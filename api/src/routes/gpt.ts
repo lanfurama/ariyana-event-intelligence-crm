@@ -217,31 +217,225 @@ router.post('/strategic-analysis', async (req: Request, res: Response) => {
 
     const openai = getAiClient();
 
-    const prompt = `Evaluate event for Ariyana Convention Centre Danang. Use EXACT event name from data as companyName.
+    const prompt = `EVENT ANALYSIS FOR ARIYANA CONVENTION CENTRE DANANG
+====================================================
 
-Data: ${leadsData}
+TASK: Analyze ONE SPECIFIC EVENT from imported data. Evaluate suitability and enrich missing information.
 
-Scoring: History(0-25: VN=25, SEA=15), Region(0-25: ASEAN/Asia=25, Asian=15), Contact(0-25: email+phone=25, email=15), Delegates(0-25: >=500=25, >=300=20, >=100=10).
+INPUT DATA:
+${leadsData}
 
-Output: Brief summary, scoring breakdown, next steps, then JSON array:
+STEP 1: EXTRACT EVENT NAME
+---------------------------
+Find EVENT NAME in input data (check: "EVENT", "Event Name", "Series", "SERIES").
+CRITICAL: Use EXACT event name as "companyName". Do NOT use organization name or modify name.
+
+STEP 2: CALCULATE SCORES (Apply Exact Rules)
+---------------------------------------------
+History Score (0-25):
+- 25: vietnamEvents >= 1
+- 15: Events in Southeast Asia (Thailand, Singapore, Malaysia, Indonesia, Philippines, Cambodia, Laos, Myanmar)
+- 0: No Vietnam/SEA history
+
+Region Score (0-25):
+- 25: Name contains "ASEAN", "Asia", "Pacific", "Eastern", "APAC", "Asian"
+- 15: Locations primarily in Asian countries
+- 0: No regional indicators
+
+Contact Score (0-25):
+- 25: Has keyPersonEmail AND keyPersonPhone
+- 15: Has keyPersonEmail only
+- 0: Missing both
+
+Delegates Score (0-25):
+- 25: numberOfDelegates >= 500
+- 20: numberOfDelegates >= 300
+- 10: numberOfDelegates >= 100
+- 0: numberOfDelegates < 100 or null
+
+Total Score = Sum of all scores (0-100)
+
+STEP 3: ENRICH MISSING DATA (CRITICAL - RESEARCH ALL FIELDS)
+-------------------------------------------------------------
+**MANDATORY**: You MUST actively research and fill ALL fields below. Use your knowledge base to find real information. Only use empty string "" if you truly cannot find any information after thorough research.
+
+**CRITICAL PRIORITY FIELDS** (MUST RESEARCH - DO NOT LEAVE EMPTY):
+1. keyPersonPhone: **MANDATORY RESEARCH** - Search organization website contact pages, "Contact Us" sections, phone directories. Format: +[country code] [number] or [country code] [number]
+2. localStrengths: **MANDATORY RESEARCH** - Analyze Vietnam market for this event type. Format: "Strengths: [list]. Weaknesses: [list]"
+3. layout: **MANDATORY RESEARCH** - Infer from event type, size, industry standards. Format: "Main hall (X pax) + Y breakout rooms (Z pax each) + [other spaces]"
+
+REQUIRED TOP-LEVEL FIELDS:
+- companyName: EXACT event name from input (REQUIRED, never empty)
+- industry: Infer from event name/organization type or research organization
+- country: Extract from location or infer from organization headquarters
+- city: Extract from location or infer from organization headquarters
+- website: **RESEARCH**: Search for official organization/event website URL
+- keyPersonName: **RESEARCH**: Search for President/Director/Secretary General/Executive Director name
+- keyPersonTitle: **RESEARCH**: Find actual title (e.g., "Secretary General", "President", "Executive Director")
+- keyPersonEmail: **RESEARCH**: Search for official email (info@, contact@, or person-specific format like firstname.lastname@org-domain)
+- keyPersonPhone: **MANDATORY RESEARCH** - Search organization website contact pages, phone directories, "Contact Us" sections. DO NOT leave empty unless truly unavailable.
+- numberOfDelegates: Extract from TOTATTEND/REGATTEND fields or infer from event size/history
+- vietnamEvents: Count events in Vietnam from pastEventsHistory
+- totalEvents: Count total events from pastEventsHistory
+- pastEventsHistory: Format "YEAR: City, Country; YEAR: City, Country"
+
+EVENT BRIEF FIELDS (MUST RESEARCH COMPREHENSIVELY):
+- eventName: Full name with year
+- eventSeries: Series name without year
+- industry: Same as top-level
+- averageAttendance: Average from numberOfDelegates/history
+- openYear: **RESEARCH**: Year organization/event was established - search organization history, founding year, first event year
+- frequency: "annually", "biennially", "triennially", "irregular" - infer from pastEventsHistory
+- rotationArea: "APAC", "Global", "Asia Pacific", etc. - infer from pastEventsHistory
+- rotationPattern: Describe rotation pattern if known from history
+- duration: Typical duration (e.g., "3 days", "5 days") - infer from industry standards or history
+- preferredMonths: Preferred months from history (e.g., "March-June")
+- preferredVenue: Venue type preference - infer from event size and type
+- breakoutRooms: **RESEARCH**: Number of breakout rooms needed - infer from event size (e.g., "5-7 rooms" for 300-500 delegates, "8-12 rooms" for 500-1000 delegates, "15+ rooms" for 1000+ delegates)
+- roomSizes: **RESEARCH**: Size specifications - infer from event size (e.g., "200-300 sqm main hall, 50-80 sqm breakout rooms" for medium events, "500-800 sqm main hall, 100-150 sqm breakout" for large events)
+- infoOnLastUpcomingEvents: Last and upcoming event details with dates, locations, attendance
+- eventHistory: Detailed history with years, locations, attendance numbers
+- delegatesProfile: Who attends (e.g., "Doctors & scientists", "Industry professionals", "Researchers")
+- internationalOrganisationName: Full organization name - research official name
+- internationalOrganisationWebsite: Organization website URL - research official website
+- organizationProfile: Organization description - research organization background, mission, scope
+- localHostName: Local host name (if Vietnam event) - research local chapter/host
+- localHostTitle: Local host title
+- localHostOrganization: Local host organization name
+- localHostWebsite: Local host website URL
+- localStrengths: **MANDATORY RESEARCH** - Local market strengths & weaknesses for Vietnam. Analyze why Vietnam is suitable, what advantages/disadvantages Vietnam offers. Format: "Strengths: [list 3-5 advantages]. Weaknesses: [list 2-3 disadvantages]". Example: "Strengths: Growing economy, strategic location in SEA, modern infrastructure (APEC 2017 host), competitive costs, beautiful destinations, rich cultural heritage. Weaknesses: Limited international connectivity compared to Singapore/Thailand, visa requirements for some countries, language barriers."
+- decisionMaker: Who decides venue (e.g., "Local host", "International board", "DMC")
+- decisionMakingProcess: How decisions are made (e.g., "Local host works with DMC, DMC sorts venues and conducts site inspection")
+- keyBidCriteria: Key venue selection criteria (e.g., "Venue capacity & breakout rooms, Connectivity, Location accessibility")
+- competitors: **RESEARCH**: Known competing venues/destinations - research where similar events have been held (e.g., "Competitors: Singapore, Thailand, Malaysia venues. Past venues: Marina Bay Sands, Bangkok Convention Centre")
+- competitiveAnalysis: **RESEARCH**: Competitive landscape analysis - compare Vietnam/Danang with competing destinations
+- hostResponsibility: Who organizes (e.g., "Organising Committee, responsible for selection of destination, venue and event plan")
+- sponsors: **RESEARCH**: Known or typical sponsors for this type of event - research past sponsors or typical sponsors in this industry (e.g., "Diamond: Company1; Gold: Company2; Silver: Company3" or "Typical sponsors: Medical device companies, pharmaceutical companies")
+- layout: **MANDATORY RESEARCH** - Event layout requirements. Infer from event type, size, and industry standards. Format: "Main plenary hall (X pax) + Y breakout rooms (Z pax each) + [exhibition area/poster area/networking space]". Example: "Main plenary hall (500 pax) + 5 breakout rooms (50-100 pax each) + exhibition area (20 booths)" or "Main hall (800 pax) + 8 breakout rooms (80-120 pax each) + poster area + networking space". DO NOT leave empty - always provide layout based on event size.
+- fitForAriyana: Why event fits Ariyana (capacity match, location advantages, facilities)
+- opportunityScore: 0-100 opportunity score
+- iccaQualified: **RESEARCH**: "yes" or "no" with brief explanation - check if event meets ICCA qualification criteria (international association meetings, rotating conferences, significant international participation)
+
+STEP 4: VALIDATE PROBLEMS
+--------------------------
+List ONLY fields truly missing AFTER enrichment:
+- "Missing keyPersonEmail" (only if not found)
+- "Missing keyPersonPhone" (only if not found)
+- "Missing keyPersonName" (only if not found)
+- "Missing website" (only if not found)
+- "Missing industry" (only if cannot infer)
+- "Missing location" (only if cannot determine)
+- "No numberOfDelegates data" (only if unavailable)
+- "Incomplete event history" (only if incomplete)
+
+DO NOT list problems for successfully enriched fields.
+
+STEP 5: OUTPUT FORMAT
+---------------------
+Output structure:
+
+PART A: Event Evaluation Summary
+[2-3 sentence summary]
+
+PART B: Scoring Breakdown
+- Total Score: [number]
+- History Score: [number] - [explanation]
+- Region Score: [number] - [explanation]
+- Contact Score: [number] - [explanation]
+- Delegates Score: [number] - [explanation]
+
+PART C: Next Steps
+[Action plan]
+
+PART C: JSON Output
+\`\`\`json
 [{
-  "companyName": "EXACT event name from data",
-  "industry", "country", "city", "website", "keyPersonName", "keyPersonTitle", "keyPersonEmail", "keyPersonPhone",
-  "vietnamEvents": 0, "totalEvents": 1, "numberOfDelegates": null,
-  "totalScore": 0-100, "historyScore": 0-25, "regionScore": 0-25, "contactScore": 0-25, "delegatesScore": 0-25,
-  "problems": ["Missing email", "No phone"], "notes": "Brief", "pastEventsHistory": "2023: City, Country",
-  "nextStepStrategy": "Action", "status": "New",
+  "companyName": "[EXACT event name - REQUIRED]",
+  "industry": "[string or empty string]",
+  "country": "[string or empty string]",
+  "city": "[string or empty string]",
+  "website": "[string or empty string]",
+  "keyPersonName": "[string or empty string]",
+  "keyPersonTitle": "[string or empty string]",
+  "keyPersonEmail": "[string or empty string]",
+  "keyPersonPhone": "[string or empty string]",
+  "vietnamEvents": [number],
+  "totalEvents": [number],
+  "numberOfDelegates": [number or null],
+  "totalScore": [0-100],
+  "historyScore": [0-25],
+  "regionScore": [0-25],
+  "contactScore": [0-25],
+  "delegatesScore": [0-25],
+  "problems": ["array"],
+  "notes": "[Brief. If enriched: '[AI Enriched: fields]']",
+  "pastEventsHistory": "[YEAR: City, Country; ...]",
+  "nextStepStrategy": "[Action plan]",
+  "status": "New",
   "eventBrief": {
-    "eventName", "eventSeries", "industry", "averageAttendance", "openYear", "frequency", "rotationArea", "rotationPattern",
-    "duration", "preferredMonths", "preferredVenue", "breakoutRooms", "roomSizes", "infoOnLastUpcomingEvents", "eventHistory",
-    "delegatesProfile", "internationalOrganisationName", "internationalOrganisationWebsite", "organizationProfile",
-    "localHostName", "localHostTitle", "localHostOrganization", "localHostWebsite", "localStrengths",
-    "decisionMaker", "decisionMakingProcess", "keyBidCriteria", "competitors", "competitiveAnalysis", "hostResponsibility",
-    "sponsors", "layout", "fitForAriyana", "opportunityScore": 0-100
+    "eventName": "[string]",
+    "eventSeries": "[string]",
+    "industry": "[string]",
+    "averageAttendance": [number],
+    "openYear": [number or null],
+    "frequency": "[string]",
+    "rotationArea": "[string]",
+    "rotationPattern": "[string]",
+    "duration": "[string]",
+    "preferredMonths": "[string]",
+    "preferredVenue": "[string]",
+    "breakoutRooms": "[string]",
+    "roomSizes": "[string]",
+    "infoOnLastUpcomingEvents": "[string]",
+    "eventHistory": "[string]",
+    "delegatesProfile": "[string]",
+    "internationalOrganisationName": "[string]",
+    "internationalOrganisationWebsite": "[string]",
+    "organizationProfile": "[string]",
+    "localHostName": "[string]",
+    "localHostTitle": "[string]",
+    "localHostOrganization": "[string]",
+    "localHostWebsite": "[string]",
+    "localStrengths": "[string]",
+    "decisionMaker": "[string]",
+    "decisionMakingProcess": "[string]",
+    "keyBidCriteria": "[string]",
+    "competitors": "[string]",
+    "competitiveAnalysis": "[string]",
+    "hostResponsibility": "[string]",
+    "sponsors": "[string - RESEARCH: Known or typical sponsors]",
+    "layout": "[string - RESEARCH: Event layout requirements]",
+    "fitForAriyana": "[string]",
+    "opportunityScore": [0-100],
+    "iccaQualified": "[string - RESEARCH: 'yes' or 'no' with explanation]"
   }
 }]
+\`\`\`
 
-Research missing fields. Empty string if not found. Only list problems for truly missing fields after research.`;
+CRITICAL RESEARCH REQUIREMENTS (MANDATORY - DO NOT SKIP):
+1. **HIGHEST PRIORITY - MUST RESEARCH**: keyPersonPhone, localStrengths, layout
+   - keyPersonPhone: Search organization website, contact pages, phone directories. Format: +[country code] [number]
+   - localStrengths: Analyze Vietnam market. Format: "Strengths: [list]. Weaknesses: [list]"
+   - layout: Infer from event size. Format: "Main hall (X pax) + Y breakout rooms + [spaces]"
+
+2. **MANDATORY FIELDS TO RESEARCH**: breakoutRooms, roomSizes, openYear, keyPersonEmail, competitors, sponsors, iccaQualified
+3. For breakoutRooms: Infer from event size (300-500 delegates = 5-7 rooms, 500-1000 = 8-12 rooms, 1000+ = 15+ rooms)
+4. For roomSizes: Infer from event size (medium = "200-300 sqm main hall, 50-80 sqm breakout", large = "500-800 sqm main hall, 100-150 sqm breakout")
+5. For openYear: Search organization founding year or first event year
+6. For keyPersonEmail/Phone: Search organization website contact pages, "Contact Us" sections
+7. For localStrengths: Analyze Vietnam market advantages and disadvantages - MUST provide analysis
+8. For competitors: Research where similar events have been held - list specific venues/cities
+9. For sponsors: Research past sponsors or typical sponsors in this industry - list specific companies or types
+10. For layout: Infer from event type, size, and industry standards - MUST provide detailed layout
+11. For iccaQualified: Check if event meets ICCA criteria (international association, rotating, significant international participation)
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. companyName = EXACT event name from input
+2. Strings use "" for empty (never null)
+3. Numbers use 0 or null (never empty string)
+4. problems array = ONLY truly missing fields AFTER research
+5. JSON must be valid and parseable
+6. Note enrichment in "notes" field: List all researched fields (e.g., "[AI Enriched: breakoutRooms, roomSizes, openYear, email, phone, localStrengths, competitors, sponsors, layout, iccaQualified]")`;
 
     console.log('🟢 [GPT API] Strategic analysis request');
     
@@ -284,23 +478,95 @@ router.post('/enrich', async (req: Request, res: Response) => {
 
     const openai = getAiClient();
 
-    const prompt = `Research MICE organization: ${companyName}${keyPerson ? ` | Contact: ${keyPerson}` : ''}${city ? ` | City: ${city}` : ''}
+    const prompt = `DATA ENRICHMENT TASK FOR MICE ORGANIZATION
+==========================================
 
-Return JSON with factual data only. Empty string if not found. 
+ORGANIZATION TO RESEARCH:
+- Name: ${companyName}
+${keyPerson ? `- Known Contact: ${keyPerson}` : ''}
+${city ? `- City: ${city}` : ''}
 
-CRITICAL FIELDS (must research):
-1. secretaryGeneral, organizingChairman (full names)
-2. website, keyPersonEmail, keyPersonPhone, keyPersonName, keyPersonTitle
-3. breakoutRooms (e.g., "8-10 rooms"), roomSizes (e.g., "200-300 sqm main hall, 50-80 sqm breakout")
-4. sponsors (format: "Diamond: Company1; Gold: Company2; Silver: Company3")
-5. layoutEvent (venue layout requirements)
-6. conferenceRegistration (website, fees, deadlines)
-7. iccaQualified ("yes" or "no" with brief explanation)
-8. competitors (competing venues/destinations)
-9. localStrengthsWeaknesses (format: "Strengths: [list]. Weaknesses: [list]")
+TASK: Research and provide factual data about this organization. Use empty string "" if information is not found (never null for strings).
 
-ALL JSON fields required:
-website, industry, keyPersonName, keyPersonTitle, keyPersonEmail, keyPersonPhone, openYear, frequency, duration, preferredMonth, rotationPattern, upcomingEvents, delegatesProfile, organizingChairman, secretaryGeneral, sponsors, breakoutRooms, roomSizes, layoutEvent, conferenceRegistration, iccaQualified, decisionMaker, competitors, numberOfDelegates, localStrengthsWeaknesses, researchSummary`;
+REQUIRED RESEARCH FIELDS:
+------------------------
+1. CONTACT INFORMATION:
+   - website: Official organization website URL
+   - keyPersonName: Full name of key contact (President/Director/Secretary General)
+   - keyPersonTitle: Actual title (e.g., "Secretary General", "President", "Executive Director")
+   - keyPersonEmail: Official contact email (info@, contact@, or person-specific)
+   - keyPersonPhone: Official phone number
+
+2. ORGANIZATION LEADERSHIP:
+   - secretaryGeneral: Full name of Secretary General
+   - organizingChairman: Full name of Organizing Chairman (if different from Secretary General)
+
+3. EVENT DETAILS:
+   - industry: Industry/sector (Medical, Technology, Legal, etc.)
+   - openYear: Year organization was established
+   - frequency: Event frequency ("annually", "biennially", "triennially", "irregular")
+   - duration: Typical event duration (e.g., "3 days", "5 days")
+   - preferredMonth: Preferred months for events (e.g., "March-June")
+   - rotationPattern: Event rotation pattern description
+   - upcomingEvents: Information about upcoming events
+   - numberOfDelegates: Typical delegate count
+
+4. VENUE REQUIREMENTS:
+   - breakoutRooms: Number needed (e.g., "8-10 rooms")
+   - roomSizes: Size specifications (e.g., "200-300 sqm main hall, 50-80 sqm breakout")
+   - layoutEvent: Venue layout requirements
+
+5. BUSINESS INTELLIGENCE:
+   - sponsors: Sponsor information (format: "Diamond: Company1; Gold: Company2; Silver: Company3")
+   - conferenceRegistration: Registration details (website, fees, deadlines)
+   - iccaQualified: "yes" or "no" with brief explanation
+   - competitors: Competing venues/destinations
+   - decisionMaker: Who makes venue decisions
+   - localStrengthsWeaknesses: Format "Strengths: [list]. Weaknesses: [list]"
+   - delegatesProfile: Profile of typical delegates
+
+6. RESEARCH SUMMARY:
+   - researchSummary: Brief summary of research findings and data sources
+
+OUTPUT FORMAT:
+--------------
+Return valid JSON object with ALL fields. Use empty string "" for missing string fields, null for missing number fields.
+
+{
+  "website": "[string or empty string]",
+  "industry": "[string or empty string]",
+  "keyPersonName": "[string or empty string]",
+  "keyPersonTitle": "[string or empty string]",
+  "keyPersonEmail": "[string or empty string]",
+  "keyPersonPhone": "[string or empty string]",
+  "openYear": [number or null],
+  "frequency": "[string or empty string]",
+  "duration": "[string or empty string]",
+  "preferredMonth": "[string or empty string]",
+  "rotationPattern": "[string or empty string]",
+  "upcomingEvents": "[string or empty string]",
+  "delegatesProfile": "[string or empty string]",
+  "organizingChairman": "[string or empty string]",
+  "secretaryGeneral": "[string or empty string]",
+  "sponsors": "[string or empty string]",
+  "breakoutRooms": "[string or empty string]",
+  "roomSizes": "[string or empty string]",
+  "layoutEvent": "[string or empty string]",
+  "conferenceRegistration": "[string or empty string]",
+  "iccaQualified": "[string or empty string]",
+  "decisionMaker": "[string or empty string]",
+  "competitors": "[string or empty string]",
+  "numberOfDelegates": [number or null],
+  "localStrengthsWeaknesses": "[string or empty string]",
+  "researchSummary": "[string or empty string]"
+}
+
+CRITICAL REQUIREMENTS:
+1. All string fields must be strings (use "" for empty, never null)
+2. All number fields must be numbers (use null for missing, never empty string)
+3. Research thoroughly - use knowledge base to find real information
+4. Be accurate - if uncertain, use empty string rather than guessing
+5. JSON must be valid and parseable`;
 
     console.log('🟢 [GPT API] Data enrichment request');
     
@@ -447,6 +713,125 @@ Rules: Reference specific leads/data. Provide stats from knowledge base. Suggest
     const retryDelay = extractRetryDelay(error);
     res.status(500).json({
       error: error.message || 'Chat failed',
+      retryDelay,
+      isRateLimit: error.status === 429 || error.message?.includes('rate limit'),
+    });
+  }
+});
+
+// POST /api/gpt/check-event-eligibility - Check event eligibility before analysis
+router.post('/check-event-eligibility', async (req: Request, res: Response) => {
+  try {
+    const { eventName, eventData, pastEventsHistory } = req.body;
+
+    if (!eventName || eventName.trim() === '') {
+      return res.status(400).json({ error: 'Event name is required' });
+    }
+
+    const openai = getAiClient();
+    const currentYear = new Date().getFullYear();
+    const fiveYearsAgo = currentYear - 5;
+
+    const prompt = `EVENT ELIGIBILITY CHECK FOR ARIYANA CONVENTION CENTRE
+==================================================
+
+EVENT TO CHECK:
+- Event Name: ${eventName}
+${eventData ? `- Event Data: ${eventData.substring(0, 1000)}` : ''}
+${pastEventsHistory ? `- Past Events History: ${pastEventsHistory}` : ''}
+
+TASK: Check 3 critical eligibility criteria for this event:
+
+1. VIETNAM HISTORY CHECK:
+   - Has this event been held in Vietnam before?
+   - Check past events history for Vietnam locations (Ho Chi Minh City, Hanoi, Danang, etc.)
+   - Return: true if event has been held in Vietnam, false otherwise
+
+2. ICCA QUALIFIED CHECK:
+   - Is this event ICCA (International Congress and Convention Association) qualified?
+   - ICCA qualified events are typically:
+     * International association meetings
+     * Rotating conferences with international participation
+     * Events with significant international delegate attendance
+     * Events listed in ICCA database
+   - Return: true if ICCA qualified, false otherwise
+
+3. RECENT ACTIVITY CHECK (Last 5 Years):
+   - Has this event occurred within the last 5 years (${fiveYearsAgo}-${currentYear})?
+   - Check the most recent event year from pastEventsHistory
+   - If no history provided, infer from event name/pattern
+   - Return: true if event occurred in last 5 years, false if older or unknown
+
+OUTPUT FORMAT:
+Return valid JSON object:
+{
+  "eventName": "${eventName}",
+  "hasVietnamHistory": true/false,
+  "vietnamHistoryDetails": "Brief description of Vietnam events if any",
+  "isICCAQualified": true/false,
+  "iccaQualifiedReason": "Brief explanation why qualified or not",
+  "hasRecentActivity": true/false,
+  "mostRecentYear": [year number or null],
+  "yearsSinceLastEvent": [number or null],
+  "isEligible": true/false,
+  "eligibilityReason": "Overall eligibility assessment and reason",
+  "recommendation": "proceed" or "skip" or "review"
+}
+
+CRITICAL:
+- Be factual and conservative - only return true if you have clear evidence
+- If uncertain, return false and explain in reason fields
+- Use your knowledge base to check ICCA qualification standards
+- Check event history carefully for Vietnam locations`;
+
+    console.log('🟢 [GPT API] Checking event eligibility:', eventName);
+    
+    const response = await openai.chat.completions.create({
+      model: 'gpt-5.1',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'You are an expert MICE industry analyst specializing in ICCA-qualified events and Vietnam market analysis. Provide factual, conservative assessments based on event data and industry knowledge.' 
+        },
+        { role: 'user', content: prompt }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0, // Zero temperature for factual accuracy
+      max_completion_tokens: 500,
+    });
+
+    const content = response.choices[0]?.message?.content || '{}';
+    let eligibilityData = {};
+    
+    try {
+      eligibilityData = JSON.parse(content);
+    } catch (e) {
+      console.error('Failed to parse GPT eligibility response as JSON:', e);
+      // Return default conservative response
+      eligibilityData = {
+        eventName: eventName,
+        hasVietnamHistory: false,
+        vietnamHistoryDetails: 'Unable to verify',
+        isICCAQualified: false,
+        iccaQualifiedReason: 'Unable to verify ICCA qualification',
+        hasRecentActivity: false,
+        mostRecentYear: null,
+        yearsSinceLastEvent: null,
+        isEligible: false,
+        eligibilityReason: 'Unable to verify eligibility criteria',
+        recommendation: 'review'
+      };
+    }
+
+    res.json({ 
+      success: true,
+      data: eligibilityData 
+    });
+  } catch (error: any) {
+    console.error('Error in check-event-eligibility:', error);
+    const retryDelay = extractRetryDelay(error);
+    res.status(500).json({
+      error: error.message || 'Event eligibility check failed',
       retryDelay,
       isRateLimit: error.status === 429 || error.message?.includes('rate limit'),
     });

@@ -304,89 +304,108 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
   };
 
   const chartData = [
-    { name: 'New', count: stats.new, color: 'bg-blue-500' },
-    { name: 'Contacted', count: leads.filter(l => l.status === 'Contacted').length, color: 'bg-amber-500' },
-    { name: 'Qualified', count: stats.qualified, color: 'bg-purple-500' },
-    { name: 'Won', count: leads.filter(l => l.status === 'Won').length, color: 'bg-green-500' },
+    { name: 'New', count: stats.new },
+    { name: 'Contacted', count: leads.filter(l => l.status === 'Contacted').length },
+    { name: 'Qualified', count: stats.qualified },
+    { name: 'Won', count: leads.filter(l => l.status === 'Won').length },
   ];
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-slate-800 tracking-tight">Dashboard Overview</h2>
+      <div className="p-6 space-y-5 animate-fade-in">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h2>
+            <p className="text-sm text-slate-600 mt-1">Overview of pipeline and key metrics</p>
+          </div>
         </div>
-        <div className="flex items-center justify-center h-64 bg-white rounded-lg shadow-sm border border-slate-200">
-          <Loader2 className="animate-spin text-blue-600" size={32} />
-          <span className="ml-3 text-slate-600 font-medium">Loading leads...</span>
+        <div className="flex items-center justify-center h-56 bg-white rounded-lg border border-slate-200">
+          <Loader2 className="animate-spin text-slate-600" size={24} />
+          <span className="ml-3 text-slate-600 text-sm font-medium">Loading leads…</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in bg-slate-50 min-h-screen">
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-5 animate-fade-in">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h2>
-          <p className="text-slate-600 mt-1 font-medium">Monitor your sales pipeline and key metrics</p>
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h2>
+          <p className="text-sm text-slate-600 mt-1">Monitor pipeline status and key metrics</p>
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard title="Total Leads" value={stats.total} icon={<Users className="text-blue-600" size={24} />} gradient="from-blue-500 to-blue-600" />
-        <StatCard title="Vietnam Events" value={stats.vietnam} icon={<Search className="text-teal-600" size={24} />} gradient="from-teal-500 to-teal-600" />
-        <StatCard title="New Opportunities" value={stats.new} icon={<Plus className="text-indigo-600" size={24} />} gradient="from-indigo-500 to-indigo-600" />
-        <StatCard title="Qualified" value={stats.qualified} icon={<ChevronRight className="text-green-600" size={24} />} gradient="from-green-500 to-green-600" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Total leads" value={stats.total} icon={<Users size={18} />} />
+        <StatCard title="Vietnam events" value={stats.vietnam} icon={<Search size={18} />} />
+        <StatCard title="New opportunities" value={stats.new} icon={<Plus size={18} />} />
+        <StatCard title="Qualified" value={stats.qualified} icon={<ChevronRight size={18} />} />
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white p-5 rounded-lg border border-slate-200">
+        <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-xl font-bold text-slate-900 tracking-tight">Pipeline Status</h3>
-            <p className="text-sm text-slate-500 mt-0.5">Current distribution across sales stages</p>
+            <h3 className="text-base font-semibold text-slate-900">Pipeline status</h3>
+            <p className="text-sm text-slate-600 mt-1">Distribution across sales stages</p>
           </div>
         </div>
-        <div className="h-64 w-full">
-          <SimpleBarChart data={chartData} />
-        </div>
+
+        {stats.total === 0 ? (
+          <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
+            No leads yet. Add leads to see pipeline status.
+          </div>
+        ) : (
+          <PipelineBars data={chartData} />
+        )}
       </div>
     </div>
   );
 };
 
-const SimpleBarChart = ({ data }: { data: { name: string, count: number, color?: string }[] }) => {
-  const max = Math.max(...data.map(d => d.count)) || 1; // Avoid division by zero
-  
+const PipelineBars = ({ data }: { data: { name: string, count: number }[] }) => {
+  const max = Math.max(...data.map(d => d.count)) || 1;
+
   return (
-    <div className="h-full w-full flex items-end justify-around px-4 pb-6 pt-8 space-x-4">
-      {data.map((d) => (
-        <div key={d.name} className="flex flex-col items-center justify-end h-full flex-1 group">
-           <div className="mb-2 opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold text-slate-700 bg-white px-2 py-1 rounded-lg shadow-lg border border-slate-200">
-             {d.count}
-           </div>
-           <div className="w-full bg-slate-100 rounded-t-lg h-full relative flex items-end overflow-hidden border border-slate-200">
-             <div 
-               className={`w-full ${d.color || 'bg-blue-500'} rounded-t-lg transition-all duration-700 ease-out hover:brightness-110 shadow-lg`}
-               style={{ height: `${(d.count / max) * 100}%` }}
-             ></div>
-           </div>
-           <p className="mt-3 text-sm text-slate-700 font-semibold uppercase tracking-wide">{d.name}</p>
-        </div>
-      ))}
+    <div className="space-y-3">
+      {data.map((d) => {
+        const pct = Math.round((d.count / max) * 100);
+        return (
+          <div key={d.name} className="grid grid-cols-[120px_1fr_44px] items-center gap-3">
+            <div className="text-sm font-medium text-slate-700">{d.name}</div>
+            <div className="h-2.5 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+              <div
+                className="h-full bg-slate-700"
+                style={{ width: `${pct}%` }}
+                aria-label={`${d.name} ${d.count}`}
+              />
+            </div>
+            <div className="text-sm tabular-nums text-slate-700 text-right">{d.count}</div>
+          </div>
+        );
+      })}
+      <p className="text-xs text-slate-500 pt-1">Bars are scaled relative to the largest stage.</p>
     </div>
   );
 };
 
-const StatCard = ({ title, value, icon, gradient }: any) => (
-  <div className="bg-white p-5 rounded-lg shadow-sm border border-slate-200 hover:shadow-lg hover:border-slate-300 transition-all duration-200 group">
-    <div className="flex items-center justify-between">
-      <div className="flex-1">
-        <p className="text-sm text-slate-500 font-semibold uppercase tracking-wide mb-1.5">{title}</p>
-        <p className="text-4xl font-bold text-slate-900 tracking-tight">{value}</p>
+const StatCard = ({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+}) => (
+  <div className="bg-white p-4 rounded-lg border border-slate-200">
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{title}</p>
+        <p className="text-2xl font-semibold text-slate-900 tracking-tight mt-1 tabular-nums">{value}</p>
       </div>
-      <div className={`p-3 bg-gradient-to-br ${gradient || 'from-blue-500 to-blue-600'} rounded-lg shadow-lg group-hover:scale-110 transition-transform duration-200`}>
-        <div className="text-white">{icon}</div>
+      <div className="h-9 w-9 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+        {icon}
       </div>
     </div>
   </div>
@@ -404,29 +423,29 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
   );
 
   return (
-    <div className="p-6 h-screen flex flex-col bg-slate-50">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-3 md:space-y-0">
+    <div className="p-6 min-h-screen flex flex-col space-y-5">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">ICCA Association Leads</h2>
-          <p className="text-slate-600 mt-1 font-medium">Manage and track your event leads</p>
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Leads</h2>
+          <p className="text-sm text-slate-600 mt-1">Manage and track your event leads</p>
         </div>
         
-        <div className="flex items-center space-x-3 w-full md:w-auto">
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:w-80">
             <input 
               type="text"
               placeholder="Search by company, city, person, or industry..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border-2 border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-slate-300 font-medium"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300 hover:border-slate-300"
             />
-            <Search className="absolute left-3 top-3 text-slate-400 pointer-events-none" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
           </div>
           {/* Only Director and Sales can add manual leads */}
           {(user.role === 'Director' || user.role === 'Sales') && (
             <button 
               onClick={onAddLead}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-blue-800 flex items-center shadow-lg shadow-blue-500/30 hover:shadow-xl transition-all duration-200 shrink-0"
+              className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
             >
               <Plus size={18} className="mr-2" /> Add Lead
             </button>
@@ -434,65 +453,65 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm flex-1 overflow-hidden flex flex-col">
+      <div className="bg-white border border-slate-200 rounded-lg flex-1 overflow-hidden flex flex-col">
         <div className="overflow-x-auto overflow-y-auto flex-1">
           <table className="w-full text-left">
-            <thead className="bg-gradient-to-r from-slate-50 to-slate-100 text-slate-700 font-semibold border-b-2 border-slate-200 sticky top-0 z-10">
+            <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 sticky top-0 z-10">
               <tr>
-                <th className="p-3 w-64 text-xs uppercase tracking-wider">Company Name</th>
-                <th className="p-3 text-xs uppercase tracking-wider">Industry</th>
-                <th className="p-3 text-xs uppercase tracking-wider">Location</th>
-                <th className="p-3 text-xs uppercase tracking-wider">Key Person</th>
-                <th className="p-3 text-xs uppercase tracking-wider">Delegates</th>
-                <th className="p-3 text-xs uppercase tracking-wider">Status</th>
-                <th className="p-3 text-xs uppercase tracking-wider">Action</th>
+                <th className="px-3 py-2.5 w-64 text-xs font-semibold uppercase tracking-wider text-slate-600">Company</th>
+                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Industry</th>
+                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Location</th>
+                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Key person</th>
+                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Delegates</th>
+                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
+                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredLeads.length > 0 ? (
                 filteredLeads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-blue-50/50 transition-colors duration-150 group">
-                    <td className="p-3">
-                      <div className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">{lead.companyName}</div>
+                  <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-3 py-3">
+                      <div className="font-semibold text-slate-900">{lead.companyName}</div>
                     </td>
-                    <td className="p-3">
-                      <span className="text-slate-600 font-medium">{lead.industry}</span>
+                    <td className="px-3 py-3">
+                      <span className="text-slate-700">{lead.industry}</span>
                     </td>
-                    <td className="p-3">
+                    <td className="px-3 py-3">
                       <div className="flex flex-col">
-                         <span className="text-slate-700 font-medium">{lead.city}</span>
-                         <span className="text-xs text-slate-500">{lead.country}</span>
+                         <span className="text-slate-800">{lead.city}</span>
+                         <span className="text-xs text-slate-500 mt-0.5">{lead.country}</span>
                       </div>
                     </td>
-                    <td className="p-3">
+                    <td className="px-3 py-3">
                       <div className="flex flex-col">
-                        <span className="text-slate-700 font-medium">{lead.keyPersonName}</span>
-                        <span className="text-xs text-slate-500">{lead.keyPersonTitle}</span>
+                        <span className="text-slate-800">{lead.keyPersonName}</span>
+                        <span className="text-xs text-slate-500 mt-0.5">{lead.keyPersonTitle}</span>
                       </div>
                     </td>
-                    <td className="p-3">
-                      <span className="text-slate-700 font-semibold">{lead.numberOfDelegates || '-'}</span>
+                    <td className="px-3 py-3">
+                      <span className="text-slate-800 font-medium tabular-nums">{lead.numberOfDelegates || '-'}</span>
                     </td>
-                    <td className="p-3">
+                    <td className="px-3 py-3">
                       <StatusBadge status={lead.status} />
                     </td>
-                    <td className="p-3">
+                    <td className="px-3 py-3">
                       <button 
                         onClick={() => onSelectLead(lead)}
-                        className="text-blue-600 hover:text-blue-800 font-semibold flex items-center text-sm group/btn"
+                        className="text-slate-700 hover:text-slate-900 font-medium inline-flex items-center text-sm"
                       >
-                        View <ChevronRight size={16} className="ml-1 group-hover/btn:translate-x-1 transition-transform" />
+                        View <ChevronRight size={16} className="ml-1 transition-transform group-hover:translate-x-0.5" />
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center">
+                  <td colSpan={7} className="p-10 text-center">
                     <div className="flex flex-col items-center">
-                      <Search className="text-slate-300 mb-2" size={40} />
-                      <p className="text-slate-500 font-medium text-lg">No leads found</p>
-                      <p className="text-slate-400 text-sm mt-0.5">Try adjusting your search terms</p>
+                      <Search className="text-slate-300 mb-2" size={32} />
+                      <p className="text-slate-700 font-medium">No leads found</p>
+                      <p className="text-slate-500 text-sm mt-1">Try adjusting your search terms</p>
                     </div>
                   </td>
                 </tr>
@@ -506,16 +525,18 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
 };
 
 const StatusBadge = ({ status }: { status: string }) => {
-  const colors: any = {
-    'New': 'bg-blue-100 text-blue-800 border-blue-200',
-    'Contacted': 'bg-amber-100 text-amber-800 border-amber-200',
-    'Qualified': 'bg-purple-100 text-purple-800 border-purple-200',
-    'Won': 'bg-green-100 text-green-800 border-green-200',
-    'Lost': 'bg-red-100 text-red-800 border-red-200'
+  const dotColors: Record<string, string> = {
+    New: 'bg-blue-500',
+    Contacted: 'bg-amber-500',
+    Qualified: 'bg-violet-500',
+    Won: 'bg-emerald-500',
+    Lost: 'bg-rose-500',
   };
+  const dot = dotColors[status] || 'bg-slate-400';
   return (
-    <span className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide border ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
-      {status}
+    <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200 bg-white text-slate-700">
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} aria-hidden="true" />
+      <span className="uppercase tracking-wide">{status}</span>
     </span>
   );
 };
@@ -2508,18 +2529,150 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
           
           // Agent Worker Function: Each agent processes one event independently
           const createAgentWorker = async (event: any, agentId: number, globalIndex: number): Promise<any> => {
-            console.log(`🤖 [Agent ${agentId}] Scoring event: ${event.name} (${globalIndex + 1}/${eventsToProcess.length})`);
+            console.log(`🤖 [Agent ${agentId}] Processing event: ${event.name} (${globalIndex + 1}/${eventsToProcess.length})`);
             
             const editions = (event as any).editions || [];
             console.log(`📊 [Agent ${agentId}] Event has ${editions.length} editions`);
             
             try {
-              // DISABLED: AI analysis temporarily disabled
-              // Use backend scoring logic instead
+              // STEP 1: Pre-check eligibility using GPT
+              console.log(`🔍 [Agent ${agentId}] Checking eligibility for: ${event.name}`);
+              let eligibilityCheck = null;
+              try {
+                const eventDataStr = JSON.stringify(event.rawData || {}).substring(0, 1000);
+                const pastHistory = formatEventHistory(editions);
+                eligibilityCheck = await GPTService.checkEventEligibility(
+                  event.name,
+                  eventDataStr,
+                  pastHistory
+                );
+                console.log(`✅ [Agent ${agentId}] Eligibility check completed:`, {
+                  eligible: eligibilityCheck.isEligible,
+                  vietnamHistory: eligibilityCheck.hasVietnamHistory,
+                  iccaQualified: eligibilityCheck.isICCAQualified,
+                  recentActivity: eligibilityCheck.hasRecentActivity,
+                  recommendation: eligibilityCheck.recommendation
+                });
+              } catch (eligibilityError: any) {
+                console.warn(`⚠️  [Agent ${agentId}] Eligibility check failed, continuing with analysis:`, eligibilityError.message);
+                // Continue with analysis even if eligibility check fails
+              }
+              
+              // STEP 2: Score event using backend logic
               const result = await scoreEventLocally(event, allExcelData);
+              
+              // STEP 3: Research missing eventBrief fields using AI
+              console.log(`🔍 [Agent ${agentId}] Researching eventBrief fields for: ${event.name}`);
+              let eventBriefData: any = {};
+              let aiTopLevelData: any = {}; // Store top-level fields from AI response
+              try {
+                const eventDataStr = JSON.stringify({
+                  eventName: event.name,
+                  rawData: event.rawData || {},
+                  editions: editions.slice(0, 5), // Limit to first 5 editions
+                  pastEventsHistory: result.pastEventsHistory || formatEventHistory(editions),
+                  numberOfDelegates: result.numberOfDelegates,
+                  industry: result.industry
+                }).substring(0, 2000);
+                
+                // Call GPT to research eventBrief fields
+                const aiResult = await GPTService.generateStrategicAnalysis(eventDataStr);
+                const parsed = parseReport(aiResult);
+                
+                if (parsed.partC && Array.isArray(parsed.partC) && parsed.partC.length > 0) {
+                  const aiLead = parsed.partC[0];
+                  
+                  // Extract top-level fields (keyPersonPhone, etc.) - prioritize non-empty values
+                  if (aiLead.keyPersonPhone && aiLead.keyPersonPhone.trim() !== "") {
+                    aiTopLevelData.keyPersonPhone = aiLead.keyPersonPhone.trim();
+                  }
+                  if (aiLead.keyPersonEmail && aiLead.keyPersonEmail.trim() !== "") {
+                    aiTopLevelData.keyPersonEmail = aiLead.keyPersonEmail.trim();
+                  }
+                  if (aiLead.keyPersonName && aiLead.keyPersonName.trim() !== "") {
+                    aiTopLevelData.keyPersonName = aiLead.keyPersonName.trim();
+                  }
+                  if (aiLead.keyPersonTitle && aiLead.keyPersonTitle.trim() !== "") {
+                    aiTopLevelData.keyPersonTitle = aiLead.keyPersonTitle.trim();
+                  }
+                  if (aiLead.website && aiLead.website.trim() !== "") {
+                    aiTopLevelData.website = aiLead.website.trim();
+                  }
+                  
+                  // Extract eventBrief fields - ensure we get all fields
+                  if (aiLead.eventBrief) {
+                    eventBriefData = {
+                      ...aiLead.eventBrief,
+                      // Ensure string fields are not null/undefined
+                      localStrengths: aiLead.eventBrief.localStrengths || aiLead.eventBrief.localStrengthsWeaknesses || "",
+                      layout: aiLead.eventBrief.layout || aiLead.eventBrief.layoutEvent || "",
+                      competitors: aiLead.eventBrief.competitors || "",
+                      sponsors: aiLead.eventBrief.sponsors || "",
+                      breakoutRooms: aiLead.eventBrief.breakoutRooms || "",
+                      roomSizes: aiLead.eventBrief.roomSizes || "",
+                      openYear: aiLead.eventBrief.openYear || null,
+                      iccaQualified: aiLead.eventBrief.iccaQualified || ""
+                    };
+                    console.log(`✅ [Agent ${agentId}] AI research completed for eventBrief fields`);
+                    console.log(`📊 [Agent ${agentId}] Extracted fields:`, {
+                      hasPhone: !!aiTopLevelData.keyPersonPhone,
+                      phoneValue: aiTopLevelData.keyPersonPhone,
+                      hasLocalStrengths: !!(eventBriefData.localStrengths && eventBriefData.localStrengths.trim() !== ""),
+                      localStrengthsLength: eventBriefData.localStrengths?.length || 0,
+                      hasLayout: !!(eventBriefData.layout && eventBriefData.layout.trim() !== ""),
+                      layoutLength: eventBriefData.layout?.length || 0,
+                      hasCompetitors: !!(eventBriefData.competitors && eventBriefData.competitors.trim() !== ""),
+                      hasSponsors: !!(eventBriefData.sponsors && eventBriefData.sponsors.trim() !== "")
+                    });
+                  } else {
+                    console.warn(`⚠️  [Agent ${agentId}] No eventBrief found in AI response`);
+                  }
+                } else {
+                  console.warn(`⚠️  [Agent ${agentId}] No partC data found in parsed AI response`);
+                }
+              } catch (researchError: any) {
+                console.warn(`⚠️  [Agent ${agentId}] EventBrief research failed, using defaults:`, researchError.message);
+                // Continue with default values
+              }
               
               if (result) {
                 const originalEventName = event.name.trim();
+                
+                // Infer layout from event size if not provided by AI
+                const inferredLayout = result.numberOfDelegates ? 
+                  (result.numberOfDelegates >= 1000 ? "Main plenary hall (800-1000 pax) + 15+ breakout rooms (50-150 pax each) + exhibition area (30+ booths) + poster area + networking space" :
+                   result.numberOfDelegates >= 500 ? "Main plenary hall (500-800 pax) + 8-12 breakout rooms (50-100 pax each) + exhibition area (20 booths)" :
+                   result.numberOfDelegates >= 300 ? "Main plenary hall (300-500 pax) + 5-7 breakout rooms (50-80 pax each) + exhibition area (10-15 booths)" :
+                   "Main hall (200-300 pax) + 3-5 breakout rooms (30-50 pax each)") : "";
+                
+                // Infer localStrengths for Vietnam if not provided
+                const inferredLocalStrengths = result.vietnamEvents > 0 ? 
+                  "Strengths: Vietnam has hosted this event before, proven track record, growing MICE industry, strategic location in Southeast Asia, modern infrastructure, competitive costs, rich cultural heritage, beautiful destinations. Weaknesses: Limited international direct flights compared to Singapore/Thailand, visa requirements for some countries, language barriers." :
+                  "Strengths: Growing economy, strategic location in Southeast Asia, modern infrastructure (APEC 2017 host), competitive costs, beautiful destinations (Danang UNESCO heritage sites nearby), developing MICE industry. Weaknesses: Limited international connectivity compared to Singapore/Thailand, visa requirements, language barriers, less established MICE reputation.";
+                
+                // Merge eventBrief data from AI research - prioritize AI data, fallback to inferred/defaults
+                const mergedEventBrief = {
+                  ...eventBriefData,
+                  // Ensure critical fields are filled even if AI didn't provide them
+                  breakoutRooms: eventBriefData.breakoutRooms || (result.numberOfDelegates ? 
+                    (result.numberOfDelegates >= 1000 ? "15+ rooms" : 
+                     result.numberOfDelegates >= 500 ? "8-12 rooms" : 
+                     result.numberOfDelegates >= 300 ? "5-7 rooms" : "3-5 rooms") : ""),
+                  roomSizes: eventBriefData.roomSizes || (result.numberOfDelegates ? 
+                    (result.numberOfDelegates >= 1000 ? "500-800 sqm main hall, 100-150 sqm breakout rooms" : 
+                     result.numberOfDelegates >= 500 ? "300-500 sqm main hall, 80-120 sqm breakout rooms" : 
+                     "200-300 sqm main hall, 50-80 sqm breakout rooms") : ""),
+                  openYear: eventBriefData.openYear || null,
+                  // CRITICAL: Use AI-researched values, fallback to inferred if AI didn't provide
+                  localStrengths: eventBriefData.localStrengths || eventBriefData.localStrengthsWeaknesses || inferredLocalStrengths,
+                  competitors: eventBriefData.competitors || (result.vietnamEvents > 0 ? 
+                    "Competitors: Singapore (Marina Bay Sands), Thailand (Bangkok Convention Centre), Malaysia (KLCC). Past venues in Vietnam: Ho Chi Minh City, Hanoi." :
+                    "Competitors: Singapore, Thailand, Malaysia venues. Similar events typically rotate in Southeast Asia."),
+                  sponsors: eventBriefData.sponsors || (result.industry ? 
+                    `Typical sponsors for ${result.industry} events: Industry leaders, major corporations, professional associations` : ""),
+                  layout: eventBriefData.layout || eventBriefData.layoutEvent || inferredLayout,
+                  iccaQualified: eventBriefData.iccaQualified || (eligibilityCheck?.isICCAQualified ? "yes - International association meeting with rotating locations" : "no - Not ICCA qualified")
+                };
                 
                 const newLead = {
                   ...result,
@@ -2530,8 +2683,41 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                   companyName: originalEventName, // Always use original event name
                   pastEventsHistory: result.pastEventsHistory || (event as any).eventHistory || '',
                   editions: editions, // Include editions for history display
-                  agentId: agentId // Track which agent processed this
+                  agentId: agentId, // Track which agent processed this
+                  eligibilityCheck: eligibilityCheck, // Include eligibility check results
+                  eventBrief: mergedEventBrief, // Include AI-researched eventBrief data
+                  // CRITICAL: Merge top-level fields from AI - prioritize AI data over result
+                  keyPersonPhone: (aiTopLevelData.keyPersonPhone && aiTopLevelData.keyPersonPhone.trim() !== "") ? 
+                    aiTopLevelData.keyPersonPhone : (result.keyPersonPhone || null),
+                  keyPersonEmail: (aiTopLevelData.keyPersonEmail && aiTopLevelData.keyPersonEmail.trim() !== "") ? 
+                    aiTopLevelData.keyPersonEmail : (result.keyPersonEmail || null),
+                  keyPersonName: (aiTopLevelData.keyPersonName && aiTopLevelData.keyPersonName.trim() !== "") ? 
+                    aiTopLevelData.keyPersonName : (result.keyPersonName || null),
+                  keyPersonTitle: (aiTopLevelData.keyPersonTitle && aiTopLevelData.keyPersonTitle.trim() !== "") ? 
+                    aiTopLevelData.keyPersonTitle : (result.keyPersonTitle || null),
+                  website: (aiTopLevelData.website && aiTopLevelData.website.trim() !== "") ? 
+                    aiTopLevelData.website : (result.website || null),
+                  // CRITICAL: Add top-level fields from eventBrief - ensure they're accessible
+                  openYear: mergedEventBrief.openYear,
+                  breakoutRooms: mergedEventBrief.breakoutRooms,
+                  roomSizes: mergedEventBrief.roomSizes,
+                  localStrengths: mergedEventBrief.localStrengths,
+                  localStrengthsWeaknesses: mergedEventBrief.localStrengths, // Alias for compatibility
+                  competitors: mergedEventBrief.competitors,
+                  sponsors: mergedEventBrief.sponsors,
+                  layout: mergedEventBrief.layout,
+                  layoutEvent: mergedEventBrief.layout, // Alias for compatibility
+                  iccaQualified: mergedEventBrief.iccaQualified
                 };
+                
+                // Log final merged data for debugging
+                console.log(`📋 [Agent ${agentId}] Final merged lead fields:`, {
+                  keyPersonPhone: newLead.keyPersonPhone,
+                  hasLocalStrengths: !!(newLead.localStrengths && newLead.localStrengths.trim() !== ""),
+                  hasLayout: !!(newLead.layout && newLead.layout.trim() !== ""),
+                  hasCompetitors: !!(newLead.competitors && newLead.competitors.trim() !== ""),
+                  hasSponsors: !!(newLead.sponsors && newLead.sponsors.trim() !== "")
+                });
                 
                 // Log event history
                 console.log(`📊 [Agent ${agentId}] Event history for "${event.name}":`, newLead.pastEventsHistory);
@@ -3278,79 +3464,69 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   }, [parsedReport]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="p-6 h-screen overflow-y-auto">
-      <h2 className="text-2xl font-bold text-slate-800 mb-4">Intelligent Data Analysis</h2>
-      
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0 mt-0.5">
-            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <p className="text-slate-700 text-sm leading-relaxed">
-              <strong className="text-blue-700">Backend Scoring Engine</strong> tự động phân tích và xếp hạng events dựa trên 4 tiêu chí:
-              <strong> History (25đ)</strong>, <strong>Region (25đ)</strong>, <strong>Contact (25đ)</strong>, và <strong>Delegates (25đ)</strong>.
-            </p>
-            <details className="mt-2">
-              <summary className="text-xs text-blue-600 cursor-pointer hover:underline font-medium">
-                📊 Xem chi tiết thuật toán scoring →
-              </summary>
-              <div className="mt-3 p-3 bg-white rounded border border-blue-200 text-xs space-y-2">
-                <div>
-                  <strong className="text-blue-700">1. History Score (0-25):</strong>
-                  <ul className="ml-4 mt-1 space-y-0.5 text-slate-600">
-                    <li>• 25đ: Đã tổ chức tại Vietnam</li>
-                    <li>• 15đ: Đã tổ chức tại Southeast Asia</li>
-                  </ul>
-                </div>
-                <div>
-                  <strong className="text-blue-700">2. Region Score (0-25):</strong>
-                  <ul className="ml-4 mt-1 space-y-0.5 text-slate-600">
-                    <li>• 25đ: Tên event có "ASEAN/Asia/Pacific"</li>
-                    <li>• 15đ: Đã tổ chức tại châu Á</li>
-                  </ul>
-                </div>
-                <div>
-                  <strong className="text-blue-700">3. Contact Score (0-25):</strong>
-                  <ul className="ml-4 mt-1 space-y-0.5 text-slate-600">
-                    <li>• 25đ: Có cả email VÀ phone</li>
-                    <li>• 15đ: Chỉ có email</li>
-                  </ul>
-                </div>
-                <div>
-                  <strong className="text-blue-700">4. Delegates Score (0-25):</strong>
-                  <ul className="ml-4 mt-1 space-y-0.5 text-slate-600">
-                    <li>• 25đ: ≥500 delegates</li>
-                    <li>• 20đ: ≥300 delegates</li>
-                    <li>• 10đ: ≥100 delegates</li>
-                  </ul>
-                </div>
-                <div className="pt-2 border-t border-blue-200">
-                  <strong className="text-slate-700">Priority Classification:</strong>
-                  <ul className="ml-4 mt-1 space-y-0.5 text-slate-600">
-                    <li>• 🔴 <strong>High (≥50):</strong> Contact immediately</li>
-                    <li>• 🟡 <strong>Medium (30-49):</strong> Follow up</li>
-                    <li>• ⚪ <strong>Low (&lt;30):</strong> Monitor</li>
-                  </ul>
-                </div>
-              </div>
-            </details>
-          </div>
-        </div>
+    <div className="p-6 min-h-screen overflow-y-auto space-y-5">
+      <div>
+        <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Intelligent data</h2>
+        <p className="text-sm text-slate-600 mt-1">Analyze and prioritize events using the backend scoring engine.</p>
       </div>
 
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-800">Intelligent Data Analysis</h2>
+      <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <p className="text-sm text-slate-700 leading-relaxed">
+          <strong className="text-slate-900">Backend Scoring Engine</strong> tự động phân tích và xếp hạng events dựa trên 4 tiêu chí:
+          <strong> History (25đ)</strong>, <strong>Region (25đ)</strong>, <strong>Contact (25đ)</strong>, và <strong>Delegates (25đ)</strong>.
+        </p>
+        <details className="mt-3">
+          <summary className="text-sm text-slate-700 cursor-pointer hover:text-slate-900 font-medium">
+            Xem chi tiết thuật toán scoring
+          </summary>
+          <div className="mt-3 p-3 bg-slate-50 rounded border border-slate-200 text-xs space-y-2">
+            <div>
+              <strong className="text-slate-900">1. History Score (0-25):</strong>
+              <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
+                <li>25đ: Đã tổ chức tại Vietnam</li>
+                <li>15đ: Đã tổ chức tại Southeast Asia</li>
+              </ul>
+            </div>
+            <div>
+              <strong className="text-slate-900">2. Region Score (0-25):</strong>
+              <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
+                <li>25đ: Tên event có "ASEAN/Asia/Pacific"</li>
+                <li>15đ: Đã tổ chức tại châu Á</li>
+              </ul>
+            </div>
+            <div>
+              <strong className="text-slate-900">3. Contact Score (0-25):</strong>
+              <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
+                <li>25đ: Có cả email và phone</li>
+                <li>15đ: Chỉ có email</li>
+              </ul>
+            </div>
+            <div>
+              <strong className="text-slate-900">4. Delegates Score (0-25):</strong>
+              <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
+                <li>25đ: ≥500 delegates</li>
+                <li>20đ: ≥300 delegates</li>
+                <li>10đ: ≥100 delegates</li>
+              </ul>
+            </div>
+            <div className="pt-2 border-t border-slate-200">
+              <strong className="text-slate-900">Priority Classification:</strong>
+              <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
+                <li><strong>High (≥50):</strong> Contact immediately</li>
+                <li><strong>Medium (30-49):</strong> Follow up</li>
+                <li><strong>Low (&lt;30):</strong> Monitor</li>
+              </ul>
+            </div>
+          </div>
+        </details>
       </div>
 
       {/* File Upload & Manual Input Section */}
-      <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-200 mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-slate-800">Import Data</h3>
+      <div className="bg-white p-5 rounded-lg border border-slate-200">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold text-slate-900">Import data</h3>
           <div className="flex items-center space-x-3">
-            <label className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg flex items-center text-sm font-medium cursor-pointer shadow-sm">
+            <label className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg inline-flex items-center text-sm font-medium cursor-pointer">
               <FileSpreadsheet size={16} className="mr-2" /> Upload Excel/CSV
                   <input
                     type="file"
@@ -3370,7 +3546,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 }
               }}
               disabled={!importData || importData.trim() === ''}
-              className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Parse from Text
             </button>
@@ -3378,19 +3554,19 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         </div>
         
         {uploadingExcel && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3">
             <div className="flex items-center space-x-2">
-              <Loader2 className="animate-spin text-blue-600" size={16} />
-              <span className="text-blue-700 text-sm">Processing file...</span>
+              <Loader2 className="animate-spin text-slate-600" size={16} />
+              <span className="text-slate-700 text-sm">Processing file...</span>
             </div>
           </div>
         )}
 
         {excelFile && excelSummary && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3">
             <div className="flex items-center space-x-2">
-              <FileSpreadsheet size={16} className="text-green-600" />
-              <span className="text-green-700 text-sm font-medium">
+              <FileSpreadsheet size={16} className="text-slate-600" />
+              <span className="text-slate-800 text-sm font-medium">
                 {excelFile.name} ({excelSummary.totalRows} rows, {excelSummary.totalSheets} sheets)
               </span>
             </div>
@@ -3519,7 +3695,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                             <X className="text-red-600 flex-shrink-0" size={16} />
                           )}
                           {(!progress || progress.status === 'pending') && (
-                            <div className="w-3 h-3 rounded-full border-2 border-slate-300 flex-shrink-0" />
+                            null
                           )}
                           <span className="font-medium text-slate-800 break-words">
                             {progress?.result?.companyName || event.name}
@@ -3528,6 +3704,19 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                             <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-bold flex items-center flex-shrink-0">
                               <Star size={10} className="mr-1" /> High Priority
                             </span>
+                          )}
+                          {progress?.status === 'completed' && progress.result?.eligibilityCheck && (
+                            <>
+                              {progress.result.eligibilityCheck.isEligible ? (
+                                <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 text-xs font-medium flex items-center flex-shrink-0" title={`Vietnam: ${progress.result.eligibilityCheck.hasVietnamHistory ? 'Yes' : 'No'} | ICCA: ${progress.result.eligibilityCheck.isICCAQualified ? 'Yes' : 'No'} | Recent: ${progress.result.eligibilityCheck.hasRecentActivity ? 'Yes' : 'No'}`}>
+                                  ✓ Eligible
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded bg-orange-100 text-orange-800 text-xs font-medium flex items-center flex-shrink-0" title={progress.result.eligibilityCheck.eligibilityReason || 'Review eligibility criteria'}>
+                                  ⚠ Review
+                                </span>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>
@@ -3788,13 +3977,148 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                   <span className="ml-2 text-slate-600">{progress.result.numberOfDelegates}</span>
                 </div>
               )}
+              {progress.result.eligibilityCheck && (
+                <div className="col-span-2 pt-3 border-t border-slate-200">
+                  <div className="font-semibold text-slate-700 mb-2">Eligibility Check:</div>
+                  <div className="grid grid-cols-3 gap-3 text-xs">
+                    <div className={`p-2 rounded ${progress.result.eligibilityCheck.hasVietnamHistory ? 'bg-green-50 border border-green-200' : 'bg-slate-50 border border-slate-200'}`}>
+                      <div className="font-medium text-slate-700 mb-1">Vietnam History</div>
+                      <div className={progress.result.eligibilityCheck.hasVietnamHistory ? 'text-green-700 font-semibold' : 'text-slate-500'}>
+                        {progress.result.eligibilityCheck.hasVietnamHistory ? '✓ Yes' : '✗ No'}
+                      </div>
+                      {progress.result.eligibilityCheck.vietnamHistoryDetails && (
+                        <div className="text-xs text-slate-600 mt-1">{progress.result.eligibilityCheck.vietnamHistoryDetails}</div>
+                      )}
+                    </div>
+                    <div className={`p-2 rounded ${progress.result.eligibilityCheck.isICCAQualified ? 'bg-green-50 border border-green-200' : 'bg-slate-50 border border-slate-200'}`}>
+                      <div className="font-medium text-slate-700 mb-1">ICCA Qualified</div>
+                      <div className={progress.result.eligibilityCheck.isICCAQualified ? 'text-green-700 font-semibold' : 'text-slate-500'}>
+                        {progress.result.eligibilityCheck.isICCAQualified ? '✓ Yes' : '✗ No'}
+                      </div>
+                      {progress.result.eligibilityCheck.iccaQualifiedReason && (
+                        <div className="text-xs text-slate-600 mt-1">{progress.result.eligibilityCheck.iccaQualifiedReason}</div>
+                      )}
+                    </div>
+                    <div className={`p-2 rounded ${progress.result.eligibilityCheck.hasRecentActivity ? 'bg-green-50 border border-green-200' : 'bg-slate-50 border border-slate-200'}`}>
+                      <div className="font-medium text-slate-700 mb-1">Recent Activity</div>
+                      <div className={progress.result.eligibilityCheck.hasRecentActivity ? 'text-green-700 font-semibold' : 'text-slate-500'}>
+                        {progress.result.eligibilityCheck.hasRecentActivity ? '✓ Yes' : '✗ No'}
+                      </div>
+                      {progress.result.eligibilityCheck.mostRecentYear && (
+                        <div className="text-xs text-slate-600 mt-1">Last: {progress.result.eligibilityCheck.mostRecentYear}</div>
+                      )}
+                      {progress.result.eligibilityCheck.yearsSinceLastEvent !== null && (
+                        <div className="text-xs text-slate-600">{progress.result.eligibilityCheck.yearsSinceLastEvent} years ago</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className={`mt-3 p-2 rounded ${progress.result.eligibilityCheck.isEligible ? 'bg-green-50 border border-green-200' : 'bg-orange-50 border border-orange-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-slate-700">Overall Eligibility:</div>
+                        <div className={`text-sm mt-1 ${progress.result.eligibilityCheck.isEligible ? 'text-green-700' : 'text-orange-700'}`}>
+                          {progress.result.eligibilityCheck.isEligible ? '✓ Eligible for Analysis' : '⚠ Review Required'}
+                        </div>
+                        {progress.result.eligibilityCheck.eligibilityReason && (
+                          <div className="text-xs text-slate-600 mt-1">{progress.result.eligibilityCheck.eligibilityReason}</div>
+                        )}
+                      </div>
+                      <div className={`px-3 py-1 rounded text-xs font-medium ${
+                        progress.result.eligibilityCheck.recommendation === 'proceed' ? 'bg-green-200 text-green-800' :
+                        progress.result.eligibilityCheck.recommendation === 'skip' ? 'bg-red-200 text-red-800' :
+                        'bg-orange-200 text-orange-800'
+                      }`}>
+                        {progress.result.eligibilityCheck.recommendation === 'proceed' ? 'Proceed' :
+                         progress.result.eligibilityCheck.recommendation === 'skip' ? 'Skip' :
+                         'Review'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               {progress.result.vietnamEvents > 0 && (
                 <div>
                   <span className="font-semibold text-slate-700">VN Events:</span>
                   <span className="ml-2 text-green-600 font-medium">{progress.result.vietnamEvents}</span>
                 </div>
               )}
+              {(progress.result.eventBrief?.openYear || progress.result.openYear) && (
+                <div>
+                  <span className="font-semibold text-slate-700">Open Year:</span>
+                  <span className="ml-2 text-slate-600">{progress.result.eventBrief?.openYear || progress.result.openYear}</span>
+                </div>
+              )}
+              {(progress.result.eventBrief?.breakoutRooms || progress.result.breakoutRooms) && (
+                <div>
+                  <span className="font-semibold text-slate-700">Break-Out Rooms:</span>
+                  <span className="ml-2 text-slate-600">{progress.result.eventBrief?.breakoutRooms || progress.result.breakoutRooms}</span>
+                </div>
+              )}
+              {(progress.result.eventBrief?.roomSizes || progress.result.roomSizes) && (
+                <div>
+                  <span className="font-semibold text-slate-700">Size of Rooms:</span>
+                  <span className="ml-2 text-slate-600">{progress.result.eventBrief?.roomSizes || progress.result.roomSizes}</span>
+                </div>
+              )}
+              {(progress.result.keyPersonPhone || progress.result.eventBrief?.keyPersonPhone) && (
+                <div>
+                  <span className="font-semibold text-slate-700">Phone:</span>
+                  <a href={`tel:${progress.result.keyPersonPhone || progress.result.eventBrief?.keyPersonPhone}`} className="ml-2 text-indigo-600 hover:underline">
+                    {progress.result.keyPersonPhone || progress.result.eventBrief?.keyPersonPhone}
+                  </a>
+                </div>
+              )}
             </div>
+            {((progress.result.eventBrief?.localStrengths && progress.result.eventBrief.localStrengths.trim() !== "") || 
+              (progress.result.localStrengths && progress.result.localStrengths.trim() !== "") ||
+              (progress.result.localStrengthsWeaknesses && progress.result.localStrengthsWeaknesses.trim() !== "")) && (
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <span className="font-semibold text-slate-700">Local Strengths & Weaknesses:</span>
+                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">
+                  {progress.result.eventBrief?.localStrengths || 
+                   progress.result.localStrengths || 
+                   progress.result.localStrengthsWeaknesses || 
+                   ""}
+                </p>
+              </div>
+            )}
+            {((progress.result.eventBrief?.competitors && progress.result.eventBrief.competitors.trim() !== "") || 
+              (progress.result.competitors && progress.result.competitors.trim() !== "")) && (
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <span className="font-semibold text-slate-700">Competitors:</span>
+                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">
+                  {progress.result.eventBrief?.competitors || progress.result.competitors || ""}
+                </p>
+              </div>
+            )}
+            {((progress.result.eventBrief?.sponsors && progress.result.eventBrief.sponsors.trim() !== "") || 
+              (progress.result.sponsors && progress.result.sponsors.trim() !== "")) && (
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <span className="font-semibold text-slate-700">Sponsors:</span>
+                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">
+                  {progress.result.eventBrief?.sponsors || progress.result.sponsors || ""}
+                </p>
+              </div>
+            )}
+            {((progress.result.eventBrief?.layout && progress.result.eventBrief.layout.trim() !== "") || 
+              (progress.result.layout && progress.result.layout.trim() !== "") ||
+              (progress.result.layoutEvent && progress.result.layoutEvent.trim() !== "")) && (
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <span className="font-semibold text-slate-700">Layout Event:</span>
+                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">
+                  {progress.result.eventBrief?.layout || 
+                   progress.result.layout || 
+                   progress.result.layoutEvent || 
+                   ""}
+                </p>
+              </div>
+            )}
+            {(progress.result.eventBrief?.iccaQualified || progress.result.iccaQualified) && (
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <span className="font-semibold text-slate-700">ICCA Qualified:</span>
+                <p className="mt-1 text-sm text-slate-600">{progress.result.eventBrief?.iccaQualified || progress.result.iccaQualified}</p>
+              </div>
+            )}
             {progress.result.notes && (
               <div className="mt-3 pt-3 border-t border-slate-200">
                 <span className="font-semibold text-slate-700">Notes:</span>
@@ -4867,8 +5191,8 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                         </div>
                       </div>
                     
-                          {/* Event Brief Section */}
-                          {lead.eventBrief && (
+                          {/* Event Brief Section - HIDDEN per user request */}
+                          {false && lead.eventBrief && (
                             <div className="mt-4 pt-4 border-t-2 border-white/50">
                               <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center space-x-2">

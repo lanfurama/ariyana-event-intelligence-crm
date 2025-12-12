@@ -225,7 +225,80 @@ export const generateStrategicAnalysis = async (leadsData: string) => {
   }
 };
 
-// --- 6. Research Edition Leadership ---
+// --- 6. Check Event Eligibility (Pre-analysis check) ---
+export interface EventEligibility {
+  eventName: string;
+  hasVietnamHistory: boolean;
+  vietnamHistoryDetails: string;
+  isICCAQualified: boolean;
+  iccaQualifiedReason: string;
+  hasRecentActivity: boolean;
+  mostRecentYear: number | null;
+  yearsSinceLastEvent: number | null;
+  isEligible: boolean;
+  eligibilityReason: string;
+  recommendation: 'proceed' | 'skip' | 'review';
+}
+
+export const checkEventEligibility = async (
+  eventName: string,
+  eventData?: string,
+  pastEventsHistory?: string
+): Promise<EventEligibility> => {
+  console.log('🟢 [GPT Service] checkEventEligibility - Checking:', eventName);
+  
+  try {
+    const result = await gptApiCall<{ success: boolean; data: EventEligibility }>('/check-event-eligibility', {
+      eventName: eventName.trim(),
+      eventData: eventData || '',
+      pastEventsHistory: pastEventsHistory || '',
+    });
+    
+    if (result.success && result.data) {
+      console.log(`✅ [GPT Service] Eligibility check completed:`, {
+        eligible: result.data.isEligible,
+        vietnamHistory: result.data.hasVietnamHistory,
+        iccaQualified: result.data.isICCAQualified,
+        recentActivity: result.data.hasRecentActivity,
+        recommendation: result.data.recommendation
+      });
+      return result.data;
+    }
+    
+    // Return default conservative response if API call succeeded but no data
+    return {
+      eventName,
+      hasVietnamHistory: false,
+      vietnamHistoryDetails: 'Unable to verify',
+      isICCAQualified: false,
+      iccaQualifiedReason: 'Unable to verify',
+      hasRecentActivity: false,
+      mostRecentYear: null,
+      yearsSinceLastEvent: null,
+      isEligible: false,
+      eligibilityReason: 'Unable to verify eligibility criteria',
+      recommendation: 'review'
+    };
+  } catch (error: any) {
+    console.error('❌ [GPT Service] Eligibility check failed:', error);
+    // Return conservative default on error
+    return {
+      eventName,
+      hasVietnamHistory: false,
+      vietnamHistoryDetails: 'Check failed',
+      isICCAQualified: false,
+      iccaQualifiedReason: 'Check failed',
+      hasRecentActivity: false,
+      mostRecentYear: null,
+      yearsSinceLastEvent: null,
+      isEligible: false,
+      eligibilityReason: 'Eligibility check failed - review manually',
+      recommendation: 'review'
+    };
+  }
+};
+
+// --- 7. Research Edition Leadership ---
 export const researchEditionLeadership = async (
   eventName: string,
   edition: string,

@@ -200,32 +200,57 @@ router.post('/enrich', async (req: Request, res: Response) => {
     const keyPersonInfo = keyPerson && keyPerson.trim() ? `Key contact person: ${keyPerson}` : 'Key contact person: Not specified';
     const cityInfo = city && city.trim() ? `Located in: ${city}` : 'Location: Not specified';
 
-    const prompt = `You are a business research assistant. I need you to provide information about the following organization:
+    const prompt = `DATA ENRICHMENT TASK FOR MICE ORGANIZATION
+==========================================
 
-Organization Name: ${companyName}
+ORGANIZATION TO RESEARCH:
+- Name: ${companyName}
 ${keyPersonInfo}
 ${cityInfo}
 
-**CRITICAL: You MUST search and find contact information if missing:**
+TASK: Research and provide factual data about this organization. Use your knowledge base to find real information.
 
-Please provide a comprehensive summary based on your knowledge about this organization. Include:
+REQUIRED RESEARCH AREAS:
+-----------------------
+1. COMPANY OVERVIEW:
+   - Brief description of what this organization does
+   - Industry/sector classification
 
-1. **Company Overview**: Brief description of what this organization does
-2. **Contact Information** (SEARCH AND FIND if not provided):
-   - Website URL (find official website)
-   - Key contact person name (President, Director, Secretary General, Executive Director, etc.)
-   - Key contact person title (e.g., "Secretary General", "President", "Executive Director")
-   - Contact email (official email format: info@, contact@, or specific person's email)
-   - Phone number (official phone number if available)
-3. **Event History**: If this is an event organizer or association, mention any notable past events or conferences they have organized (include years and locations if known)
-4. **Industry Context**: What industry or sector this organization operates in
-5. **Recent Activity**: Any notable recent news or activities (if known)
+2. CONTACT INFORMATION (CRITICAL - SEARCH AND FIND):
+   - Website URL: Find official organization website
+   - Key Contact Person Name: Search for President, Director, Secretary General, Executive Director, etc.
+   - Key Contact Person Title: Find actual title (e.g., "Secretary General", "President", "Executive Director", "Director of Conferences")
+   - Contact Email: Search for official email (info@, contact@, or person-specific format)
+   - Phone Number: Find official phone number if available
 
-**IMPORTANT**: Use your knowledge base to actively search for missing contact information. For international associations and organizations, common titles include "Secretary General", "President", "Executive Director", "Director of Events/Conferences". Try to find real contact details, not just generic formats.
+3. EVENT HISTORY:
+   - Notable past events/conferences organized
+   - Years and locations of events
+   - Event frequency and patterns
 
-If you don't have specific information about this organization, please state that clearly and provide general information about organizations of this type or name.
+4. INDUSTRY CONTEXT:
+   - Industry or sector classification
+   - Type of organization (association, society, corporation, etc.)
 
-Format your response in a clear, structured way that would be useful for a sales team trying to reach out to this organization.`;
+5. RECENT ACTIVITY:
+   - Notable recent news or activities
+   - Upcoming events if known
+
+RESEARCH GUIDELINES:
+--------------------
+- For international associations: Common titles include "Secretary General", "President", "Executive Director", "Director of Events/Conferences"
+- Search for real contact details, not just generic formats
+- Use official websites and verified sources
+- If specific information is not available, provide general information about organizations of this type
+- Be accurate - if uncertain about a detail, state that clearly
+
+OUTPUT FORMAT:
+--------------
+Format your response in a clear, structured way useful for a sales team:
+- Use clear headings for each section
+- Provide specific details when available
+- Note data sources or confidence level if relevant
+- Include actionable contact information prominently`;
 
     console.log('🔵 [Gemini API] Enrich request for:', companyName);
     const response = await ai.models.generateContent({
@@ -474,170 +499,226 @@ router.post('/strategic-analysis', async (req: Request, res: Response) => {
     const ai = getAiClient();
     const modelId = 'gemini-2.5-flash-lite';
 
-    const prompt = `You are analyzing a SPECIFIC EVENT that was imported from Excel/CSV file. Your task is to evaluate THIS EXACT EVENT and determine how suitable it is for Ariyana Convention Centre Danang.
+    const prompt = `EVENT ANALYSIS TASK
+==================
+You are analyzing ONE SPECIFIC EVENT from imported Excel/CSV data. Evaluate ONLY this event for Ariyana Convention Centre Danang.
 
-**CRITICAL: YOU ARE EVALUATING THE EVENT PROVIDED BELOW, NOT SEARCHING FOR NEW EVENTS**
-
-The event data below is ONE EVENT from a list of imported events. Your job is to:
-1. Analyze THIS event's potential for Ariyana Convention Centre
-2. Score it based on suitability criteria
-3. Enrich missing information about THIS event
-4. DO NOT search for or suggest other events - evaluate ONLY the event provided
-
-Data:
+INPUT DATA:
 ${leadsData}
 
-**CRITICAL: EXTRACT THE EVENT NAME FROM THE DATA ABOVE**
+STEP 1: EXTRACT EVENT NAME
+---------------------------
+Find the EVENT NAME in the input data. Check fields: "EVENT", "Event Name", "Event", "Series", "SERIES", "Event Series".
+CRITICAL: Use the EXACT event name as "companyName" in JSON output. Do NOT use organization name or modify the name.
 
-Look for the EVENT NAME in the data above. It might be in fields like:
-- "EVENT", "Event Name", "Event", "Series", "SERIES", "Event Series"
-- Or it might be the main title/name field in the data
+STEP 2: CALCULATE SCORES (Strict Rules)
+----------------------------------------
+Apply these exact scoring rules:
 
-**THE EVENT NAME YOU FIND ABOVE MUST BE USED EXACTLY AS THE "companyName" FIELD IN YOUR JSON OUTPUT**
+History Score (0-25):
+- 25 points: Event has been held in Vietnam (vietnamEvents >= 1)
+- 15 points: Event has been held in Southeast Asia (Thailand, Singapore, Malaysia, Indonesia, Philippines, Cambodia, Laos, Myanmar)
+- 0 points: No Vietnam/SEA history
 
-**IMPORTANT INSTRUCTIONS:**
-1. **MANDATORY**: The "companyName" field in your JSON output MUST be the EXACT EVENT NAME from the input data above
-   - DO NOT use organization name
-   - DO NOT use a different event name
-   - DO NOT use a shortened or modified version
-   - USE THE EXACT EVENT NAME AS IT APPEARS IN THE DATA
-   
-2. Example: If the data shows "ASEAN Law Association Annual Conference", then companyName MUST be "ASEAN Law Association Annual Conference" (NOT "ASEAN Law Association" or "ALA")
+Region Score (0-25):
+- 25 points: Event name contains "ASEAN", "Asia", "Pacific", "Eastern", "APAC", "Asian"
+- 15 points: Event locations are primarily in Asian countries
+- 0 points: No regional indicators
 
-3. You are evaluating THIS EVENT's suitability, not finding organizations or other events
+Contact Score (0-25):
+- 25 points: Has both email (keyPersonEmail) AND phone (keyPersonPhone)
+- 15 points: Has email (keyPersonEmail) only
+- 0 points: Missing both email and phone
 
-4. This event is from a list of imported events - your job is to score and rank THIS SPECIFIC EVENT
+Delegates Score (0-25):
+- 25 points: numberOfDelegates >= 500
+- 20 points: numberOfDelegates >= 300
+- 10 points: numberOfDelegates >= 100
+- 0 points: numberOfDelegates < 100 or null
 
-5. Focus on: Does THIS event fit Ariyana? What's the opportunity score for THIS event?
+Total Score = History Score + Region Score + Contact Score + Delegates Score (0-100)
 
-6. **VALIDATION**: Before outputting JSON, verify that companyName matches the event name from the input data exactly
+STEP 3: ENRICH MISSING DATA (CRITICAL - RESEARCH ALL FIELDS)
+-------------------------------------------------------------
+**MANDATORY**: You MUST actively research and fill ALL fields below. Use your knowledge base to find real information. Only use empty string "" if you truly cannot find any information after thorough research.
 
-**CRITICAL DATA ENRICHMENT REQUIREMENT:**
+**CRITICAL PRIORITY FIELDS** (MUST RESEARCH - DO NOT LEAVE EMPTY):
+1. keyPersonPhone: **MANDATORY RESEARCH** - Search organization website contact pages, "Contact Us" sections, phone directories. Format: +[country code] [number] or [country code] [number]
+2. localStrengths: **MANDATORY RESEARCH** - Analyze Vietnam market for this event type. Format: "Strengths: [list]. Weaknesses: [list]"
+3. layout: **MANDATORY RESEARCH** - Infer from event type, size, industry standards. Format: "Main hall (X pax) + Y breakout rooms (Z pax each) + [other spaces]"
 
-1. **Contact Information Enrichment:**
-For THIS EVENT, if contact information is missing (keyPersonName, keyPersonTitle, keyPersonEmail, keyPersonPhone), you MUST use your knowledge to search and find this information:
-- **keyPersonName**: Search for the organization's key contact person (President, Director, Secretary General, Executive Director, etc.)
-- **keyPersonTitle**: Find their actual title (e.g., "Secretary General", "President", "Executive Director", "Director of Conferences")
-- **keyPersonEmail**: Search for official contact email (info@, contact@, or specific person's email format)
-- **keyPersonPhone**: Find the organization's official phone number if available
-- **website**: Find the official website URL
+REQUIRED FIELDS (must provide, use empty string "" if truly not found):
+- companyName: EXACT event name from input (REQUIRED, never empty)
+- industry: Infer from event name, organization type, or event category
+- country: Extract from event location data or infer from organization
+- city: Extract from event location data or infer from organization
+- website: **RESEARCH**: Search for official organization/event website URL
+- keyPersonName: **RESEARCH**: Search for President/Director/Secretary General/Executive Director name
+- keyPersonTitle: **RESEARCH**: Search for actual title (e.g., "Secretary General", "President")
+- keyPersonEmail: **RESEARCH**: Search for official email (info@, contact@, or person-specific format)
+- keyPersonPhone: **MANDATORY RESEARCH** - Search organization website contact pages, phone directories, "Contact Us" sections. DO NOT leave empty unless truly unavailable.
+- numberOfDelegates: Extract from TOTATTEND/REGATTEND fields or infer from event size
+- vietnamEvents: Count events in Vietnam from pastEventsHistory
+- totalEvents: Count total events from pastEventsHistory
+- pastEventsHistory: Format as "YEAR: City, Country; YEAR: City, Country"
 
-2. **Event Brief Enrichment (CRITICAL - Output format like Event Brief template):**
-For THIS EVENT, research and provide comprehensive Event Brief information:
-- **Event Name & Series**: Full event name with year, event series name
-- **Industry**: Industry/sector of the event (Medical, Technology, Legal, etc.)
-- **Average Attendance**: Average number of attendees/delegates across all editions
-- **Event Details**: Open year (when established), frequency (annually/biennially), rotation area & pattern
-- **Event Specifications**: Duration, preferred months, preferred venue type, breakout rooms needed, room sizes
-- **Event History**: Detailed history of past events (years, locations, attendance), info on last/upcoming events
-- **Delegates Profile**: Who attends (doctors, scientists, professionals, etc.)
-- **International Organization**: Full name, website, organization profile
-- **Local Host Information**: If known, especially for Vietnam events - name, title, organization, website
-- **Local Strengths & Weaknesses**: Context about local market, especially for Vietnam
-- **Bidding Information**: 
-  - Decision maker (who decides: local host, international board, DMC, etc.)
-  - Decision making process (how decisions are made)
-  - Key bid criteria (what matters: capacity, connectivity, location, etc.)
-  - Competitors (venues they've used before)
-  - Competitive analysis
-  - Host responsibility (who organizes)
-- **Sponsors**: Known sponsors or typical sponsors for this type of event
-- **Layout**: Typical event layout requirements (main hall, breakout rooms, exhibition area, etc.)
-- **Fit for Ariyana**: Why this event fits Ariyana Convention Centre (capacity match, location advantages, facilities)
-- **Opportunity Score**: 0-100 score for how good this opportunity is for Ariyana
+EVENT BRIEF FIELDS (MUST RESEARCH COMPREHENSIVELY):
+- eventName: Full event name with year
+- eventSeries: Series name without year
+- industry: Same as top-level industry
+- averageAttendance: Average from numberOfDelegates or history
+- openYear: **RESEARCH**: Year organization/event was established - search organization history, founding year, first event year
+- frequency: "annually", "biennially", "triennially", or "irregular" - infer from pastEventsHistory
+- rotationArea: "APAC", "Global", "Asia Pacific", "Regional", etc. - infer from pastEventsHistory
+- rotationPattern: Describe rotation pattern if known from history
+- duration: Typical duration (e.g., "3 days", "5 days") - infer from industry standards
+- preferredMonths: Preferred months from history (e.g., "March-June")
+- preferredVenue: Venue type preference - infer from event size
+- breakoutRooms: **RESEARCH**: Number of breakout rooms needed - infer from event size (300-500 delegates = "5-7 rooms", 500-1000 = "8-12 rooms", 1000+ = "15+ rooms")
+- roomSizes: **RESEARCH**: Size range - infer from event size (medium = "200-300 sqm main hall, 50-80 sqm breakout rooms", large = "500-800 sqm main hall, 100-150 sqm breakout")
+- infoOnLastUpcomingEvents: Last and upcoming event details with dates, locations, attendance
+- eventHistory: Detailed history with years, locations, attendance numbers
+- delegatesProfile: Who attends (e.g., "Doctors & scientists", "Industry professionals")
+- internationalOrganisationName: Full organization name - research official name
+- internationalOrganisationWebsite: Organization website URL - research official website
+- organizationProfile: Organization description - research organization background
+- localHostName: Local host name (if Vietnam event) - research local chapter
+- localHostTitle: Local host title
+- localHostOrganization: Local host organization name
+- localHostWebsite: Local host website URL
+- localStrengths: **MANDATORY RESEARCH** - Local market strengths & weaknesses for Vietnam. Analyze why Vietnam is suitable, what advantages/disadvantages Vietnam offers. Format: "Strengths: [list 3-5 advantages]. Weaknesses: [list 2-3 disadvantages]". Example: "Strengths: Growing economy, strategic location in SEA, modern infrastructure (APEC 2017 host), competitive costs, beautiful destinations, rich cultural heritage. Weaknesses: Limited international connectivity compared to Singapore/Thailand, visa requirements for some countries, language barriers."
+- decisionMaker: Who decides venue (e.g., "Local host", "International board")
+- decisionMakingProcess: How decisions are made
+- keyBidCriteria: Key venue selection criteria
+- competitors: **RESEARCH**: Known competing venues/destinations - research where similar events have been held (e.g., "Competitors: Singapore, Thailand venues. Past venues: Marina Bay Sands, Bangkok Convention Centre")
+- competitiveAnalysis: **RESEARCH**: Competitive landscape analysis - compare Vietnam with competing destinations
+- hostResponsibility: Who organizes
+- sponsors: **RESEARCH**: Known or typical sponsors for this type of event - research past sponsors or typical sponsors (e.g., "Diamond: Company1; Gold: Company2" or "Typical sponsors: Medical device companies")
+- layout: **MANDATORY RESEARCH** - Event layout requirements. Infer from event type, size, and industry standards. Format: "Main plenary hall (X pax) + Y breakout rooms (Z pax each) + [exhibition area/poster area/networking space]". Example: "Main plenary hall (500 pax) + 5 breakout rooms (50-100 pax each) + exhibition area (20 booths)" or "Main hall (800 pax) + 8 breakout rooms (80-120 pax each) + poster area + networking space". DO NOT leave empty - always provide layout based on event size.
+- fitForAriyana: Why event fits Ariyana (capacity, location, facilities)
+- opportunityScore: 0-100 opportunity score
+- iccaQualified: **RESEARCH**: "yes" or "no" with brief explanation - check if event meets ICCA qualification criteria
 
-Use your knowledge base and infer from organization names, types, event history, and common patterns. For international associations and organizations, common titles include "Secretary General", "President", "Executive Director", "Director of Events/Conferences".
+STEP 4: VALIDATE PROBLEMS ARRAY
+--------------------------------
+List ONLY fields that are truly missing AFTER enrichment:
+- "Missing keyPersonEmail" - only if email not found
+- "Missing keyPersonPhone" - only if phone not found
+- "Missing keyPersonName" - only if name not found
+- "Missing website" - only if website not found
+- "Missing industry" - only if cannot infer
+- "Missing location" - only if country/city cannot be determined
+- "No numberOfDelegates data" - only if truly unavailable
+- "Incomplete event history" - only if history is incomplete
 
-DO NOT leave these fields as null if you can reasonably find or infer the information. Only mark as null if you truly cannot find any information.
+DO NOT list problems for fields you successfully enriched.
 
-Scoring (0-100 total):
-- History (0-25): 25 if VN events>=1, 15 if SEA, else 0
-- Region (0-25): 25 if name has "ASEAN/Asia/Pacific", 15 if Asian location, else 0
-- Contact (0-25): 25 if email+phone, 15 if email only, else 0
-- Delegates (0-25): 25 if >=500, 20 if >=300, 10 if >=100, else 0
-
-Output format:
+STEP 5: OUTPUT FORMAT
+---------------------
+Output MUST follow this exact structure:
 
 PART A: Event Evaluation Summary
-Provide a brief summary of this event's suitability for Ariyana Convention Centre.
+[Brief 2-3 sentence summary of event suitability]
 
 PART B: Scoring Breakdown
-- Total Score: [0-100]
-- History Score: [0-25] - Has this event been held in Vietnam or Southeast Asia?
-- Region Score: [0-25] - Is this event likely to rotate to Asia/Vietnam?
-- Contact Score: [0-25] - Do we have contact information?
-- Delegates Score: [0-25] - Event size and potential impact
+- Total Score: [calculated total]
+- History Score: [calculated] - [explanation]
+- Region Score: [calculated] - [explanation]
+- Contact Score: [calculated] - [explanation]
+- Delegates Score: [calculated] - [explanation]
 
 PART C: Next Steps
-What should be the next action for pursuing this event?
+[Action plan for pursuing this event]
 
-PART C: JSON array (wrap in \`\`\`json\`\`\`)
+PART C: JSON Output
+\`\`\`json
 [{
-  "companyName": "String (REQUIRED - MUST be the EXACT EVENT NAME from input data above. DO NOT use organization name. DO NOT modify or shorten the event name. Use the event name exactly as it appears in the EVENT/Series/Event Name field from the input data)",
-  "industry": "String (infer if missing)",
-  "country": "String (infer if missing)",
-  "city": "String (infer if missing)",
-  "website": "String (SEARCH and find official website if not in data)",
-  "keyPersonName": "String (SEARCH for President/Director/Secretary if missing - try to provide)",
-  "keyPersonTitle": "String (SEARCH for actual title like 'Secretary General', 'President', 'Executive Director' - try to provide)",
-  "keyPersonEmail": "String (SEARCH for official contact email format - try to provide)",
-  "keyPersonPhone": "String (SEARCH for official phone number if available - try to provide)",
-  "vietnamEvents": 0,
-  "totalEvents": 1,
-  "numberOfDelegates": null,
-  "totalScore": 0-100,
-  "historyScore": 0-25,
-  "regionScore": 0-25,
-  "contactScore": 0-25,
-  "delegatesScore": 0-25,
-  "problems": ["Missing email", "No phone", "Unclear industry", "Missing location", "No website", "No contact person", "Incomplete event history"],
-  "notes": "Brief insights. If you enriched data, note: '[AI Enriched: Contact info found via knowledge base]'",
-  "pastEventsHistory": "2023: City, Country; 2022: City, Country",
-  "nextStepStrategy": "Action plan",
+  "companyName": "[EXACT event name from input - REQUIRED]",
+  "industry": "[string or empty string]",
+  "country": "[string or empty string]",
+  "city": "[string or empty string]",
+  "website": "[string or empty string]",
+  "keyPersonName": "[string or empty string]",
+  "keyPersonTitle": "[string or empty string]",
+  "keyPersonEmail": "[string or empty string]",
+  "keyPersonPhone": "[string or empty string]",
+  "vietnamEvents": [number],
+  "totalEvents": [number],
+  "numberOfDelegates": [number or null],
+  "totalScore": [0-100],
+  "historyScore": [0-25],
+  "regionScore": [0-25],
+  "contactScore": [0-25],
+  "delegatesScore": [0-25],
+  "problems": ["array of missing fields"],
+  "notes": "[Brief insights. If enriched: '[AI Enriched: fields found]']",
+  "pastEventsHistory": "[YEAR: City, Country; YEAR: City, Country]",
+  "nextStepStrategy": "[Action plan]",
   "status": "New",
   "eventBrief": {
-    "eventName": "String (Full event name with year, e.g., 'The Asia Pacific Society of Cardiovascular and Interventional Radiology 2025 (APSCVIR 2025)')",
-    "eventSeries": "String (Event series name without year)",
-    "industry": "String (Industry/sector of the event, e.g., 'Medical', 'Technology', 'Legal', infer from organization name and event type)",
-    "averageAttendance": "Number (Average number of attendees/delegates, infer from numberOfDelegates or pastEventsHistory)",
-    "openYear": "Number (Year organization/event was established, infer from history if available)",
-    "frequency": "String (e.g., 'annually', 'biennially', 'triennially', infer from pastEventsHistory)",
-    "rotationArea": "String (e.g., 'APAC', 'Global', 'Asia Pacific', infer from pastEventsHistory and organization name)",
-    "rotationPattern": "String (Describe rotation pattern if known, e.g., 'Rotates between Asian countries')",
-    "duration": "String (Typical event duration, e.g., '3 days', '5 days', infer from typical industry patterns)",
-    "preferredMonths": "String (Preferred months for event, e.g., 'March-June', infer from pastEventsHistory)",
-    "preferredVenue": "String (Preferred venue type, e.g., 'Hotel with convention facilities', 'Convention Centre', infer from event size)",
-    "breakoutRooms": "String (Number of breakout rooms needed, e.g., '5-7', infer from event size and industry)",
-    "roomSizes": "String (Size range of rooms needed, e.g., '50 - 800 pax', infer from numberOfDelegates)",
-    "infoOnLastUpcomingEvents": "String (Information about last event and upcoming events, dates, locations, attendance)",
-    "eventHistory": "String (Detailed event history with years, locations, attendance numbers if available)",
-    "delegatesProfile": "String (Profile of delegates, e.g., 'Doctors & scientists', 'Industry professionals', infer from industry)",
-    "internationalOrganisationName": "String (Full name of the international organization, research and provide)",
-    "internationalOrganisationWebsite": "String (Official website of the international organization, research and provide)",
-    "organizationProfile": "String (Description of the international organization, research and provide)",
-    "localHostName": "String (Name of local host/member if known, especially for Vietnam events)",
-    "localHostTitle": "String (Title of local host)",
-    "localHostOrganization": "String (Local host organization name)",
-    "localHostWebsite": "String (Local host website if known)",
-    "localStrengths": "String (Local strengths and context, especially for Vietnam)",
-    "decisionMaker": "String (Who makes the decision, e.g., 'Local host', 'International board', 'DMC', infer from organization structure)",
-    "decisionMakingProcess": "String (How decisions are made, e.g., 'Local host work with DMC, DMC sorting venues & have site inspection')",
-    "keyBidCriteria": "String (Key criteria for venue selection, e.g., 'Venue capacity & breakout rooms, Connectivity')",
-    "competitors": "String (Known competitors or venues they've used before)",
-    "competitiveAnalysis": "String (Analysis of competitive landscape)",
-    "hostResponsibility": "String (Who is responsible for organizing, e.g., 'Organising Committee, responsible for selection of destination, venue and event plan')",
-    "sponsors": "String (Known sponsors or typical sponsors for this type of event)",
-    "layout": "String (Typical event layout requirements, e.g., 'Main plenary hall + 5 breakout rooms + exhibition area')",
-    "fitForAriyana": "String (Why this event fits Ariyana Convention Centre - capacity, location, facilities match)",
-    "opportunityScore": "Number (0-100, how good is this opportunity for Ariyana)"
+    "eventName": "[string]",
+    "eventSeries": "[string]",
+    "industry": "[string]",
+    "averageAttendance": [number],
+    "openYear": [number or null],
+    "frequency": "[string]",
+    "rotationArea": "[string]",
+    "rotationPattern": "[string]",
+    "duration": "[string]",
+    "preferredMonths": "[string]",
+    "preferredVenue": "[string]",
+    "breakoutRooms": "[string]",
+    "roomSizes": "[string]",
+    "infoOnLastUpcomingEvents": "[string]",
+    "eventHistory": "[string]",
+    "delegatesProfile": "[string]",
+    "internationalOrganisationName": "[string]",
+    "internationalOrganisationWebsite": "[string]",
+    "organizationProfile": "[string]",
+    "localHostName": "[string]",
+    "localHostTitle": "[string]",
+    "localHostOrganization": "[string]",
+    "localHostWebsite": "[string]",
+    "localStrengths": "[string]",
+    "decisionMaker": "[string]",
+    "decisionMakingProcess": "[string]",
+    "keyBidCriteria": "[string]",
+    "competitors": "[string]",
+    "competitiveAnalysis": "[string]",
+    "hostResponsibility": "[string]",
+    "sponsors": "[string]",
+    "layout": "[string - RESEARCH: Event layout requirements]",
+    "fitForAriyana": "[string]",
+    "opportunityScore": [0-100],
+    "iccaQualified": "[string - RESEARCH: 'yes' or 'no' with explanation]"
   }
 }]
+\`\`\`
 
-CRITICAL: 
-- Include "problems" array listing ONLY fields that are truly missing AFTER your search/enrichment attempt
-- If you found and filled in keyPersonPhone or keyPersonTitle, DO NOT include "Missing keyPersonPhone" or "No keyPersonTitle" in problems array
-- Be specific about what you found vs what's missing (e.g., "Missing keyPersonEmail" only if you truly couldn't find it)
-- Prioritize accuracy - use your knowledge to find real contact information when possible`;
+CRITICAL RESEARCH REQUIREMENTS (MANDATORY - DO NOT SKIP):
+1. **HIGHEST PRIORITY - MUST RESEARCH**: keyPersonPhone, localStrengths, layout
+   - keyPersonPhone: Search organization website, contact pages, phone directories. Format: +[country code] [number]
+   - localStrengths: Analyze Vietnam market. Format: "Strengths: [list]. Weaknesses: [list]"
+   - layout: Infer from event size. Format: "Main hall (X pax) + Y breakout rooms + [spaces]"
+
+2. **MANDATORY FIELDS TO RESEARCH**: breakoutRooms, roomSizes, openYear, keyPersonEmail, competitors, sponsors, iccaQualified
+3. For breakoutRooms: Infer from event size (300-500 delegates = 5-7 rooms, 500-1000 = 8-12 rooms, 1000+ = 15+ rooms)
+4. For roomSizes: Infer from event size (medium = "200-300 sqm main hall, 50-80 sqm breakout", large = "500-800 sqm main hall, 100-150 sqm breakout")
+5. For openYear: Search organization founding year or first event year
+6. For keyPersonEmail/Phone: Search organization website contact pages, "Contact Us" sections
+7. For localStrengths: Analyze Vietnam market advantages and disadvantages - MUST provide analysis
+8. For competitors: Research where similar events have been held - list specific venues/cities
+9. For sponsors: Research past sponsors or typical sponsors in this industry - list specific companies or types
+10. For layout: Infer from event type, size, and industry standards - MUST provide detailed layout
+11. For iccaQualified: Check if event meets ICCA criteria (international association, rotating, significant international participation)
+
+CRITICAL OUTPUT REQUIREMENTS:
+1. companyName MUST be the EXACT event name from input data
+2. All string fields must be strings (use "" for empty, never null)
+3. All number fields must be numbers (use 0 or null, never empty string)
+4. problems array must list ONLY truly missing fields AFTER research
+5. JSON MUST be valid and parseable
+6. Include enrichment notes in "notes" field: List all researched fields (e.g., "[AI Enriched: breakoutRooms, roomSizes, openYear, email, phone, localStrengths, competitors, sponsors, layout, iccaQualified]")`;
 
     console.log('🔵 [Gemini API] Strategic analysis request');
     console.log('📝 [Gemini API] Data length:', leadsData.length, 'characters');

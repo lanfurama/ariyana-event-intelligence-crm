@@ -113,5 +113,6 @@ export interface EventBrief {
   layout?: string;
   fitForAriyana?: string;
   opportunityScore?: number;
+  iccaQualified?: string;
 }
 
