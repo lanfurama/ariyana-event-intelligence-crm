@@ -1,0 +1,5 @@
+{
+  "name": "Ariyana Event Intelligence CRM",
+  "description": "A comprehensive CRM for Ariyana Convention Centre to manage ICCA event leads. Features include AI-powered data enrichment via Google Search, automated email drafting, promotional video generation with Veo, and video analysis for market intelligence.",
+  "requestFramePermissions": []
+}

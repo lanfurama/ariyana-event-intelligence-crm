@@ -1,0 +1,206 @@
+import type { User, Lead, EmailTemplate, EmailLog, EmailLogAttachment, LeadWithEmailCount, ChatMessage } from '../types';
+
+// Always use relative path /api/v1 - works in both dev and production
+// In development, Vite proxy will forward /api/v1 requests to backend
+const API_BASE_URL = '/api/v1';
+
+// Log API base URL on module load (for debugging)
+if (import.meta.env.DEV) {
+  console.log(`🔗 API Base URL: ${API_BASE_URL}`);
+}
+
+// Helper function for API calls
+async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      ...options,
+    });
+
+    // Check content-type header (don't read body yet)
+    const contentType = response.headers.get('content-type') || '';
+    
+    // Read response body once as text first (can parse JSON from text)
+    const responseText = await response.text();
+    
+    // Check if response is HTML (usually means proxy failed or route not found)
+    if (contentType.includes('text/html') || responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+      console.error(`❌ API returned HTML instead of JSON:`, responseText.substring(0, 200));
+      
+      const isDev = import.meta.env.DEV;
+      if (isDev) {
+        throw new Error(`API server returned HTML. Make sure backend is running or check API configuration.`);
+      } else {
+        throw new Error(`API server returned HTML. Please ensure the backend API is deployed and accessible.`);
+      }
+    }
+
+    // Parse JSON from text
+    let responseData: any;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (parseError: any) {
+      // If JSON parse fails, log the response
+      console.error(`❌ Failed to parse JSON response (${contentType}):`, responseText.substring(0, 200));
+      const isDev = import.meta.env.DEV;
+      if (isDev) {
+        throw new Error(`Cannot parse API response as JSON. Backend may not be running or returned invalid response.`);
+      } else {
+        throw new Error(`Cannot parse API response as JSON. Please ensure the backend API is deployed and accessible.`);
+      }
+    }
+
+    // Handle error responses
+    if (!response.ok) {
+      const errorMessage = responseData?.error || `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
+    return responseData;
+  } catch (error: any) {
+    // Handle JSON parse errors (usually means HTML was returned)
+    if (error.message && error.message.includes('JSON')) {
+      const isDev = import.meta.env.DEV;
+      if (isDev) {
+        throw new Error(`Cannot parse API response. API may not be configured correctly. Check console for details.`);
+      } else {
+        throw new Error(`Cannot parse API response. Please ensure the backend API is deployed and accessible.`);
+      }
+    }
+    
+    // Handle network errors (CORS, connection refused, etc.)
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.error(`❌ API call failed: ${API_BASE_URL}${endpoint}`, error);
+      console.error(`   Error details:`, error.message);
+      
+      // More helpful error message
+      const isDev = import.meta.env.DEV;
+      if (isDev) {
+        throw new Error(`Cannot connect to API server at ${API_BASE_URL}. Check if API is properly configured in Vite dev server.`);
+      } else {
+        throw new Error(`Cannot connect to API server at ${API_BASE_URL}. Please ensure the backend API is deployed and accessible.`);
+      }
+    }
+    // Re-throw other errors
+    throw error;
+  }
+}
+
+// Users API
+export const usersApi = {
+  getAll: () => apiCall<User[]>('/users'),
+  getByUsername: (username: string) => apiCall<User>(`/users/${username}`),
+  create: (user: User) => apiCall<User>('/users', {
+    method: 'POST',
+    body: JSON.stringify(user),
+  }),
+  update: (username: string, user: Partial<User>) => apiCall<User>(`/users/${username}`, {
+    method: 'PUT',
+    body: JSON.stringify(user),
+  }),
+  delete: (username: string) => apiCall<void>(`/users/${username}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Leads API
+export const leadsApi = {
+  getAll: (filters?: { status?: string; industry?: string; country?: string; search?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.industry) params.append('industry', filters.industry);
+    if (filters?.country) params.append('country', filters.country);
+    if (filters?.search) params.append('search', filters.search);
+    const query = params.toString();
+    return apiCall<Lead[]>(`/leads${query ? `?${query}` : ''}`);
+  },
+  getById: (id: string) => apiCall<Lead>(`/leads/${id}`),
+  getStats: () => apiCall<{ total: number; byStatus: Record<string, number>; byIndustry: Record<string, number>; byCountry: Record<string, number> }>('/leads/stats'),
+  getWithEmailCount: (leadId?: string) => {
+    const query = leadId ? `?leadId=${leadId}` : '';
+    return apiCall<LeadWithEmailCount[]>(`/leads/with-email-count${query}`);
+  },
+  create: (lead: Lead) => apiCall<Lead>('/leads', {
+    method: 'POST',
+    body: JSON.stringify(lead),
+  }),
+  update: (id: string, lead: Partial<Lead>) => apiCall<Lead>(`/leads/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(lead),
+  }),
+  delete: (id: string) => apiCall<void>(`/leads/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Email Templates API
+export const emailTemplatesApi = {
+  getAll: () => apiCall<EmailTemplate[]>('/email-templates'),
+  getById: (id: string) => apiCall<EmailTemplate>(`/email-templates/${id}`),
+  create: (template: EmailTemplate) => apiCall<EmailTemplate>('/email-templates', {
+    method: 'POST',
+    body: JSON.stringify(template),
+  }),
+  update: (id: string, template: Partial<EmailTemplate>) => apiCall<EmailTemplate>(`/email-templates/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(template),
+  }),
+  delete: (id: string) => apiCall<void>(`/email-templates/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Email Logs API
+export const emailLogsApi = {
+  getAll: (leadId?: string) => {
+    const query = leadId ? `?leadId=${leadId}` : '';
+    return apiCall<EmailLog[]>(`/email-logs${query}`);
+  },
+  getById: (id: string) => apiCall<EmailLog>(`/email-logs/${id}`),
+  create: (emailLog: EmailLog) => apiCall<EmailLog>('/email-logs', {
+    method: 'POST',
+    body: JSON.stringify(emailLog),
+  }),
+  update: (id: string, emailLog: Partial<EmailLog>) => apiCall<EmailLog>(`/email-logs/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(emailLog),
+  }),
+  delete: (id: string) => apiCall<void>(`/email-logs/${id}`, {
+    method: 'DELETE',
+  }),
+  getAttachments: (emailLogId: string) => apiCall<EmailLogAttachment[]>(`/email-logs/${emailLogId}/attachments`),
+  createAttachment: (emailLogId: string, attachment: Omit<EmailLogAttachment, 'id' | 'created_at'>) => apiCall<EmailLogAttachment>(`/email-logs/${emailLogId}/attachments`, {
+    method: 'POST',
+    body: JSON.stringify(attachment),
+  }),
+  deleteAttachment: (attachmentId: number) => apiCall<void>(`/email-logs/attachments/${attachmentId}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Chat Messages API
+export interface ChatMessageDB {
+  id: string;
+  username: string;
+  role: 'user' | 'model' | 'assistant'; // 'model' for backward compatibility, 'assistant' for GPT
+  text: string;
+  timestamp: Date | string;
+  created_at?: Date;
+}
+
+export const chatMessagesApi = {
+  getByUsername: (username: string) => apiCall<ChatMessageDB[]>(`/chat-messages/${username}`),
+  create: (message: ChatMessageDB) => apiCall<ChatMessageDB>('/chat-messages', {
+    method: 'POST',
+    body: JSON.stringify(message),
+  }),
+  deleteByUsername: (username: string) => apiCall<void>(`/chat-messages/${username}`, {
+    method: 'DELETE',
+  }),
+  deleteById: (id: string) => apiCall<void>(`/chat-messages/message/${id}`, {
+    method: 'DELETE',
+  }),
+};

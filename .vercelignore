@@ -1,0 +1,5 @@
+# Vercel ignore file - exclude files from Vercel deployment
+
+# Exclude vite-plugin-api from build analysis
+# This file is only used in development and causes build errors
+vite-plugin-api.ts

@@ -1,0 +1,7 @@
+# Ignore source files - only v1/ folder should be treated as functions
+src/
+package.json
+tsconfig.json
+.gitignore
+*.ts
+!v1/**/*.ts
