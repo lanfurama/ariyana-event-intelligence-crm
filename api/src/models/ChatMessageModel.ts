@@ -10,6 +10,8 @@ export class ChatMessageModel {
     );
     return result.rows.map(row => ({
       ...row,
+      // Normalize 'model' to 'assistant' for frontend (GPT standard)
+      role: row.role === 'model' ? 'assistant' : row.role,
       timestamp: new Date(row.timestamp),
     }));
   }
@@ -23,21 +25,28 @@ export class ChatMessageModel {
     const row = result.rows[0];
     return {
       ...row,
+      // Normalize 'model' to 'assistant' for frontend (GPT standard)
+      role: row.role === 'model' ? 'assistant' : row.role,
       timestamp: new Date(row.timestamp),
     };
   }
 
   // Create a new chat message
   static async create(message: Omit<ChatMessage, 'created_at'>): Promise<ChatMessage> {
+    // Normalize 'assistant' to 'model' for database storage (backward compatibility)
+    const dbRole = message.role === 'assistant' ? 'model' : message.role;
+    
     const result = await query(
       `INSERT INTO chat_messages (id, username, role, text, timestamp)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [message.id, message.username, message.role, message.text, message.timestamp]
+      [message.id, message.username, dbRole, message.text, message.timestamp]
     );
     const row = result.rows[0];
     return {
       ...row,
+      // Normalize 'model' to 'assistant' for frontend (GPT standard)
+      role: row.role === 'model' ? 'assistant' : row.role,
       timestamp: new Date(row.timestamp),
     };
   }

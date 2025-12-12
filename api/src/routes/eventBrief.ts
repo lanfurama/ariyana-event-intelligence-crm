@@ -438,10 +438,10 @@ router.post('/export', async (req: Request, res: Response) => {
     // Generate Word document buffer
     const buffer = await Packer.toBuffer(doc);
 
-    // Set response headers for file download (FIX: Remove underscore, use hyphen)
+    // Set response headers for file download
     const fileName = `Event-Brief-${(lead.companyName || 'Event').replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().getFullYear()}.docx`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
     res.setHeader('Content-Length', buffer.length.toString());
 
     console.log(`✅ [Export] Exporting Event Brief: ${fileName}`);

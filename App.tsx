@@ -3195,11 +3195,23 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
 
       // Get filename from Content-Disposition header or use default
       const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `Event Brief_ ${lead.companyName || 'Event'}_${new Date().getFullYear()}.docx`;
+      let filename = `Event-Brief-${(lead.companyName || 'Event').replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().getFullYear()}.docx`;
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-        if (filenameMatch) {
-          filename = decodeURIComponent(filenameMatch[1]);
+        // Try to extract filename from Content-Disposition header
+        // Support both formats: filename="..." and filename*=UTF-8''...
+        const filenameMatch = contentDisposition.match(/filename\*?=['"]?([^'";]+)['"]?/i);
+        if (filenameMatch && filenameMatch[1]) {
+          const extractedFilename = filenameMatch[1];
+          // Decode if it's URL encoded
+          try {
+            filename = decodeURIComponent(extractedFilename);
+          } catch (e) {
+            filename = extractedFilename;
+          }
+          // Ensure .docx extension (remove any trailing underscore or incorrect extension)
+          if (!filename.endsWith('.docx')) {
+            filename = filename.replace(/\.docx_?$/i, '') + '.docx';
+          }
         }
       }
 

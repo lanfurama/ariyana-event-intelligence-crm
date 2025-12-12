@@ -35,9 +35,10 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Missing required fields: id, username, role, text' });
     }
 
-    if (role !== 'user' && role !== 'model') {
+    // Accept 'user', 'model' (backward compatibility), and 'assistant' (GPT standard)
+    if (role !== 'user' && role !== 'model' && role !== 'assistant') {
       console.error('❌ Invalid role:', role);
-      return res.status(400).json({ error: 'Role must be either "user" or "model"' });
+      return res.status(400).json({ error: 'Role must be "user", "model", or "assistant"' });
     }
 
     // Convert timestamp to Date if it's a string
