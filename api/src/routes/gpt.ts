@@ -259,11 +259,6 @@ STEP 3: ENRICH MISSING DATA (CRITICAL - RESEARCH ALL FIELDS)
 -------------------------------------------------------------
 **MANDATORY**: You MUST actively research and fill ALL fields below. Use your knowledge base to find real information. Only use empty string "" if you truly cannot find any information after thorough research.
 
-**CRITICAL PRIORITY FIELDS** (MUST RESEARCH - DO NOT LEAVE EMPTY):
-1. keyPersonPhone: **MANDATORY RESEARCH** - Search organization website contact pages, "Contact Us" sections, phone directories. Format: +[country code] [number] or [country code] [number]
-2. localStrengths: **MANDATORY RESEARCH** - Analyze Vietnam market for this event type. Format: "Strengths: [list]. Weaknesses: [list]"
-3. layout: **MANDATORY RESEARCH** - Infer from event type, size, industry standards. Format: "Main hall (X pax) + Y breakout rooms (Z pax each) + [other spaces]"
-
 REQUIRED TOP-LEVEL FIELDS:
 - companyName: EXACT event name from input (REQUIRED, never empty)
 - industry: Infer from event name/organization type or research organization
@@ -273,7 +268,7 @@ REQUIRED TOP-LEVEL FIELDS:
 - keyPersonName: **RESEARCH**: Search for President/Director/Secretary General/Executive Director name
 - keyPersonTitle: **RESEARCH**: Find actual title (e.g., "Secretary General", "President", "Executive Director")
 - keyPersonEmail: **RESEARCH**: Search for official email (info@, contact@, or person-specific format like firstname.lastname@org-domain)
-- keyPersonPhone: **MANDATORY RESEARCH** - Search organization website contact pages, phone directories, "Contact Us" sections. DO NOT leave empty unless truly unavailable.
+- keyPersonPhone: **RESEARCH**: Search for official phone number from organization website or contact pages
 - numberOfDelegates: Extract from TOTATTEND/REGATTEND fields or infer from event size/history
 - vietnamEvents: Count events in Vietnam from pastEventsHistory
 - totalEvents: Count total events from pastEventsHistory
@@ -293,17 +288,19 @@ EVENT BRIEF FIELDS (MUST RESEARCH COMPREHENSIVELY):
 - preferredVenue: Venue type preference - infer from event size and type
 - breakoutRooms: **RESEARCH**: Number of breakout rooms needed - infer from event size (e.g., "5-7 rooms" for 300-500 delegates, "8-12 rooms" for 500-1000 delegates, "15+ rooms" for 1000+ delegates)
 - roomSizes: **RESEARCH**: Size specifications - infer from event size (e.g., "200-300 sqm main hall, 50-80 sqm breakout rooms" for medium events, "500-800 sqm main hall, 100-150 sqm breakout" for large events)
-- infoOnLastUpcomingEvents: Last and upcoming event details with dates, locations, attendance
+- infoOnLastUpcomingEvents: **RESEARCH MANDATORY**: MUST provide comprehensive details about last event AND upcoming event(s). Format: "Last Event: [Year] - [City, Country] - [Attendance] delegates - [Key details]. Upcoming Event: [Year] - [City, Country] - [Expected attendance] - [Key details]". Include dates, locations, attendance numbers, and any relevant information. This field is CRITICAL and must NOT be empty.
 - eventHistory: Detailed history with years, locations, attendance numbers
 - delegatesProfile: Who attends (e.g., "Doctors & scientists", "Industry professionals", "Researchers")
 - internationalOrganisationName: Full organization name - research official name
 - internationalOrganisationWebsite: Organization website URL - research official website
 - organizationProfile: Organization description - research organization background, mission, scope
-- localHostName: Local host name (if Vietnam event) - research local chapter/host
-- localHostTitle: Local host title
-- localHostOrganization: Local host organization name
-- localHostWebsite: Local host website URL
-- localStrengths: **MANDATORY RESEARCH** - Local market strengths & weaknesses for Vietnam. Analyze why Vietnam is suitable, what advantages/disadvantages Vietnam offers. Format: "Strengths: [list 3-5 advantages]. Weaknesses: [list 2-3 disadvantages]". Example: "Strengths: Growing economy, strategic location in SEA, modern infrastructure (APEC 2017 host), competitive costs, beautiful destinations, rich cultural heritage. Weaknesses: Limited international connectivity compared to Singapore/Thailand, visa requirements for some countries, language barriers."
+- localHostName: **RESEARCH MANDATORY**: Name of Local Host / Member - research local chapter/host name or member organization name. If event has been in Vietnam, find the local host. If not, research potential local host organization or member. Format: "Full Name" or "Organization Name" or "Name of Local Host / Member"
+- localHostTitle: **RESEARCH**: Local host title/position (e.g., "President", "Secretary General", "Chairman", "Executive Director")
+- localHostEmail: **RESEARCH MANDATORY**: Local host contact email - search organization website, contact pages, or member directory. Format: email address or empty string if not found
+- localHostPhone: **RESEARCH MANDATORY**: Local host contact phone number - search organization website, contact pages. Format: phone number with country code or empty string if not found
+- localHostOrganization: **RESEARCH**: Local host organization name (if different from international organization)
+- localHostWebsite: **RESEARCH**: Local host website URL
+- localStrengths: **RESEARCH MANDATORY**: Local market strengths & weaknesses for Vietnam - MUST include BOTH strengths AND weaknesses. Format: "Strengths: [list 3-5 key advantages Vietnam offers for this event, e.g., Growing economy, strategic location in SEA, modern infrastructure, competitive costs, skilled workforce]. Weaknesses: [list 2-3 challenges, e.g., Limited international connectivity compared to Singapore/Thailand, visa requirements, language barriers]". This field is CRITICAL and must analyze Vietnam's suitability comprehensively.
 - decisionMaker: Who decides venue (e.g., "Local host", "International board", "DMC")
 - decisionMakingProcess: How decisions are made (e.g., "Local host works with DMC, DMC sorts venues and conducts site inspection")
 - keyBidCriteria: Key venue selection criteria (e.g., "Venue capacity & breakout rooms, Connectivity, Location accessibility")
@@ -311,8 +308,9 @@ EVENT BRIEF FIELDS (MUST RESEARCH COMPREHENSIVELY):
 - competitiveAnalysis: **RESEARCH**: Competitive landscape analysis - compare Vietnam/Danang with competing destinations
 - hostResponsibility: Who organizes (e.g., "Organising Committee, responsible for selection of destination, venue and event plan")
 - sponsors: **RESEARCH**: Known or typical sponsors for this type of event - research past sponsors or typical sponsors in this industry (e.g., "Diamond: Company1; Gold: Company2; Silver: Company3" or "Typical sponsors: Medical device companies, pharmaceutical companies")
-- layout: **MANDATORY RESEARCH** - Event layout requirements. Infer from event type, size, and industry standards. Format: "Main plenary hall (X pax) + Y breakout rooms (Z pax each) + [exhibition area/poster area/networking space]". Example: "Main plenary hall (500 pax) + 5 breakout rooms (50-100 pax each) + exhibition area (20 booths)" or "Main hall (800 pax) + 8 breakout rooms (80-120 pax each) + poster area + networking space". DO NOT leave empty - always provide layout based on event size.
+- layout: **RESEARCH MANDATORY**: Event layout requirements - MUST provide detailed layout specifications. Format: "Main plenary hall: [capacity] pax, [size] sqm; Breakout rooms: [number] rooms, [capacity range] pax each, [size range] sqm; Exhibition area: [number] booths, [size] sqm; Additional spaces: [poster area, networking space, registration area, etc.]". Include all space requirements: plenary hall, breakout rooms, exhibition, poster sessions, networking areas, registration, catering areas. This field is CRITICAL for venue matching.
 - fitForAriyana: Why event fits Ariyana (capacity match, location advantages, facilities)
+- conferenceRegistration: **RESEARCH MANDATORY**: Conference registration details - MUST include registration website URL, registration fees (if available), registration deadlines, early bird dates, registration process, and contact information for registration inquiries. Format: "Registration Website: [URL]. Registration Fees: [details]. Deadlines: [early bird date, regular deadline]. Process: [description]. Contact: [email/phone]". This field is CRITICAL for understanding event logistics.
 - opportunityScore: 0-100 opportunity score
 - iccaQualified: **RESEARCH**: "yes" or "no" with brief explanation - check if event meets ICCA qualification criteria (international association meetings, rotating conferences, significant international participation)
 
@@ -386,17 +384,19 @@ PART C: JSON Output
     "preferredVenue": "[string]",
     "breakoutRooms": "[string]",
     "roomSizes": "[string]",
-    "infoOnLastUpcomingEvents": "[string]",
+    "infoOnLastUpcomingEvents": "[string - RESEARCH MANDATORY: MUST NOT BE EMPTY. Format: 'Last Event: [Year] - [City, Country] - [Attendance] delegates - [Key details]. Upcoming Event: [Year] - [City, Country] - [Expected attendance] - [Key details]']",
     "eventHistory": "[string]",
     "delegatesProfile": "[string]",
     "internationalOrganisationName": "[string]",
     "internationalOrganisationWebsite": "[string]",
     "organizationProfile": "[string]",
-    "localHostName": "[string]",
-    "localHostTitle": "[string]",
-    "localHostOrganization": "[string]",
-    "localHostWebsite": "[string]",
-    "localStrengths": "[string]",
+    "localHostName": "[string - RESEARCH MANDATORY: Name of Local Host / Member - MUST NOT BE EMPTY. Research local chapter/host name or member organization name]",
+    "localHostTitle": "[string - RESEARCH MANDATORY: Local host title/position - MUST NOT BE EMPTY. Find actual title like 'President', 'Secretary General', 'Chairman']",
+    "localHostEmail": "[string - RESEARCH MANDATORY: Local host contact email - MUST NOT BE EMPTY. Search organization website, contact pages, member directory]",
+    "localHostPhone": "[string - RESEARCH MANDATORY: Local host contact phone - MUST NOT BE EMPTY. Search organization website, contact pages. Include country code]",
+    "localHostOrganization": "[string - RESEARCH: Local host organization name (if different from international organization)]",
+    "localHostWebsite": "[string - RESEARCH: Local host website URL]",
+    "localStrengths": "[string - RESEARCH MANDATORY: Must include BOTH Strengths AND Weaknesses - MUST NOT BE EMPTY. Format: 'Strengths: [list]. Weaknesses: [list]']",
     "decisionMaker": "[string]",
     "decisionMakingProcess": "[string]",
     "keyBidCriteria": "[string]",
@@ -404,30 +404,38 @@ PART C: JSON Output
     "competitiveAnalysis": "[string]",
     "hostResponsibility": "[string]",
     "sponsors": "[string - RESEARCH: Known or typical sponsors]",
-    "layout": "[string - RESEARCH: Event layout requirements]",
+    "layout": "[string - RESEARCH MANDATORY: Detailed event layout requirements - MUST NOT BE EMPTY. Format: 'Main plenary hall: [capacity] pax, [size] sqm; Breakout rooms: [number] rooms, [capacity range] pax each, [size range] sqm; Exhibition area: [number] booths, [size] sqm; Additional spaces: [details]']",
     "fitForAriyana": "[string]",
+    "conferenceRegistration": "[string - RESEARCH MANDATORY: Registration website, fees, deadlines, process - MUST NOT BE EMPTY. Format: 'Registration Website: [URL]. Registration Fees: [details]. Deadlines: [dates]. Process: [description]. Contact: [email/phone]']",
     "opportunityScore": [0-100],
     "iccaQualified": "[string - RESEARCH: 'yes' or 'no' with explanation]"
   }
 }]
 \`\`\`
 
-CRITICAL RESEARCH REQUIREMENTS (MANDATORY - DO NOT SKIP):
-1. **HIGHEST PRIORITY - MUST RESEARCH**: keyPersonPhone, localStrengths, layout
-   - keyPersonPhone: Search organization website, contact pages, phone directories. Format: +[country code] [number]
-   - localStrengths: Analyze Vietnam market. Format: "Strengths: [list]. Weaknesses: [list]"
-   - layout: Infer from event size. Format: "Main hall (X pax) + Y breakout rooms + [spaces]"
-
-2. **MANDATORY FIELDS TO RESEARCH**: breakoutRooms, roomSizes, openYear, keyPersonEmail, competitors, sponsors, iccaQualified
-3. For breakoutRooms: Infer from event size (300-500 delegates = 5-7 rooms, 500-1000 = 8-12 rooms, 1000+ = 15+ rooms)
-4. For roomSizes: Infer from event size (medium = "200-300 sqm main hall, 50-80 sqm breakout", large = "500-800 sqm main hall, 100-150 sqm breakout")
-5. For openYear: Search organization founding year or first event year
-6. For keyPersonEmail/Phone: Search organization website contact pages, "Contact Us" sections
-7. For localStrengths: Analyze Vietnam market advantages and disadvantages - MUST provide analysis
-8. For competitors: Research where similar events have been held - list specific venues/cities
-9. For sponsors: Research past sponsors or typical sponsors in this industry - list specific companies or types
-10. For layout: Infer from event type, size, and industry standards - MUST provide detailed layout
-11. For iccaQualified: Check if event meets ICCA criteria (international association, rotating, significant international participation)
+CRITICAL RESEARCH REQUIREMENTS:
+1. **MANDATORY FIELDS TO RESEARCH** (MUST NOT BE EMPTY): 
+   - infoOnLastUpcomingEvents: MUST provide last event AND upcoming event details with dates, locations, attendance
+   - localHostName: MUST find Name of Local Host / Member
+   - localHostEmail: MUST search for local host email
+   - localHostPhone: MUST search for local host phone
+   - localStrengths: MUST include BOTH Strengths AND Weaknesses for Vietnam
+   - layout: MUST provide detailed layout specifications (plenary hall, breakout rooms, exhibition, etc.)
+   - conferenceRegistration: MUST provide registration website, fees, deadlines, process
+   - breakoutRooms, roomSizes, openYear, keyPersonEmail, keyPersonPhone, competitors, sponsors, iccaQualified
+2. For breakoutRooms: Infer from event size (300-500 delegates = 5-7 rooms, 500-1000 = 8-12 rooms, 1000+ = 15+ rooms)
+3. For roomSizes: Infer from event size (medium = "200-300 sqm main hall, 50-80 sqm breakout", large = "500-800 sqm main hall, 100-150 sqm breakout")
+4. For openYear: Search organization founding year or first event year
+5. For keyPersonEmail/Phone: Search organization website contact pages
+6. For infoOnLastUpcomingEvents: MUST provide comprehensive details - last event: year, city, country, attendance; upcoming event: year, city, country, expected attendance. This is CRITICAL information.
+7. For localHostName: Search for local chapter/host organization name or member name. Check organization website for local chapters, members, or host information.
+8. For localHostEmail/Phone: Search organization website contact pages, member directories, local chapter pages for email and phone contact information.
+9. For localStrengths: MUST analyze BOTH strengths (advantages Vietnam offers) AND weaknesses (challenges). Format: "Strengths: [list]. Weaknesses: [list]"
+10. For layout: MUST provide detailed specifications: plenary hall capacity and size, number and capacity of breakout rooms, exhibition area size and booth count, additional spaces (poster, networking, registration, catering)
+11. For conferenceRegistration: Search event website for registration page, fees, deadlines, early bird dates, registration process, contact information
+12. For competitors: Research where similar events have been held
+13. For sponsors: Research past sponsors or typical sponsors in this industry
+14. For iccaQualified: Check if event meets ICCA criteria (international association, rotating, significant international participation)
 
 CRITICAL OUTPUT REQUIREMENTS:
 1. companyName = EXACT event name from input
@@ -435,7 +443,28 @@ CRITICAL OUTPUT REQUIREMENTS:
 3. Numbers use 0 or null (never empty string)
 4. problems array = ONLY truly missing fields AFTER research
 5. JSON must be valid and parseable
-6. Note enrichment in "notes" field: List all researched fields (e.g., "[AI Enriched: breakoutRooms, roomSizes, openYear, email, phone, localStrengths, competitors, sponsors, layout, iccaQualified]")`;
+6. Note enrichment in "notes" field: List all researched fields (e.g., "[AI Enriched: infoOnLastUpcomingEvents, localHostName, localHostEmail, localHostPhone, localStrengths, layout, conferenceRegistration, breakoutRooms, roomSizes, openYear, email, phone, competitors, sponsors, iccaQualified]")
+7. **CRITICAL**: The following fields MUST be researched and filled comprehensively - they are MANDATORY and should NOT be empty unless truly unavailable after thorough research:
+   - infoOnLastUpcomingEvents (last event + upcoming event details)
+   - localHostName (Name of Local Host / Member)
+   - localHostTitle (Title/Position of Local Host)
+   - localHostEmail (contact email)
+   - localHostPhone (contact phone)
+   - localStrengths (Strengths AND Weaknesses)
+   - layout (detailed layout specifications)
+   - conferenceRegistration (registration details)
+
+8. **VALIDATION CHECKLIST** - Before outputting JSON, verify ALL these fields are filled:
+   ✓ localHostName: Is there a name? (If event in Vietnam, find actual host. If not, research potential host/member)
+   ✓ localHostTitle: Is there a title? (Search for President, Secretary General, Chairman, etc.)
+   ✓ localHostEmail: Is there an email? (Search organization website, contact pages, member directory)
+   ✓ localHostPhone: Is there a phone? (Search organization website, contact pages)
+   ✓ localStrengths: Does it include BOTH "Strengths:" AND "Weaknesses:"?
+   ✓ layout: Does it include plenary hall, breakout rooms, exhibition area specifications?
+   ✓ conferenceRegistration: Does it include website, fees, deadlines, process?
+   ✓ infoOnLastUpcomingEvents: Does it include both last event AND upcoming event details?
+
+If any field above is empty, you MUST research more thoroughly before outputting.`;
 
     console.log('🟢 [GPT API] Strategic analysis request');
     

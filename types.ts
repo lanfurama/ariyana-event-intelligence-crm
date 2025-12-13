@@ -28,9 +28,12 @@ export interface EventBrief {
   organizationProfile?: string;
   localHostName?: string;
   localHostTitle?: string;
+  localHostEmail?: string;
+  localHostPhone?: string;
   localHostOrganization?: string;
   localHostWebsite?: string;
   localStrengths?: string;
+  conferenceRegistration?: string;
   decisionMaker?: string;
   decisionMakingProcess?: string;
   keyBidCriteria?: string;

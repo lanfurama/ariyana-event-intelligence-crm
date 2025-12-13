@@ -2564,7 +2564,6 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               // STEP 3: Research missing eventBrief fields using AI
               console.log(`🔍 [Agent ${agentId}] Researching eventBrief fields for: ${event.name}`);
               let eventBriefData: any = {};
-              let aiTopLevelData: any = {}; // Store top-level fields from AI response
               try {
                 const eventDataStr = JSON.stringify({
                   eventName: event.name,
@@ -2581,54 +2580,10 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 
                 if (parsed.partC && Array.isArray(parsed.partC) && parsed.partC.length > 0) {
                   const aiLead = parsed.partC[0];
-                  
-                  // Extract top-level fields (keyPersonPhone, etc.) - prioritize non-empty values
-                  if (aiLead.keyPersonPhone && aiLead.keyPersonPhone.trim() !== "") {
-                    aiTopLevelData.keyPersonPhone = aiLead.keyPersonPhone.trim();
-                  }
-                  if (aiLead.keyPersonEmail && aiLead.keyPersonEmail.trim() !== "") {
-                    aiTopLevelData.keyPersonEmail = aiLead.keyPersonEmail.trim();
-                  }
-                  if (aiLead.keyPersonName && aiLead.keyPersonName.trim() !== "") {
-                    aiTopLevelData.keyPersonName = aiLead.keyPersonName.trim();
-                  }
-                  if (aiLead.keyPersonTitle && aiLead.keyPersonTitle.trim() !== "") {
-                    aiTopLevelData.keyPersonTitle = aiLead.keyPersonTitle.trim();
-                  }
-                  if (aiLead.website && aiLead.website.trim() !== "") {
-                    aiTopLevelData.website = aiLead.website.trim();
-                  }
-                  
-                  // Extract eventBrief fields - ensure we get all fields
                   if (aiLead.eventBrief) {
-                    eventBriefData = {
-                      ...aiLead.eventBrief,
-                      // Ensure string fields are not null/undefined
-                      localStrengths: aiLead.eventBrief.localStrengths || aiLead.eventBrief.localStrengthsWeaknesses || "",
-                      layout: aiLead.eventBrief.layout || aiLead.eventBrief.layoutEvent || "",
-                      competitors: aiLead.eventBrief.competitors || "",
-                      sponsors: aiLead.eventBrief.sponsors || "",
-                      breakoutRooms: aiLead.eventBrief.breakoutRooms || "",
-                      roomSizes: aiLead.eventBrief.roomSizes || "",
-                      openYear: aiLead.eventBrief.openYear || null,
-                      iccaQualified: aiLead.eventBrief.iccaQualified || ""
-                    };
+                    eventBriefData = aiLead.eventBrief;
                     console.log(`✅ [Agent ${agentId}] AI research completed for eventBrief fields`);
-                    console.log(`📊 [Agent ${agentId}] Extracted fields:`, {
-                      hasPhone: !!aiTopLevelData.keyPersonPhone,
-                      phoneValue: aiTopLevelData.keyPersonPhone,
-                      hasLocalStrengths: !!(eventBriefData.localStrengths && eventBriefData.localStrengths.trim() !== ""),
-                      localStrengthsLength: eventBriefData.localStrengths?.length || 0,
-                      hasLayout: !!(eventBriefData.layout && eventBriefData.layout.trim() !== ""),
-                      layoutLength: eventBriefData.layout?.length || 0,
-                      hasCompetitors: !!(eventBriefData.competitors && eventBriefData.competitors.trim() !== ""),
-                      hasSponsors: !!(eventBriefData.sponsors && eventBriefData.sponsors.trim() !== "")
-                    });
-                  } else {
-                    console.warn(`⚠️  [Agent ${agentId}] No eventBrief found in AI response`);
                   }
-                } else {
-                  console.warn(`⚠️  [Agent ${agentId}] No partC data found in parsed AI response`);
                 }
               } catch (researchError: any) {
                 console.warn(`⚠️  [Agent ${agentId}] EventBrief research failed, using defaults:`, researchError.message);
@@ -2638,22 +2593,11 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               if (result) {
                 const originalEventName = event.name.trim();
                 
-                // Infer layout from event size if not provided by AI
-                const inferredLayout = result.numberOfDelegates ? 
-                  (result.numberOfDelegates >= 1000 ? "Main plenary hall (800-1000 pax) + 15+ breakout rooms (50-150 pax each) + exhibition area (30+ booths) + poster area + networking space" :
-                   result.numberOfDelegates >= 500 ? "Main plenary hall (500-800 pax) + 8-12 breakout rooms (50-100 pax each) + exhibition area (20 booths)" :
-                   result.numberOfDelegates >= 300 ? "Main plenary hall (300-500 pax) + 5-7 breakout rooms (50-80 pax each) + exhibition area (10-15 booths)" :
-                   "Main hall (200-300 pax) + 3-5 breakout rooms (30-50 pax each)") : "";
-                
-                // Infer localStrengths for Vietnam if not provided
-                const inferredLocalStrengths = result.vietnamEvents > 0 ? 
-                  "Strengths: Vietnam has hosted this event before, proven track record, growing MICE industry, strategic location in Southeast Asia, modern infrastructure, competitive costs, rich cultural heritage, beautiful destinations. Weaknesses: Limited international direct flights compared to Singapore/Thailand, visa requirements for some countries, language barriers." :
-                  "Strengths: Growing economy, strategic location in Southeast Asia, modern infrastructure (APEC 2017 host), competitive costs, beautiful destinations (Danang UNESCO heritage sites nearby), developing MICE industry. Weaknesses: Limited international connectivity compared to Singapore/Thailand, visa requirements, language barriers, less established MICE reputation.";
-                
-                // Merge eventBrief data from AI research - prioritize AI data, fallback to inferred/defaults
+                // Merge eventBrief data from AI research - PRESERVE ALL AI FIELDS
                 const mergedEventBrief = {
+                  // First, spread all AI-researched fields to preserve everything
                   ...eventBriefData,
-                  // Ensure critical fields are filled even if AI didn't provide them
+                  // Ensure critical fields are filled even if AI didn't provide them (only as fallback)
                   breakoutRooms: eventBriefData.breakoutRooms || (result.numberOfDelegates ? 
                     (result.numberOfDelegates >= 1000 ? "15+ rooms" : 
                      result.numberOfDelegates >= 500 ? "8-12 rooms" : 
@@ -2663,15 +2607,24 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                      result.numberOfDelegates >= 500 ? "300-500 sqm main hall, 80-120 sqm breakout rooms" : 
                      "200-300 sqm main hall, 50-80 sqm breakout rooms") : ""),
                   openYear: eventBriefData.openYear || null,
-                  // CRITICAL: Use AI-researched values, fallback to inferred if AI didn't provide
-                  localStrengths: eventBriefData.localStrengths || eventBriefData.localStrengthsWeaknesses || inferredLocalStrengths,
-                  competitors: eventBriefData.competitors || (result.vietnamEvents > 0 ? 
-                    "Competitors: Singapore (Marina Bay Sands), Thailand (Bangkok Convention Centre), Malaysia (KLCC). Past venues in Vietnam: Ho Chi Minh City, Hanoi." :
-                    "Competitors: Singapore, Thailand, Malaysia venues. Similar events typically rotate in Southeast Asia."),
-                  sponsors: eventBriefData.sponsors || (result.industry ? 
-                    `Typical sponsors for ${result.industry} events: Industry leaders, major corporations, professional associations` : ""),
-                  layout: eventBriefData.layout || eventBriefData.layoutEvent || inferredLayout,
-                  iccaQualified: eventBriefData.iccaQualified || (eligibilityCheck?.isICCAQualified ? "yes - International association meeting with rotating locations" : "no - Not ICCA qualified")
+                  // CRITICAL: Preserve all Local Host fields from AI
+                  localHostName: eventBriefData.localHostName || "",
+                  localHostTitle: eventBriefData.localHostTitle || "",
+                  localHostEmail: eventBriefData.localHostEmail || "",
+                  localHostPhone: eventBriefData.localHostPhone || "",
+                  localHostOrganization: eventBriefData.localHostOrganization || "",
+                  localHostWebsite: eventBriefData.localHostWebsite || "",
+                  // CRITICAL: Preserve Local Strengths & Weaknesses from AI
+                  localStrengths: eventBriefData.localStrengths || "",
+                  // CRITICAL: Preserve Layout Event from AI
+                  layout: eventBriefData.layout || "",
+                  // CRITICAL: Preserve Conference Registration from AI
+                  conferenceRegistration: eventBriefData.conferenceRegistration || "",
+                  // CRITICAL: Preserve Info on Last/Upcoming Events from AI
+                  infoOnLastUpcomingEvents: eventBriefData.infoOnLastUpcomingEvents || "",
+                  competitors: eventBriefData.competitors || "",
+                  sponsors: eventBriefData.sponsors || "",
+                  iccaQualified: eventBriefData.iccaQualified || (eligibilityCheck?.isICCAQualified ? "yes" : "no")
                 };
                 
                 const newLead = {
@@ -2686,38 +2639,16 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                   agentId: agentId, // Track which agent processed this
                   eligibilityCheck: eligibilityCheck, // Include eligibility check results
                   eventBrief: mergedEventBrief, // Include AI-researched eventBrief data
-                  // CRITICAL: Merge top-level fields from AI - prioritize AI data over result
-                  keyPersonPhone: (aiTopLevelData.keyPersonPhone && aiTopLevelData.keyPersonPhone.trim() !== "") ? 
-                    aiTopLevelData.keyPersonPhone : (result.keyPersonPhone || null),
-                  keyPersonEmail: (aiTopLevelData.keyPersonEmail && aiTopLevelData.keyPersonEmail.trim() !== "") ? 
-                    aiTopLevelData.keyPersonEmail : (result.keyPersonEmail || null),
-                  keyPersonName: (aiTopLevelData.keyPersonName && aiTopLevelData.keyPersonName.trim() !== "") ? 
-                    aiTopLevelData.keyPersonName : (result.keyPersonName || null),
-                  keyPersonTitle: (aiTopLevelData.keyPersonTitle && aiTopLevelData.keyPersonTitle.trim() !== "") ? 
-                    aiTopLevelData.keyPersonTitle : (result.keyPersonTitle || null),
-                  website: (aiTopLevelData.website && aiTopLevelData.website.trim() !== "") ? 
-                    aiTopLevelData.website : (result.website || null),
-                  // CRITICAL: Add top-level fields from eventBrief - ensure they're accessible
+                  // Also add top-level fields from eventBrief for backward compatibility
                   openYear: mergedEventBrief.openYear,
                   breakoutRooms: mergedEventBrief.breakoutRooms,
                   roomSizes: mergedEventBrief.roomSizes,
                   localStrengths: mergedEventBrief.localStrengths,
-                  localStrengthsWeaknesses: mergedEventBrief.localStrengths, // Alias for compatibility
                   competitors: mergedEventBrief.competitors,
                   sponsors: mergedEventBrief.sponsors,
                   layout: mergedEventBrief.layout,
-                  layoutEvent: mergedEventBrief.layout, // Alias for compatibility
                   iccaQualified: mergedEventBrief.iccaQualified
                 };
-                
-                // Log final merged data for debugging
-                console.log(`📋 [Agent ${agentId}] Final merged lead fields:`, {
-                  keyPersonPhone: newLead.keyPersonPhone,
-                  hasLocalStrengths: !!(newLead.localStrengths && newLead.localStrengths.trim() !== ""),
-                  hasLayout: !!(newLead.layout && newLead.layout.trim() !== ""),
-                  hasCompetitors: !!(newLead.competitors && newLead.competitors.trim() !== ""),
-                  hasSponsors: !!(newLead.sponsors && newLead.sponsors.trim() !== "")
-                });
                 
                 // Log event history
                 console.log(`📊 [Agent ${agentId}] Event history for "${event.name}":`, newLead.pastEventsHistory);
@@ -4060,57 +3991,37 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                   <span className="ml-2 text-slate-600">{progress.result.eventBrief?.roomSizes || progress.result.roomSizes}</span>
                 </div>
               )}
-              {(progress.result.keyPersonPhone || progress.result.eventBrief?.keyPersonPhone) && (
+              {progress.result.keyPersonPhone && (
                 <div>
                   <span className="font-semibold text-slate-700">Phone:</span>
-                  <a href={`tel:${progress.result.keyPersonPhone || progress.result.eventBrief?.keyPersonPhone}`} className="ml-2 text-indigo-600 hover:underline">
-                    {progress.result.keyPersonPhone || progress.result.eventBrief?.keyPersonPhone}
+                  <a href={`tel:${progress.result.keyPersonPhone}`} className="ml-2 text-indigo-600 hover:underline">
+                    {progress.result.keyPersonPhone}
                   </a>
                 </div>
               )}
             </div>
-            {((progress.result.eventBrief?.localStrengths && progress.result.eventBrief.localStrengths.trim() !== "") || 
-              (progress.result.localStrengths && progress.result.localStrengths.trim() !== "") ||
-              (progress.result.localStrengthsWeaknesses && progress.result.localStrengthsWeaknesses.trim() !== "")) && (
+            {(progress.result.eventBrief?.localStrengths || progress.result.localStrengths) && (
               <div className="mt-3 pt-3 border-t border-slate-200">
                 <span className="font-semibold text-slate-700">Local Strengths & Weaknesses:</span>
-                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">
-                  {progress.result.eventBrief?.localStrengths || 
-                   progress.result.localStrengths || 
-                   progress.result.localStrengthsWeaknesses || 
-                   ""}
-                </p>
+                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">{progress.result.eventBrief?.localStrengths || progress.result.localStrengths}</p>
               </div>
             )}
-            {((progress.result.eventBrief?.competitors && progress.result.eventBrief.competitors.trim() !== "") || 
-              (progress.result.competitors && progress.result.competitors.trim() !== "")) && (
+            {(progress.result.eventBrief?.competitors || progress.result.competitors) && (
               <div className="mt-3 pt-3 border-t border-slate-200">
                 <span className="font-semibold text-slate-700">Competitors:</span>
-                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">
-                  {progress.result.eventBrief?.competitors || progress.result.competitors || ""}
-                </p>
+                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">{progress.result.eventBrief?.competitors || progress.result.competitors}</p>
               </div>
             )}
-            {((progress.result.eventBrief?.sponsors && progress.result.eventBrief.sponsors.trim() !== "") || 
-              (progress.result.sponsors && progress.result.sponsors.trim() !== "")) && (
+            {(progress.result.eventBrief?.sponsors || progress.result.sponsors) && (
               <div className="mt-3 pt-3 border-t border-slate-200">
                 <span className="font-semibold text-slate-700">Sponsors:</span>
-                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">
-                  {progress.result.eventBrief?.sponsors || progress.result.sponsors || ""}
-                </p>
+                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">{progress.result.eventBrief?.sponsors || progress.result.sponsors}</p>
               </div>
             )}
-            {((progress.result.eventBrief?.layout && progress.result.eventBrief.layout.trim() !== "") || 
-              (progress.result.layout && progress.result.layout.trim() !== "") ||
-              (progress.result.layoutEvent && progress.result.layoutEvent.trim() !== "")) && (
+            {(progress.result.eventBrief?.layout || progress.result.layout) && (
               <div className="mt-3 pt-3 border-t border-slate-200">
                 <span className="font-semibold text-slate-700">Layout Event:</span>
-                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">
-                  {progress.result.eventBrief?.layout || 
-                   progress.result.layout || 
-                   progress.result.layoutEvent || 
-                   ""}
-                </p>
+                <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">{progress.result.eventBrief?.layout || progress.result.layout}</p>
               </div>
             )}
             {(progress.result.eventBrief?.iccaQualified || progress.result.iccaQualified) && (
@@ -5191,7 +5102,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                         </div>
                       </div>
                     
-                          {/* Event Brief Section - HIDDEN per user request */}
+                          {/* Event Brief Section - Hidden */}
                           {false && lead.eventBrief && (
                             <div className="mt-4 pt-4 border-t-2 border-white/50">
                               <div className="flex items-center justify-between mb-4">
@@ -5335,6 +5246,16 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                                   <p className="text-slate-800">{lead.eventBrief.localHostName}</p>
                                   {lead.eventBrief.localHostTitle && <p className="text-slate-600 text-xs mt-0.5">{lead.eventBrief.localHostTitle}</p>}
                                   {lead.eventBrief.localHostOrganization && <p className="text-slate-600 text-xs mt-0.5">{lead.eventBrief.localHostOrganization}</p>}
+                                  {lead.eventBrief.localHostEmail && (
+                                    <p className="text-slate-600 text-xs mt-0.5">
+                                      Email: <a href={`mailto:${lead.eventBrief.localHostEmail}`} className="text-blue-600 hover:underline">{lead.eventBrief.localHostEmail}</a>
+                                    </p>
+                                  )}
+                                  {lead.eventBrief.localHostPhone && (
+                                    <p className="text-slate-600 text-xs mt-0.5">
+                                      Phone: <a href={`tel:${lead.eventBrief.localHostPhone}`} className="text-blue-600 hover:underline">{lead.eventBrief.localHostPhone}</a>
+                                    </p>
+                                  )}
                                   {lead.eventBrief.localHostWebsite && (
                                     <a href={lead.eventBrief.localHostWebsite} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs mt-0.5 block">
                                       {lead.eventBrief.localHostWebsite}
@@ -5352,6 +5273,18 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                                   {lead.eventBrief.keyBidCriteria && (
                                     <p className="text-slate-800 mt-1"><span className="font-semibold">Key Criteria:</span> {lead.eventBrief.keyBidCriteria}</p>
                                   )}
+                                </div>
+                              )}
+                              {lead.eventBrief.layout && (
+                                <div className="md:col-span-2 pt-2 border-t border-slate-100">
+                                  <span className="font-semibold text-slate-600 block mb-1">Layout Event:</span>
+                                  <p className="text-slate-800 text-xs whitespace-pre-line">{lead.eventBrief.layout}</p>
+                                </div>
+                              )}
+                              {lead.eventBrief.conferenceRegistration && (
+                                <div className="md:col-span-2 pt-2 border-t border-slate-100">
+                                  <span className="font-semibold text-slate-600 block mb-1">Conference Registration:</span>
+                                  <p className="text-slate-800 text-xs whitespace-pre-line">{lead.eventBrief.conferenceRegistration}</p>
                                 </div>
                               )}
                               {lead.eventBrief.fitForAriyana && (

@@ -165,7 +165,7 @@ router.post('/export', async (req: Request, res: Response) => {
       new TableRow({
         children: [
           createCell('Info on Last / Upcoming Events', false, true),
-          createCell(markAI(lead.upcomingEvents || lead.lastEventInfo, 'upcomingEvents', aiFilledFields)),
+          createCell(markAI(lead.eventBrief?.infoOnLastUpcomingEvents || lead.upcomingEvents || lead.lastEventInfo, 'infoOnLastUpcomingEvents', aiFilledFields)),
         ],
       }),
       new TableRow({
@@ -273,31 +273,31 @@ router.post('/export', async (req: Request, res: Response) => {
       new TableRow({
         children: [
           createCell('Name of Local Host / Member', false, true),
-          createCell(markAI(lead.keyPersonName || lead.localHostName, 'keyPersonName', aiFilledFields)),
+          createCell(markAI(lead.eventBrief?.localHostName || lead.keyPersonName || lead.localHostName, 'localHostName', aiFilledFields)),
         ],
       }),
       new TableRow({
         children: [
           createCell('Title', false, true),
-          createCell(markAI(lead.keyPersonTitle, 'keyPersonTitle', aiFilledFields)),
+          createCell(markAI(lead.eventBrief?.localHostTitle || lead.keyPersonTitle, 'localHostTitle', aiFilledFields)),
         ],
       }),
       new TableRow({
         children: [
           createCell('Email', false, true),
-          createCell(markAI(lead.keyPersonEmail, 'keyPersonEmail', aiFilledFields)),
+          createCell(markAI(lead.eventBrief?.localHostEmail || lead.keyPersonEmail, 'localHostEmail', aiFilledFields)),
         ],
       }),
       new TableRow({
         children: [
           createCell('Phone', false, true),
-          createCell(markAI(lead.keyPersonPhone, 'keyPersonPhone', aiFilledFields)),
+          createCell(markAI(lead.eventBrief?.localHostPhone || lead.keyPersonPhone, 'localHostPhone', aiFilledFields)),
         ],
       }),
       new TableRow({
         children: [
           createCell('Local Strengths & Weaknesses', false, true),
-          createCell(markAI(lead.localStrengthsWeaknesses, 'localStrengthsWeaknesses', aiFilledFields)),
+          createCell(markAI(lead.eventBrief?.localStrengths || lead.localStrengthsWeaknesses, 'localStrengths', aiFilledFields)),
         ],
       }),
     ];
@@ -373,13 +373,13 @@ router.post('/export', async (req: Request, res: Response) => {
       new TableRow({
         children: [
           createCell('Layout Event', false, true),
-          createCell(markAI(lead.layoutEvent || lead.eventLayout, 'layoutEvent', aiFilledFields)),
+          createCell(markAI(lead.eventBrief?.layout || lead.layoutEvent || lead.eventLayout, 'layout', aiFilledFields)),
         ],
       }),
       new TableRow({
         children: [
           createCell('Conference Registration', false, true),
-          createCell(markAI(lead.conferenceRegistration, 'conferenceRegistration', aiFilledFields)),
+          createCell(markAI(lead.eventBrief?.conferenceRegistration || lead.conferenceRegistration, 'conferenceRegistration', aiFilledFields)),
         ],
       }),
       new TableRow({
