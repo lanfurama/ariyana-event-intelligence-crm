@@ -7,3 +7,14 @@ dist/
 *.swo
 *~
 
+# Compiled TypeScript files - Vercel compiles these automatically
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
+!vite.config.js
+!*.config.js
+
+# But keep .ts source files
+!*.ts
+
