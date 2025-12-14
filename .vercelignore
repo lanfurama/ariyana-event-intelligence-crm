@@ -3,3 +3,12 @@
 # Exclude vite-plugin-api from build analysis
 # This file is only used in development and causes build errors
 vite-plugin-api.ts
+
+# Exclude api/src directory - only api/v1/ should be treated as serverless functions
+# This prevents Vercel from creating separate functions for each route file
+api/src/
+api/dist/
+api/node_modules/
+api/tsconfig.json
+api/package.json
+api/.gitignore

@@ -8,6 +8,7 @@ export interface DataIssue {
 
 export interface OrganizationData {
   name: string;
+  organizationName?: string; // Organization name (different from event name)
   rawData: any;
   issues: DataIssue[];
   dataQualityScore: number;
