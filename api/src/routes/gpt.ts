@@ -173,7 +173,7 @@ Return: {"organizations": [{"name": "Org Name", "rowIndex": 1, "sourceField": "F
     console.log('🟢 [GPT API] Extract organizations request');
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-5.1',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -220,7 +220,12 @@ router.post('/strategic-analysis', async (req: Request, res: Response) => {
     const prompt = `EVENT ANALYSIS FOR ARIYANA CONVENTION CENTRE DANANG
 ====================================================
 
-TASK: Analyze ONE SPECIFIC EVENT from imported data. Evaluate suitability and enrich missing information.
+⚠️ CRITICAL ACCURACY REQUIREMENT: 
+You MUST provide ONLY FACTUAL, VERIFIED information. NEVER guess, invent, or hallucinate data. 
+If information is not available after thorough research, use empty string "" for strings or null for numbers.
+Incorrect data is WORSE than missing data. Accuracy is paramount.
+
+TASK: Analyze ONE SPECIFIC EVENT from imported data. Evaluate suitability and enrich missing information with ACCURATE, VERIFIED data only.
 
 ⚠️ CRITICAL MANDATORY FIELDS - MUST BE RESEARCHED AND FILLED:
 ---------------------------------------------------------------
@@ -561,12 +566,16 @@ If ANY of these fields is empty or incomplete, you MUST:
     console.log('🟢 [GPT API] Strategic analysis request');
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-5.1',
+      model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'MICE sales analyst. Evaluate events for Ariyana Convention Centre. Return factual data only.' },
+        { 
+          role: 'system', 
+          content: 'You are an expert MICE industry analyst specializing in event research and analysis. CRITICAL RULES: 1) Only provide FACTUAL, VERIFIED information from your knowledge base. 2) NEVER guess or invent data. 3) If information is not available, use empty string "" for strings or null for numbers. 4) Be precise and accurate - incorrect data is worse than missing data. 5) Research thoroughly using your training data knowledge. 6) Follow all format requirements exactly.' 
+        },
         { role: 'user', content: prompt }
       ],
-      temperature: 0,
+      temperature: 0, // Zero temperature for maximum accuracy and consistency
+      max_tokens: 4000, // Ensure sufficient tokens for comprehensive analysis
     });
 
     // Handle tool calls if any
@@ -601,6 +610,11 @@ router.post('/enrich', async (req: Request, res: Response) => {
 
     const prompt = `DATA ENRICHMENT TASK FOR MICE ORGANIZATION
 ==========================================
+
+⚠️ CRITICAL ACCURACY REQUIREMENT:
+You MUST provide ONLY FACTUAL, VERIFIED information from your knowledge base.
+NEVER guess, invent, or hallucinate data. If information is truly unavailable after thorough research, use empty string "" for strings or null for numbers.
+Incorrect data is WORSE than missing data. Research thoroughly and verify accuracy.
 
 ORGANIZATION TO RESEARCH:
 - Name: ${companyName}
@@ -696,27 +710,30 @@ Return valid JSON object with ALL fields. Use empty string "" for missing string
   "localStrengthsWeaknesses": "[string or empty string]"
 }
 
-CRITICAL REQUIREMENTS:
+CRITICAL ACCURACY REQUIREMENTS:
 1. All string fields must be strings (use "" for empty, never null)
 2. All number fields must be numbers (use null for missing, never empty string)
-3. Research thoroughly - use knowledge base to find real information
-4. Be accurate - if uncertain, use empty string rather than guessing
-5. JSON must be valid and parseable`;
+3. Research thoroughly - use your knowledge base to find REAL, VERIFIED information
+4. ACCURACY IS PARAMOUNT - if uncertain or cannot verify, use empty string "" rather than guessing
+5. NEVER invent, guess, or hallucinate data - incorrect data is WORSE than missing data
+6. Verify information from multiple sources in your knowledge base when possible
+7. JSON must be valid and parseable
+8. Double-check all contact information, dates, and names for accuracy`;
 
     console.log('🟢 [GPT API] Data enrichment request');
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-5.1', // Using GPT-5.1 for better capabilities
+      model: 'gpt-4o-mini', // Using GPT-4o-mini for cost efficiency (60-90% cheaper than GPT-4o)
       messages: [
         { 
           role: 'system', 
-          content: `MICE industry researcher. Find factual data only. Priority: Secretary General, Organizing Chairman, website, email. Return JSON only. Empty string if not found.` 
+          content: `You are an expert MICE industry researcher. CRITICAL ACCURACY RULES: 1) Only provide FACTUAL, VERIFIED information from your knowledge base. 2) NEVER guess, invent, or hallucinate data. 3) If information is truly unavailable after thorough research, use empty string "" for strings or null for numbers. 4) Priority fields: Secretary General, Organizing Chairman, website, email, contact information. 5) Research thoroughly - check organization websites, member directories, event history. 6) Return valid JSON only. 7) Incorrect data is WORSE than missing data - accuracy over completeness.` 
         },
         { role: 'user', content: prompt }
       ],
       response_format: { type: 'json_object' },
-      temperature: 0,
-      max_completion_tokens: 1500, // Optimized for concise responses
+      temperature: 0, // Zero temperature for maximum accuracy
+      max_tokens: 2000, // Sufficient tokens for comprehensive research data
     });
 
     const content = response.choices[0]?.message?.content || '{}';
@@ -771,7 +788,7 @@ The email should:
 Return a JSON object with "subject" and "body" fields.`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-5.1',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: 'You are an expert sales email writer specializing in MICE industry outreach.' },
         { role: 'user', content: prompt }
@@ -835,7 +852,7 @@ Rules: Reference specific leads/data. Provide stats from knowledge base. Suggest
 
     console.log('🟢 [GPT API] Chat request with ICCA Leads knowledge base');
     const response = await openai.chat.completions.create({
-      model: 'gpt-5.1',
+      model: 'gpt-4o-mini',
       messages,
       temperature: 0, // Zero temperature for accurate, factual responses based on knowledge base
     });
@@ -922,7 +939,7 @@ CRITICAL:
     console.log('🟢 [GPT API] Checking event eligibility:', eventName);
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-5.1',
+      model: 'gpt-4o-mini',
       messages: [
         { 
           role: 'system', 
@@ -1028,7 +1045,7 @@ Return JSON:
     const openai = getAiClient();
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-5.1',
+      model: 'gpt-4o-mini',
       messages: [
         { 
           role: 'system', 

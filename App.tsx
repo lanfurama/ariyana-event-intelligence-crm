@@ -1390,7 +1390,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
 
 
   // Generate final report from batch results
-  const generateFinalReport = (results: any[], totalEvents: number): string => {
+  const generateFinalReport = (results: any[], totalEvents: number, skippedCount: number = 0): string => {
     // Sort by totalScore descending
     const sortedResults = [...results].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
     
@@ -1401,6 +1401,9 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
 
     let report = `# Phân tích và chọn lọc Events\n\n`;
     report += `**Tổng số events đã import:** ${totalEvents}\n`;
+    if (skippedCount > 0) {
+      report += `**Số events bị SKIP (không ICCA qualified):** ${skippedCount}\n`;
+    }
     report += `**Số events đã phân tích:** ${results.length}\n`;
     report += `**Số events PHÙ HỢP (Score ≥ 40):** ${qualifiedEvents.length}\n`;
     report += `**Top events được đề xuất:** ${topEvents.length}\n\n`;
@@ -2513,12 +2516,13 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
            setOrganizationProgress(initialProgress);
            setIsBatchMode(true);
            
-           // Process events one by one and display results immediately
-           const allResults: any[] = [];
-           
-           // Initialize skeleton loading for all events
-           setAnalyzingEvents(new Set(eventsList.map(e => e.name)));
-           setCompletedLeadsMap(new Map());
+          // Process events one by one and display results immediately
+          const allResults: any[] = [];
+          let skippedCount = 0; // Track events skipped due to not being ICCA qualified
+          
+          // Initialize skeleton loading for all events
+          setAnalyzingEvents(new Set(eventsList.map(e => e.name)));
+          setCompletedLeadsMap(new Map());
            
           // Multi-Agent System: Each event gets assigned to a dedicated agent worker
           const MAX_AGENTS = 10; // Number of concurrent agent workers
@@ -2556,6 +2560,28 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               } catch (eligibilityError: any) {
                 console.warn(`⚠️  [Agent ${agentId}] Eligibility check failed, continuing with analysis:`, eligibilityError.message);
                 // Continue with analysis even if eligibility check fails
+              }
+              
+              // FILTER: Skip events that are NOT ICCA qualified
+              if (eligibilityCheck && !eligibilityCheck.isICCAQualified) {
+                console.log(`⏭️  [Agent ${agentId}] Skipping event "${event.name}" - NOT ICCA qualified`);
+                console.log(`📋 [Agent ${agentId}] Reason: ${eligibilityCheck.iccaQualifiedReason || 'Event does not meet ICCA qualification criteria'}`);
+                
+                // Update progress to show skipped
+                setOrganizationProgress(prev => prev.map(p => 
+                  p.companyName === event.name 
+                    ? { ...p, status: 'skipped', reason: 'Not ICCA qualified' }
+                    : p
+                ));
+                
+                // Remove from analyzing set
+                setAnalyzingEvents(prev => {
+                  const newSet = new Set(prev);
+                  newSet.delete(event.name);
+                  return newSet;
+                });
+                
+                return { success: false, agentId, eventName: event.name, skipped: true, reason: 'Not ICCA qualified' };
               }
               
               // STEP 2: Score event using backend logic
@@ -2729,7 +2755,10 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               batchResults.forEach((settled, index) => {
                 if (settled.status === 'fulfilled') {
                   const result = settled.value;
-                  if (result.success && result.lead) {
+                  if (result.skipped) {
+                    skippedCount++;
+                    console.log(`⏭️  [Agent Pool] Event "${result.eventName}" skipped: ${result.reason || 'Not ICCA qualified'}`);
+                  } else if (result.success && result.lead) {
                     allResults.push(result.lead);
                     
                     // Update extracted leads immediately
@@ -3046,8 +3075,8 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               });
               
               // Generate and display report after each batch
-              if (allResults.length > 0) {
-                const currentReport = generateFinalReport(allResults, eventsToProcess.length);
+              if (allResults.length > 0 || skippedCount > 0) {
+                const currentReport = generateFinalReport(allResults, eventsToProcess.length, skippedCount);
                 const currentParsed = parseReport(currentReport);
                 
                 setParsedReport(currentParsed);
@@ -3408,7 +3437,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         </p>
         <details className="mt-3">
           <summary className="text-sm text-slate-700 cursor-pointer hover:text-slate-900 font-medium">
-            Xem chi tiết thuật toán scoring
+            Xem chi tiết
           </summary>
           <div className="mt-3 p-3 bg-slate-50 rounded border border-slate-200 text-xs space-y-2">
             <div>
@@ -5302,9 +5331,12 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               </div>
             </div>
           ) : (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-yellow-800">
-                ⚠️ Analysis completed but no structured data found. Showing raw report below.
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-4 text-center">
+              <p className="text-base text-blue-800 font-medium">
+                Không tìm thấy event phù hợp
+              </p>
+              <p className="text-sm text-blue-600 mt-2">
+                Không có event nào đáp ứng tiêu chí ICCA qualified và điểm số yêu cầu.
               </p>
             </div>
           )}
@@ -5371,14 +5403,16 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         </div>
       )}
 
-      {/* Fallback: Show raw report if parsing failed or partC is empty */}
+      {/* Fallback: Show message if parsing failed or partC is empty - No raw report display */}
       {report && (!parsedReport || !parsedReport.partC || !Array.isArray(parsedReport.partC) || parsedReport.partC.length === 0) && (
-        <div className="bg-white p-5 rounded-lg shadow-sm border border-slate-200 animate-fade-in">
-          <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center">
-              <FileText className="mr-2 text-indigo-500" size={20} />
-              Strategic Analysis Report
-            </h3>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center animate-fade-in">
+          <p className="text-base text-blue-800 font-medium">
+            Không tìm thấy event phù hợp
+          </p>
+          <p className="text-sm text-blue-600 mt-2">
+            Không có event nào đáp ứng tiêu chí ICCA qualified và điểm số yêu cầu.
+          </p>
+          {report && (
             <button
               onClick={() => {
                 const blob = new Blob([report], { type: 'text/plain' });
@@ -5389,25 +5423,11 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 link.click();
                 URL.revokeObjectURL(url);
               }}
-              className="text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded flex items-center"
+              className="mt-4 text-xs px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded flex items-center mx-auto"
             >
-              <Download size={14} className="mr-1" /> Download Report
+              <Download size={14} className="mr-1" /> Tải báo cáo chi tiết
             </button>
-          </div>
-          <div className="max-h-[600px] overflow-y-auto pr-2">
-            <div className="prose prose-slate max-w-none text-sm">
-              {report.split('\n').map((line, i) => {
-                if (line.trim() === '') return <br key={i} />;
-                if (line.startsWith('# ')) return <h1 key={i} className="text-2xl font-bold mb-4 mt-6 text-slate-900">{line.replace('# ', '')}</h1>;
-                if (line.startsWith('## ')) return <h2 key={i} className="text-xl font-bold mt-6 mb-3 text-slate-800">{line.replace('## ', '')}</h2>;
-                if (line.startsWith('### ')) return <h3 key={i} className="text-lg font-semibold mt-4 mb-2 text-slate-800">{line.replace('### ', '')}</h3>;
-                if (line.startsWith('|')) return <div key={i} className="font-mono text-xs text-slate-600 overflow-x-auto whitespace-pre my-2 bg-slate-50 p-2 rounded">{line}</div>;
-                if (line.startsWith('- ') || line.startsWith('* ')) return <li key={i} className="ml-4 mb-1 text-slate-700">{line.replace(/^[-*] /, '')}</li>;
-                if (line.startsWith('**') && line.endsWith('**')) return <p key={i} className="font-bold mb-2 text-slate-900">{line.replace(/\*\*/g, '')}</p>;
-                return <p key={i} className="mb-2 text-slate-700 leading-relaxed">{line}</p>;
-              })}
-            </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -5863,6 +5883,132 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   );
 };
 
+// Helper function to format markdown text into React elements
+const formatMarkdown = (text: string): React.ReactNode => {
+  if (!text) return null;
+  
+  // Split by double newlines to create paragraphs
+  const paragraphs = text.split(/\n\n+/);
+  
+  return paragraphs.map((para, paraIdx) => {
+    if (!para.trim()) return null;
+    
+    // Split by single newlines for line breaks
+    const lines = para.split('\n');
+    
+    return (
+      <div key={paraIdx} className={paraIdx > 0 ? 'mt-3' : ''}>
+        {lines.map((line, lineIdx) => {
+          if (!line.trim()) return <br key={lineIdx} />;
+          
+          // Check if it's a list item
+          const listMatch = line.match(/^(\s*)([-*•]\s+|(\d+\.)\s+)(.+)$/);
+          if (listMatch) {
+            const isOrdered = !!listMatch[3];
+            const content = formatInlineMarkdown(listMatch[4]);
+            return (
+              <div key={lineIdx} className={`flex ${lineIdx > 0 ? 'mt-1' : ''}`}>
+                <span className="mr-2">{isOrdered ? listMatch[3] : '•'}</span>
+                <span>{content}</span>
+              </div>
+            );
+          }
+          
+          // Check if it's a heading
+          const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
+          if (headingMatch) {
+            const level = headingMatch[1].length;
+            const content = formatInlineMarkdown(headingMatch[2]);
+            const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+            const className = level === 1 ? 'text-lg font-bold mt-4 mb-2' : 
+                             level === 2 ? 'text-base font-semibold mt-3 mb-1' : 
+                             'text-sm font-semibold mt-2 mb-1';
+            return <Tag key={lineIdx} className={className}>{content}</Tag>;
+          }
+          
+          // Regular paragraph line
+          return (
+            <p key={lineIdx} className={lineIdx > 0 ? 'mt-2' : ''}>
+              {formatInlineMarkdown(line)}
+            </p>
+          );
+        })}
+      </div>
+    );
+  });
+};
+
+// Helper to format inline markdown (bold, italic, code)
+const formatInlineMarkdown = (text: string): React.ReactNode => {
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  
+  // Pattern for **bold**, *italic*, `code`, and **bold with *italic***
+  const patterns = [
+    { regex: /\*\*([^*]+)\*\*/g, tag: 'strong', className: 'font-semibold' },
+    { regex: /\*([^*]+)\*/g, tag: 'em', className: 'italic' },
+    { regex: /`([^`]+)`/g, tag: 'code', className: 'bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono' },
+  ];
+  
+  // Find all matches
+  const matches: Array<{ start: number; end: number; type: string; content: string; className: string }> = [];
+  
+  patterns.forEach(({ regex, tag, className }) => {
+    let match;
+    regex.lastIndex = 0;
+    while ((match = regex.exec(text)) !== null) {
+      matches.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        type: tag,
+        content: match[1],
+        className
+      });
+    }
+  });
+  
+  // Sort matches by position
+  matches.sort((a, b) => a.start - b.start);
+  
+  // Remove overlapping matches (keep the first one)
+  const filteredMatches: typeof matches = [];
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
+    const overlaps = filteredMatches.some(m => 
+      (match.start >= m.start && match.start < m.end) ||
+      (match.end > m.start && match.end <= m.end)
+    );
+    if (!overlaps) {
+      filteredMatches.push(match);
+    }
+  }
+  
+  // Build React elements
+  filteredMatches.forEach((match, idx) => {
+    // Add text before match
+    if (match.start > lastIndex) {
+      parts.push(text.substring(lastIndex, match.start));
+    }
+    
+    // Add formatted content
+    const Tag = match.type as keyof JSX.IntrinsicElements;
+    parts.push(
+      <Tag key={idx} className={match.className}>
+        {match.content}
+      </Tag>
+    );
+    
+    lastIndex = match.end;
+  });
+  
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+  
+  return parts.length > 0 ? <>{parts}</> : text;
+};
+
 // 6. Chat Assistant
 const ChatAssistant = ({ user }: { user: User }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -6138,7 +6284,13 @@ const ChatAssistant = ({ user }: { user: User }) => {
                 ? 'bg-blue-600 text-white rounded-br-none' 
                 : 'bg-white text-slate-700 border border-slate-200 rounded-bl-none'
             }`}>
-              {msg.text}
+              {msg.role === 'assistant' ? (
+                <div className="prose prose-sm max-w-none">
+                  {formatMarkdown(msg.text)}
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap">{msg.text}</div>
+              )}
             </div>
           </div>
         ))
