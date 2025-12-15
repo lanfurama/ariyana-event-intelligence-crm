@@ -1,0 +1,426 @@
+test_case_id,feature_id,test_case_name,test_type,test_steps,expected_result,priority,status,notes,deadline
+TC-USR-001-01,USR-001,Get All Users - Success,positive,"1. Send GET request to /api/users
+2. Verify response status code is 200
+3. Verify response contains array of users
+4. Verify each user has required fields (username role email)",Response status 200; Returns array of user objects with required fields,high,pending,,
+TC-USR-001-02,USR-001,Get All Users - Empty Database,edge case,"1. Clear users table
+2. Send GET request to /api/users
+3. Verify response status code is 200
+4. Verify response is empty array",Response status 200; Returns empty array [],medium,pending,,
+TC-USR-002-01,USR-002,Get User by Username - Success,positive,"1. Create test user with username 'testuser'
+2. Send GET request to /api/users/testuser
+3. Verify response status code is 200
+4. Verify response contains user data matching testuser",Response status 200; Returns user object with matching username,high,pending,,
+TC-USR-002-02,USR-002,Get User by Username - Not Found,negative,"1. Send GET request to /api/users/nonexistentuser
+2. Verify response status code is 404
+3. Verify response contains error message",Response status 404; Error message indicates user not found,high,pending,,
+TC-USR-003-01,USR-003,Create User - Success,positive,"1. Send POST request to /api/users with valid user data (username role email password)
+2. Verify response status code is 201
+3. Verify response contains created user data
+4. Verify user exists in database",Response status 201; User created successfully with all provided fields,high,pending,,
+TC-USR-003-02,USR-003,Create User - Missing Required Fields,negative,"1. Send POST request to /api/users with missing username
+2. Verify response status code is 400 or 500
+3. Verify response contains error message",Response status 400/500; Error message indicates missing required field,high,pending,,
+TC-USR-003-03,USR-003,Create User - Duplicate Username,negative,"1. Create user with username 'testuser'
+2. Send POST request to /api/users with same username
+3. Verify response status code is 400 or 409
+4. Verify response contains error about duplicate username",Response status 400/409; Error indicates duplicate username not allowed,high,pending,,
+TC-USR-004-01,USR-004,Update User - Success,positive,"1. Create test user
+2. Send PUT request to /api/users/testuser with updated data
+3. Verify response status code is 200
+4. Verify response contains updated user data
+5. Verify changes persisted in database",Response status 200; User updated successfully with new values,high,pending,,
+TC-USR-004-02,USR-004,Update User - Not Found,negative,"1. Send PUT request to /api/users/nonexistentuser
+2. Verify response status code is 404
+3. Verify response contains error message",Response status 404; Error indicates user not found,high,pending,,
+TC-USR-005-01,USR-005,Delete User - Success,positive,"1. Create test user
+2. Send DELETE request to /api/users/testuser
+3. Verify response status code is 204
+4. Verify user no longer exists in database",Response status 204; User deleted successfully,high,pending,,
+TC-USR-005-02,USR-005,Delete User - Not Found,negative,"1. Send DELETE request to /api/users/nonexistentuser
+2. Verify response status code is 404
+3. Verify response contains error message",Response status 404; Error indicates user not found,high,pending,,
+TC-LEAD-001-01,LEAD-001,Get All Leads - Success,positive,"1. Create multiple test leads
+2. Send GET request to /api/leads
+3. Verify response status code is 200
+4. Verify response contains array of leads
+5. Verify each lead has required fields",Response status 200; Returns array of lead objects,high,pending,,
+TC-LEAD-001-02,LEAD-001,Get All Leads - Filter by Status,positive,"1. Create leads with different statuses (New In Progress Closed)
+2. Send GET request to /api/leads?status=New
+3. Verify response contains only leads with status=New",Response status 200; Returns filtered leads matching status filter,high,pending,,
+TC-LEAD-001-03,LEAD-001,Get All Leads - Filter by Industry,positive,"1. Create leads with different industries
+2. Send GET request to /api/leads?industry=Medical
+3. Verify response contains only leads with industry=Medical",Response status 200; Returns filtered leads matching industry filter,high,pending,,
+TC-LEAD-001-04,LEAD-001,Get All Leads - Filter by Country,positive,"1. Create leads with different countries
+2. Send GET request to /api/leads?country=Vietnam
+3. Verify response contains only leads with country=Vietnam",Response status 200; Returns filtered leads matching country filter,high,pending,,
+TC-LEAD-001-05,LEAD-001,Get All Leads - Search by Keyword,positive,"1. Create leads with company names containing 'Conference'
+2. Send GET request to /api/leads?search=Conference
+3. Verify response contains leads matching search keyword",Response status 200; Returns leads matching search keyword in relevant fields,high,pending,,
+TC-LEAD-001-06,LEAD-001,Get All Leads - Multiple Filters,positive,"1. Create test leads
+2. Send GET request to /api/leads?status=New&industry=Medical&country=Vietnam
+3. Verify response contains leads matching all filters",Response status 200; Returns leads matching all applied filters,high,pending,,
+TC-LEAD-002-01,LEAD-002,Get Lead Statistics - Success,positive,"1. Create multiple leads with different statuses and industries
+2. Send GET request to /api/leads/stats
+3. Verify response status code is 200
+4. Verify response contains statistics (total leads by status by industry etc)",Response status 200; Returns statistics object with lead counts and breakdowns,high,pending,,
+TC-LEAD-003-01,LEAD-003,Get Leads with Email Count - Success,positive,"1. Create leads with associated email logs
+2. Send GET request to /api/leads/with-email-count
+3. Verify response contains leads with email_count field
+4. Verify email_count matches actual email logs",Response status 200; Returns leads with accurate email_count field,high,pending,,
+TC-LEAD-003-02,LEAD-003,Get Leads with Email Count - Filter by Lead ID,positive,"1. Create lead with ID=1 and email logs
+2. Send GET request to /api/leads/with-email-count?leadId=1
+3. Verify response contains only lead with ID=1 and email_count",Response status 200; Returns single lead with email_count matching actual logs,medium,pending,,
+TC-LEAD-004-01,LEAD-004,Get Lead by ID - Success,positive,"1. Create test lead with ID=1
+2. Send GET request to /api/leads/1
+3. Verify response status code is 200
+4. Verify response contains lead data with ID=1",Response status 200; Returns lead object matching requested ID,high,pending,,
+TC-LEAD-004-02,LEAD-004,Get Lead by ID - Not Found,negative,"1. Send GET request to /api/leads/99999
+2. Verify response status code is 404
+3. Verify response contains error message",Response status 404; Error indicates lead not found,high,pending,,
+TC-LEAD-005-01,LEAD-005,Create Lead - Success,positive,"1. Send POST request to /api/leads with valid lead data (companyName industry country city)
+2. Verify response status code is 201
+3. Verify response contains created lead data
+4. Verify lead exists in database",Response status 201; Lead created successfully with all provided fields,high,pending,,
+TC-LEAD-005-02,LEAD-005,Create Lead - Missing Required Fields,negative,"1. Send POST request to /api/leads with missing companyName
+2. Verify response status code is 400 or 500
+3. Verify response contains error message",Response status 400/500; Error indicates missing required field,high,pending,,
+TC-LEAD-006-01,LEAD-006,Update Lead - Success,positive,"1. Create test lead
+2. Send PUT request to /api/leads/1 with updated data
+3. Verify response status code is 200
+4. Verify response contains updated lead data
+5. Verify changes persisted in database",Response status 200; Lead updated successfully with new values,high,pending,,
+TC-LEAD-006-02,LEAD-006,Update Lead - Not Found,negative,"1. Send PUT request to /api/leads/99999
+2. Verify response status code is 404
+3. Verify response contains error message",Response status 404; Error indicates lead not found,high,pending,,
+TC-LEAD-007-01,LEAD-007,Delete Lead - Success,positive,"1. Create test lead
+2. Send DELETE request to /api/leads/1
+3. Verify response status code is 204
+4. Verify lead no longer exists in database",Response status 204; Lead deleted successfully,high,pending,,
+TC-ET-001-01,ET-001,Get All Email Templates - Success,positive,"1. Create multiple email templates
+2. Send GET request to /api/email-templates
+3. Verify response status code is 200
+4. Verify response contains array of templates",Response status 200; Returns array of email template objects,high,pending,,
+TC-ET-002-01,ET-002,Get Template by ID - Success,positive,"1. Create email template with ID=1
+2. Send GET request to /api/email-templates/1
+3. Verify response status code is 200
+4. Verify response contains template data",Response status 200; Returns email template object matching requested ID,high,pending,,
+TC-ET-003-01,ET-003,Create Email Template - Success,positive,"1. Send POST request to /api/email-templates with valid template data (name subject body)
+2. Verify response status code is 201
+3. Verify response contains created template data",Response status 201; Template created successfully,high,pending,,
+TC-ET-004-01,ET-004,Update Email Template - Success,positive,"1. Create email template
+2. Send PUT request to /api/email-templates/1 with updated content
+3. Verify response status code is 200
+4. Verify template updated in database",Response status 200; Template updated successfully,high,pending,,
+TC-ET-005-01,ET-005,Delete Email Template - Success,positive,"1. Create email template
+2. Send DELETE request to /api/email-templates/1
+3. Verify response status code is 204
+4. Verify template deleted from database",Response status 204; Template deleted successfully,high,pending,,
+TC-EL-001-01,EL-001,Get All Email Logs - Success,positive,"1. Create multiple email logs
+2. Send GET request to /api/email-logs
+3. Verify response status code is 200
+4. Verify response contains array of email logs",Response status 200; Returns array of email log objects,high,pending,,
+TC-EL-001-02,EL-001,Get All Email Logs - Filter by Lead ID,positive,"1. Create email logs for different leads
+2. Send GET request to /api/email-logs?leadId=1
+3. Verify response contains only logs for leadId=1",Response status 200; Returns filtered email logs matching leadId,high,pending,,
+TC-EL-002-01,EL-002,Get Email Log by ID - Success,positive,"1. Create email log with ID=1
+2. Send GET request to /api/email-logs/1
+3. Verify response status code is 200
+4. Verify response contains email log data",Response status 200; Returns email log object matching requested ID,high,pending,,
+TC-EL-003-01,EL-003,Create Email Log - Success,positive,"1. Send POST request to /api/email-logs with valid log data (leadId subject body sentAt)
+2. Verify response status code is 201
+3. Verify response contains created log data",Response status 201; Email log created successfully,high,pending,,
+TC-EL-006-01,EL-006,Get Email Attachments - Success,positive,"1. Create email log with attachments
+2. Send GET request to /api/email-logs/1/attachments
+3. Verify response status code is 200
+4. Verify response contains array of attachments",Response status 200; Returns array of attachment objects,medium,pending,,
+TC-EL-007-01,EL-007,Create Email Attachment - Success,positive,"1. Create email log
+2. Send POST request to /api/email-logs/1/attachments with attachment data (filename filepath fileSize)
+3. Verify response status code is 201
+4. Verify attachment created",Response status 201; Attachment created successfully,medium,pending,,
+TC-EL-008-01,EL-008,Delete Email Attachment - Success,positive,"1. Create email log with attachment
+2. Send DELETE request to /api/email-logs/attachments/1
+3. Verify response status code is 204
+4. Verify attachment deleted",Response status 204; Attachment deleted successfully,medium,pending,,
+TC-CHAT-001-01,CHAT-001,Get Chat Messages by Username - Success,positive,"1. Create multiple chat messages for username 'testuser'
+2. Send GET request to /api/chat-messages/testuser
+3. Verify response status code is 200
+4. Verify response contains array of messages for testuser",Response status 200; Returns array of chat messages for specified username,high,pending,,
+TC-CHAT-001-02,CHAT-001,Get Chat Messages - Empty History,edge case,"1. Send GET request to /api/chat-messages/newuser
+2. Verify response status code is 200
+3. Verify response is empty array",Response status 200; Returns empty array for user with no messages,medium,pending,,
+TC-CHAT-002-01,CHAT-002,Create Chat Message - Success,positive,"1. Send POST request to /api/chat-messages with valid message data (id username role text timestamp)
+2. Verify response status code is 201
+3. Verify response contains created message data
+4. Verify message stored in database",Response status 201; Chat message created successfully,high,pending,,
+TC-CHAT-002-02,CHAT-002,Create Chat Message - Missing Required Fields,negative,"1. Send POST request to /api/chat-messages with missing username
+2. Verify response status code is 400
+3. Verify response contains error about missing fields",Response status 400; Error indicates missing required fields,high,pending,,
+TC-CHAT-002-03,CHAT-002,Create Chat Message - Invalid Role,negative,"1. Send POST request with role='invalid'
+2. Verify response status code is 400
+3. Verify response contains error about invalid role",Response status 400; Error indicates role must be user model or assistant,high,pending,,
+TC-CHAT-003-01,CHAT-003,Delete All Messages by Username - Success,positive,"1. Create multiple messages for username 'testuser'
+2. Send DELETE request to /api/chat-messages/testuser
+3. Verify response status code is 204
+4. Verify all messages for testuser deleted",Response status 204; All messages for username deleted successfully,medium,pending,,
+TC-CHAT-004-01,CHAT-004,Delete Single Message - Success,positive,"1. Create chat message with ID='msg123'
+2. Send DELETE request to /api/chat-messages/message/msg123
+3. Verify response status code is 204
+4. Verify message deleted",Response status 204; Single message deleted successfully,medium,pending,,
+TC-GEM-001-01,GEM-001,Lead Data Enrichment - Success,positive,"1. Send POST request to /api/gemini/enrich with companyName='World Medical Association'
+2. Verify response status code is 200
+3. Verify response contains text field with enrichment data
+4. Verify response may contain grounding metadata",Response status 200; Returns enriched data with contact info website industry details,high,pending,,Requires GEMINI_API_KEY
+TC-GEM-001-02,GEM-001,Lead Data Enrichment - Missing Company Name,negative,"1. Send POST request to /api/gemini/enrich without companyName
+2. Verify response status code is 400
+3. Verify response contains error message",Response status 400; Error indicates company name is required,high,pending,,
+TC-GEM-001-03,GEM-001,Lead Data Enrichment - Rate Limit Handling,edge case,"1. Send multiple rapid requests to /api/gemini/enrich
+2. Verify rate limit error handling
+3. Verify retryDelay field in error response",Response handles rate limits; Returns retryDelay if rate limited,medium,pending,,
+TC-GEM-002-01,GEM-002,Draft Sales Email - Success,positive,"1. Send POST request to /api/gemini/draft-email with leadName leadCompany leadTitle eventContext
+2. Verify response status code is 200
+3. Verify response contains subject and body fields
+4. Verify email content is personalized and professional",Response status 200; Returns JSON with subject and body fields containing personalized email,high,pending,,
+TC-GEM-002-02,GEM-002,Draft Sales Email - Missing Required Fields,negative,"1. Send POST request without leadName or leadCompany
+2. Verify response status code is 400
+3. Verify response contains error message",Response status 400; Error indicates lead name and company are required,high,pending,,
+TC-GEM-003-01,GEM-003,Chat Assistant - Success,positive,"1. Send POST request to /api/gemini/chat with history array and message
+2. Verify response status code is 200
+3. Verify response contains text field with AI response
+4. Verify response references ICCA Leads knowledge base",Response status 200; Returns AI response that references ICCA Leads data,high,pending,,
+TC-GEM-003-02,GEM-003,Chat Assistant - Missing Message,negative,"1. Send POST request without message field
+2. Verify response status code is 400
+3. Verify response contains error message",Response status 400; Error indicates message and history are required,high,pending,,
+TC-GEM-004-01,GEM-004,Video Image Analysis - Success,positive,"1. Send POST request to /api/gemini/analyze-video with base64Data and mimeType
+2. Verify response status code is 200
+3. Verify response contains text with competitive intelligence analysis
+4. Verify analysis includes venue competitor info and sales opportunities",Response status 200; Returns analysis in Vietnamese with competitive intelligence insights,medium,pending,,
+TC-GEM-005-01,GEM-005,Knowledge Base Summary - Success,positive,"1. Create multiple leads in database
+2. Send GET request to /api/gemini/knowledge-base
+3. Verify response status code is 200
+4. Verify response contains knowledge field with formatted ICCA Leads data",Response status 200; Returns knowledge base summary with lead statistics and patterns,medium,pending,,
+TC-GEM-006-01,GEM-006,Strategic Analysis - Success,positive,"1. Send POST request to /api/gemini/strategic-analysis with leadsData containing event information
+2. Verify response status code is 200
+3. Verify response contains text with analysis
+4. Verify analysis includes mandatory fields (openYear localHostName localHostTitle localHostEmail localHostPhone localStrengths layout conferenceRegistration)
+5. Verify JSON output contains enriched event data",Response status 200; Returns comprehensive analysis with all 8 mandatory fields researched and filled,high,pending,,
+TC-GEM-006-02,GEM-006,Strategic Analysis - Missing Leads Data,negative,"1. Send POST request without leadsData
+2. Verify response status code is 400
+3. Verify response contains error message",Response status 400; Error indicates leads data is required,high,pending,,
+TC-GPT-002-01,GPT-002,Strategic Analysis - Success,positive,"1. Send POST request to /api/gpt/strategic-analysis with leadsData
+2. Verify response status code is 200
+3. Verify response contains comprehensive analysis
+4. Verify mandatory fields are researched and validated",Response status 200; Returns strategic analysis with mandatory field validation,high,pending,,Requires OPENAI_API_KEY
+TC-GPT-003-01,GPT-003,Data Enrichment - Success,positive,"1. Send POST request to /api/gpt/enrich with companyName
+2. Verify response status code is 200
+3. Verify response contains enriched data (website contact info industry etc)
+4. Verify mandatory fields (localStrengthsWeaknesses layoutEvent conferenceRegistration) are filled",Response status 200; Returns enriched data with mandatory fields researched,high,pending,,
+TC-GPT-006-01,GPT-006,Event Eligibility Check - Success,positive,"1. Send POST request to /api/gpt/check-event-eligibility with eventName and eventData
+2. Verify response status code is 200
+3. Verify response contains hasVietnamHistory isICCAQualified hasRecentActivity fields
+4. Verify ICCA qualification follows 3 golden rules (rotation size regularity)",Response status 200; Returns eligibility check with ICCA qualification validation,high,pending,,
+TC-GPT-006-02,GPT-006,Event Eligibility Check - ICCA Qualified Event,positive,"1. Send request with event that rotates between 3+ countries has 50+ delegates and is regular
+2. Verify isICCAQualified is true
+3. Verify iccaQualifiedReason explains all 3 rules satisfied",Response status 200; isICCAQualified=true with explanation of all 3 rules,high,pending,,
+TC-GPT-006-03,GPT-006,Event Eligibility Check - Non-ICCA Event,positive,"1. Send request with corporate event or trade show
+2. Verify isICCAQualified is false
+3. Verify iccaQualifiedReason explains why not qualified",Response status 200; isICCAQualified=false with clear explanation,high,pending,,
+TC-EXCEL-001-01,EXCEL-001,Upload Excel File - Success,positive,"1. Prepare valid Excel file (.xlsx) with Organizations and Editions sheets
+2. Send POST request to /api/excel-import/upload with file in multipart/form-data
+3. Verify response status code is 200
+4. Verify response contains summary preview events and textData fields
+5. Verify events are extracted and grouped by SeriesName",Response status 200; File processed successfully; Events extracted and grouped correctly,high,pending,,
+TC-EXCEL-001-02,EXCEL-001,Upload Excel File - Invalid File Type,negative,"1. Send POST request with PDF file instead of Excel
+2. Verify response status code is 400
+3. Verify response contains error about file type",Response status 400; Error indicates only Excel files allowed,high,pending,,
+TC-EXCEL-001-03,EXCEL-001,Upload Excel File - File Too Large,negative,"1. Send POST request with Excel file larger than 10MB
+2. Verify response status code is 400
+3. Verify response contains error about file size limit",Response status 400; Error indicates file size exceeds 10MB limit,medium,pending,,
+TC-EXCEL-001-04,EXCEL-001,Upload Excel File - Multiple Sheets,positive,"1. Upload Excel file with Organizations Editions Contacts sheets
+2. Verify all sheets are processed
+3. Verify summary shows correct sheet count and row counts",Response status 200; All sheets processed; Summary shows accurate sheet and row counts,high,pending,,
+TC-EXCEL-001-05,EXCEL-001,Upload Excel File - Duplicate Removal,positive,"1. Upload Excel file with duplicate rows
+2. Verify duplicates are removed
+3. Verify cleanedData count is less than original row count",Response status 200; Duplicates removed; cleanedData count reflects unique rows only,high,pending,,
+TC-EXCEL-002-01,EXCEL-002,Excel Data Analysis - Success,positive,"1. Upload Excel file and get textData
+2. Send POST request to /api/excel-import/analyze with textData and summary
+3. Verify response status code is 200
+4. Verify response contains analysis field with strategic analysis
+5. Verify analysis includes JSON array of high-potential leads",Response status 200; Returns analysis with JSON array of enriched leads,high,pending,,
+TC-EXCEL-002-02,EXCEL-002,Excel Data Analysis - Missing Text Data,negative,"1. Send POST request without textData
+2. Verify response status code is 400
+3. Verify response contains error message",Response status 400; Error indicates text data is required,high,pending,,
+TC-CSV-001-01,CSV-001,Upload CSV File - Success,positive,"1. Prepare valid CSV file with headers and data rows
+2. Send POST request to /api/csv-import/upload with file
+3. Verify response status code is 200
+4. Verify response contains summary preview organizations and textData
+5. Verify organizations are extracted correctly",Response status 200; CSV file processed successfully; Organizations extracted,high,pending,,
+TC-CSV-001-02,CSV-001,Upload CSV File - Invalid File Type,negative,"1. Send POST request with Excel file instead of CSV
+2. Verify response status code is 400
+3. Verify response contains error about file type",Response status 400; Error indicates only CSV files allowed,high,pending,,
+TC-CSV-001-03,CSV-001,Upload CSV File - Quoted Values,positive,"1. Upload CSV file with quoted values containing commas
+2. Verify quoted values are parsed correctly
+3. Verify no data corruption",Response status 200; Quoted values parsed correctly without corruption,medium,pending,,
+TC-CSV-001-04,CSV-001,Upload CSV File - BOM Handling,positive,"1. Upload CSV file with BOM (Byte Order Mark)
+2. Verify BOM is removed correctly
+3. Verify headers parsed correctly",Response status 200; BOM removed; Headers parsed correctly,medium,pending,,
+TC-EB-001-01,EB-001,Export Event Brief to Word - Success,positive,"1. Create lead with complete event brief data
+2. Send POST request to /api/event-brief/export with lead data
+3. Verify response status code is 200
+4. Verify Content-Type is application/vnd.openxmlformats-officedocument.wordprocessingml.document
+5. Verify Content-Disposition header includes filename
+6. Verify response body is valid .docx file",Response status 200; Returns valid .docx file with correct headers,high,pending,,
+TC-EB-001-02,EB-001,Export Event Brief - Missing Lead Data,negative,"1. Send POST request without lead data
+2. Verify response status code is 400
+3. Verify response contains error message",Response status 400; Error indicates lead data is required,high,pending,,
+TC-EB-001-03,EB-001,Export Event Brief - All Sections Included,positive,"1. Export Event Brief with complete lead data
+2. Open generated .docx file
+3. Verify all sections present: Event Brief Event History International Organisation Bidding Information Other Information
+4. Verify AI-researched fields marked with [AI Researched]",Response status 200; Word document contains all required sections with AI markers,high,pending,,
+TC-EB-002-01,EB-002,Event Brief Sections - Event History,positive,"1. Export Event Brief with lead containing editions array
+2. Verify Event History section includes all editions
+3. Verify format: Date Congress Venue Organizing Chairman Secretary General",Response status 200; Event History section formatted correctly with all editions,high,pending,,
+TC-EB-003-01,EB-003,AI Field Marking - Success,positive,"1. Export Event Brief with lead containing aiFilledFields array
+2. Verify fields in aiFilledFields are marked with [AI Researched] in document
+3. Verify note at bottom indicates number of AI-filled fields",Response status 200; AI-researched fields marked correctly; Note displayed,high,pending,,
+TC-SCORE-001-01,SCORE-001,Calculate Event Score - High Score,positive,"1. Create event with Vietnam history (25) regional name (25) email+phone (25) 500+ delegates (25)
+2. Calculate event score
+3. Verify totalScore is 100",Total score equals 100 (sum of all component scores),high,pending,,
+TC-SCORE-001-02,SCORE-001,Calculate Event Score - Low Score,positive,"1. Create event with no Vietnam/SEA history (0) no regional indicators (0) no contact (0) no delegates (0)
+2. Calculate event score
+3. Verify totalScore is 0",Total score equals 0,high,pending,,
+TC-SCORE-002-01,SCORE-002,History Score - Vietnam Events,positive,"1. Create event with editions containing Vietnam country
+2. Calculate history score
+3. Verify historyScore is 25",History score equals 25 for Vietnam events,high,pending,,
+TC-SCORE-002-02,SCORE-002,History Score - SEA Events,positive,"1. Create event with editions containing Thailand or Singapore
+2. Calculate history score
+3. Verify historyScore is 15",History score equals 15 for SEA events,high,pending,,
+TC-SCORE-002-03,SCORE-002,History Score - No Asia History,positive,"1. Create event with editions only in Europe/Americas
+2. Calculate history score
+3. Verify historyScore is 0",History score equals 0 for no Asia history,high,pending,,
+TC-SCORE-003-01,SCORE-003,Region Score - ASEAN Keyword,positive,"1. Create event with name containing 'ASEAN'
+2. Calculate region score
+3. Verify regionScore is 25",Region score equals 25 for ASEAN/Asia/Pacific keywords,high,pending,,
+TC-SCORE-003-02,SCORE-003,Region Score - Asian Location,positive,"1. Create event with editions in Asian countries
+2. Calculate region score
+3. Verify regionScore is 15",Region score equals 15 for Asian locations,high,pending,,
+TC-SCORE-004-01,SCORE-004,Contact Score - Email and Phone,positive,"1. Create event with valid email and phone
+2. Calculate contact score
+3. Verify contactScore is 25",Contact score equals 25 for email+phone,high,pending,,
+TC-SCORE-004-02,SCORE-004,Contact Score - Email Only,positive,"1. Create event with valid email but no phone
+2. Calculate contact score
+3. Verify contactScore is 15",Contact score equals 15 for email only,high,pending,,
+TC-SCORE-004-03,SCORE-004,Contact Score - No Contact,positive,"1. Create event with no email or phone
+2. Calculate contact score
+3. Verify contactScore is 0",Contact score equals 0 for no contact info,high,pending,,
+TC-SCORE-005-01,SCORE-005,Delegates Score - 500+,positive,"1. Create event with average delegates >= 500
+2. Calculate delegates score
+3. Verify delegatesScore is 25",Delegates score equals 25 for 500+ delegates,high,pending,,
+TC-SCORE-005-02,SCORE-005,Delegates Score - 300-499,positive,"1. Create event with average delegates >= 300 and < 500
+2. Calculate delegates score
+3. Verify delegatesScore is 20",Delegates score equals 20 for 300-499 delegates,high,pending,,
+TC-SCORE-005-03,SCORE-005,Delegates Score - 100-299,positive,"1. Create event with average delegates >= 100 and < 300
+2. Calculate delegates score
+3. Verify delegatesScore is 10",Delegates score equals 10 for 100-299 delegates,high,pending,,
+TC-DQ-001-01,DQ-001,Detect Data Issues - Missing Contact,positive,"1. Create organization data without email phone or contact person
+2. Run detectDataIssues function
+3. Verify critical issue detected for contact field",Critical issue detected for missing contact information,high,pending,,
+TC-DQ-001-02,DQ-001,Detect Data Issues - Missing Location,positive,"1. Create organization data without country or city
+2. Run detectDataIssues function
+3. Verify critical issue detected for location field",Critical issue detected for missing location information,high,pending,,
+TC-DQ-001-03,DQ-001,Detect Data Issues - Missing Industry,positive,"1. Create organization data without industry field
+2. Run detectDataIssues function
+3. Verify warning issue detected for industry field",Warning issue detected for missing industry,medium,pending,,
+TC-DQ-002-01,DQ-002,Calculate Data Quality Score - Perfect Score,positive,"1. Create organization data with all fields complete (email phone name country city website industry)
+2. Calculate data quality score
+3. Verify score is 100 or higher (with bonuses)",Data quality score is 100+ with bonuses for complete data,high,pending,,
+TC-DQ-002-02,DQ-002,Calculate Data Quality Score - Low Score,positive,"1. Create organization data with multiple critical issues
+2. Calculate data quality score
+3. Verify score is reduced appropriately",Data quality score reduced based on issue severity,high,pending,,
+TC-DQ-003-01,DQ-003,Extract Organization Name - Standard Field,positive,"1. Create data row with ORGNAME field containing 'World Medical Association'
+2. Run extractOrganizationName function
+3. Verify returns 'World Medical Association'",Returns correct organization name from standard field,high,pending,,
+TC-DQ-003-02,DQ-003,Extract Organization Name - Case Insensitive,positive,"1. Create data row with 'orgname' field (lowercase)
+2. Run extractOrganizationName function
+3. Verify returns organization name correctly",Returns organization name with case-insensitive matching,high,pending,,
+TC-DQ-004-01,DQ-004,Extract Event Name - SeriesName Priority,positive,"1. Create data row with both SeriesName and Event fields
+2. Run extractEventName function
+3. Verify returns value from SeriesName field (priority)",Returns event name from SeriesName field (highest priority),high,pending,,
+TC-DQ-005-01,DQ-005,Validate Email Format - Valid Email,positive,"1. Test email validation with 'test@example.com'
+2. Verify returns true",Returns true for valid email format,medium,pending,,
+TC-DQ-005-02,DQ-005,Validate Email Format - Invalid Email,positive,"1. Test email validation with 'invalid-email'
+2. Verify returns false",Returns false for invalid email format,medium,pending,,
+TC-DQ-006-01,DQ-006,Validate Phone Format - Valid Phone,positive,"1. Test phone validation with '+84 123 456 7890'
+2. Verify returns true",Returns true for valid phone format (7+ digits),medium,pending,,
+TC-DQ-006-02,DQ-006,Validate Phone Format - Invalid Phone,positive,"1. Test phone validation with '123' (too short)
+2. Verify returns false",Returns false for invalid phone format,medium,pending,,
+TC-INFRA-001-01,INFRA-001,Health Check - Database Connected,positive,"1. Ensure database is running and connected
+2. Send GET request to /health
+3. Verify response status code is 200
+4. Verify response contains status='ok' and database='connected'",Response status 200; Database connection confirmed,high,pending,,
+TC-INFRA-001-02,INFRA-001,Health Check - Database Disconnected,edge case,"1. Stop database connection
+2. Send GET request to /health
+3. Verify response status code is 500
+4. Verify response indicates database disconnected",Response status 500; Database connection failure indicated,high,pending,,
+TC-INFRA-002-01,INFRA-002,Test Endpoint - Success,positive,"1. Send GET request to /test
+2. Verify response status code is 200
+3. Verify response contains status='ok' and message",Response status 200; API server running confirmation,low,pending,,
+TC-INFRA-003-01,INFRA-003,CORS Configuration - Allowed Origin,positive,"1. Send request from allowed origin (http://localhost:5173)
+2. Verify CORS headers present
+3. Verify request succeeds",CORS headers present; Request succeeds from allowed origin,high,pending,,
+TC-INFRA-003-02,INFRA-003,CORS Configuration - Blocked Origin,negative,"1. Send request from blocked origin
+2. Verify CORS error returned
+3. Verify request blocked",CORS error returned; Request blocked from unauthorized origin,high,pending,,
+TC-INFRA-004-01,INFRA-004,Error Handling - 500 Error,positive,"1. Trigger server error (e.g., database query error)
+2. Verify error middleware catches error
+3. Verify response status code is 500
+4. Verify response contains error message",Response status 500; Error message returned by error middleware,high,pending,,
+TC-INFRA-005-01,INFRA-005,404 Handler - Invalid Route,positive,"1. Send GET request to /api/invalid-route
+2. Verify response status code is 404
+3. Verify response contains error message 'Route not found'",Response status 404; Error message indicates route not found,medium,pending,,
+TC-DB-001-01,DB-001,Database Connection Pooling - Multiple Connections,positive,"1. Send multiple concurrent requests to API
+2. Verify all requests succeed
+3. Verify no connection pool exhaustion",All requests succeed; Connection pool handles concurrent requests,high,pending,,
+TC-DB-002-01,DB-002,User Model - GetAll,positive,"1. Create multiple users
+2. Call UserModel.getAll()
+3. Verify returns all users from database",Returns all users from users table,high,pending,,
+TC-DB-003-01,DB-003,Lead Model - GetAll with Filters,positive,"1. Create leads with different statuses
+2. Call LeadModel.getAll({status: 'New'})
+3. Verify returns only leads with status='New'",Returns filtered leads matching query parameters,high,pending,,
+TC-KB-001-01,KB-001,ICCA Leads Knowledge Base - Load Success,positive,"1. Create multiple leads in database
+2. Call getICCALeadsKnowledge function
+3. Verify returns formatted knowledge base text
+4. Verify includes lead statistics and patterns",Returns formatted knowledge base with lead data and insights,high,pending,,
+TC-KB-002-01,KB-002,Knowledge Base Formatting - Industry Breakdown,positive,"1. Create leads with different industries
+2. Format knowledge base
+3. Verify industry distribution section included",Knowledge base includes industry distribution breakdown,high,pending,,
+TC-KB-003-01,KB-003,High Priority Lead Identification - Vietnam Events,positive,"1. Create lead with vietnam_events > 0
+2. Identify high-priority leads
+3. Verify lead flagged as high priority",Lead with Vietnam events identified as high priority,high,pending,,
+TC-KB-003-02,KB-003,High Priority Lead Identification - High Delegates,positive,"1. Create lead with numberOfDelegates >= 300
+2. Identify high-priority leads
+3. Verify lead flagged as high priority",Lead with 300+ delegates identified as high priority,high,pending,,
+TC-RL-001-01,RL-001,Retry Delay Extraction - Gemini Rate Limit,positive,"1. Trigger Gemini API rate limit error
+2. Extract retry delay from error
+3. Verify retryDelay value extracted correctly",Retry delay extracted from rate limit error response,medium,pending,,
+TC-RL-002-01,RL-002,Rate Limit Error Handling - Response Format,positive,"1. Trigger rate limit error
+2. Verify error response contains retryDelay and isRateLimit fields
+3. Verify retryDelay is number",Error response includes retryDelay (number) and isRateLimit (boolean),medium,pending,,
+TC-FILE-001-01,FILE-001,Multer Configuration - File Size Limit,positive,"1. Upload file exactly 10MB
+2. Verify upload succeeds
+3. Upload file 10.1MB
+4. Verify upload fails with size limit error",10MB file succeeds; 10.1MB file fails with size limit error,high,pending,,
+TC-FILE-002-01,FILE-002,Excel File Validation - Valid Types,positive,"1. Upload .xlsx file
+2. Verify upload succeeds
+3. Upload .xls file
+4. Verify upload succeeds",Both .xlsx and .xls files accepted,high,pending,,
+TC-FILE-002-02,FILE-002,Excel File Validation - Invalid Type,negative,"1. Upload .pdf file with Excel endpoint
+2. Verify upload fails
+3. Verify error indicates only Excel files allowed",Upload fails with error about file type restriction,high,pending,,
+TC-FILE-003-01,FILE-003,CSV File Validation - Valid Types,positive,"1. Upload .csv file
+2. Verify upload succeeds
+3. Upload .txt file
+4. Verify upload succeeds",Both .csv and .txt files accepted,high,pending,,
+TC-FILE-003-02,FILE-003,CSV File Validation - Invalid Type,negative,"1. Upload .xlsx file with CSV endpoint
+2. Verify upload fails
+3. Verify error indicates only CSV files allowed",Upload fails with error about file type restriction,high,pending,,
