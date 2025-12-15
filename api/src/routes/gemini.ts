@@ -569,7 +569,7 @@ CRITICAL: Use the EXACT event name as "companyName" in JSON output. Do NOT use o
 
 STEP 2: CALCULATE SCORES (Strict Rules)
 ----------------------------------------
-Apply these exact scoring rules:
+Apply these exact scoring rules (NOTE: Backend scoring engine will recalculate scores automatically, but you should calculate them here for the report):
 
 History Score (0-25):
 - 25 points: Event has been held in Vietnam (vietnamEvents >= 1)

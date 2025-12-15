@@ -506,12 +506,11 @@ Task 1: Data Understanding
 - Note any important fields like: Organization names, event dates, locations, contact information, delegate counts, etc.
 
 Task 2: The Filtering Algorithm (Logic Step)
-Analyze the data and identify "High Potential Leads" based on this scoring criteria:
-- History Score: If they have organized events in Vietnam or Southeast Asia before (High priority)
-- Region Score: If Organization Name contains "ASEAN", "Asia", "Pacific", "Eastern", or if events are in Asian countries, they likely rotate within our region
-- Contact Score: Must have valid contact information (email, phone, or contact person)
-- Event Size Score: Higher delegate/attendee count (>= 300) indicates larger events worth pursuing
-- Frequency Score: Regular event organizers (annual, biennial) are more valuable than one-time events
+Analyze the data and identify "High Potential Leads" based on these criteria (NOTE: Scoring will be done by backend engine, you only need to identify potential leads):
+- History: Events organized in Vietnam or Southeast Asia are high priority
+- Region: Events with "ASEAN", "Asia", "Pacific", "Eastern" in name, or events in Asian countries, likely rotate within our region
+- Contact: Events with valid contact information (email, phone, or contact person) are easier to pursue
+- Event Size: Events with higher delegate/attendee count (>= 300) indicate larger events worth pursuing
 
 Task 3: The Enrichment (Research Step) - AUTOMATIC DATA ENRICHMENT
 For ALL leads identified in Task 2 (especially those with missing information):
@@ -537,12 +536,14 @@ Create a Markdown table with the top 5-10 leads ranked by priority:
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | 1 | [Name] | [Event name] | [0-100] | [0-25] | [0-25] | [0-25] | [0-25] | [e.g., Organized in Asia 3x, 500 delegates, annual rotation...] | [e.g., Propose for 2027...] |
 
-IMPORTANT: For each lead, calculate and show:
-- Total Score (0-100): Sum of all individual scores
+IMPORTANT: For each lead, provide the data fields below. The backend scoring engine will automatically calculate scores based on:
 - History Score (0-25): 25 if VN events >= 1, 15 if SEA events, 0 otherwise
-- Region Score (0-25): 25 if name contains "ASEAN/Asia/Pacific", 15 if Asian location, 0 otherwise
+- Region Score (0-25): 25 if name contains "ASEAN/Asia/Pacific/Eastern", 15 if Asian location, 0 otherwise
 - Contact Score (0-25): 25 if has email+phone, 15 if email only, 0 otherwise
 - Delegates Score (0-25): 25 if >= 500, 20 if >= 300, 10 if >= 100, 0 otherwise
+- Total Score (0-100): Sum of all individual scores (calculated by backend)
+
+You do NOT need to calculate scores - just provide accurate data fields. The backend will calculate scores automatically.
 
 PART B: DATA INSIGHTS
 - Total organizations analyzed: [count]
@@ -578,11 +579,11 @@ Use this EXACT structure for each object:
   "vietnamEvents": Number (Count of events in Vietnam, if any, default 0),
   "totalEvents": Number (Total events found, default 1),
   "numberOfDelegates": Number (Average or max delegates from TOTATTEND/REGATTEND, if mentioned, default null)",
-  "totalScore": Number (0-100, calculated score from PART A table),
-  "historyScore": Number (0-25),
-  "regionScore": Number (0-25),
-  "contactScore": Number (0-25),
-  "delegatesScore": Number (0-25),
+  "totalScore": Number (0-100, will be recalculated by backend scoring engine),
+  "historyScore": Number (0-25, will be recalculated by backend scoring engine),
+  "regionScore": Number (0-25, will be recalculated by backend scoring engine),
+  "contactScore": Number (0-25, will be recalculated by backend scoring engine),
+  "delegatesScore": Number (0-25, will be recalculated by backend scoring engine),
   "problems": ["Missing email", "No phone", "Unclear industry", "Missing location", "No website", "No contact person", "Incomplete event history"],
   "notes": "String (The Score Reason, key insights, and note if data was enriched)",
   "pastEventsHistory": "String (Event history summary from Editions sheet - format: '2023: City, Country; 2022: City, Country')",

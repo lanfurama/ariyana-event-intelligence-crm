@@ -293,6 +293,7 @@ CRITICAL: Use EXACT event name as "companyName". Do NOT use organization name or
 
 STEP 2: CALCULATE SCORES (Apply Exact Rules)
 ---------------------------------------------
+NOTE: Backend scoring engine will recalculate scores automatically, but you should calculate them here for the report.
 History Score (0-25):
 - 25: vietnamEvents >= 1
 - 15: Events in Southeast Asia (Thailand, Singapore, Malaysia, Indonesia, Philippines, Cambodia, Laos, Myanmar)

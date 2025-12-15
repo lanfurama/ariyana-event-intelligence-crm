@@ -1394,9 +1394,18 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     // Sort by totalScore descending
     const sortedResults = [...results].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
     
-    // Filter: Only show events with MEDIUM or HIGH priority (score >= 40)
-    // LOW priority events (score < 40) are excluded from recommendations
-    const qualifiedEvents = sortedResults.filter(event => (event.totalScore || 0) >= 40);
+    // Filter: Only show events with MEDIUM or HIGH priority (score >= 30) AND ICCA qualified
+    // LOW priority events (score < 30) or non-ICCA qualified events are excluded from recommendations
+    const qualifiedEvents = sortedResults.filter(event => {
+      const hasMinimumScore = (event.totalScore || 0) >= 30;
+      // Check ICCA qualified status from multiple sources
+      const isICCAQualified = 
+        (event.iccaQualified && (event.iccaQualified.toLowerCase() === 'yes' || event.iccaQualified === 'true')) ||
+        (event.eligibilityCheck && event.eligibilityCheck.isICCAQualified === true) ||
+        (event.eventBrief && event.eventBrief.iccaQualified && (event.eventBrief.iccaQualified.toLowerCase() === 'yes' || event.eventBrief.iccaQualified === 'true'));
+      
+      return hasMinimumScore && isICCAQualified;
+    });
     const topEvents = qualifiedEvents.slice(0, 15); // Top 15 qualified events
 
     let report = `# Phân tích và chọn lọc Events\n\n`;
@@ -1405,11 +1414,11 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
       report += `**Số events bị SKIP (không ICCA qualified):** ${skippedCount}\n`;
     }
     report += `**Số events đã phân tích:** ${results.length}\n`;
-    report += `**Số events PHÙ HỢP (Score ≥ 40):** ${qualifiedEvents.length}\n`;
+    report += `**Số events PHÙ HỢP (Score ≥ 30):** ${qualifiedEvents.length}\n`;
     report += `**Top events được đề xuất:** ${topEvents.length}\n\n`;
 
     report += `## PHẦN A: XẾP HẠNG EVENTS PHÙ HỢP NHẤT\n\n`;
-    report += `*Chỉ hiển thị events có điểm ≥ 40 (MEDIUM hoặc HIGH priority)*\n\n`;
+    report += `*Chỉ hiển thị events có điểm ≥ 30 (MEDIUM hoặc HIGH priority) và ICCA qualified*\n\n`;
     report += `| Hạng | Tên Event | Điểm tổng | Điểm lịch sử | Điểm khu vực | Điểm liên hệ | Điểm quy mô | Lý do điểm | Chiến lược tiếp theo |\n`;
     report += `| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n`;
 
@@ -1707,6 +1716,9 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   // 4. Delegates Score (0-25): Ưu tiên events quy mô lớn (>500 người)
   // Total Score: 0-100 điểm
   //
+  // ⚠️ CRITICAL: Chỉ các events ICCA qualified mới được tính điểm và hiển thị
+  // ICCA qualified check được thực hiện trước khi gọi hàm này (xem line 2619)
+  //
   // Chi tiết xem file: SCORING_LOGIC.md
   // ============================================================================
   
@@ -1778,14 +1790,17 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     const email = rawData.EMAIL || rawData.Email || rawData.email || '';
     const phone = rawData.PHONE || rawData.Phone || rawData.phone || '';
     
-    // Get max delegates
-    let maxDelegates = 0;
+    // Get average delegates (more representative than max)
+    const delegateValues: number[] = [];
     editions.forEach((edition: any) => {
       const delegates = Number(edition.TOTATTEND || edition.REGATTEND || edition.Delegates || 0);
-      if (!isNaN(delegates) && delegates > maxDelegates) {
-        maxDelegates = delegates;
+      if (!isNaN(delegates) && delegates > 0) {
+        delegateValues.push(delegates);
       }
     });
+    const averageDelegates = delegateValues.length > 0 
+      ? Math.round(delegateValues.reduce((acc, val) => acc + val, 0) / delegateValues.length)
+      : 0;
     
     const notes = notesParts.length > 0 ? notesParts.join(', ') : 'Standard event';
     
@@ -1801,7 +1816,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
       keyPersonPhone: phone || null,
       vietnamEvents: vietnamEvents,
       totalEvents: editions.length || 1,
-      numberOfDelegates: maxDelegates > 0 ? maxDelegates : null,
+      numberOfDelegates: averageDelegates > 0 ? averageDelegates : null,
       totalScore: totalScore,
       historyScore: historyScore,
       regionScore: regionScore,
@@ -1845,16 +1860,26 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   const calculateRegionScore = (eventName: string, editions: any[]): number => {
     const nameLower = (eventName || '').toLowerCase();
     
-    if (nameLower.includes('asean') || nameLower.includes('asia') || nameLower.includes('pacific') || nameLower.includes('apac')) {
+    if (nameLower.includes('asean') || nameLower.includes('asia') || nameLower.includes('pacific') || nameLower.includes('apac') || nameLower.includes('eastern')) {
       return 25;
     }
     
     if (editions && editions.length > 0) {
-      const asianCountries = ['china', 'japan', 'korea', 'india', 'thailand', 'singapore', 'malaysia', 'indonesia', 'philippines', 'vietnam', 'taiwan', 'hong kong'];
+      const asianCountries = ['china', 'japan', 'korea', 'india', 'thailand', 'singapore', 'malaysia', 'indonesia', 'philippines', 'vietnam', 'taiwan', 'hong kong', 'south korea', 'north korea', 'sri lanka', 'bangladesh', 'pakistan', 'myanmar', 'cambodia', 'laos', 'brunei'];
       
       for (const edition of editions) {
         const country = String(edition.COUNTRY || edition.Country || edition.country || '').toLowerCase().trim();
-        if (asianCountries.some(ac => country.includes(ac) || ac.includes(country))) {
+        // Use exact match or check if country string equals or starts with Asian country name
+        // This avoids false positives like "united kingdom" matching "kingdom"
+        if (asianCountries.some(ac => {
+          // Exact match
+          if (country === ac) return true;
+          // Country name contains full Asian country name (e.g., "south korea" contains "korea")
+          if (country.includes(ac) && ac.length >= 4) return true; // Only match if Asian country name is at least 4 chars to avoid short matches
+          // Asian country name contains country (e.g., "hong kong" contains "hong")
+          if (ac.includes(country) && country.length >= 4) return true;
+          return false;
+        })) {
           return 15;
         }
       }
@@ -1863,39 +1888,72 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     return 0;
   };
   
+  // Helper functions for validation
+  const isValidEmail = (email: string): boolean => {
+    if (!email || typeof email !== 'string') return false;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
+  const isValidPhone = (phone: string): boolean => {
+    if (!phone || typeof phone !== 'string') return false;
+    const phoneStr = phone.trim();
+    // Remove common phone formatting characters
+    const cleaned = phoneStr.replace(/[\s\-\(\)\+]/g, '');
+    // Check if it contains at least 7 digits (minimum for a valid phone number)
+    return /^\d{7,}$/.test(cleaned);
+  };
+
   const calculateContactScore = (eventData: any, relatedContacts: any[] = []): number => {
     let hasEmail = false;
     let hasPhone = false;
+    let hasName = false;
     
     const emailFields = ['EMAIL', 'Email', 'email', 'keyPersonEmail', 'CONTACT_EMAIL'];
     const phoneFields = ['PHONE', 'Phone', 'phone', 'keyPersonPhone', 'CONTACT_PHONE', 'TEL'];
+    const nameFields = ['keyPersonName', 'CONTACT_NAME', 'Name', 'Contact Name'];
     
     for (const field of emailFields) {
-      if (eventData[field] && String(eventData[field]).trim() && String(eventData[field]).includes('@')) {
+      const emailValue = eventData[field];
+      if (emailValue && isValidEmail(String(emailValue))) {
         hasEmail = true;
         break;
       }
     }
     
     for (const field of phoneFields) {
-      if (eventData[field] && String(eventData[field]).trim()) {
+      const phoneValue = eventData[field];
+      if (phoneValue && isValidPhone(String(phoneValue))) {
         hasPhone = true;
         break;
       }
     }
     
-    if (!hasEmail || !hasPhone) {
+    for (const field of nameFields) {
+      const nameValue = eventData[field];
+      if (nameValue && String(nameValue).trim().length > 0) {
+        hasName = true;
+        break;
+      }
+    }
+    
+    if (!hasEmail || !hasPhone || !hasName) {
       relatedContacts.forEach((contact: any) => {
         const contactEmail = contact.EMAIL || contact.Email || contact.email || contact.keyPersonEmail;
         const contactPhone = contact.PHONE || contact.Phone || contact.phone || contact.keyPersonPhone;
+        const contactName = contact.NAME || contact.Name || contact.name || contact.keyPersonName;
         
-        if (contactEmail && String(contactEmail).includes('@')) hasEmail = true;
-        if (contactPhone && String(contactPhone).trim()) hasPhone = true;
+        if (contactEmail && isValidEmail(String(contactEmail))) hasEmail = true;
+        if (contactPhone && isValidPhone(String(contactPhone))) hasPhone = true;
+        if (contactName && String(contactName).trim().length > 0) hasName = true;
       });
     }
     
+    // Improved scoring: 25 = email+phone, 20 = email+name, 15 = email only, 10 = name only, 0 = nothing
     if (hasEmail && hasPhone) return 25;
+    if (hasEmail && hasName) return 20;
     if (hasEmail) return 15;
+    if (hasName) return 10;
     return 0;
   };
   
@@ -1904,27 +1962,34 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     
     const delegateFields = ['TOTATTEND', 'REGATTEND', 'Delegates', 'Attendees', 'Attendance', 'DELEGATES', 'ATTENDEES'];
     
-    let maxDelegates = 0;
+    const delegateValues: number[] = [];
     
     editions.forEach((edition: any) => {
       for (const field of delegateFields) {
         const value = edition[field];
         if (value !== null && value !== undefined) {
           const numValue = Number(value);
-          if (!isNaN(numValue) && isFinite(numValue) && numValue > maxDelegates) {
-            maxDelegates = numValue;
+          if (!isNaN(numValue) && isFinite(numValue) && numValue > 0) {
+            delegateValues.push(numValue);
+            break; // Only count one value per edition
           }
         }
       }
     });
     
+    if (delegateValues.length === 0) return 0;
+    
+    // Calculate average delegates (more representative than max)
+    const sum = delegateValues.reduce((acc, val) => acc + val, 0);
+    const averageDelegates = Math.round(sum / delegateValues.length);
+    
     // Ariyana Convention Centre sweet spot: 200-800 delegates
     // Too small or too large events are penalized
-    if (maxDelegates >= 200 && maxDelegates <= 800) {
+    if (averageDelegates >= 200 && averageDelegates <= 800) {
       return 25; // Perfect fit for Ariyana capacity
-    } else if ((maxDelegates >= 150 && maxDelegates < 200) || (maxDelegates > 800 && maxDelegates <= 1000)) {
+    } else if ((averageDelegates >= 150 && averageDelegates < 200) || (averageDelegates > 800 && averageDelegates <= 1000)) {
       return 20; // Acceptable but not ideal
-    } else if ((maxDelegates >= 100 && maxDelegates < 150) || (maxDelegates > 1000 && maxDelegates <= 1500)) {
+    } else if ((averageDelegates >= 100 && averageDelegates < 150) || (averageDelegates > 1000 && averageDelegates <= 1500)) {
       return 10; // Too small or too large
     } else {
       return 0; // Not suitable (<100 or >1500)
@@ -2380,6 +2445,25 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         // Score locally
         const scoredResult = await scoreEventLocally(mockEvent, '');
         
+        // CRITICAL: Check ICCA qualified before adding to results
+        const isICCAQualified = 
+          (lead.iccaQualified && (lead.iccaQualified.toLowerCase() === 'yes' || lead.iccaQualified === 'true')) ||
+          (scoredResult.iccaQualified && (scoredResult.iccaQualified.toLowerCase() === 'yes' || scoredResult.iccaQualified === 'true')) ||
+          (scoredResult.eligibilityCheck && scoredResult.eligibilityCheck.isICCAQualified === true) ||
+          (scoredResult.eventBrief && scoredResult.eventBrief.iccaQualified && (scoredResult.eventBrief.iccaQualified.toLowerCase() === 'yes' || scoredResult.eventBrief.iccaQualified === 'true'));
+        
+        if (!isICCAQualified) {
+          console.log(`⏭️  [Existing Leads] Skipping "${lead.companyName}" - NOT ICCA qualified`);
+          setOrganizationProgress(prev => {
+            return prev.map(p => 
+              p.companyName === lead.companyName 
+                ? { ...p, status: 'skipped' as const, reason: 'Not ICCA qualified' }
+                : p
+            );
+          });
+          return; // Skip this lead
+        }
+        
         // Update progress
         setOrganizationProgress(prev => {
           return prev.map(p => 
@@ -2558,14 +2642,29 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                   recommendation: eligibilityCheck.recommendation
                 });
               } catch (eligibilityError: any) {
-                console.warn(`⚠️  [Agent ${agentId}] Eligibility check failed, continuing with analysis:`, eligibilityError.message);
-                // Continue with analysis even if eligibility check fails
+                console.warn(`⚠️  [Agent ${agentId}] Eligibility check failed, skipping event:`, eligibilityError.message);
+                // If eligibility check fails, we cannot verify ICCA qualification - skip the event
+                setOrganizationProgress(prev => prev.map(p => 
+                  p.companyName === event.name 
+                    ? { ...p, status: 'skipped', reason: 'Eligibility check failed - cannot verify ICCA qualification' }
+                    : p
+                ));
+                setAnalyzingEvents(prev => {
+                  const newSet = new Set(prev);
+                  newSet.delete(event.name);
+                  return newSet;
+                });
+                return { success: false, agentId, eventName: event.name, skipped: true, reason: 'Eligibility check failed' };
               }
               
-              // FILTER: Skip events that are NOT ICCA qualified
-              if (eligibilityCheck && !eligibilityCheck.isICCAQualified) {
-                console.log(`⏭️  [Agent ${agentId}] Skipping event "${event.name}" - NOT ICCA qualified`);
-                console.log(`📋 [Agent ${agentId}] Reason: ${eligibilityCheck.iccaQualifiedReason || 'Event does not meet ICCA qualification criteria'}`);
+              // FILTER: Skip events that are NOT ICCA qualified (MANDATORY CHECK - STRICT)
+              // CRITICAL: Only proceed if eligibilityCheck exists AND isICCAQualified is EXPLICITLY true
+              if (!eligibilityCheck || eligibilityCheck.isICCAQualified !== true) {
+                const reason = eligibilityCheck?.iccaQualifiedReason || 
+                              (eligibilityCheck ? 'Event does not meet ICCA qualification criteria' : 'Eligibility check not available');
+                console.log(`⏭️  [Agent ${agentId}] SKIPPING event "${event.name}" - NOT ICCA qualified`);
+                console.log(`📋 [Agent ${agentId}] Reason: ${reason}`);
+                console.log(`📋 [Agent ${agentId}] ICCA Status: ${eligibilityCheck?.isICCAQualified} (must be exactly true)`);
                 
                 // Update progress to show skipped
                 setOrganizationProgress(prev => prev.map(p => 
@@ -2583,6 +2682,9 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 
                 return { success: false, agentId, eventName: event.name, skipped: true, reason: 'Not ICCA qualified' };
               }
+              
+              // DOUBLE-CHECK: Log confirmation that event is ICCA qualified
+              console.log(`✅ [Agent ${agentId}] Event "${event.name}" is ICCA QUALIFIED - proceeding with analysis`);
               
               // STEP 2: Score event using backend logic
               const result = await scoreEventLocally(event, allExcelData);
@@ -2650,7 +2752,9 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                   infoOnLastUpcomingEvents: eventBriefData.infoOnLastUpcomingEvents || "",
                   competitors: eventBriefData.competitors || "",
                   sponsors: eventBriefData.sponsors || "",
-                  iccaQualified: eventBriefData.iccaQualified || (eligibilityCheck?.isICCAQualified ? "yes" : "no")
+                  // CRITICAL: Use eligibilityCheck result as source of truth, not AI eventBriefData
+                  // Only set "yes" if eligibilityCheck.isICCAQualified is EXPLICITLY true
+                  iccaQualified: eligibilityCheck.isICCAQualified === true ? "yes" : "no"
                 };
                 
                 const newLead = {
@@ -2673,13 +2777,25 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                   competitors: mergedEventBrief.competitors,
                   sponsors: mergedEventBrief.sponsors,
                   layout: mergedEventBrief.layout,
-                  iccaQualified: mergedEventBrief.iccaQualified
+                  // CRITICAL: Use eligibilityCheck as source of truth, NOT AI eventBriefData
+                  // Only set "yes" if eligibilityCheck.isICCAQualified is EXPLICITLY true
+                  iccaQualified: eligibilityCheck.isICCAQualified === true ? "yes" : "no"
                 };
+                
+                // CRITICAL: Final validation - ONLY use eligibilityCheck, ignore AI eventBriefData
+                // This ensures we never bypass the ICCA qualification check
+                if (eligibilityCheck.isICCAQualified !== true) {
+                  console.error(`❌ [Agent ${agentId}] CRITICAL ERROR: Event "${event.name}" passed initial check but ICCA status is not true!`);
+                  console.error(`❌ [Agent ${agentId}] ICCA Status: ${eligibilityCheck.isICCAQualified}, Type: ${typeof eligibilityCheck.isICCAQualified}`);
+                  return { success: false, agentId, eventName: event.name, skipped: true, reason: 'Not ICCA qualified (final validation failed)' };
+                }
+                
+                console.log(`✅ [Agent ${agentId}] Final validation passed: Event "${event.name}" is ICCA qualified`);
                 
                 // Log event history
                 console.log(`📊 [Agent ${agentId}] Event history for "${event.name}":`, newLead.pastEventsHistory);
                 console.log(`📊 [Agent ${agentId}] Total editions: ${editions.length}`);
-                console.log(`✅ [Agent ${agentId}] Completed scoring for: ${event.name} (Score: ${result.totalScore})`);
+                console.log(`✅ [Agent ${agentId}] Completed scoring for: ${event.name} (Score: ${result.totalScore}, ICCA: Yes)`);
                 
                 // Update completed leads map - this will replace skeleton with actual result
                 setCompletedLeadsMap(prev => {
@@ -2759,10 +2875,23 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                     skippedCount++;
                     console.log(`⏭️  [Agent Pool] Event "${result.eventName}" skipped: ${result.reason || 'Not ICCA qualified'}`);
                   } else if (result.success && result.lead) {
-                    allResults.push(result.lead);
+                    // CRITICAL: Double-check ICCA qualified before adding to results
+                    const lead = result.lead;
+                    const isICCAQualified = 
+                      (lead.iccaQualified && (lead.iccaQualified.toLowerCase() === 'yes' || lead.iccaQualified === 'true')) ||
+                      (lead.eligibilityCheck && lead.eligibilityCheck.isICCAQualified === true) ||
+                      (lead.eventBrief && lead.eventBrief.iccaQualified && (lead.eventBrief.iccaQualified.toLowerCase() === 'yes' || lead.eventBrief.iccaQualified === 'true'));
+                    
+                    if (!isICCAQualified) {
+                      console.log(`⏭️  [Agent Pool] Event "${lead.companyName}" skipped - NOT ICCA qualified (final check)`);
+                      skippedCount++;
+                      return;
+                    }
+                    
+                    allResults.push(lead);
                     
                     // Update extracted leads immediately
-                    setExtractedLeads(prev => [...prev, result.lead]);
+                    setExtractedLeads(prev => [...prev, lead]);
                     
                     // Update completed leads map
                     setCompletedLeadsMap(prev => {
@@ -3434,6 +3563,8 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         <p className="text-sm text-slate-700 leading-relaxed">
           <strong className="text-slate-900">Backend Scoring Engine</strong> tự động phân tích và xếp hạng events dựa trên 4 tiêu chí:
           <strong> History (25đ)</strong>, <strong>Region (25đ)</strong>, <strong>Contact (25đ)</strong>, và <strong>Delegates (25đ)</strong>.
+          <br />
+          <strong className="text-red-600">⚠️ Lưu ý:</strong> Chỉ các events <strong>ICCA qualified</strong> mới được tính điểm và hiển thị trong kết quả.
         </p>
         <details className="mt-3">
           <summary className="text-sm text-slate-700 cursor-pointer hover:text-slate-900 font-medium">
@@ -3458,7 +3589,9 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               <strong className="text-slate-900">3. Contact Score (0-25):</strong>
               <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
                 <li>25đ: Có cả email và phone</li>
+                <li>20đ: Có email và tên người liên hệ</li>
                 <li>15đ: Chỉ có email</li>
+                <li>10đ: Chỉ có tên người liên hệ</li>
               </ul>
             </div>
             <div>
@@ -4438,12 +4571,30 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-bold">
-                    {parsedReport.partC.length} events
+                    {(() => {
+                      const qualifiedCount = parsedReport.partC.filter((lead: any) => {
+                        const isICCAQualified = 
+                          (lead.iccaQualified && (lead.iccaQualified.toLowerCase() === 'yes' || lead.iccaQualified === 'true')) ||
+                          (lead.eligibilityCheck && lead.eligibilityCheck.isICCAQualified === true) ||
+                          (lead.eventBrief && lead.eventBrief.iccaQualified && (lead.eventBrief.iccaQualified.toLowerCase() === 'yes' || lead.eventBrief.iccaQualified === 'true'));
+                        return isICCAQualified;
+                      }).length;
+                      return `${qualifiedCount} events (ICCA qualified)`;
+                    })()}
                   </span>
                 </div>
               </div>
               <div className="space-y-8">
-                {parsedReport.partC.map((lead: any, idx: number) => {
+                {parsedReport.partC
+                  .filter((lead: any) => {
+                    // CRITICAL: Only show ICCA qualified events
+                    const isICCAQualified = 
+                      (lead.iccaQualified && (lead.iccaQualified.toLowerCase() === 'yes' || lead.iccaQualified === 'true')) ||
+                      (lead.eligibilityCheck && lead.eligibilityCheck.isICCAQualified === true) ||
+                      (lead.eventBrief && lead.eventBrief.iccaQualified && (lead.eventBrief.iccaQualified.toLowerCase() === 'yes' || lead.eventBrief.iccaQualified === 'true'));
+                    return isICCAQualified;
+                  })
+                  .map((lead: any, idx: number) => {
                   const score = lead.totalScore || 0;
                   const isResearching = !lead.lastEnriched;
                   
@@ -4926,30 +5077,84 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                                   
                                   console.log('🔍 [Sponsors Parse] Raw text:', text);
                                   
-                                  // Split by semicolon or newline
-                                  const sections = text.split(/[;\n]/).filter(s => s.trim());
+                                  if (!text || typeof text !== 'string') {
+                                    return tiers;
+                                  }
                                   
-                                  console.log('🔍 [Sponsors Parse] Sections:', sections);
+                                  // Remove "AI Researched" suffix if present
+                                  const cleanText = text.replace(/\s*AI\s+Researched\s*$/i, '').trim();
                                   
-                                  sections.forEach(section => {
-                                    // Match pattern: "TierName: Company1, Company2"
-                                    const match = section.match(/^([^:]+):\s*(.+)$/);
-                                    if (match) {
-                                      const tierName = match[1].trim();
-                                      const companiesText = match[2].trim();
-                                      // Split by comma, handle "and", remove extra spaces
-                                      const companies = companiesText
-                                        .split(/,|\band\b/)
-                                        .map(c => c.trim())
-                                        .filter(c => c.length > 0);
-                                      
-                                      console.log(`🔍 [Sponsors Parse] ${tierName}:`, companies, `(${companies.length} companies)`);
-                                      
-                                      tiers[tierName] = companies;
-                                    } else {
-                                      console.warn('⚠️ [Sponsors Parse] Could not parse section:', section);
+                                  // Pattern 1: "TIER SPONSORS [number] CompanyName" (e.g., "DIAMOND SPONSORS 1 Company1")
+                                  // Simple regex to match: TIER SPONSORS number CompanyName
+                                  const pattern1 = /(DIAMOND|PLATINUM|GOLD|SILVER|BRONZE|INSTITUTIONAL|MEDIA|EXHIBITION)\s+SPONSORS?\s+\d+\s+([A-Za-z0-9][A-Za-z0-9\s&.,-]*?)(?=\s+(?:DIAMOND|PLATINUM|GOLD|SILVER|BRONZE|INSTITUTIONAL|MEDIA|EXHIBITION)\s+SPONSORS?\s+\d+|$)/gi;
+                                  
+                                  let match;
+                                  while ((match = pattern1.exec(cleanText)) !== null) {
+                                    const tierNameRaw = match[1].trim();
+                                    let companyName = match[2].trim();
+                                    
+                                    console.log(`🔍 [Sponsors Parse] Found tier: ${tierNameRaw}, company: "${companyName}"`);
+                                    
+                                    // Normalize tier name (DIAMOND -> Diamond)
+                                    const normalizedTierName = tierNameRaw.charAt(0).toUpperCase() + tierNameRaw.slice(1).toLowerCase();
+                                    
+                                    // Clean company name - remove trailing numbers or "AI Researched"
+                                    companyName = companyName.replace(/\s*AI\s+Researched\s*$/i, '').trim();
+                                    
+                                    // Handle multiple companies separated by comma or "and"
+                                    const companies = companyName
+                                      .split(/,|\band\b/)
+                                      .map(c => c.trim())
+                                      .filter(c => c.length > 0 && !c.match(/^\d+$/)); // Remove pure numbers
+                                    
+                                    console.log(`🔍 [Sponsors Parse] Parsed companies for ${normalizedTierName}:`, companies);
+                                    
+                                    if (companies.length > 0) {
+                                      if (!tiers[normalizedTierName]) {
+                                        tiers[normalizedTierName] = [];
+                                      }
+                                      tiers[normalizedTierName].push(...companies);
                                     }
-                                  });
+                                  }
+                                  
+                                  // Pattern 2: "TierName: Company1, Company2" (original format with colon)
+                                  if (Object.keys(tiers).length === 0) {
+                                    const sections = cleanText.split(/[;\n]/).filter(s => s.trim());
+                                    sections.forEach(section => {
+                                      const match = section.match(/^([^:]+):\s*(.+)$/);
+                                      if (match) {
+                                        let tierName = match[1].trim().replace(/\s+SPONSORS?$/i, ''); // Remove "SPONSORS" suffix
+                                        tierName = tierName.charAt(0).toUpperCase() + tierName.slice(1).toLowerCase();
+                                        const companiesText = match[2].trim();
+                                        const companies = companiesText
+                                          .split(/,|\band\b/)
+                                          .map(c => c.trim())
+                                          .filter(c => c.length > 0);
+                                        if (companies.length > 0) {
+                                          tiers[tierName] = companies;
+                                        }
+                                      }
+                                    });
+                                  }
+                                  
+                                  // Pattern 3: "TierName SPONSORS Company1, Company2" (without colon, without number)
+                                  if (Object.keys(tiers).length === 0) {
+                                    const tierNames = ['Diamond', 'Platinum', 'Gold', 'Silver', 'Bronze', 'Institutional', 'Media', 'Exhibition'];
+                                    tierNames.forEach(tierName => {
+                                      const regex = new RegExp(`${tierName}\\s+SPONSORS?\\s+(.+?)(?=\\s+(${tierNames.join('|')})\\s+SPONSORS?|$)`, 'gi');
+                                      const match = cleanText.match(regex);
+                                      if (match) {
+                                        const companiesText = match[0].replace(new RegExp(`${tierName}\\s+SPONSORS?\\s+`, 'i'), '').trim();
+                                        const companies = companiesText
+                                          .split(/,|\band\b/)
+                                          .map(c => c.trim())
+                                          .filter(c => c.length > 0);
+                                        if (companies.length > 0) {
+                                          tiers[tierName] = companies;
+                                        }
+                                      }
+                                    });
+                                  }
                                   
                                   console.log('✅ [Sponsors Parse] Final tiers:', tiers);
                                   
@@ -5048,12 +5253,6 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                             <tr className="border-b border-slate-200">
                               <td className="px-4 py-3 bg-slate-50 font-semibold text-slate-700">Additional Notes</td>
                               <td className="px-4 py-3 text-slate-900 whitespace-pre-wrap">{lead.otherInformation}</td>
-                            </tr>
-                          )}
-                          {lead.researchSummary && (
-                            <tr className="border-b border-slate-200 bg-blue-50">
-                              <td className="px-4 py-3 bg-blue-100 font-semibold text-blue-900">AI Research Summary</td>
-                              <td className="px-4 py-3 text-blue-900 whitespace-pre-wrap text-xs">{lead.researchSummary}</td>
                             </tr>
                           )}
                         </tbody>
