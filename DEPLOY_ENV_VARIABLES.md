@@ -264,3 +264,4 @@ Dự án của bạn **ĐÃ ĐƯỢC BẢO VỆ ĐÚNG CÁCH**:
 
 **Nhớ:** Luôn kiểm tra `git status` trước khi commit để đảm bảo không có `.env` file! 🔒
 
+
