@@ -1,6 +1,14 @@
 import { query } from '../config/database.js';
 import { Lead, LeadWithEmailCount } from '../types/index.js';
 
+// Helper function to ensure industry is never null/empty
+function normalizeIndustry(industry: string | null | undefined): string {
+  if (!industry || industry.trim() === '' || industry.toLowerCase() === 'n/a' || industry.toLowerCase() === 'null') {
+    return 'Unknown';
+  }
+  return industry.trim();
+}
+
 export class LeadModel {
   static async getAll(filters?: {
     status?: string;
@@ -88,7 +96,7 @@ export class LeadModel {
       [
         lead.id,
         lead.company_name,
-        lead.industry,
+        normalizeIndustry(lead.industry), // Ensure industry is never null/empty
         lead.country,
         lead.city,
         lead.website || null,
@@ -120,7 +128,7 @@ export class LeadModel {
 
     const fieldMap: Record<string, any> = {
       company_name: lead.company_name,
-      industry: lead.industry,
+      industry: lead.industry !== undefined ? normalizeIndustry(lead.industry) : undefined, // Ensure industry is never null/empty if provided
       country: lead.country,
       city: lead.city,
       website: lead.website,

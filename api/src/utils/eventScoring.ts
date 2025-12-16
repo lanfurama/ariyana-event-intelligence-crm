@@ -1,5 +1,13 @@
 // Event Scoring Utilities - Logic to score and filter events
 
+export interface ScoringCriteria {
+  history?: boolean;
+  region?: boolean;
+  contact?: boolean;
+  delegates?: boolean;
+  iccaQualification?: boolean;
+}
+
 export interface EventScore {
   totalScore: number;
   historyScore: number;
@@ -264,12 +272,23 @@ export function calculateEventScore(
   eventName: string,
   eventData: any,
   editions: any[] = [],
-  relatedContacts: any[] = []
+  relatedContacts: any[] = [],
+  criteria?: ScoringCriteria
 ): EventScore {
-  const historyScore = calculateHistoryScore(editions);
-  const regionScore = calculateRegionScore(eventName, editions);
-  const contactScore = calculateContactScore(eventData, relatedContacts);
-  const delegatesScore = calculateDelegatesScore(editions);
+  // Default: all criteria enabled
+  const scoringCriteria: ScoringCriteria = {
+    history: true,
+    region: true,
+    contact: true,
+    delegates: true,
+    iccaQualification: true,
+    ...criteria
+  };
+  
+  const historyScore = scoringCriteria.history ? calculateHistoryScore(editions) : 0;
+  const regionScore = scoringCriteria.region ? calculateRegionScore(eventName, editions) : 0;
+  const contactScore = scoringCriteria.contact ? calculateContactScore(eventData, relatedContacts) : 0;
+  const delegatesScore = scoringCriteria.delegates ? calculateDelegatesScore(editions) : 0;
   
   const totalScore = historyScore + regionScore + contactScore + delegatesScore;
   

@@ -285,32 +285,81 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
 
     console.log('✅ [Excel Import] Cleaned data:', summary.totalRows, 'rows from', summary.totalSheets, 'sheets');
 
-    // Filter to only Editions sheet for preview (for event parsing)
-    // Priority: "Editions" sheet first, then any sheet with "edition" or "event" in name
-    // Fallback: if no Editions sheet found, try "Orgs" sheet (for backward compatibility)
-    let editionSheetName = workbook.SheetNames.find(name => 
-      name.toLowerCase() === 'editions'
+    // Filter to Orgs sheet for event parsing (as per user requirement)
+    // Priority: "Orgs" sheet first, then fallback to "Editions" sheet (for backward compatibility)
+    let orgsSheetName = workbook.SheetNames.find(name => 
+      name.toLowerCase() === 'orgs'
     ) || workbook.SheetNames.find(name => 
-      name.toLowerCase().includes('edition') || 
-      (name.toLowerCase().includes('event') && !name.toLowerCase().includes('contact'))
+      name.toLowerCase().includes('org') && !name.toLowerCase().includes('contact') && !name.toLowerCase().includes('country')
     );
     
-    // Fallback: if no Editions sheet, try Orgs sheet (for backward compatibility)
-    if (!editionSheetName) {
-      editionSheetName = workbook.SheetNames.find(name => 
-        name.toLowerCase() === 'orgs'
+    // Fallback: if no Orgs sheet, try Editions sheet (for backward compatibility)
+    if (!orgsSheetName) {
+      orgsSheetName = workbook.SheetNames.find(name => 
+        name.toLowerCase() === 'editions'
       ) || workbook.SheetNames.find(name => 
-        name.toLowerCase().includes('org') && !name.toLowerCase().includes('contact') && !name.toLowerCase().includes('country')
+        name.toLowerCase().includes('edition') || 
+        (name.toLowerCase().includes('event') && !name.toLowerCase().includes('contact'))
       );
     }
     
-    const editionData = editionSheetName 
-      ? cleanedData.filter(row => (row._sheet || '').toLowerCase() === editionSheetName.toLowerCase())
-      : cleanedData; // Fallback to all data if no edition/org sheet found
+    const orgsData = orgsSheetName 
+      ? cleanedData.filter(row => (row._sheet || '').toLowerCase() === orgsSheetName.toLowerCase())
+      : cleanedData; // Fallback to all data if no orgs/edition sheet found
     
     console.log(`📊 [Excel Import] Available sheets:`, workbook.SheetNames.join(', '));
-    console.log(`📊 [Excel Import] Using sheet: ${editionSheetName || 'All sheets (fallback)'}, ${editionData.length} rows`);
+    console.log(`📊 [Excel Import] Using sheet: ${orgsSheetName || 'All sheets (fallback)'}, ${orgsData.length} rows`);
     console.log(`📊 [Excel Import] Total cleaned data: ${cleanedData.length} rows from ${summary.totalSheets} sheets`);
+
+    // CRITICAL: Extract Series and Editions sheets to link with Orgs
+    // Link chain: Orgs.ACODE === Series.ACODE, then Series.ID === Editions.SeriesID
+    const seriesSheetName = workbook.SheetNames.find(name => 
+      name.toLowerCase() === 'series'
+    );
+    const editionsSheetName = workbook.SheetNames.find(name => 
+      name.toLowerCase() === 'editions'
+    );
+    
+    const seriesData = seriesSheetName
+      ? cleanedData.filter(row => (row._sheet || '').toLowerCase() === seriesSheetName.toLowerCase())
+      : [];
+    
+    const editionsData = editionsSheetName
+      ? cleanedData.filter(row => (row._sheet || '').toLowerCase() === editionsSheetName.toLowerCase())
+      : [];
+    
+    console.log(`📊 [Excel Import] Series data: ${seriesData.length} rows`);
+    console.log(`📊 [Excel Import] Editions data: ${editionsData.length} rows`);
+    
+    // Build lookup maps for linking
+    // Map: ACODE -> Series IDs (one org can have multiple series)
+    const acodeToSeriesIds = new Map<string, number[]>();
+    seriesData.forEach((series: any) => {
+      const acode = series.ACODE || series.acode || series['ACODE'] || '';
+      const seriesId = series.ID || series.id || series['ID'] || series.SeriesID || series.seriesId || '';
+      if (acode && seriesId) {
+        const acodeStr = String(acode).trim();
+        if (!acodeToSeriesIds.has(acodeStr)) {
+          acodeToSeriesIds.set(acodeStr, []);
+        }
+        acodeToSeriesIds.get(acodeStr)!.push(Number(seriesId));
+      }
+    });
+    
+    // Map: SeriesID -> Editions
+    const seriesIdToEditions = new Map<string, any[]>();
+    editionsData.forEach((edition: any) => {
+      const seriesId = edition.SeriesID || edition.seriesId || edition.Series_ID || edition['SeriesID'] || '';
+      if (seriesId) {
+        const seriesIdStr = String(seriesId).trim();
+        if (!seriesIdToEditions.has(seriesIdStr)) {
+          seriesIdToEditions.set(seriesIdStr, []);
+        }
+        seriesIdToEditions.get(seriesIdStr)!.push(edition);
+      }
+    });
+    
+    console.log(`📊 [Excel Import] Built lookup: ${acodeToSeriesIds.size} ACODEs -> Series, ${seriesIdToEditions.size} SeriesIDs -> Editions`);
 
     // Extract events and detect data issues
     // Group editions by event name/series to build event history
@@ -326,48 +375,59 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
     }>();
     
     try {
-      editionData.forEach((row: any) => {
+      orgsData.forEach((row: any) => {
         try {
-          // Try extractEventName first (for Editions sheet)
-          let eventName = extractEventName(row);
+          // For Orgs sheet, use organization name as event name
+          const organizationName = extractOrganizationName(row);
           
-          // Fallback: if extractEventName fails, try extractOrganizationName (for Orgs sheet backward compatibility)
-          if (!eventName || eventName === 'N/A') {
-            eventName = extractOrganizationName(row);
-          }
-          
-          if (!eventName || eventName === 'N/A') {
-            return; // Skip rows without valid event/series name
+          if (!organizationName || organizationName === 'N/A') {
+            return; // Skip rows without valid organization name
           }
           
           // Use case-insensitive key for grouping
-          const nameKey = eventName.toLowerCase().trim();
+          const nameKey = organizationName.toLowerCase().trim();
           
-          // If event already exists, add this row as another edition
+          // If event already exists, add this row as another edition (for duplicate orgs)
           if (eventsMap.has(nameKey)) {
             const existingEvent = eventsMap.get(nameKey)!;
             existingEvent.editions.push(row);
             return;
           }
           
-          // New event - create entry
-          // Extract organization name (different from event/series name)
-          const organizationName = extractOrganizationName(row);
+          // CRITICAL: Link Orgs with Editions through Series
+          // Get ACODE from Orgs
+          const orgAcode = row.ACODE || row.acode || row['ACODE'] || '';
+          const linkedEditions: any[] = [];
           
-          console.log(`📊 [Excel Import] Event: "${eventName}" | Org: "${organizationName || 'N/A'}"`);
-          if (!organizationName) {
-            console.log(`⚠️ [Excel Import] No organization name found for event "${eventName}". Available fields:`, Object.keys(row).filter(k => k.toLowerCase().includes('org') || k.toLowerCase().includes('name')));
+          if (orgAcode) {
+            const acodeStr = String(orgAcode).trim();
+            const seriesIds = acodeToSeriesIds.get(acodeStr) || [];
+            
+            // Find all editions for this org's series
+            seriesIds.forEach(seriesId => {
+              const seriesIdStr = String(seriesId).trim();
+              const editions = seriesIdToEditions.get(seriesIdStr) || [];
+              linkedEditions.push(...editions);
+            });
+            
+            console.log(`📊 [Excel Import] Organization: "${organizationName}" (ACODE: ${acodeStr}) -> Found ${linkedEditions.length} editions`);
           }
           
-          // Detect data issues (using event name instead of org name)
-          const issues = detectDataIssues(row, eventName);
+          // Combine org row with linked editions
+          const allEditions = linkedEditions.length > 0 ? linkedEditions : [row];
+          
+          // New event - create entry
+          console.log(`📊 [Excel Import] Organization: "${organizationName}" with ${allEditions.length} editions`);
+          
+          // Detect data issues (using organization name)
+          const issues = detectDataIssues(row, organizationName);
           const dataQualityScore = calculateDataQualityScore(row, issues);
           
           eventsMap.set(nameKey, {
-            name: eventName,
-            organizationName: organizationName || eventName, // Fallback to event name if no org name
-            editions: [row], // Start with first edition
-            rawData: row, // Keep first row as primary rawData
+            name: organizationName,
+            organizationName: organizationName,
+            editions: allEditions, // Include linked editions from Editions sheet
+            rawData: row, // Keep org row as primary rawData
             issues,
             dataQualityScore,
             hasContactInfo: issues.filter(i => i.field === 'contact' && i.severity === 'critical').length === 0,
@@ -408,6 +468,71 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
     console.log(`📊 [Excel Import] Events with data issues: ${events.filter(e => e.issues.length > 0).length}`);
     console.log(`📊 [Excel Import] Total editions across all events: ${events.reduce((sum, e) => sum + (e.editions?.length || 1), 0)}`);
     
+    // Extract contacts from org_contacts sheet - check multiple variations
+    const contactsSheetName = workbook.SheetNames.find(name => {
+      const nameLower = name.toLowerCase().trim();
+      return nameLower === 'org_contacts' || 
+             nameLower === 'orgcontacts' ||
+             nameLower === 'org contacts' ||
+             nameLower === 'organization_contacts' ||
+             nameLower === 'organization contacts' ||
+             nameLower === 'contacts' ||
+             (nameLower.includes('contact') && (nameLower.includes('org') || nameLower.includes('organization')));
+    });
+    
+    const contactsData = contactsSheetName
+      ? cleanedData.filter(row => {
+          const rowSheet = (row._sheet || '').toLowerCase().trim();
+          const targetSheet = contactsSheetName.toLowerCase().trim();
+          return rowSheet === targetSheet;
+        }).map(contact => {
+          // Normalize and enrich contact data for easier extraction
+          // Combine FirstName + MiddleName + LastName into FullName
+          const firstName = contact.FirstName || contact.FIRSTNAME || contact.firstName || contact['First Name'] || contact['FIRST NAME'] || '';
+          const middleName = contact.MiddleName || contact.MIDDLENAME || contact.middleName || contact['Middle Name'] || contact['MIDDLE NAME'] || '';
+          const lastName = contact.LastName || contact.LASTNAME || contact.lastName || contact['Last Name'] || contact['LAST NAME'] || '';
+          
+          // Combine name parts
+          const nameParts = [firstName, middleName, lastName].filter(part => part && part.trim().length > 0);
+          const fullName = nameParts.length > 0 ? nameParts.join(' ').trim() : '';
+          
+          // Add normalized fields for easier extraction
+          return {
+            ...contact,
+            // Normalized name fields
+            FullName: fullName || contact.FullName || contact.FULLNAME || contact.fullName || '',
+            FirstName: firstName,
+            MiddleName: middleName,
+            LastName: lastName,
+            // Normalized contact fields (preserve original case variations)
+            Title: contact.Title || contact.TITLE || contact.title || contact['Title'] || contact['TITLE'] || '',
+            Email: contact.Email || contact.EMAIL || contact.email || contact['Email'] || contact['EMAIL'] || '',
+            Phone: contact.Phone || contact.PHONE || contact.phone || contact['Phone'] || contact['PHONE'] || '',
+            // Normalized ID fields for matching
+            // CRITICAL: OrgID from Org_Contacts sheet links to ID from Orgs sheet
+            // Match: Orgs.ID === Org_Contacts.OrgID
+            OrgID: contact.OrgID || contact.ORGID || contact.orgId || contact.OrgId || contact['OrgID'] || contact['ORGID'] || contact['Organization ID'] || '',
+            OrgName: contact.OrgName || contact.ORGNAME || contact.orgName || contact['OrgName'] || contact['ORGNAME'] || contact['Organization Name'] || '',
+          };
+        })
+      : [];
+    
+    console.log(`📇 [Excel Import] Available sheets:`, workbook.SheetNames.join(', '));
+    console.log(`📇 [Excel Import] Found contacts sheet: ${contactsSheetName || 'None'}, ${contactsData.length} contacts`);
+    
+    // Log sample contact data structure for debugging
+    if (contactsData.length > 0) {
+      console.log(`📇 [Excel Import] Sample contact fields:`, Object.keys(contactsData[0]).slice(0, 20).join(', '));
+      console.log(`📇 [Excel Import] Sample contact (normalized):`, JSON.stringify({
+        FullName: contactsData[0].FullName,
+        Title: contactsData[0].Title,
+        Email: contactsData[0].Email,
+        Phone: contactsData[0].Phone,
+        OrgID: contactsData[0].OrgID,
+        OrgName: contactsData[0].OrgName,
+      }, null, 2));
+    }
+    
     // Warn if no events found
     if (events.length === 0) {
       console.warn(`⚠️ [Excel Import] No events found. Available sheets: ${workbook.SheetNames.join(', ')}`);
@@ -435,7 +560,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
     res.json({
       success: true,
       summary,
-      preview: editionData.slice(0, Math.min(50, editionData.length)), // Only Editions sheet rows for preview
+      preview: orgsData.slice(0, Math.min(50, orgsData.length)), // Only Orgs sheet rows for preview
       events: events.map(event => ({
         name: event.name,
         organizationName: event.organizationName,
@@ -462,6 +587,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
         eventHistory: event.eventHistory || '',
       })),
       textData, // Cleaned text data ready for AI analysis (all sheets for context)
+      contacts: contactsData, // Include contacts from org_contacts sheet
       message: `Successfully processed ${summary.totalRows} rows from ${summary.totalSheets} sheets. Found ${events.length} events.`,
     });
   } catch (error: any) {
