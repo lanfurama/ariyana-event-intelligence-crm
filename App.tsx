@@ -25,11 +25,15 @@ import {
   Lock,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
   Star,
   User as UserIcon,
   Calendar,
   MapPin,
-  Sparkles
+  Sparkles,
+  CheckCircle,
+  TrendingUp,
+  Menu
 } from 'lucide-react';
 import { INITIAL_LEADS, EMAIL_TEMPLATES, USERS } from './constants';
 import { Lead, ChatMessage, User } from './types';
@@ -207,12 +211,25 @@ const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
 };
 
 // 1. Sidebar
-const Sidebar = ({ activeTab, setActiveTab, user, onLogout }: { activeTab: string, setActiveTab: (t: string) => void, user: User, onLogout: () => void }) => (
-  <div className="w-64 bg-gradient-to-b from-slate-900 to-slate-800 text-white flex flex-col h-screen fixed left-0 top-0 border-r border-slate-700/50 shadow-2xl z-20">
-    <div className="p-4 border-b border-slate-700/50 bg-slate-900/50">
-      <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-400 bg-clip-text text-transparent tracking-tight">Ariyana CRM</h1>
-      <p className="text-xs text-slate-400 mt-1 font-medium tracking-wide">Event Intelligence System</p>
-    </div>
+const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onToggle }: { activeTab: string, setActiveTab: (t: string) => void, user: User, onLogout: () => void, isOpen: boolean, onToggle: () => void }) => (
+  <>
+    {/* Sidebar */}
+    <div className={`w-52 bg-gradient-to-b from-slate-900 to-slate-800 text-white flex flex-col h-screen fixed left-0 top-0 border-r border-slate-700/50 shadow-2xl z-20 transition-transform duration-300 ease-in-out ${
+      isOpen ? 'translate-x-0' : '-translate-x-full'
+    }`}>
+      <div className="p-4 border-b border-slate-700/50 bg-slate-900/50 flex items-center justify-between">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-400 bg-clip-text text-transparent tracking-tight">Ariyana CRM</h1>
+          <p className="text-xs text-slate-400 mt-1 font-medium tracking-wide">Event Intelligence System</p>
+        </div>
+        <button
+          onClick={onToggle}
+          className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-300 hover:text-white"
+          title="Close sidebar"
+        >
+          <ChevronLeft size={20} />
+        </button>
+      </div>
     
     <div className="p-3 border-b border-slate-700/50 bg-slate-800/30 flex items-center space-x-3">
        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 overflow-hidden border-2 border-blue-400/50 shadow-lg">
@@ -250,6 +267,18 @@ const Sidebar = ({ activeTab, setActiveTab, user, onLogout }: { activeTab: strin
       </div>
     </div>
   </div>
+  
+  {/* Toggle Button - Show when sidebar is closed */}
+  {!isOpen && (
+    <button
+      onClick={onToggle}
+      className="fixed left-4 top-4 z-30 p-2 bg-slate-900 text-white rounded-lg shadow-lg hover:bg-slate-800 transition-all duration-200 hover:scale-110"
+      title="Open sidebar"
+    >
+      <Menu size={20} />
+    </button>
+  )}
+  </>
 );
 
 const NavItem = ({ icon, label, id, active, onClick }: any) => (
@@ -426,7 +455,17 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     <div className="p-6 min-h-screen flex flex-col space-y-5">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Leads</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Leads</h2>
+            <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-semibold">
+              {filteredLeads.length} {filteredLeads.length === 1 ? 'lead' : 'leads'}
+              {searchTerm && filteredLeads.length !== leads.length && (
+                <span className="text-slate-500 font-normal ml-1">
+                  of {leads.length}
+                </span>
+              )}
+            </span>
+          </div>
           <p className="text-sm text-slate-600 mt-1">Manage and track your event leads</p>
         </div>
         
@@ -1297,6 +1336,10 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   const [analyzingEvents, setAnalyzingEvents] = useState<Set<string>>(new Set()); // Track which events are currently being analyzed
   const [completedLeadsMap, setCompletedLeadsMap] = useState<Map<string, any>>(new Map()); // Map event name -> lead result
   const [completingDataMap, setCompletingDataMap] = useState<Map<string, boolean>>(new Map()); // Track which events are being auto-filled
+  const [searchTerm, setSearchTerm] = useState(''); // Search filter for events
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all'); // Priority filter
+  const [sortBy, setSortBy] = useState<'score' | 'name' | 'status'>('score'); // Sort option
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // Sort order
   
   // Helper function to calculate data quality score
   const calculateDataQuality = (result: any): number => {
@@ -2881,293 +2924,11 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                       return newSet;
                     });
                     
-                    // Auto-fill missing data with AI research (fire and forget)
-                    (async () => {
-                      try {
-                        const lead = result.lead;
-                        const missingFields: string[] = [];
-                        
-                        // Check for missing critical fields
-                        if (!lead.industry) missingFields.push('Industry');
-                        if (!lead.website) missingFields.push('Website');
-                        if (!lead.keyPersonName) missingFields.push('Key Person');
-                        if (!lead.keyPersonEmail) missingFields.push('Email');
-                        
-                        // Only research if there are significant missing fields
-                        if (missingFields.length >= 2) {
-                          console.log(`🔍 [Auto-Research] Starting for: ${lead.companyName} (missing: ${missingFields.join(', ')})`);
-                          
-                          const enrichResult = await GPTService.enrichLeadData(
-                            lead.companyName || '',
-                            lead.keyPersonName || '',
-                            lead.city || ''
-                          );
-                          
-                            const enrichedText = enrichResult.text || '';
-                            const enrichedData = enrichResult.research || {};
-                            console.log(`✅ [Auto-Research] Completed for: ${lead.companyName}`);
-                            console.log(`📊 [Auto-Research] Enriched fields:`, Object.keys(enrichedData));
-                            
-                            // Update the lead with enriched data - only fill N/A or empty fields
-                            setExtractedLeads(prev => {
-                              const leadIndex = prev.findIndex(l => l.companyName === lead.companyName);
-                              if (leadIndex >= 0) {
-                                const newLeads = [...prev];
-                                const currentLead = newLeads[leadIndex];
-                                const aiFilledFields: string[] = [];
-                                
-                                // Helper to check if field should be filled
-                                const shouldFill = (currentValue: any) => {
-                                  return !currentValue || currentValue === 'N/A' || currentValue === '';
-                                };
-                                
-                                // Fill each field if it's empty/N/A and AI has data
-                                const updatedLead: any = { ...currentLead };
-                                
-                                if (shouldFill(currentLead.website) && enrichedData.website) {
-                                  updatedLead.website = enrichedData.website;
-                                  aiFilledFields.push('website');
-                                }
-                                if (shouldFill(currentLead.industry) && enrichedData.industry) {
-                                  updatedLead.industry = enrichedData.industry;
-                                  aiFilledFields.push('industry');
-                                }
-                                if (shouldFill(currentLead.keyPersonName) && enrichedData.keyPersonName) {
-                                  updatedLead.keyPersonName = enrichedData.keyPersonName;
-                                  aiFilledFields.push('keyPersonName');
-                                }
-                                if (shouldFill(currentLead.keyPersonTitle) && enrichedData.keyPersonTitle) {
-                                  updatedLead.keyPersonTitle = enrichedData.keyPersonTitle;
-                                  aiFilledFields.push('keyPersonTitle');
-                                }
-                                if (shouldFill(currentLead.keyPersonEmail) && enrichedData.keyPersonEmail) {
-                                  updatedLead.keyPersonEmail = enrichedData.keyPersonEmail;
-                                  aiFilledFields.push('keyPersonEmail');
-                                }
-                                if (shouldFill(currentLead.keyPersonPhone) && enrichedData.keyPersonPhone) {
-                                  updatedLead.keyPersonPhone = enrichedData.keyPersonPhone;
-                                  aiFilledFields.push('keyPersonPhone');
-                                }
-                                if (shouldFill(currentLead.openYear) && enrichedData.openYear) {
-                                  updatedLead.openYear = enrichedData.openYear;
-                                  aiFilledFields.push('openYear');
-                                }
-                                if (shouldFill(currentLead.frequency) && enrichedData.frequency) {
-                                  updatedLead.frequency = enrichedData.frequency;
-                                  aiFilledFields.push('frequency');
-                                }
-                                if (shouldFill(currentLead.duration) && enrichedData.duration) {
-                                  updatedLead.duration = enrichedData.duration;
-                                  aiFilledFields.push('duration');
-                                }
-                                if (shouldFill(currentLead.preferredMonth) && enrichedData.preferredMonth) {
-                                  updatedLead.preferredMonth = enrichedData.preferredMonth;
-                                  aiFilledFields.push('preferredMonth');
-                                }
-                                if (shouldFill(currentLead.rotationPattern) && enrichedData.rotationPattern) {
-                                  updatedLead.rotationPattern = enrichedData.rotationPattern;
-                                  aiFilledFields.push('rotationPattern');
-                                }
-                                if (shouldFill(currentLead.sponsors) && enrichedData.sponsors) {
-                                  updatedLead.sponsors = enrichedData.sponsors;
-                                  aiFilledFields.push('sponsors');
-                                }
-                                if (shouldFill(currentLead.layoutEvent) && enrichedData.layoutEvent) {
-                                  updatedLead.layoutEvent = enrichedData.layoutEvent;
-                                  aiFilledFields.push('layoutEvent');
-                                }
-                                if (shouldFill(currentLead.conferenceRegistration) && enrichedData.conferenceRegistration) {
-                                  updatedLead.conferenceRegistration = enrichedData.conferenceRegistration;
-                                  aiFilledFields.push('conferenceRegistration');
-                                }
-                                if (shouldFill(currentLead.iccaQualified) && enrichedData.iccaQualified) {
-                                  updatedLead.iccaQualified = enrichedData.iccaQualified;
-                                  aiFilledFields.push('iccaQualified');
-                                }
-                                if (shouldFill(currentLead.decisionMaker) && enrichedData.decisionMaker) {
-                                  updatedLead.decisionMaker = enrichedData.decisionMaker;
-                                  aiFilledFields.push('decisionMaker');
-                                }
-                                if (shouldFill(currentLead.competitors) && enrichedData.competitors) {
-                                  updatedLead.competitors = enrichedData.competitors;
-                                  aiFilledFields.push('competitors');
-                                }
-                                if (shouldFill(currentLead.numberOfDelegates) && enrichedData.numberOfDelegates) {
-                                  updatedLead.numberOfDelegates = Number(enrichedData.numberOfDelegates);
-                                  aiFilledFields.push('numberOfDelegates');
-                                }
-                                if (shouldFill(currentLead.upcomingEvents) && enrichedData.upcomingEvents) {
-                                  updatedLead.upcomingEvents = enrichedData.upcomingEvents;
-                                  aiFilledFields.push('upcomingEvents');
-                                }
-                                if (shouldFill(currentLead.breakoutRooms) && enrichedData.breakoutRooms) {
-                                  updatedLead.breakoutRooms = enrichedData.breakoutRooms;
-                                  aiFilledFields.push('breakoutRooms');
-                                }
-                                if (shouldFill(currentLead.roomSizes) && enrichedData.roomSizes) {
-                                  updatedLead.roomSizes = enrichedData.roomSizes;
-                                  aiFilledFields.push('roomSizes');
-                                }
-                                if (shouldFill(currentLead.organizingChairman) && enrichedData.organizingChairman) {
-                                  updatedLead.organizingChairman = enrichedData.organizingChairman;
-                                  aiFilledFields.push('organizingChairman');
-                                }
-                                if (shouldFill(currentLead.secretaryGeneral) && enrichedData.secretaryGeneral) {
-                                  updatedLead.secretaryGeneral = enrichedData.secretaryGeneral;
-                                  aiFilledFields.push('secretaryGeneral');
-                                }
-                                if (shouldFill(currentLead.delegatesProfile) && enrichedData.delegatesProfile) {
-                                  updatedLead.delegatesProfile = enrichedData.delegatesProfile;
-                                  aiFilledFields.push('delegatesProfile');
-                                }
-                                if (shouldFill(currentLead.localStrengthsWeaknesses) && enrichedData.localStrengthsWeaknesses) {
-                                  updatedLead.localStrengthsWeaknesses = enrichedData.localStrengthsWeaknesses;
-                                  aiFilledFields.push('localStrengthsWeaknesses');
-                                }
-                                
-                                updatedLead.aiFilledFields = aiFilledFields;
-                                updatedLead.lastEnriched = new Date().toISOString();
-                                updatedLead.researchSummary = enrichedData.researchSummary || '';
-                                
-                                console.log(`✅ [Auto-Fill] Filled ${aiFilledFields.length} fields:`, aiFilledFields);
-                                newLeads[leadIndex] = updatedLead;
-                                return newLeads;
-                              }
-                              return prev;
-                            });
-                          
-                            // Also update parsedReport.partC with same logic
-                            setParsedReport(prev => {
-                              if (!prev || !prev.partC) return prev;
-                              const leadIndex = prev.partC.findIndex((l: any) => l.companyName === lead.companyName);
-                              if (leadIndex >= 0) {
-                                const newPartC = [...prev.partC];
-                                const currentLead = newPartC[leadIndex];
-                                const aiFilledFields: string[] = [];
-                                
-                                const shouldFill = (currentValue: any) => {
-                                  return !currentValue || currentValue === 'N/A' || currentValue === '';
-                                };
-                                
-                                const updatedLead: any = { ...currentLead };
-                                
-                                // Fill fields same as above
-                                if (shouldFill(currentLead.website) && enrichedData.website) {
-                                  updatedLead.website = enrichedData.website;
-                                  aiFilledFields.push('website');
-                                }
-                                if (shouldFill(currentLead.industry) && enrichedData.industry) {
-                                  updatedLead.industry = enrichedData.industry;
-                                  aiFilledFields.push('industry');
-                                }
-                                if (shouldFill(currentLead.keyPersonName) && enrichedData.keyPersonName) {
-                                  updatedLead.keyPersonName = enrichedData.keyPersonName;
-                                  aiFilledFields.push('keyPersonName');
-                                }
-                                if (shouldFill(currentLead.keyPersonTitle) && enrichedData.keyPersonTitle) {
-                                  updatedLead.keyPersonTitle = enrichedData.keyPersonTitle;
-                                  aiFilledFields.push('keyPersonTitle');
-                                }
-                                if (shouldFill(currentLead.keyPersonEmail) && enrichedData.keyPersonEmail) {
-                                  updatedLead.keyPersonEmail = enrichedData.keyPersonEmail;
-                                  aiFilledFields.push('keyPersonEmail');
-                                }
-                                if (shouldFill(currentLead.keyPersonPhone) && enrichedData.keyPersonPhone) {
-                                  updatedLead.keyPersonPhone = enrichedData.keyPersonPhone;
-                                  aiFilledFields.push('keyPersonPhone');
-                                }
-                                if (shouldFill(currentLead.openYear) && enrichedData.openYear) {
-                                  updatedLead.openYear = enrichedData.openYear;
-                                  aiFilledFields.push('openYear');
-                                }
-                                if (shouldFill(currentLead.frequency) && enrichedData.frequency) {
-                                  updatedLead.frequency = enrichedData.frequency;
-                                  aiFilledFields.push('frequency');
-                                }
-                                if (shouldFill(currentLead.duration) && enrichedData.duration) {
-                                  updatedLead.duration = enrichedData.duration;
-                                  aiFilledFields.push('duration');
-                                }
-                                if (shouldFill(currentLead.preferredMonth) && enrichedData.preferredMonth) {
-                                  updatedLead.preferredMonth = enrichedData.preferredMonth;
-                                  aiFilledFields.push('preferredMonth');
-                                }
-                                if (shouldFill(currentLead.rotationPattern) && enrichedData.rotationPattern) {
-                                  updatedLead.rotationPattern = enrichedData.rotationPattern;
-                                  aiFilledFields.push('rotationPattern');
-                                }
-                                if (shouldFill(currentLead.sponsors) && enrichedData.sponsors) {
-                                  updatedLead.sponsors = enrichedData.sponsors;
-                                  aiFilledFields.push('sponsors');
-                                }
-                                if (shouldFill(currentLead.layoutEvent) && enrichedData.layoutEvent) {
-                                  updatedLead.layoutEvent = enrichedData.layoutEvent;
-                                  aiFilledFields.push('layoutEvent');
-                                }
-                                if (shouldFill(currentLead.conferenceRegistration) && enrichedData.conferenceRegistration) {
-                                  updatedLead.conferenceRegistration = enrichedData.conferenceRegistration;
-                                  aiFilledFields.push('conferenceRegistration');
-                                }
-                                if (shouldFill(currentLead.iccaQualified) && enrichedData.iccaQualified) {
-                                  updatedLead.iccaQualified = enrichedData.iccaQualified;
-                                  aiFilledFields.push('iccaQualified');
-                                }
-                                if (shouldFill(currentLead.decisionMaker) && enrichedData.decisionMaker) {
-                                  updatedLead.decisionMaker = enrichedData.decisionMaker;
-                                  aiFilledFields.push('decisionMaker');
-                                }
-                                if (shouldFill(currentLead.competitors) && enrichedData.competitors) {
-                                  updatedLead.competitors = enrichedData.competitors;
-                                  aiFilledFields.push('competitors');
-                                }
-                                if (shouldFill(currentLead.numberOfDelegates) && enrichedData.numberOfDelegates) {
-                                  updatedLead.numberOfDelegates = Number(enrichedData.numberOfDelegates);
-                                  aiFilledFields.push('numberOfDelegates');
-                                }
-                                if (shouldFill(currentLead.upcomingEvents) && enrichedData.upcomingEvents) {
-                                  updatedLead.upcomingEvents = enrichedData.upcomingEvents;
-                                  aiFilledFields.push('upcomingEvents');
-                                }
-                                if (shouldFill(currentLead.breakoutRooms) && enrichedData.breakoutRooms) {
-                                  updatedLead.breakoutRooms = enrichedData.breakoutRooms;
-                                  aiFilledFields.push('breakoutRooms');
-                                }
-                                if (shouldFill(currentLead.roomSizes) && enrichedData.roomSizes) {
-                                  updatedLead.roomSizes = enrichedData.roomSizes;
-                                  aiFilledFields.push('roomSizes');
-                                }
-                                if (shouldFill(currentLead.organizingChairman) && enrichedData.organizingChairman) {
-                                  updatedLead.organizingChairman = enrichedData.organizingChairman;
-                                  aiFilledFields.push('organizingChairman');
-                                }
-                                if (shouldFill(currentLead.secretaryGeneral) && enrichedData.secretaryGeneral) {
-                                  updatedLead.secretaryGeneral = enrichedData.secretaryGeneral;
-                                  aiFilledFields.push('secretaryGeneral');
-                                }
-                                if (shouldFill(currentLead.delegatesProfile) && enrichedData.delegatesProfile) {
-                                  updatedLead.delegatesProfile = enrichedData.delegatesProfile;
-                                  aiFilledFields.push('delegatesProfile');
-                                }
-                                if (shouldFill(currentLead.localStrengthsWeaknesses) && enrichedData.localStrengthsWeaknesses) {
-                                  updatedLead.localStrengthsWeaknesses = enrichedData.localStrengthsWeaknesses;
-                                  aiFilledFields.push('localStrengthsWeaknesses');
-                                }
-                                
-                                updatedLead.aiFilledFields = aiFilledFields;
-                                updatedLead.lastEnriched = new Date().toISOString();
-                                updatedLead.researchSummary = enrichedData.researchSummary || '';
-                                
-                                newPartC[leadIndex] = updatedLead;
-                                return { ...prev, partC: newPartC };
-                              }
-                              return prev;
-                            });
-                        }
-                      } catch (error: any) {
-                        console.error(`❌ [Auto-Research] Error for ${result.lead.companyName}:`, error.message);
-                        // Don't throw - just log and continue
-                      }
-                    })();
+                    // DISABLED: Auto-fill missing data with AI research
+                    // Research is now manual - user must click Research button
+                    // (async () => {
+                    //   ... auto-research code removed ...
+                    // })();
                   } else if (result.isRateLimit) {
                     console.error(`❌ [Agent Pool] Rate limit hit by Agent ${result.agentId}`);
                     setAnalysisError(`Rate limit exceeded. Please wait before retrying.`);
@@ -3492,173 +3253,202 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     }
   };
 
-  // Auto-trigger edition research when parsedReport has editions
-  useEffect(() => {
-    if (!parsedReport || !parsedReport.partC) {
-      console.log('⏭️ [Edition Research] No parsedReport or partC, skipping research');
-      return;
-    }
 
-    console.log(`🔍 [Edition Research] Checking ${parsedReport.partC.length} events for editions to research`);
-
-    parsedReport.partC.forEach((lead: any) => {
-      if (lead.editions && Array.isArray(lead.editions) && lead.editions.length > 0) {
-        console.log(`📋 [Edition Research] Event "${lead.companyName}" has ${lead.editions.length} editions`);
-        
-        // Check if already researched or researching
-        const alreadyResearched = lead.editions.every((edition: any) => {
-          const startDate = edition.STARTDATE || edition.StartDate || edition.startDate || '';
-          const editionYear = edition.EDITYEARS || edition.EditYears || edition.edityears || '';
-          const year = editionYear || startDate || '';
-          const city = edition.CITY || edition.City || edition.city || '';
-          const country = edition.COUNTRY || edition.Country || edition.country || '';
-          const cacheKey = `${lead.companyName}_${year}_${city}_${country}`;
-          
-          const hasCache = editionResearchCache.has(cacheKey);
-          const isResearching = researchingEditions.has(cacheKey);
-          
-          if (hasCache || isResearching) {
-            console.log(`✓ Edition ${year} ${city}: ${hasCache ? 'cached' : 'researching'}`);
-          }
-          
-          return hasCache || isResearching;
-        });
-
-        if (!alreadyResearched) {
-          console.log(`🚀 [Edition Research] Auto-triggering research for "${lead.companyName}" (${lead.editions.length} editions)`);
-          researchEditionsLeadership(lead.companyName, lead.editions);
-        } else {
-          console.log(`⏭️ [Edition Research] All editions already researched for "${lead.companyName}"`);
-        }
-      } else {
-        console.log(`⏭️ [Edition Research] Event "${lead.companyName}" has no editions`);
+  // Filter and sort events
+  const filteredAndSortedEvents = eventsList
+    .map((event, idx) => {
+      const eventNameLower = event.name.toLowerCase().trim();
+      const progress = organizationProgress.find(p => {
+        const progressName = (p.companyName || '').toLowerCase().trim();
+        const resultName = (p.result?.companyName || '').toLowerCase().trim();
+        return progressName === eventNameLower || 
+               resultName === eventNameLower ||
+               progressName.includes(eventNameLower) ||
+               eventNameLower.includes(progressName);
+      });
+      return { event, idx, progress };
+    })
+    .filter(({ event, progress }) => {
+      // Search filter
+      if (searchTerm && !event.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+        return false;
+      }
+      
+      // Priority filter
+      if (priorityFilter !== 'all' && progress?.status === 'completed' && progress.result) {
+        const score = progress.result.totalScore || 0;
+        if (priorityFilter === 'high' && score < 50) return false;
+        if (priorityFilter === 'medium' && (score < 30 || score >= 50)) return false;
+        if (priorityFilter === 'low' && score >= 30) return false;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'score') {
+        const scoreA = a.progress?.result?.totalScore || 0;
+        const scoreB = b.progress?.result?.totalScore || 0;
+        return sortOrder === 'desc' ? scoreB - scoreA : scoreA - scoreB;
+      } else if (sortBy === 'name') {
+        const nameA = a.progress?.result?.companyName || a.event.name;
+        const nameB = b.progress?.result?.companyName || b.event.name;
+        return sortOrder === 'desc' 
+          ? nameB.localeCompare(nameA)
+          : nameA.localeCompare(nameB);
+      } else { // status
+        const statusOrder = { 'completed': 0, 'analyzing': 1, 'pending': 2, 'error': 3 };
+        const statusA = statusOrder[a.progress?.status || 'pending'] ?? 3;
+        const statusB = statusOrder[b.progress?.status || 'pending'] ?? 3;
+        return sortOrder === 'desc' ? statusB - statusA : statusA - statusB;
       }
     });
-  }, [parsedReport]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="p-6 min-h-screen overflow-y-auto space-y-5">
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Intelligent data</h2>
-        <p className="text-sm text-slate-600 mt-1">Analyze and prioritize events using the backend scoring engine.</p>
+    <div className="p-6 min-h-screen overflow-y-auto space-y-6">
+      {/* Header Section */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Event Intelligence Dashboard</h2>
+          <p className="text-sm text-slate-600 mt-1">Phân tích và ưu tiên hóa events tự động với Backend Scoring Engine</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg inline-flex items-center text-sm font-semibold cursor-pointer transition-colors shadow-sm">
+            <FileSpreadsheet size={16} className="mr-2" /> Upload Excel/CSV
+            <input
+              type="file"
+              onChange={handleFileImport}
+              accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              className="hidden"
+            />
+          </label>
+        </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-lg p-4">
-        <p className="text-sm text-slate-700 leading-relaxed">
-          <strong className="text-slate-900">Backend Scoring Engine</strong> tự động phân tích và xếp hạng events dựa trên 4 tiêu chí:
-          <strong> History (25đ)</strong>, <strong>Region (25đ)</strong>, <strong>Contact (25đ)</strong>, và <strong>Delegates (25đ)</strong>.
-        </p>
-        <details className="mt-3">
-          <summary className="text-sm text-slate-700 cursor-pointer hover:text-slate-900 font-medium">
-            Xem chi tiết
+      {/* Scoring Engine Info - Collapsible */}
+      <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+        <details className="group">
+          <summary className="text-sm font-semibold text-slate-900 cursor-pointer hover:text-slate-700 flex items-center justify-between">
+            <span className="flex items-center">
+              <Sparkles size={16} className="mr-2 text-indigo-500" />
+              Backend Scoring Engine - 5 Tiêu chí đánh giá
+            </span>
+            <ChevronDown size={16} className="text-slate-400 group-open:rotate-180 transition-transform" />
           </summary>
-          <div className="mt-3 p-3 bg-slate-50 rounded border border-slate-200 text-xs space-y-2">
-            <div>
-              <strong className="text-slate-900">1. History Score (0-25):</strong>
-              <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
-                <li>25đ: Đã tổ chức tại Vietnam</li>
-                <li>15đ: Đã tổ chức tại Southeast Asia</li>
-              </ul>
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <p className="text-sm text-slate-700 leading-relaxed mb-4">
+              Hệ thống tự động phân tích và xếp hạng events dựa trên <strong className="text-slate-900">4 tiêu chí scoring</strong>:
+              <strong className="text-blue-600"> History (25đ)</strong>, <strong className="text-green-600">Region (25đ)</strong>, 
+              <strong className="text-purple-600"> Contact (25đ)</strong>, <strong className="text-orange-600">Delegates (25đ)</strong>,
+              và <strong className="text-slate-900">1 tiêu chí qualification</strong>: <strong className="text-teal-600">ICCA Qualification</strong>.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <strong className="text-blue-900 block mb-2">1. History Score (0-25)</strong>
+                <ul className="ml-4 space-y-1 text-blue-700 list-disc">
+                  <li>25đ: Đã tổ chức tại Vietnam</li>
+                  <li>15đ: Đã tổ chức tại Southeast Asia</li>
+                </ul>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <strong className="text-green-900 block mb-2">2. Region Score (0-25)</strong>
+                <ul className="ml-4 space-y-1 text-green-700 list-disc">
+                  <li>25đ: Tên event có "ASEAN/Asia/Pacific"</li>
+                  <li>15đ: Đã tổ chức tại châu Á</li>
+                </ul>
+              </div>
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                <strong className="text-purple-900 block mb-2">3. Contact Score (0-25)</strong>
+                <ul className="ml-4 space-y-1 text-purple-700 list-disc">
+                  <li>25đ: Có cả email và phone</li>
+                  <li>20đ: Có email và tên người liên hệ</li>
+                  <li>15đ: Chỉ có email</li>
+                  <li>10đ: Chỉ có tên người liên hệ</li>
+                </ul>
+              </div>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <strong className="text-orange-900 block mb-2">4. Delegates Score (0-25)</strong>
+                <ul className="ml-4 space-y-1 text-orange-700 list-disc">
+                  <li>25đ: ≥500 delegates</li>
+                  <li>20đ: ≥300 delegates</li>
+                  <li>10đ: ≥100 delegates</li>
+                </ul>
+              </div>
             </div>
-            <div>
-              <strong className="text-slate-900">2. Region Score (0-25):</strong>
-              <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
-                <li>25đ: Tên event có "ASEAN/Asia/Pacific"</li>
-                <li>15đ: Đã tổ chức tại châu Á</li>
-              </ul>
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
+                <strong className="text-teal-900 block mb-2">5. ICCA Qualification (Bắt buộc - 3 Quy tắc Vàng)</strong>
+                <p className="text-xs text-teal-700 mb-2">Event phải thỏa mãn <strong className="text-teal-900">TẤT CẢ 3 quy tắc</strong> để được coi là ICCA Qualified:</p>
+                <ul className="ml-4 space-y-1.5 text-teal-700 list-disc text-xs">
+                  <li><strong>Quy tắc 1 - Rotation (Luân phiên):</strong> Event phải rotate giữa ít nhất 3 quốc gia khác nhau</li>
+                  <li><strong>Quy tắc 2 - Size (Quy mô):</strong> Phải có ít nhất 50 ONSITE participants (virtual không tính)</li>
+                  <li><strong>Quy tắc 3 - Regularity (Thường kỳ):</strong> Phải tổ chức thường xuyên (annual/biennial/triennial, không phải one-off)</li>
+                </ul>
+                <p className="text-xs text-teal-600 mt-2 italic">
+                  <strong>Organizer:</strong> Phải là International Association (không phải corporate). 
+                  <strong> Loại trừ:</strong> Trade shows, corporate meetings, sporting events, religious/political events.
+                </p>
+              </div>
             </div>
-            <div>
-              <strong className="text-slate-900">3. Contact Score (0-25):</strong>
-              <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
-                <li>25đ: Có cả email và phone</li>
-                <li>20đ: Có email và tên người liên hệ</li>
-                <li>15đ: Chỉ có email</li>
-                <li>10đ: Chỉ có tên người liên hệ</li>
-              </ul>
-            </div>
-            <div>
-              <strong className="text-slate-900">4. Delegates Score (0-25):</strong>
-              <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
-                <li>25đ: ≥500 delegates</li>
-                <li>20đ: ≥300 delegates</li>
-                <li>10đ: ≥100 delegates</li>
-              </ul>
-            </div>
-            <div className="pt-2 border-t border-slate-200">
-              <strong className="text-slate-900">Priority Classification:</strong>
-              <ul className="ml-4 mt-1 space-y-0.5 text-slate-600 list-disc">
-                <li><strong>High (≥50):</strong> Contact immediately</li>
-                <li><strong>Medium (30-49):</strong> Follow up</li>
-                <li><strong>Low (&lt;30):</strong> Monitor</li>
-              </ul>
+            <div className="mt-4 pt-4 border-t border-slate-200 bg-slate-50 rounded-lg p-3">
+              <strong className="text-slate-900 block mb-2">Priority Classification:</strong>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-red-50 border border-red-200 rounded p-2">
+                  <strong className="text-red-900">High (≥50)</strong>
+                  <p className="text-xs text-red-700 mt-1">Contact immediately</p>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
+                  <strong className="text-yellow-900">Medium (30-49)</strong>
+                  <p className="text-xs text-yellow-700 mt-1">Follow up</p>
+                </div>
+                <div className="bg-slate-100 border border-slate-300 rounded p-2">
+                  <strong className="text-slate-700">Low (&lt;30)</strong>
+                  <p className="text-xs text-slate-600 mt-1">Monitor</p>
+                </div>
+              </div>
             </div>
           </div>
         </details>
       </div>
 
-      {/* File Upload & Manual Input Section */}
-      <div className="bg-white p-5 rounded-lg border border-slate-200">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-slate-900">Import data</h3>
+      {/* File Upload Status */}
+      {uploadingExcel && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center space-x-3">
-            <label className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg inline-flex items-center text-sm font-medium cursor-pointer">
-              <FileSpreadsheet size={16} className="mr-2" /> Upload Excel/CSV
-                  <input
-                    type="file"
-                    onChange={handleFileImport}
-                    accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    className="hidden"
-                  />
-                </label>
+            <Loader2 className="animate-spin text-blue-600" size={20} />
+            <div>
+              <p className="text-sm font-semibold text-blue-800">Processing file...</p>
+              <p className="text-xs text-blue-700 mt-0.5">Please wait while we analyze your data</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {excelFile && excelSummary && !uploadingExcel && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <FileSpreadsheet size={20} className="text-green-600" />
+              <div>
+                <p className="text-sm font-semibold text-green-800">{excelFile.name}</p>
+                <p className="text-xs text-green-700 mt-0.5">
+                  {excelSummary.totalRows} rows • {excelSummary.totalSheets} sheets • {eventsList.length} events detected
+                </p>
+              </div>
+            </div>
             <button
               onClick={() => {
-                const events = parseEventsFromData(importData, excelSummary);
-                if (events.length > 0) {
-                  setEventsList(events);
-                  alert(`Found ${events.length} events from pasted data!`);
-                } else {
-                  alert('No events found. Please check the data format.');
-                }
+                setExcelFile(null);
+                setExcelSummary(null);
+                setEventsList([]);
+                setImportData('');
               }}
-              disabled={!importData || importData.trim() === ''}
-              className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-green-600 hover:text-green-800 p-1"
             >
-              Parse from Text
+              <X size={18} />
             </button>
-                  </div>
+          </div>
         </div>
-        
-        {uploadingExcel && (
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3">
-            <div className="flex items-center space-x-2">
-              <Loader2 className="animate-spin text-slate-600" size={16} />
-              <span className="text-slate-700 text-sm">Processing file...</span>
-            </div>
-          </div>
-        )}
-
-        {excelFile && excelSummary && (
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3">
-            <div className="flex items-center space-x-2">
-              <FileSpreadsheet size={16} className="text-slate-600" />
-              <span className="text-slate-800 text-sm font-medium">
-                {excelFile.name} ({excelSummary.totalRows} rows, {excelSummary.totalSheets} sheets)
-              </span>
-            </div>
-          </div>
-        )}
-
-             {/* Textarea hidden - user can upload files instead */}
-             {/* <textarea 
-               className="w-full h-32 p-3 bg-white border border-slate-300 rounded-lg text-xs font-mono text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-y transition-colors"
-          placeholder="Paste CSV data here or upload an Excel/CSV file...&#10;Example format:&#10;NAME, Industry, Country, City&#10;Organization 1, Technology, Singapore, Singapore&#10;Organization 2, Healthcare, Malaysia, Kuala Lumpur"
-               value={importData}
-               onChange={(e) => setImportData(e.target.value)}
-        />
-        <p className="text-xs text-slate-500 mt-2">
-          💡 Tip: Paste CSV data or upload Excel/CSV file. Click "Parse from Text" to extract events, then click "Run Strategy Analysis" to analyze.
-        </p> */}
-      </div>
+      )}
 
       {rateLimitCountdown !== null && rateLimitCountdown > 0 && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
@@ -3715,44 +3505,95 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         )}
 
 
+      {/* Filters and Search Bar */}
+      {eventsList.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search events by name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
+                />
+              </div>
+            </div>
+            
+            {/* Priority Filter */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-slate-700 whitespace-nowrap">Priority:</label>
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value as any)}
+                className="px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
+              >
+                <option value="all">All Priorities</option>
+                <option value="high">High (≥50)</option>
+                <option value="medium">Medium (30-49)</option>
+                <option value="low">Low (&lt;30)</option>
+              </select>
+            </div>
+
+            {/* Sort By */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-slate-700 whitespace-nowrap">Sort by:</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
+              >
+                <option value="score">Score</option>
+                <option value="name">Name</option>
+                <option value="status">Status</option>
+              </select>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+              >
+                {sortOrder === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+            </div>
+          </div>
+          
+          {/* Results count */}
+          <div className="mt-3 pt-3 border-t border-slate-200">
+            <p className="text-xs text-slate-600">
+              Showing <strong className="text-slate-900">{filteredAndSortedEvents.length}</strong> of <strong className="text-slate-900">{eventsList.length}</strong> events
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Events Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 mb-4">
-        <table className="w-full">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider w-10">#</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Event Name</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider w-24 whitespace-nowrap">Status</th>
-              <th className="px-3 py-2 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider w-20 whitespace-nowrap">Score</th>
-            </tr>
-          </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {eventsList.length === 0 ? (
+      {eventsList.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
                 <tr>
-                  <td colSpan={4} className="px-4 py-12 text-center text-slate-500">
-                    <FileSpreadsheet size={48} className="mx-auto mb-3 text-slate-300" />
-                    <p className="text-sm font-medium">No events found</p>
-                    <p className="text-xs mt-1">Upload an Excel/CSV file to get started</p>
-                  </td>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-12">#</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider min-w-[300px]">Event Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-28">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-24">Score</th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-700 uppercase tracking-wider w-32">Actions</th>
                 </tr>
-              ) : (
-                eventsList
-                  .map((event, idx) => {
-                    // Find progress with case-insensitive matching
-                    const eventNameLower = event.name.toLowerCase().trim();
-                    const progress = organizationProgress.find(p => {
-                      const progressName = (p.companyName || '').toLowerCase().trim();
-                      const resultName = (p.result?.companyName || '').toLowerCase().trim();
-                      return progressName === eventNameLower || 
-                             resultName === eventNameLower ||
-                             progressName.includes(eventNameLower) ||
-                             eventNameLower.includes(progressName);
-                    });
-                    return { event, idx, progress };
-                  })
-                  // Show ALL events - don't filter, let user see ICCA qualification status
-                  // All events will be displayed with their ICCA qualification status visible
-                  .map(({ event, idx, progress }) => (
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {filteredAndSortedEvents.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
+                      <Search size={48} className="mx-auto mb-3 text-slate-300" />
+                      <p className="text-sm font-medium">No events match your filters</p>
+                      <p className="text-xs mt-1">Try adjusting your search or filter criteria</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAndSortedEvents.map(({ event, idx, progress }) => (
                     <tr 
                       key={event.id || idx} 
                       className={`hover:bg-slate-50 transition-colors ${
@@ -3761,9 +3602,11 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                         progress?.status === 'error' ? 'bg-red-50/30' : ''
                       }`}
                     >
-                      <td className="px-3 py-2 text-sm text-slate-600">{idx + 1}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center space-x-2 flex-wrap">
+                      <td className="px-4 py-3 text-sm font-medium text-slate-600">{idx + 1}</td>
+                      
+                      {/* Event Name */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center space-x-2">
                           {progress?.status === 'completed' && (
                             <Check className="text-green-600 flex-shrink-0" size={16} />
                           )}
@@ -3773,158 +3616,155 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                           {progress?.status === 'error' && (
                             <X className="text-red-600 flex-shrink-0" size={16} />
                           )}
-                          {(!progress || progress.status === 'pending') && (
-                            null
-                          )}
-                          <span className="font-medium text-slate-800 break-words">
-                            {progress?.result?.companyName || event.name}
-                          </span>
-                          {progress?.status === 'completed' && progress.result && progress.result.totalScore >= 80 && (
-                            <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 text-xs font-bold flex items-center flex-shrink-0">
-                              <Star size={10} className="mr-1" /> High Priority
-                            </span>
-                          )}
-                          {/* ICCA Qualification Status Badge */}
-                          {progress?.status === 'completed' && progress.result?.eligibilityCheck && (
-                            <>
-                              {progress.result.eligibilityCheck.isICCAQualified ? (
-                                <span 
-                                  className="px-2 py-0.5 rounded bg-green-100 text-green-800 text-xs font-medium flex items-center flex-shrink-0 cursor-help" 
-                                  title={`✅ ICCA Qualified\nReason: ${progress.result.eligibilityCheck.iccaQualifiedReason || 'Confirmed ICCA qualified'}\nVietnam History: ${progress.result.eligibilityCheck.hasVietnamHistory ? 'Yes' : 'No'}\nRecent Activity: ${progress.result.eligibilityCheck.hasRecentActivity ? 'Yes' : 'No'}`}
-                                >
-                                  ✓ ICCA Qualified
-                                </span>
-                              ) : (
-                                <span 
-                                  className="px-2 py-0.5 rounded bg-red-100 text-red-800 text-xs font-medium flex items-center flex-shrink-0 cursor-help" 
-                                  title={`❌ NOT ICCA Qualified\nReason: ${progress.result.eligibilityCheck.iccaQualifiedReason || 'Does not meet ICCA qualification criteria'}\nVietnam History: ${progress.result.eligibilityCheck.hasVietnamHistory ? 'Yes' : 'No'}\nRecent Activity: ${progress.result.eligibilityCheck.hasRecentActivity ? 'Yes' : 'No'}`}
-                                >
-                                  ✗ Not ICCA Qualified
-                                </span>
-                              )}
-                            </>
-                          )}
-                          {/* Show ICCA status even if eligibilityCheck is not available but result has iccaQualified field */}
-                          {progress?.status === 'completed' && progress.result && !progress.result.eligibilityCheck && (
-                            <>
-                              {(progress.result.iccaQualified?.toLowerCase().trim() === 'yes' || progress.result.eventBrief?.iccaQualified?.toLowerCase().trim() === 'yes') ? (
-                                <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 text-xs font-medium flex items-center flex-shrink-0">
-                                  ✓ ICCA Qualified
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 text-xs font-medium flex items-center flex-shrink-0">
-                                  ✗ Not ICCA Qualified
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex flex-col">
-                          <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
-                            progress?.status === 'completed' 
-                              ? 'bg-green-100 text-green-800' 
-                              : progress?.status === 'analyzing'
-                              ? 'bg-blue-100 text-blue-800'
-                              : progress?.status === 'error'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-slate-100 text-slate-600'
-                          }`}>
-                            {progress?.status === 'completed' ? 'Completed' :
-                             progress?.status === 'analyzing' ? 'Analyzing...' :
-                             progress?.status === 'error' ? 'Error' : 'Pending'}
-                          </span>
-                          {/* Show reason if event is completed but not ICCA qualified */}
-                          {progress?.status === 'completed' && progress.result && 
-                           !progress.result.eligibilityCheck?.isICCAQualified && 
-                           progress.result.reason && (
-                            <div className="mt-1 text-xs text-red-600 max-w-[200px] truncate cursor-help" title={progress.result.reason}>
-                              {progress.result.reason}
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-slate-900 truncate">
+                              {progress?.result?.companyName || event.name}
                             </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2">
-                        {progress?.status === 'completed' && progress.result ? (
-                          <span className="text-sm font-bold text-indigo-600 whitespace-nowrap">
-                            {progress.result.totalScore || 0}/100
-                          </span>
-                        ) : (event as any).dataQualityScore !== undefined ? (
-                          <div className="relative group">
-                            <div className="flex items-center space-x-1">
-                              <span className={`text-xs font-medium whitespace-nowrap ${
-                                (event as any).dataQualityScore >= 80 ? 'text-green-600' :
-                                (event as any).dataQualityScore >= 60 ? 'text-yellow-600' :
-                                'text-red-600'
-                              }`}>
-                                {(event as any).dataQualityScore}%
-                              </span>
-                              {(event as any).issues && Array.isArray((event as any).issues) && (event as any).issues.length > 0 && (
-                                <span className="text-xs text-slate-400 cursor-help flex-shrink-0" title="Hover to see data issues">
-                                  ⓘ
-                                </span>
-                              )}
-                            </div>
-                            {(event as any).issues && Array.isArray((event as any).issues) && (event as any).issues.length > 0 && (
-                              <div className="absolute left-0 top-full mt-2 w-72 bg-slate-900 text-white text-xs rounded-lg shadow-xl p-4 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 border border-slate-700">
-                                <div className="font-bold mb-3 text-sm flex items-center">
-                                  <span className="mr-2">📊</span>
-                                  Data Quality: {(event as any).dataQualityScore}%
-                                </div>
-                                <div className="space-y-2 max-h-64 overflow-y-auto">
-                                  {(event as any).issues.filter((i: any) => i.severity === 'critical').length > 0 && (
-              <div>
-                                      <div className="font-semibold text-red-300 mb-1 text-xs uppercase">Critical Issues:</div>
-                                      {(event as any).issues.filter((i: any) => i.severity === 'critical').map((issue: any, idx: number) => (
-                                        <div key={idx} className="text-red-200 mb-1 flex items-start">
-                                          <span className="mr-1.5">🔴</span>
-                                          <span>{issue.message}</span>
-              </div>
-                                      ))}
-              </div>
-                                  )}
-                                  {(event as any).issues.filter((i: any) => i.severity === 'warning').length > 0 && (
-                                    <div>
-                                      <div className="font-semibold text-yellow-300 mb-1 text-xs uppercase">Warnings:</div>
-                                      {(event as any).issues.filter((i: any) => i.severity === 'warning').map((issue: any, idx: number) => (
-                                        <div key={idx} className="text-yellow-200 mb-1 flex items-start">
-                                          <span className="mr-1.5">🟡</span>
-                                          <span>{issue.message}</span>
-            </div>
-                                      ))}
-          </div>
-        )}
-                                  {(event as any).issues.filter((i: any) => i.severity === 'info').length > 0 && (
-                                    <div>
-                                      <div className="font-semibold text-blue-300 mb-1 text-xs uppercase">Info:</div>
-                                      {(event as any).issues.filter((i: any) => i.severity === 'info').map((issue: any, idx: number) => (
-                                        <div key={idx} className="text-blue-200 mb-1 flex items-start">
-                                          <span className="mr-1.5">ℹ️</span>
-                                          <span>{issue.message}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                                {(event as any).issues.filter((i: any) => i.severity === 'critical').length === 0 && (
-                                  <div className="mt-3 pt-3 border-t border-slate-700 text-green-300 text-xs">
-                                    ✓ No critical issues - Data is ready for analysis
-                                  </div>
-                                )}
+                            {progress?.result?.industry && (
+                              <div className="text-xs text-slate-500 mt-0.5 truncate">
+                                {progress.result.industry}
                               </div>
                             )}
                           </div>
+                        </div>
+                      </td>
+                      
+                      {/* Status */}
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          progress?.status === 'completed' 
+                            ? 'bg-green-100 text-green-800' 
+                            : progress?.status === 'analyzing'
+                            ? 'bg-blue-100 text-blue-800'
+                            : progress?.status === 'error'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {progress?.status === 'completed' ? 'Completed' :
+                           progress?.status === 'analyzing' ? 'Analyzing' :
+                           progress?.status === 'error' ? 'Error' : 'Pending'}
+                        </span>
+                      </td>
+                      
+                      {/* Score */}
+                      <td className="px-4 py-3">
+                        {progress?.status === 'completed' && progress.result ? (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-base font-bold text-indigo-600">
+                              {progress.result.totalScore || 0}
+                            </span>
+                            <span className="text-xs text-slate-500">/100</span>
+                          </div>
+                        ) : (event as any).dataQualityScore !== undefined ? (
+                          <span className={`text-sm font-semibold ${
+                            (event as any).dataQualityScore >= 80 ? 'text-green-600' :
+                            (event as any).dataQualityScore >= 60 ? 'text-yellow-600' :
+                            'text-red-600'
+                          }`}>
+                            {(event as any).dataQualityScore}%
+                          </span>
                         ) : (
                           <span className="text-sm text-slate-400">-</span>
                         )}
+                      </td>
+                      
+                      {/* Actions */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-2">
+                          {progress?.status === 'completed' && progress.result && (
+                            <>
+                              <button
+                                onClick={() => setSelectedEventForModal({
+                                  name: progress.result.companyName || event.name,
+                                  data: event.data,
+                                  id: event.id,
+                                  dataQualityScore: (event as any).dataQualityScore,
+                                  issues: (event as any).issues,
+                                  rawData: (event as any).rawData
+                                })}
+                                className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                                title="View Details"
+                              >
+                                <FileText size={16} />
+                              </button>
+                              {(() => {
+                                // Check for editions in result or event
+                                const editions = progress.result.editions || (event as any).editions || [];
+                                const hasEditions = Array.isArray(editions) && editions.length > 0;
+                                
+                                if (hasEditions) {
+                                  const eventName = progress.result.companyName || event.name;
+                                  const isResearching = Array.from(researchingEditions).some(key => key.includes(eventName));
+                                  
+                                  return (
+                                    <button
+                                      onClick={() => {
+                                        if (!isResearching) {
+                                          researchEditionsLeadership(eventName, editions);
+                                        }
+                                      }}
+                                      disabled={isResearching}
+                                      className="p-1.5 text-purple-600 hover:text-purple-900 hover:bg-purple-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      title="Research Edition Leadership"
+                                    >
+                                      {isResearching ? (
+                                        <Loader2 className="animate-spin" size={16} />
+                                      ) : (
+                                        <Sparkles size={16} />
+                                      )}
+                                    </button>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </>
+                          )}
+                          {(event as any).rawData && !progress?.result && (
+                            <button
+                              onClick={() => setSelectedEventForModal({
+                                name: event.name,
+                                data: event.data,
+                                id: event.id,
+                                dataQualityScore: (event as any).dataQualityScore,
+                                issues: (event as any).issues,
+                                rawData: (event as any).rawData
+                              })}
+                              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                              title="View Raw Data"
+                            >
+                              <Search size={16} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
               )}
             </tbody>
           </table>
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {eventsList.length === 0 && !uploadingExcel && (
+        <div className="bg-white rounded-lg shadow-sm border-2 border-dashed border-slate-300 p-12 text-center">
+          <FileSpreadsheet size={64} className="mx-auto mb-4 text-slate-300" />
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">No Events Yet</h3>
+          <p className="text-sm text-slate-600 mb-6 max-w-md mx-auto">
+            Upload an Excel or CSV file to start analyzing events. The system will automatically score and prioritize them based on 4 criteria.
+          </p>
+          <label className="inline-flex items-center px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold cursor-pointer transition-colors shadow-md">
+            <FileSpreadsheet size={18} className="mr-2" /> Upload Excel/CSV File
+            <input
+              type="file"
+              onChange={handleFileImport}
+              accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              className="hidden"
+            />
+          </label>
+        </div>
+      )}
 
       {/* Run Strategy Analysis Button */}
       {eventsList.length > 0 && (
@@ -3938,16 +3778,26 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 Analyzing events one by one... This may take a few minutes.
               </p>
             )}
+            {researchingEditions.size > 0 && !loading && (
+              <p className="text-xs text-purple-600 mt-1">
+                Researching edition leadership information... Please wait.
+              </p>
+            )}
           </div>
            <button 
              onClick={handleAnalyze} 
-            disabled={loading || eventsList.length === 0 || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 flex items-center shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || researchingEditions.size > 0 || eventsList.length === 0 || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 flex items-center shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
            >
              {loading ? (
                <>
                  <Loader2 className="animate-spin mr-2" size={18} />
-                <span>Analyzing...</span>
+                 <span>Analyzing...</span>
+               </>
+             ) : researchingEditions.size > 0 ? (
+               <>
+                 <Loader2 className="animate-spin mr-2" size={18} />
+                 <span>Researching...</span>
                </>
              ) : (
                <>
@@ -5152,12 +5002,6 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                             <tr className="border-b border-slate-200">
                               <td className="px-4 py-3 bg-slate-50 font-semibold text-slate-700">Additional Notes</td>
                               <td className="px-4 py-3 text-slate-900 whitespace-pre-wrap">{lead.otherInformation}</td>
-                            </tr>
-                          )}
-                          {lead.researchSummary && (
-                            <tr className="border-b border-slate-200 bg-blue-50">
-                              <td className="px-4 py-3 bg-blue-100 font-semibold text-blue-900">AI Research Summary</td>
-                              <td className="px-4 py-3 text-blue-900 whitespace-pre-wrap text-xs">{lead.researchSummary}</td>
                             </tr>
                           )}
                         </tbody>
@@ -6597,6 +6441,9 @@ const VideoAnalysisView = () => {
 
 // 8. Main App Layout
 const App = () => {
+  // Sidebar toggle state
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  
   // Load user from localStorage on mount
   const [user, setUser] = useState<User | null>(() => {
     try {
@@ -6817,9 +6664,18 @@ const App = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout} />
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        user={user} 
+        onLogout={handleLogout}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+      />
       
-      <main className="flex-1 ml-64 relative">
+      <main className={`flex-1 relative transition-all duration-300 ease-in-out ${
+        sidebarOpen ? 'ml-52' : 'ml-0'
+      }`}>
         {renderContent()}
       </main>
 

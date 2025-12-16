@@ -369,7 +369,7 @@ EVENT BRIEF FIELDS (MUST RESEARCH COMPREHENSIVELY):
 - competitors: **RESEARCH**: Known competing venues/destinations - research where similar events have been held (e.g., "Competitors: Singapore, Thailand, Malaysia venues. Past venues: Marina Bay Sands, Bangkok Convention Centre")
 - competitiveAnalysis: **RESEARCH**: Competitive landscape analysis - compare Vietnam/Danang with competing destinations
 - hostResponsibility: Who organizes (e.g., "Organising Committee, responsible for selection of destination, venue and event plan")
-- sponsors: **RESEARCH MANDATORY**: Known or typical sponsors for this type of event - MUST research actual sponsor company names from past events or typical sponsors in this industry. Format: "Diamond: [ACTUAL COMPANY NAME 1], [ACTUAL COMPANY NAME 2]; Gold: [ACTUAL COMPANY NAME 3]". CRITICAL: NEVER use placeholder names like "Company1" or "Company2" - these are just format examples. You MUST research and provide REAL company names. If no sponsors found, use empty string "".
+- sponsors: **RESEARCH**: Known or typical sponsors for this type of event - research past sponsors or typical sponsors in this industry (e.g., "Diamond: Company1; Gold: Company2; Silver: Company3" or "Typical sponsors: Medical device companies, pharmaceutical companies")
 - layout: **RESEARCH MANDATORY**: Event layout requirements - MUST provide detailed layout specifications. Format: "Main plenary hall: [capacity] pax, [size] sqm; Breakout rooms: [number] rooms, [capacity range] pax each, [size range] sqm; Exhibition area: [number] booths, [size] sqm; Additional spaces: [poster area, networking space, registration area, etc.]". Include all space requirements: plenary hall, breakout rooms, exhibition, poster sessions, networking areas, registration, catering areas. This field is CRITICAL for venue matching.
 - fitForAriyana: Why event fits Ariyana (capacity match, location advantages, facilities)
 - conferenceRegistration: **RESEARCH MANDATORY**: Conference registration details - MUST include registration website URL, registration fees (if available), registration deadlines, early bird dates, registration process, and contact information for registration inquiries. Format: "Registration Website: [URL]. Registration Fees: [details]. Deadlines: [early bird date, regular deadline]. Process: [description]. Contact: [email/phone]". This field is CRITICAL for understanding event logistics.
@@ -671,7 +671,7 @@ REQUIRED RESEARCH FIELDS:
    - layoutEvent: ⚠️ MANDATORY - Venue layout requirements. MUST provide detailed specifications: "Main plenary hall: [capacity] pax, [size] sqm; Breakout rooms: [number] rooms, [capacity range] pax each, [size range] sqm; Exhibition area: [number] booths, [size] sqm; Additional spaces: [poster area, networking space, registration area, catering areas, etc.]"
 
 5. BUSINESS INTELLIGENCE:
-   - sponsors: **RESEARCH MANDATORY**: Sponsor information - MUST research actual sponsor company names from past events or typical sponsors for this event type. Format: "Diamond: [ACTUAL COMPANY NAME 1], [ACTUAL COMPANY NAME 2]; Gold: [ACTUAL COMPANY NAME 3]; Silver: [ACTUAL COMPANY NAME 4]". NEVER use placeholder names like "Company1" or "Company2" - these are just format examples. You MUST research and provide REAL company names. If no sponsors found, use empty string "".
+   - sponsors: Sponsor information (format: "Diamond: Company1; Gold: Company2; Silver: Company3")
    - conferenceRegistration: ⚠️ MANDATORY - Registration details. MUST include: "Registration Website: [URL]. Registration Fees: [details]. Deadlines: [early bird date, regular deadline]. Process: [description]. Contact: [email/phone]"
    - iccaQualified: "yes" or "no" with brief explanation
    - competitors: Competing venues/destinations
@@ -900,63 +900,14 @@ TASK: Check 3 critical eligibility criteria for this event:
    - Check past events history for Vietnam locations (Ho Chi Minh City, Hanoi, Danang, etc.)
    - Return: true if event has been held in Vietnam, false otherwise
 
-2. ICCA QUALIFIED CHECK (CRITICAL - THIS IS MANDATORY):
-   ICCA Qualified events MUST satisfy ALL THREE GOLDEN RULES simultaneously:
-   
-   RULE 1: ROTATION RULE (Quy tắc Luân phiên)
-   - Event MUST rotate between at least 3 DIFFERENT countries/territories
-   - Check pastEventsHistory: Count(Distinct Countries) >= 3
-   - If event has only 1-2 countries in history → NOT qualified
-   - If event is new (first or second edition) → NOT qualified (needs proof of future rotation)
-   - Pattern like "Country A → Country B → Country A → Country B" = only 2 countries → NOT qualified
-   
-   RULE 2: SIZE RULE (Quy tắc Quy mô)
-   - Event MUST have at least 50 ONSITE participants (face-to-face attendance)
-   - Virtual/online attendees DO NOT COUNT
-   - Hybrid events: Only count physical attendees
-   - If delegate count is unknown or < 50 → NOT qualified
-   - Check numberOfDelegates field: Must be >= 50
-   
-   RULE 3: REGULARITY RULE (Quy tắc Thường kỳ)
-   - Event MUST be held on a regular basis (annual, biennial, triennial)
-   - One-off events (single occurrence) → NOT qualified
-   - Ad-hoc events without established pattern → NOT qualified
-   - Must have evidence of past events AND future plans
-   
-   ORGANIZER REQUIREMENT:
-   - MUST be organized by an INTERNATIONAL ASSOCIATION (not a company)
-   - Check organizer name: Should contain "Association", "Society", "Federation", "Union", "Council"
-   - Corporate organizers (Inc, Ltd, Corp, Company) → NOT qualified
-   - National government (without international partners) → NOT qualified
-   
-   AUTOMATIC EXCLUSIONS (Loại trừ Tự động):
-   - Trade Shows/Exhibitions: Keywords "Expo", "Fair", "Trade Show" WITHOUT "Congress"/"Conference" → NOT qualified
-   - Corporate Meetings: Organized by companies → NOT qualified
-   - Religious/Political: Pure religious or political events (except scientific research) → NOT qualified
-   - Sporting Events: "Championship", "Tournament", "Games", "Olympiad" → NOT qualified
-   - National Governmental: Organized by single country's ministry (except UN, EU, ASEAN, etc.) → NOT qualified
-   
-   EXAMPLES OF ICCA QUALIFIED:
-   ✅ "World Congress of Cardiology" - International medical association, rotates between countries, 1000+ delegates
-   ✅ "International Conference on Computer Science" - Academic association, rotating, regular annual basis
-   ✅ "Asian Pacific Congress of Gastroenterology" - Regional association, rotating, biennial
-   
-   EXAMPLES OF NON-ICCA QUALIFIED:
-   ❌ "Microsoft Developer Conference" - Corporate event
-   ❌ "Vietnam Food Expo" - Trade show without congress/conference
-   ❌ "Ho Chi Minh City Business Forum" - Local event, not international association
-   ❌ "World Championship of Tennis" - Sporting event
-   ❌ "Annual Meeting of ABC Company" - Corporate meeting
-   ❌ Event with only 2 countries in rotation history
-   ❌ Event with < 50 onsite delegates
-   ❌ One-time event without established series
-   
-   STRICT VALIDATION:
-   - Return isICCAQualified: true ONLY if ALL 3 rules are satisfied AND organizer is international association
-   - If ANY rule fails → Return false
-   - If uncertain or missing information → Return false (conservative approach)
-   - If event name suggests exclusion keywords → Return false immediately
-   - Return: true ONLY if confirmed ICCA qualified with clear evidence, false otherwise
+2. ICCA QUALIFIED CHECK:
+   - Is this event ICCA (International Congress and Convention Association) qualified?
+   - ICCA qualified events are typically:
+     * International association meetings
+     * Rotating conferences with international participation
+     * Events with significant international delegate attendance
+     * Events listed in ICCA database
+   - Return: true if ICCA qualified, false otherwise
 
 3. RECENT ACTIVITY CHECK (Last 5 Years):
    - Has this event occurred within the last 5 years (${fiveYearsAgo}-${currentYear})?
@@ -980,19 +931,11 @@ Return valid JSON object:
   "recommendation": "proceed" or "skip" or "review"
 }
 
-CRITICAL RULES (Based on Official ICCA Standards):
-- ICCA QUALIFICATION REQUIRES ALL 3 GOLDEN RULES:
-  1. ROTATION: Must rotate between at least 3 different countries (check pastEventsHistory)
-  2. SIZE: Must have at least 50 ONSITE participants (virtual attendees don't count)
-  3. REGULARITY: Must be held on regular basis (annual/biennial/triennial, not one-off)
-- ORGANIZER: Must be International Association (not corporate or national government)
-- EXCLUSIONS: Trade shows, corporate meetings, sporting events, religious/political → NOT qualified
-- Be EXTREMELY conservative - default to false if there's any doubt
-- If ANY rule fails → return false
-- If uncertain or missing information → return false (not true)
-- Check event history carefully for rotation pattern and Vietnam locations
-- For isEligible: Only return true if isICCAQualified is true (ICCA qualification is prerequisite)
-- For recommendation: Return "skip" if isICCAQualified is false, "proceed" only if isICCAQualified is true`;
+CRITICAL:
+- Be factual and conservative - only return true if you have clear evidence
+- If uncertain, return false and explain in reason fields
+- Use your knowledge base to check ICCA qualification standards
+- Check event history carefully for Vietnam locations`;
 
     console.log('🟢 [GPT API] Checking event eligibility:', eventName);
     
@@ -1001,47 +944,7 @@ CRITICAL RULES (Based on Official ICCA Standards):
       messages: [
         { 
           role: 'system', 
-          content: `You are an expert MICE industry analyst specializing in ICCA-qualified events and Vietnam market analysis.
-
-CRITICAL RULES FOR ICCA QUALIFICATION (Based on Official ICCA Standards):
-
-ICCA qualification requires ALL THREE GOLDEN RULES to be satisfied simultaneously:
-
-1. ROTATION RULE: Event must rotate between at least 3 different countries
-   - Check pastEventsHistory: Count distinct countries >= 3
-   - Events with only 1-2 countries → NOT qualified
-   - New events (1st or 2nd edition) → NOT qualified (need proof of future rotation)
-
-2. SIZE RULE: Event must have at least 50 ONSITE participants
-   - Only count face-to-face attendees (virtual attendees DO NOT COUNT)
-   - Check numberOfDelegates field: Must be >= 50
-   - Unknown or < 50 → NOT qualified
-
-3. REGULARITY RULE: Event must be held on regular basis
-   - Must be annual, biennial, or triennial
-   - One-off events → NOT qualified
-   - Must have evidence of past events AND future plans
-
-ORGANIZER REQUIREMENT:
-- MUST be International Association (contains "Association", "Society", "Federation", "Union", "Council")
-- Corporate organizers (Inc, Ltd, Corp) → NOT qualified
-- National government (without international partners) → NOT qualified
-
-AUTOMATIC EXCLUSIONS:
-- Trade Shows: "Expo", "Fair", "Trade Show" without "Congress"/"Conference" → NOT qualified
-- Corporate Meetings: Company-organized → NOT qualified
-- Religious/Political: Pure religious/political (except scientific research) → NOT qualified
-- Sporting Events: "Championship", "Tournament", "Games", "Olympiad" → NOT qualified
-- National Governmental: Single country ministry (except UN, EU, ASEAN) → NOT qualified
-
-VALIDATION APPROACH:
-- Return isICCAQualified: true ONLY if ALL 3 rules satisfied AND organizer is international association
-- If ANY rule fails → Return false
-- If uncertain or missing information → Return false (conservative)
-- If exclusion keywords detected → Return false immediately
-- Be EXTREMELY conservative - false positives are NOT acceptable
-
-Provide factual, conservative assessments based on event data and industry knowledge.` 
+          content: 'You are an expert MICE industry analyst specializing in ICCA-qualified events and Vietnam market analysis. Provide factual, conservative assessments based on event data and industry knowledge.' 
         },
         { role: 'user', content: prompt }
       ],
@@ -1055,76 +958,6 @@ Provide factual, conservative assessments based on event data and industry knowl
     
     try {
       eligibilityData = JSON.parse(content);
-      
-      // LOG: Log the full eligibility check result for debugging
-      console.log(`📋 [GPT API] Eligibility check result for "${eventName}":`, {
-        isICCAQualified: eligibilityData.isICCAQualified,
-        iccaQualifiedReason: eligibilityData.iccaQualifiedReason,
-        hasVietnamHistory: eligibilityData.hasVietnamHistory,
-        hasRecentActivity: eligibilityData.hasRecentActivity,
-        recommendation: eligibilityData.recommendation
-      });
-      
-      // STRICT VALIDATION: Ensure ICCA qualification follows official ICCA standards
-      // Based on 3 Golden Rules: Rotation (3+ countries), Size (50+ onsite), Regularity (recurring)
-      
-      if (eligibilityData.isICCAQualified === true) {
-        const reason = eligibilityData.iccaQualifiedReason || '';
-        
-        // Validation checks for false positives
-        const hasUncertainKeywords = reason.toLowerCase().includes('uncertain') || 
-                                     reason.toLowerCase().includes('unable') || 
-                                     reason.toLowerCase().includes('might') ||
-                                     reason.toLowerCase().includes('possibly') ||
-                                     reason.toLowerCase().includes('appears');
-        
-        const hasExclusionKeywords = eventName.toLowerCase().includes('expo') ||
-                                     eventName.toLowerCase().includes('fair') ||
-                                     eventName.toLowerCase().includes('trade show') ||
-                                     eventName.toLowerCase().includes('championship') ||
-                                     eventName.toLowerCase().includes('tournament') ||
-                                     eventName.toLowerCase().includes('games') ||
-                                     eventName.toLowerCase().includes('olympiad');
-        
-        // Check if reason mentions all 3 rules
-        const mentionsRotation = reason.toLowerCase().includes('rotate') || 
-                                reason.toLowerCase().includes('3 countr') ||
-                                reason.toLowerCase().includes('three countr');
-        const mentionsSize = reason.toLowerCase().includes('50') || 
-                           reason.toLowerCase().includes('delegate') ||
-                           reason.toLowerCase().includes('participant');
-        const mentionsRegularity = reason.toLowerCase().includes('regular') || 
-                                  reason.toLowerCase().includes('annual') ||
-                                  reason.toLowerCase().includes('biennial') ||
-                                  reason.toLowerCase().includes('triennial');
-        
-        // If reason is missing, unclear, or has exclusion keywords → reject
-        if (!reason || hasUncertainKeywords || hasExclusionKeywords) {
-          console.warn(`⚠️  [GPT API] ICCA qualified=true REJECTED for "${eventName}"`);
-          console.warn(`📝 [GPT API] Reason: ${reason || 'Missing'} | Uncertain: ${hasUncertainKeywords} | Exclusion: ${hasExclusionKeywords}`);
-          eligibilityData.isICCAQualified = false;
-          eligibilityData.iccaQualifiedReason = hasExclusionKeywords 
-            ? 'Event contains exclusion keywords (expo, fair, trade show, championship, etc.)'
-            : 'ICCA qualification could not be verified - reason was unclear or missing';
-        } else if (!mentionsRotation || !mentionsSize || !mentionsRegularity) {
-          // If reason doesn't mention all 3 rules → be cautious
-          console.warn(`⚠️  [GPT API] ICCA qualified=true but reason incomplete for "${eventName}"`);
-          console.warn(`📝 [GPT API] Mentions Rotation: ${mentionsRotation}, Size: ${mentionsSize}, Regularity: ${mentionsRegularity}`);
-          // Still accept but log warning
-          console.log(`✅ [GPT API] ICCA qualified confirmed for "${eventName}": ${reason}`);
-        } else {
-          console.log(`✅ [GPT API] ICCA qualified confirmed for "${eventName}": ${reason}`);
-        }
-      } else {
-        console.log(`❌ [GPT API] ICCA qualified=false for "${eventName}": ${eligibilityData.iccaQualifiedReason || 'No reason provided'}`);
-      }
-      
-      // Ensure isEligible aligns with isICCAQualified (ICCA is prerequisite)
-      if (eligibilityData.isICCAQualified === false) {
-        eligibilityData.isEligible = false;
-        eligibilityData.recommendation = 'skip';
-      }
-      
     } catch (e) {
       console.error('Failed to parse GPT eligibility response as JSON:', e);
       // Return default conservative response
@@ -1139,7 +972,7 @@ Provide factual, conservative assessments based on event data and industry knowl
         yearsSinceLastEvent: null,
         isEligible: false,
         eligibilityReason: 'Unable to verify eligibility criteria',
-        recommendation: 'skip' // Changed from 'review' to 'skip' since ICCA is mandatory
+        recommendation: 'review'
       };
     }
 
