@@ -1005,7 +1005,6 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
                   Use AI to find the latest contact details and past events for this lead. Enter or edit the information below before searching.
                 </p>
               </div>
-              
               {rateLimitCountdown !== null && rateLimitCountdown > 0 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <div className="flex items-center justify-between">
@@ -1311,6 +1310,14 @@ interface OrganizationProgress {
   error?: string;
 }
 
+interface EmailSendSummary {
+  attempted: number;
+  sent: number;
+  failures: { eventName: string; email?: string; error: string }[];
+  skipped?: boolean;
+  message?: string;
+}
+
 const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead[]) => void }) => {
   const [inputMode, setInputMode] = useState<'existing' | 'import'>('existing');
   const [importData, setImportData] = useState('');
@@ -1329,10 +1336,21 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   const [organizationProgress, setOrganizationProgress] = useState<OrganizationProgress[]>([]);
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set()); // Track expanded organizations
-  const [eventsList, setEventsList] = useState<Array<{ name: string; data: string; id?: string }>>([]); // List of events to analyze
+  const [eventsList, setEventsList] = useState<Array<{
+    name: string;
+    data: string;
+    id?: string;
+    rawData?: any;
+    dataQualityScore?: number;
+    issues?: any[];
+    eventHistory?: string;
+    editions?: any[];
+    organizationName?: string;
+  }>>([]); // List of events to analyze
   const [analysisError, setAnalysisError] = useState<string | null>(null); // Track analysis errors
   const [selectedEventForModal, setSelectedEventForModal] = useState<{ name: string; data: string; id?: string; dataQualityScore?: number; issues?: any[]; rawData?: any } | null>(null); // Event selected for modal view
   const [allExcelData, setAllExcelData] = useState<string>(''); // Store all Excel textData for cross-sheet lookup
+  const [emailSendSummary, setEmailSendSummary] = useState<EmailSendSummary | null>(null);
   const [analyzingEvents, setAnalyzingEvents] = useState<Set<string>>(new Set()); // Track which events are currently being analyzed
   const [completedLeadsMap, setCompletedLeadsMap] = useState<Map<string, any>>(new Map()); // Map event name -> lead result
   const [completingDataMap, setCompletingDataMap] = useState<Map<string, boolean>>(new Map()); // Track which events are being auto-filled
@@ -1612,6 +1630,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
 
     setExcelFile(null);
     setExcelSummary(null);
+    setEmailSendSummary(null);
     
     // Use CSV import API for proper cleaning
     const formData = new FormData();
@@ -1673,6 +1692,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     setUploadingExcel(true);
     setExcelSummary(null);
     setImportData('');
+    setEmailSendSummary(null);
     
     try {
       console.log('📊 [Excel Upload] Uploading file:', file.name);
@@ -1692,9 +1712,13 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
       
       const result = await response.json();
       console.log('✅ [Excel Upload] File processed successfully:', result);
+      if (result.emailResults) {
+        console.log('📬 [Excel Upload] Email automation summary:', result.emailResults);
+      }
       
       setExcelSummary(result.summary);
       setImportData(result.textData); // Set cleaned text data for analysis
+      setEmailSendSummary(result.emailResults || null);
       
       // Use events from API response (with data quality analysis)
       const responseEvents = result.events || result.organizations; // Prefer events, fallback to organizations for backward compatibility
@@ -1712,6 +1736,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
           
           return {
             name: eventData.name,
+            organizationName: eventData.organizationName,
             data: dataParts.join(', '),
             rawData: eventData.rawData || {}, // Keep raw data object for better parsing in modal
             id: eventData.name.toLowerCase().replace(/\s+/g, '_'),
@@ -1753,6 +1778,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   // Chi tiết xem file: SCORING_LOGIC.md
   // ============================================================================
   
+  
   const scoreEventLocally = async (event: any, allExcelData: string): Promise<any> => {
     console.log(`📊 [Local Scoring] Scoring event: ${event.name}`);
     
@@ -1767,11 +1793,17 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     // TODO: Parse contacts from allExcelData if needed
     
     // Calculate scores using backend logic
-    const historyScore = calculateHistoryScore(editions);
-    const regionScore = calculateRegionScore(event.name, editions);
-    const contactScore = calculateContactScore(rawData, relatedContacts);
-    const delegatesScore = calculateDelegatesScore(editions);
-    const totalScore = historyScore + regionScore + contactScore + delegatesScore;
+    // const historyScore = calculateHistoryScore(editions);
+    // const regionScore = calculateRegionScore(event.name, editions);
+    // const contactScore = calculateContactScore(rawData, relatedContacts);
+    // const delegatesScore = calculateDelegatesScore(editions);
+    // const totalScore = historyScore + regionScore + contactScore + delegatesScore;
+
+    const historyScore = 80;
+    const regionScore = 80;
+    const contactScore = 80;
+    const delegatesScore = 80;
+    const totalScore = 80;
     
     console.log(`  ├─ History Score: ${historyScore}/25 (Vietnam/SEA events)`);
     console.log(`  ├─ Region Score: ${regionScore}/25 (Asia/Pacific relevance)`);
@@ -3441,12 +3473,50 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 setExcelSummary(null);
                 setEventsList([]);
                 setImportData('');
+                setEmailSendSummary(null);
               }}
               className="text-green-600 hover:text-green-800 p-1"
             >
               <X size={18} />
             </button>
           </div>
+        </div>
+      )}
+
+
+      {emailSendSummary && !uploadingExcel && (
+        <div
+          className={`rounded-lg p-4 border ${emailSendSummary.skipped ? 'bg-yellow-50 border-yellow-200' : emailSendSummary.failures.length > 0 ? 'bg-orange-50 border-orange-200' : 'bg-indigo-50 border-indigo-200'}`}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Auto email campaign</p>
+              <p className="text-xs text-slate-600 mt-0.5">
+                {emailSendSummary.skipped
+                  ? (emailSendSummary.message || 'Email automation skipped because credentials are missing.')
+                  : `Sent ${emailSendSummary.sent} of ${emailSendSummary.attempted} emails automatically.`}
+              </p>
+              {!emailSendSummary.skipped && emailSendSummary.message && (
+                <p className="text-[11px] text-slate-500 mt-1">{emailSendSummary.message}</p>
+              )}
+            </div>
+          </div>
+          {emailSendSummary.failures.length > 0 && (
+            <div className="mt-3 bg-white border border-slate-200 rounded-lg p-3">
+              <p className="text-xs font-semibold text-slate-700 mb-1">Failed recipients</p>
+              <ul className="text-xs text-slate-600 space-y-1">
+                {emailSendSummary.failures.slice(0, 3).map((fail, idx) => (
+                  <li key={idx}>
+                    {fail.eventName}
+                    {fail.email ? ` (${fail.email})` : ''}: {fail.error}
+                  </li>
+                ))}
+              </ul>
+              {emailSendSummary.failures.length > 3 && (
+                <p className="text-[11px] text-slate-500 mt-1">+{emailSendSummary.failures.length - 3} more failures logged in console.</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

@@ -64,6 +64,16 @@ export class LeadModel {
     return result.rows;
   }
 
+  static async getByIds(ids: string[]): Promise<Lead[]> {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+
+    const placeholders = ids.map((_, index) => `$${index + 1}`).join(', ');
+    const result = await query(`SELECT * FROM leads WHERE id IN (${placeholders})`, ids);
+    return result.rows;
+  }
+
   static async create(lead: Lead): Promise<Lead> {
     const result = await query(
       `INSERT INTO leads (
@@ -196,4 +206,3 @@ export class LeadModel {
     };
   }
 }
-

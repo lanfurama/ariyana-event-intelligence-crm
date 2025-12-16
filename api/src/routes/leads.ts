@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { LeadModel } from '../models/LeadModel.js';
+import { sendLeadEmails } from '../utils/emailSender.js';
+import type { Lead } from '../types/index.js';
 
 const router = Router();
 
@@ -97,4 +99,41 @@ router.delete('/:id', async (req: Request, res: Response) => {
 });
 
 export default router;
+// POST /api/leads/send-emails - Send email campaign to leads
+router.post('/send-emails', async (req: Request, res: Response) => {
+  try {
+    const leadIds = Array.isArray(req.body?.leadIds) ? (req.body.leadIds as string[]).filter(Boolean) : [];
+    const leads = leadIds.length > 0 ? await LeadModel.getByIds(leadIds) : await LeadModel.getAll();
 
+    if (leads.length === 0) {
+      return res.status(404).json({ error: 'No leads available for email dispatch.' });
+    }
+
+    const emailSummary = await sendLeadEmails(leads);
+
+    let updatedLeads: Lead[] = [];
+    if (emailSummary.successIds && emailSummary.successIds.length > 0) {
+      const timestamp = new Date().toISOString();
+      const updated = await Promise.all(
+        emailSummary.successIds.map(async (leadId) => {
+          try {
+            return await LeadModel.update(leadId, { status: 'Contacted', last_contacted: timestamp });
+          } catch (updateError) {
+            console.error(`Error updating lead ${leadId} after email send:`, updateError);
+            return null;
+          }
+        })
+      );
+      updatedLeads = updated.filter((lead): lead is NonNullable<typeof lead> => Boolean(lead));
+    }
+
+    res.json({
+      success: true,
+      summary: emailSummary,
+      updatedLeads,
+    });
+  } catch (error: any) {
+    console.error('Error sending lead emails:', error);
+    res.status(500).json({ error: error.message || 'Failed to send lead emails' });
+  }
+});

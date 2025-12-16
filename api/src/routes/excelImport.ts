@@ -386,17 +386,23 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
     }
     
     // Convert map to array (using OrganizationData type for backward compatibility)
-    const events: any[] = Array.from(eventsMap.values()).map(eventData => ({
-      name: eventData.name,
-      organizationName: eventData.organizationName, // Organization name (different from event name)
-      rawData: eventData.rawData,
-      issues: eventData.issues,
-      dataQualityScore: eventData.dataQualityScore,
-      hasContactInfo: eventData.hasContactInfo,
-      hasLocationInfo: eventData.hasLocationInfo,
-      hasEventInfo: eventData.hasEventInfo,
-      editions: eventData.editions, // Add editions history
-    }));
+    const events: any[] = Array.from(eventsMap.values()).map(eventData => {
+      const eventHistory = eventData.editions && eventData.editions.length > 0
+        ? formatEventHistory(eventData.editions)
+        : '';
+      return {
+        name: eventData.name,
+        organizationName: eventData.organizationName, // Organization name (different from event name)
+        rawData: eventData.rawData,
+        issues: eventData.issues,
+        dataQualityScore: eventData.dataQualityScore,
+        hasContactInfo: eventData.hasContactInfo,
+        hasLocationInfo: eventData.hasLocationInfo,
+        hasEventInfo: eventData.hasEventInfo,
+        editions: eventData.editions, // Add editions history
+        eventHistory,
+      };
+    });
     
     console.log(`✅ [Excel Import] Extracted ${events.length} unique events`);
     console.log(`📊 [Excel Import] Events with data issues: ${events.filter(e => e.issues.length > 0).length}`);
@@ -430,41 +436,31 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       success: true,
       summary,
       preview: editionData.slice(0, Math.min(50, editionData.length)), // Only Editions sheet rows for preview
-      events: events.map(event => {
-        // Format event history from editions
-        const eventHistory = event.editions && event.editions.length > 0 
-          ? formatEventHistory(event.editions)
-          : '';
-        
-        return {
-          name: event.name,
-          dataQualityScore: event.dataQualityScore,
-          issues: event.issues,
-          hasContactInfo: event.hasContactInfo,
-          hasLocationInfo: event.hasLocationInfo,
-          hasEventInfo: event.hasEventInfo,
-          rawData: event.rawData, // Include raw data for analysis
-          editions: event.editions || [], // Include all editions
-          eventHistory: eventHistory, // Formatted history string
-        };
-      }),
+      events: events.map(event => ({
+        name: event.name,
+        organizationName: event.organizationName,
+        dataQualityScore: event.dataQualityScore,
+        issues: event.issues,
+        hasContactInfo: event.hasContactInfo,
+        hasLocationInfo: event.hasLocationInfo,
+        hasEventInfo: event.hasEventInfo,
+        rawData: event.rawData, // Include raw data for analysis
+        editions: event.editions || [], // Include all editions
+        eventHistory: event.eventHistory || '', // Formatted history string
+      })),
       // Also provide organizations for backward compatibility
-      organizations: events.map(event => {
-        const eventHistory = event.editions && event.editions.length > 0 
-          ? formatEventHistory(event.editions)
-          : '';
-        return {
-          name: event.name,
-          dataQualityScore: event.dataQualityScore,
-          issues: event.issues,
-          hasContactInfo: event.hasContactInfo,
-          hasLocationInfo: event.hasLocationInfo,
-          hasEventInfo: event.hasEventInfo,
-          rawData: event.rawData,
-          editions: event.editions || [],
-          eventHistory: eventHistory,
-        };
-      }),
+      organizations: events.map(event => ({
+        name: event.name,
+        organizationName: event.organizationName,
+        dataQualityScore: event.dataQualityScore,
+        issues: event.issues,
+        hasContactInfo: event.hasContactInfo,
+        hasLocationInfo: event.hasLocationInfo,
+        hasEventInfo: event.hasEventInfo,
+        rawData: event.rawData,
+        editions: event.editions || [],
+        eventHistory: event.eventHistory || '',
+      })),
       textData, // Cleaned text data ready for AI analysis (all sheets for context)
       message: `Successfully processed ${summary.totalRows} rows from ${summary.totalSheets} sheets. Found ${events.length} events.`,
     });
@@ -672,4 +668,3 @@ DO NOT skip the JSON output. It is essential for data import.
 });
 
 export default router;
-
