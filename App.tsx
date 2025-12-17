@@ -570,6 +570,7 @@ const StatCard = ({
 // 3. Leads View
 const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { leads: Lead[], onSelectLead: (lead: Lead) => void, onUpdateLead: (lead: Lead) => void, user: User, onAddLead?: () => void }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [emailFilter, setEmailFilter] = useState<'all' | 'sent' | 'unsent'>('all');
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -578,12 +579,36 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
   const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
   const [sendingEmails, setSendingEmails] = useState(false);
 
-  const filteredLeads = leads.filter(lead => 
-    lead.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.keyPersonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.industry.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Helper to get email status for a lead
+  const getEmailStatus = (leadId: string) => {
+    const log = emailLogs.find(l => l.leadId === leadId);
+    return log ? { hasEmail: true, count: log.count, lastSent: log.lastSent } : { hasEmail: false, count: 0 };
+  };
+
+  const filteredLeads = useMemo(() => {
+    return leads.filter(lead => {
+      // Search filter
+      const matchesSearch = 
+        lead.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lead.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lead.keyPersonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lead.industry.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      if (!matchesSearch) return false;
+
+      // Email filter
+      if (emailFilter === 'all') return true;
+      
+      const emailStatus = getEmailStatus(lead.id);
+      if (emailFilter === 'sent') {
+        return emailStatus.hasEmail;
+      } else if (emailFilter === 'unsent') {
+        return !emailStatus.hasEmail;
+      }
+      
+      return true;
+    });
+  }, [leads, searchTerm, emailFilter, emailLogs]);
 
   // Load email logs on mount
   useEffect(() => {
@@ -635,12 +660,6 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     } finally {
       setLoadingEmailLogs(false);
     }
-  };
-
-  // Helper to get email status for a lead
-  const getEmailStatus = (leadId: string) => {
-    const log = emailLogs.find(l => l.leadId === leadId);
-    return log ? { hasEmail: true, count: log.count, lastSent: log.lastSent } : { hasEmail: false, count: 0 };
   };
 
   const loadEmailTemplates = async () => {
@@ -792,6 +811,39 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300 hover:border-slate-300"
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+          </div>
+          {/* Email Filter */}
+          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1">
+            <button
+              onClick={() => setEmailFilter('all')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                emailFilter === 'all'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setEmailFilter('sent')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                emailFilter === 'sent'
+                  ? 'bg-green-600 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Sent
+            </button>
+            <button
+              onClick={() => setEmailFilter('unsent')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                emailFilter === 'unsent'
+                  ? 'bg-amber-600 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Not Sent
+            </button>
           </div>
           {/* Only Director and Sales can add manual leads */}
           {(user.role === 'Director' || user.role === 'Sales') && (
@@ -1136,6 +1188,15 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
   const [enrichKeyPerson, setEnrichKeyPerson] = useState(lead.keyPersonName || '');
   const [enrichCity, setEnrichCity] = useState(lead.city || '');
   
+  // Research results for key person
+  const [researchResults, setResearchResults] = useState<{
+    name?: string;
+    title?: string;
+    email?: string;
+    verificationStatus?: 'pending' | 'approved' | 'rejected' | 'auto-approved';
+    verificationReason?: string;
+  } | null>(null);
+  
   // Email States
   const [emailLoading, setEmailLoading] = useState(false);
   const [draftedEmail, setDraftedEmail] = useState<{subject: string, body: string} | null>(null);
@@ -1242,6 +1303,201 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
     }
   }, [emailRateLimitCountdown]);
 
+  // Helper function to extract domain from website URL
+  const extractDomain = (website: string | null | undefined): string | null => {
+    if (!website) return null;
+    try {
+      // Remove protocol if present
+      let url = website.trim();
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace('www.', '').toLowerCase();
+    } catch {
+      // If URL parsing fails, try to extract domain manually
+      const match = website.match(/(?:https?:\/\/)?(?:www\.)?([^\/]+)/);
+      return match ? match[1].toLowerCase() : null;
+    }
+  };
+
+  // Helper function to verify email
+  const verifyEmail = (email: string, companyWebsite: string | null | undefined): {
+    status: 'pending' | 'approved' | 'rejected' | 'auto-approved';
+    reason: string;
+  } => {
+    if (!email) {
+      return { status: 'rejected', reason: 'No email provided' };
+    }
+
+    const emailLower = email.toLowerCase().trim();
+    const emailDomain = emailLower.split('@')[1];
+
+    if (!emailDomain) {
+      return { status: 'rejected', reason: 'Invalid email format' };
+    }
+
+    // Case 1: Domain matches company website - auto approve
+    const companyDomain = extractDomain(companyWebsite || editedLead.website);
+    if (companyDomain && emailDomain === companyDomain) {
+      return { 
+        status: 'auto-approved', 
+        reason: `Domain matches company website (${emailDomain})` 
+      };
+    }
+
+    // Case 2: Gmail + name - requires manual review
+    if (emailDomain === 'gmail.com' || emailDomain === 'googlemail.com') {
+      return { 
+        status: 'pending', 
+        reason: 'Gmail address - requires manual review' 
+      };
+    }
+
+    // Other cases - pending for manual review
+    return { 
+      status: 'pending', 
+      reason: `Domain ${emailDomain} - requires manual review` 
+    };
+  };
+
+  // Parse research result to extract key person info
+  // Key person should be someone with important role: Sales, Marketing, Director, Manager, etc.
+  const parseResearchResult = (text: string): {
+    name?: string;
+    title?: string;
+    email?: string;
+  } => {
+    const result: { name?: string; title?: string; email?: string } = {};
+    
+    console.log('🔍 [Parse] Parsing research result:', text.substring(0, 500));
+    
+    // First, try to parse structured format from prompt
+    const structuredPattern = /KEY PERSON CONTACT:[\s\S]*?Name:\s*([^\n]+)[\s\S]*?Title:\s*([^\n]+)[\s\S]*?Email:\s*([^\n]+)/i;
+    const structuredMatch = text.match(structuredPattern);
+    
+    if (structuredMatch) {
+      const name = structuredMatch[1]?.trim();
+      const title = structuredMatch[2]?.trim();
+      const email = structuredMatch[3]?.trim();
+      
+      // Check if not "Not found"
+      if (name && name.toLowerCase() !== 'not found' && name.length > 0) {
+        result.name = name;
+      }
+      if (title && title.toLowerCase() !== 'not found' && title.length > 0) {
+        result.title = title;
+      }
+      if (email && email.toLowerCase() !== 'not found' && email.includes('@')) {
+        result.email = email;
+      }
+      
+      if (result.name || result.title || result.email) {
+        console.log('✅ [Parse] Found structured format:', result);
+        return result;
+      }
+    }
+    
+    // Fallback: Extract email (common patterns)
+    const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+    const emails = text.match(emailRegex);
+    if (emails && emails.length > 0) {
+      // Filter out generic emails like info@, contact@, noreply@
+      const personEmails = emails.filter(e => {
+        const local = e.split('@')[0].toLowerCase();
+        return !['info', 'contact', 'noreply', 'no-reply', 'admin', 'webmaster', 'support'].includes(local);
+      });
+      if (personEmails.length > 0) {
+        result.email = personEmails[0];
+      } else {
+        result.email = emails[0]; // Use first email if no person-specific found
+      }
+    }
+
+    // Important titles/keywords for key persons
+    const importantTitles = [
+      'sales', 'marketing', 'business development', 'bd', 'revenue', 'commercial',
+      'director', 'manager', 'head', 'lead', 'vp', 'vice president', 'president',
+      'ceo', 'cmo', 'cso', 'chief', 'executive', 'coordinator', 'specialist',
+      'account manager', 'client relations', 'partnership', 'outreach', 'engagement',
+      'events', 'conference', 'meeting', 'secretary general', 'organizing'
+    ];
+    
+    // Try multiple patterns to extract name and title
+    const patterns = [
+      // Pattern 1: "Name, Title" (e.g., "John Smith, Sales Director")
+      new RegExp(`([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)+)\\s*[,;]\\s*([^,;\\n]*(?:${importantTitles.join('|')})[^,;\\n]*)`, 'gi'),
+      // Pattern 2: "Title Name" (e.g., "Sales Director John Smith")
+      new RegExp(`([^,;\\n]*(?:${importantTitles.join('|')})[^,;\\n]*)\\s+([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)+)`, 'gi'),
+      // Pattern 3: "Name is Title" (e.g., "John Smith is Sales Director")
+      new RegExp(`([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)+)\\s+(?:is|as|the|serves as)\\s+([^,;\\n]*(?:${importantTitles.join('|')})[^,;\\n]*)`, 'gi'),
+      // Pattern 4: "Name - Title" (e.g., "John Smith - Sales Director")
+      new RegExp(`([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)+)\\s*[-–—]\\s*([^,;\\n]*(?:${importantTitles.join('|')})[^,;\\n]*)`, 'gi'),
+      // Pattern 5: "Name (Title)" (e.g., "John Smith (Sales Director)")
+      new RegExp(`([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)+)\\s*\\(([^)]*(?:${importantTitles.join('|')})[^)]*)\\)`, 'gi'),
+    ];
+
+    let bestMatch: { name?: string; title?: string } | null = null;
+    
+    for (const pattern of patterns) {
+      const matches = [...text.matchAll(pattern)];
+      for (const match of matches) {
+        let name = '';
+        let title = '';
+        
+        // Extract based on pattern type
+        if (pattern.source.includes('Name.*Title') || pattern.source.includes('Name.*Title')) {
+          name = match[1]?.trim() || '';
+          title = match[2]?.trim() || '';
+        } else if (pattern.source.includes('Title.*Name')) {
+          title = match[1]?.trim() || '';
+          name = match[2]?.trim() || '';
+        } else {
+          name = match[1]?.trim() || '';
+          title = match[2]?.trim() || '';
+        }
+        
+        // Validate
+        if (name && title) {
+          const nameWords = name.split(/\s+/).filter(w => w.length > 0);
+          const titleLower = title.toLowerCase();
+          const hasImportantTitle = importantTitles.some(keyword => titleLower.includes(keyword));
+          
+          // More lenient: accept if name has at least 2 words and title seems relevant
+          if (nameWords.length >= 2 && (hasImportantTitle || title.length > 5)) {
+            // Check if name looks valid (starts with capital letters)
+            if (nameWords.every(w => /^[A-Z]/.test(w.trim()))) {
+              bestMatch = { name, title };
+              console.log('✅ [Parse] Found match:', bestMatch);
+              break;
+            }
+          }
+        }
+      }
+      if (bestMatch) break;
+    }
+
+    if (bestMatch) {
+      result.name = bestMatch.name;
+      result.title = bestMatch.title;
+    }
+
+    // If we have key person name from input, use it
+    if (enrichKeyPerson && enrichKeyPerson.trim() && !result.name) {
+      result.name = enrichKeyPerson.trim();
+      // Try to find title associated with this name
+      const nameEscaped = enrichKeyPerson.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const namePattern = new RegExp(`(${nameEscaped})\\s*[,;]\\s*([^,;\\n]*(?:${importantTitles.join('|')})[^,;\\n]*)`, 'i');
+      const match = text.match(namePattern);
+      if (match && match[2]) {
+        result.title = match[2].trim();
+      }
+    }
+
+    console.log('📋 [Parse] Final result:', result);
+    return result;
+  };
+
   const handleEnrich = async () => {
     if (!enrichCompanyName || enrichCompanyName.trim() === '') {
       alert('Please enter a company name to search');
@@ -1250,6 +1506,7 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
     
     setEnrichLoading(true);
     setRateLimitCountdown(null);
+    setResearchResults(null);
     try {
       const result = await GeminiService.enrichLeadData(
         enrichCompanyName.trim(), 
@@ -1257,6 +1514,50 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
         enrichCity.trim() || ''
       );
       setEnrichResult(result);
+      
+      // Parse result to extract key person info
+      const parsedInfo = parseResearchResult(result.text);
+      
+      // Verify email if found
+      let verificationStatus: 'pending' | 'approved' | 'rejected' | 'auto-approved' = 'pending';
+      let verificationReason = '';
+      
+      if (parsedInfo.email) {
+        const verification = verifyEmail(parsedInfo.email, editedLead.website);
+        verificationStatus = verification.status;
+        verificationReason = verification.reason;
+        
+        // Auto-approve and update if domain matches
+        if (verificationStatus === 'auto-approved') {
+          const updatedLead = { ...editedLead };
+          
+          // Update key person info if found
+          if (parsedInfo.name) {
+            updatedLead.keyPersonName = parsedInfo.name;
+          }
+          if (parsedInfo.title) {
+            updatedLead.keyPersonTitle = parsedInfo.title;
+          }
+          if (parsedInfo.email) {
+            updatedLead.keyPersonEmail = parsedInfo.email;
+          }
+          
+          // Add to research notes
+          const notesUpdate = `[AI Research ${new Date().toLocaleDateString()}]: Found key person - ${parsedInfo.name || 'N/A'}, ${parsedInfo.title || 'N/A'}, ${parsedInfo.email} (Auto-approved: ${verificationReason})`;
+          updatedLead.researchNotes = (updatedLead.researchNotes || '') + '\n\n' + notesUpdate;
+          
+          setEditedLead(updatedLead);
+          onSave(updatedLead);
+        }
+      }
+      
+      setResearchResults({
+        name: parsedInfo.name,
+        title: parsedInfo.title,
+        email: parsedInfo.email,
+        verificationStatus,
+        verificationReason
+      });
     } catch (e: any) {
       console.error(e);
       if (isGeminiRateLimitError(e)) {
@@ -1272,6 +1573,38 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
     } finally {
       setEnrichLoading(false);
     }
+  };
+
+  const handleApproveEmail = () => {
+    if (!researchResults || !researchResults.email) return;
+    
+    const updatedLead = { ...editedLead };
+    
+    // Update key person info if found
+    if (researchResults.name) {
+      updatedLead.keyPersonName = researchResults.name;
+    }
+    if (researchResults.title) {
+      updatedLead.keyPersonTitle = researchResults.title;
+    }
+    if (researchResults.email) {
+      updatedLead.keyPersonEmail = researchResults.email;
+    }
+    
+    // Add to research notes
+    const notesUpdate = `[AI Research ${new Date().toLocaleDateString()}]: Found key person - ${researchResults.name || 'N/A'}, ${researchResults.title || 'N/A'}, ${researchResults.email} (Approved)`;
+    updatedLead.researchNotes = (updatedLead.researchNotes || '') + '\n\n' + notesUpdate;
+    
+    setEditedLead(updatedLead);
+    setResearchResults(prev => prev ? { ...prev, verificationStatus: 'approved' } : null);
+    
+    // Save to database
+    onSave(updatedLead);
+  };
+
+  const handleRejectEmail = () => {
+    if (!researchResults) return;
+    setResearchResults(prev => prev ? { ...prev, verificationStatus: 'rejected' } : null);
   };
 
   const handleSaveEnrichment = () => {
@@ -1739,26 +2072,161 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
 
               {enrichResult && (
                 <div className="space-y-4">
-                  <div className="prose prose-sm max-w-none text-slate-700">
-                    <h4 className="font-bold text-slate-900">AI Summary</h4>
-                    <p className="whitespace-pre-wrap">{enrichResult.text}</p>
+                  <div className="bg-white border border-slate-200 rounded-lg p-5">
+                    <h4 className="font-bold text-slate-900 mb-3 text-lg">AI Summary</h4>
+                    <div 
+                      className="text-slate-700 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ 
+                        __html: enrichResult.text
+                          .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>')
+                          .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+                          .replace(/^### (.*$)/gim, '<h3 class="text-base font-bold text-slate-900 mt-4 mb-2">$1</h3>')
+                          .replace(/^## (.*$)/gim, '<h2 class="text-lg font-bold text-slate-900 mt-5 mb-3">$1</h2>')
+                          .replace(/^# (.*$)/gim, '<h1 class="text-xl font-bold text-slate-900 mt-6 mb-4">$1</h1>')
+                          .replace(/\n\n/g, '</p><p class="mb-3 leading-relaxed">')
+                          .replace(/\n/g, '<br />')
+                          .replace(/^(.+)$/, '<p class="mb-3 leading-relaxed">$1</p>')
+                      }} 
+                    />
                   </div>
                   {enrichResult.grounding && (
-                    <div className="bg-slate-50 p-4 rounded-lg">
-                      <h5 className="text-xs font-bold text-slate-500 uppercase mb-2">Sources</h5>
-                      <ul className="space-y-1">
-                        {enrichResult.grounding.map((chunk: any, i: number) => (
-                           chunk.web?.uri && (
-                             <li key={i}>
-                               <a href={chunk.web.uri} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline truncate block">
-                                 {chunk.web.title || chunk.web.uri}
-                               </a>
-                             </li>
-                           )
-                        ))}
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                      <h5 className="text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Sources</h5>
+                      <ul className="space-y-2">
+                        {(() => {
+                          // Extract domain from URI for duplicate detection
+                          const getDomain = (uri: string): string => {
+                            if (!uri) return '';
+                            try {
+                              let url = uri.trim();
+                              if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                                url = 'https://' + url;
+                              }
+                              const urlObj = new URL(url);
+                              return urlObj.hostname.replace(/^www\./, '').toLowerCase();
+                            } catch {
+                              // Fallback: extract domain manually
+                              const match = uri.match(/(?:https?:\/\/)?(?:www\.)?([^\/]+)/);
+                              return match ? match[1].toLowerCase() : uri.toLowerCase();
+                            }
+                          };
+
+                          // Remove duplicates by domain
+                          const seenDomains = new Set<string>();
+                          const uniqueSources: any[] = [];
+                          
+                          enrichResult.grounding.forEach((chunk: any) => {
+                            if (!chunk.web?.uri) return;
+                            const domain = getDomain(chunk.web.uri);
+                            if (!seenDomains.has(domain)) {
+                              seenDomains.add(domain);
+                              uniqueSources.push(chunk);
+                            }
+                          });
+                          
+                          return uniqueSources.map((chunk: any, i: number) => (
+                            <li key={i} className="flex items-start">
+                              <ExternalLink size={14} className="mr-2 mt-0.5 text-slate-400 flex-shrink-0" />
+                              <a 
+                                href={chunk.web.uri} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="text-xs text-blue-600 hover:text-blue-800 hover:underline break-all flex-1"
+                              >
+                                {chunk.web.title || chunk.web.uri}
+                              </a>
+                            </li>
+                          ));
+                        })()}
                       </ul>
                     </div>
                   )}
+
+                  {/* Key Person Research Results */}
+                  {researchResults && (researchResults.name || researchResults.title || researchResults.email) && (
+                    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg p-5 space-y-4">
+                      <h4 className="font-bold text-indigo-900 flex items-center">
+                        <UserIcon size={18} className="mr-2" />
+                        Key Person Research Results
+                      </h4>
+                      
+                      <div className="space-y-3">
+                        {researchResults.name && (
+                          <div className="flex items-start">
+                            <span className="text-sm font-semibold text-slate-600 w-24 flex-shrink-0">Name:</span>
+                            <span className="text-sm text-slate-900 font-medium">{researchResults.name}</span>
+                          </div>
+                        )}
+                        
+                        {researchResults.title && (
+                          <div className="flex items-start">
+                            <span className="text-sm font-semibold text-slate-600 w-24 flex-shrink-0">Title:</span>
+                            <span className="text-sm text-slate-900 font-medium">{researchResults.title}</span>
+                          </div>
+                        )}
+                        
+                        {researchResults.email && (
+                          <div className="space-y-2">
+                            <div className="flex items-start">
+                              <span className="text-sm font-semibold text-slate-600 w-24 flex-shrink-0">Email:</span>
+                              <div className="flex-1">
+                                <span className="text-sm text-slate-900 font-medium">{researchResults.email}</span>
+                                {researchResults.verificationStatus && (
+                                  <div className="mt-2">
+                                    {researchResults.verificationStatus === 'auto-approved' && (
+                                      <div className="flex items-center text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+                                        <CheckCircle size={14} className="mr-1" />
+                                        Auto-approved: {researchResults.verificationReason}
+                                      </div>
+                                    )}
+                                    {researchResults.verificationStatus === 'pending' && (
+                                      <div className="space-y-2">
+                                        <div className="flex items-center text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                                          <Mail size={14} className="mr-1" />
+                                          {researchResults.verificationReason}
+                                        </div>
+                                        {canEdit && (
+                                          <div className="flex gap-2">
+                                            <button
+                                              onClick={handleApproveEmail}
+                                              className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 flex items-center justify-center"
+                                            >
+                                              <Check size={14} className="mr-1" />
+                                              Approve & Update
+                                            </button>
+                                            <button
+                                              onClick={handleRejectEmail}
+                                              className="flex-1 px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 flex items-center justify-center"
+                                            >
+                                              <X size={14} className="mr-1" />
+                                              Reject
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                    {researchResults.verificationStatus === 'approved' && (
+                                      <div className="flex items-center text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">
+                                        <CheckCircle size={14} className="mr-1" />
+                                        Approved and updated to database
+                                      </div>
+                                    )}
+                                    {researchResults.verificationStatus === 'rejected' && (
+                                      <div className="flex items-center text-xs text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1">
+                                        <X size={14} className="mr-1" />
+                                        Rejected
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {canEdit && (
                     <button 
                       onClick={handleSaveEnrichment}
@@ -2076,13 +2544,13 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all'); // Priority filter
   const [sortBy, setSortBy] = useState<'score' | 'name' | 'status'>('score'); // Sort option
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // Sort order
-  // Scoring criteria toggles - all disabled by default (auto off)
+  // Scoring criteria toggles - all enabled by default (auto on)
   const [scoringCriteria, setScoringCriteria] = useState({
-    history: false,
-    region: false,
-    contact: false,
-    delegates: false,
-    iccaQualification: false
+    history: true,
+    region: true,
+    contact: true,
+    delegates: true,
+    iccaQualification: true
   });
   
   // Helper function to calculate data quality score
@@ -2605,7 +3073,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     const vietnamEvents = (event as any).vietnamEvents || rawData.vietnamEvents || rawData.VIETNAM_EVENTS;
     
     // Calculate scores using backend logic - only for enabled criteria
-    const historyScore = scoringCriteria.history ? calculateHistoryScore(editions, vietnamEvents) : 0;
+    const historyScore = scoringCriteria.history ? calculateHistoryScore(editions) : 0;
     const regionScore = scoringCriteria.region ? calculateRegionScore(event.name, editions) : 0;
     const contactScore = scoringCriteria.contact ? calculateContactScore(rawData, relatedContacts) : 0;
     const delegatesScore = scoringCriteria.delegates ? calculateDelegatesScore(editions) : 0;
@@ -3445,15 +3913,20 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     // Update progress for this batch
     leads.forEach(lead => {
       setOrganizationProgress(prev => {
-        const existing = prev.find(p => p.companyName === lead.companyName);
+        const leadNameLower = (lead.companyName || '').toLowerCase().trim();
+        const existing = prev.find(p => {
+          const pNameLower = (p.companyName || '').toLowerCase().trim();
+          return pNameLower === leadNameLower;
+        });
         if (!existing) {
           return [...prev, { companyName: lead.companyName, status: 'analyzing' }];
         }
-        return prev.map(p => 
-          p.companyName === lead.companyName 
+        return prev.map(p => {
+          const pNameLower = (p.companyName || '').toLowerCase().trim();
+          return pNameLower === leadNameLower
             ? { ...p, status: 'analyzing' }
-            : p
-        );
+            : p;
+        });
       });
     });
 
@@ -3525,12 +3998,15 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         const scoredResult = await scoreEventLocally(mockEvent, '');
         
         // Update progress
+        // Use case-insensitive matching to ensure we find the right progress entry
         setOrganizationProgress(prev => {
-          return prev.map(p => 
-            p.companyName === lead.companyName 
+          const leadNameLower = (lead.companyName || '').toLowerCase().trim();
+          return prev.map(p => {
+            const pNameLower = (p.companyName || '').toLowerCase().trim();
+            return pNameLower === leadNameLower
               ? { ...p, status: 'completed' as const, result: scoredResult }
-              : p
-          );
+              : p;
+          });
         });
         
         results.push(scoredResult);
@@ -3540,13 +4016,15 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     } catch (error: any) {
       console.error(`❌ [Batch ${batchIndex + 1}] Error:`, error);
       leads.forEach(lead => {
-        setOrganizationProgress(prev => 
-          prev.map(p => 
-            p.companyName === lead.companyName
+        setOrganizationProgress(prev => {
+          const leadNameLower = (lead.companyName || '').toLowerCase().trim();
+          return prev.map(p => {
+            const pNameLower = (p.companyName || '').toLowerCase().trim();
+            return pNameLower === leadNameLower
               ? { ...p, status: 'error', error: error.message }
-              : p
-          )
-        );
+              : p;
+          });
+        });
       });
       return [];
     }
@@ -3785,7 +4263,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
            
           // Multi-Agent System: Each event gets assigned to a dedicated agent worker
           const MAX_AGENTS = 10; // Number of concurrent agent workers
-          const MAX_EVENTS = 50; // Limit total events to analyze
+          const MAX_EVENTS = 200; // Limit total events to analyze (increased from 50 to handle more events)
           const eventsToProcess = eventsList.slice(0, MAX_EVENTS);
           
           console.log(`🤖 [Multi-Agent System] Deploying ${Math.min(MAX_AGENTS, eventsToProcess.length)} agents to process ${eventsToProcess.length} events`);
@@ -3795,11 +4273,15 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
             console.log(`🤖 [Agent ${agentId}] Processing event: ${event.name} (${globalIndex + 1}/${eventsToProcess.length})`);
             
             // Ensure status is set to 'analyzing' when agent starts processing
-            setOrganizationProgress(prev => prev.map(p => 
-              p.companyName === event.name && p.status !== 'analyzing'
-                ? { ...p, status: 'analyzing' }
-                : p
-            ));
+            // Use case-insensitive matching to ensure we find the right progress entry
+            setOrganizationProgress(prev => prev.map(p => {
+              const pNameLower = (p.companyName || '').toLowerCase().trim();
+              const eventNameLower = (event.name || '').toLowerCase().trim();
+              if (pNameLower === eventNameLower && p.status !== 'analyzing') {
+                return { ...p, status: 'analyzing' };
+              }
+              return p;
+            }));
             
             const editions = (event as any).editions || [];
             console.log(`📊 [Agent ${agentId}] Event has ${editions.length} editions`);
@@ -3945,11 +4427,15 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               }
               
               // If no result returned, mark as error
-              setOrganizationProgress(prev => prev.map(p => 
-                p.companyName === event.name 
-                  ? { ...p, status: 'error', error: 'No result returned from scoring' }
-                  : p
-              ));
+              // Use case-insensitive matching to ensure we find the right progress entry
+              setOrganizationProgress(prev => prev.map(p => {
+                const pNameLower = (p.companyName || '').toLowerCase().trim();
+                const eventNameLower = (event.name || '').toLowerCase().trim();
+                if (pNameLower === eventNameLower) {
+                  return { ...p, status: 'error', error: 'No result returned from scoring' };
+                }
+                return p;
+              }));
               
               setAnalyzingEvents(prev => {
                 const newSet = new Set(prev);
@@ -3968,11 +4454,15 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               }
               
               // CRITICAL: Update organizationProgress to clear 'analyzing' status
-              setOrganizationProgress(prev => prev.map(p => 
-                p.companyName === event.name 
-                  ? { ...p, status: 'error', error: errorMsg }
-                  : p
-              ));
+              // Use case-insensitive matching to ensure we find the right progress entry
+              setOrganizationProgress(prev => prev.map(p => {
+                const pNameLower = (p.companyName || '').toLowerCase().trim();
+                const eventNameLower = (event.name || '').toLowerCase().trim();
+                if (pNameLower === eventNameLower) {
+                  return { ...p, status: 'error', error: errorMsg };
+                }
+                return p;
+              }));
               
               // Remove from analyzing set
               setAnalyzingEvents(prev => {
@@ -4005,8 +4495,11 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
             } finally {
               // CRITICAL: Ensure status is cleared even if there's an unexpected error
               // This is a safety net to prevent stuck "Analyzing" status
+              // Use case-insensitive matching to ensure we find the right progress entry
               setOrganizationProgress(prev => prev.map(p => {
-                if (p.companyName === event.name && p.status === 'analyzing') {
+                const pNameLower = (p.companyName || '').toLowerCase().trim();
+                const eventNameLower = (event.name || '').toLowerCase().trim();
+                if (pNameLower === eventNameLower && p.status === 'analyzing') {
                   // Only update if still in analyzing state (not already completed/error)
                   // This prevents overwriting completed/error status
                   if (!p.result && !p.error) {
@@ -4046,11 +4539,16 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                     skippedCount++;
                     console.log(`⏭️  [Agent Pool] Event "${result.eventName}" skipped: ${result.reason || 'Not ICCA qualified'}`);
                     // Update progress for skipped events
-                    setOrganizationProgress(prev => prev.map(p => 
-                      p.companyName === batch[index].name 
-                        ? { ...p, status: 'error', error: result.reason || 'Skipped' }
-                        : p
-                    ));
+                    // Use case-insensitive matching to ensure we find the right progress entry
+                    setOrganizationProgress(prev => {
+                      const batchNameLower = (batch[index].name || '').toLowerCase().trim();
+                      return prev.map(p => {
+                        const pNameLower = (p.companyName || '').toLowerCase().trim();
+                        return pNameLower === batchNameLower
+                          ? { ...p, status: 'error', error: result.reason || 'Skipped' }
+                          : p;
+                      });
+                    });
                     setAnalyzingEvents(prev => {
                       const newSet = new Set(prev);
                       newSet.delete(batch[index].name);
@@ -4481,6 +4979,11 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
 
 
   // Filter and sort events
+  // Calculate how many events were analyzed vs total
+  const MAX_EVENTS_ANALYZED = 200; // Should match MAX_EVENTS in handleAnalyze
+  const analyzedCount = organizationProgress.filter(p => p.status === 'completed' || p.status === 'analyzing' || p.status === 'error').length;
+  const notAnalyzedCount = Math.max(0, eventsList.length - Math.min(eventsList.length, MAX_EVENTS_ANALYZED));
+  
   const filteredAndSortedEvents = eventsList
     .map((event, idx) => {
       const eventNameLower = event.name.toLowerCase().trim();
@@ -4492,20 +4995,35 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                progressName.includes(eventNameLower) ||
                eventNameLower.includes(progressName);
       });
-      return { event, idx, progress };
+      
+      // Determine if event was analyzed or skipped
+      // Event is skipped if:
+      // 1. It's beyond the MAX_EVENTS_ANALYZED limit AND
+      // 2. It doesn't have any progress (wasn't analyzed)
+      const wasAnalyzed = !!progress;
+      const wasSkipped = !wasAnalyzed && idx >= MAX_EVENTS_ANALYZED;
+      const skipReason = wasSkipped ? `Not analyzed - only first ${MAX_EVENTS_ANALYZED} events are analyzed` : null;
+      
+      return { event, idx, progress, wasAnalyzed, wasSkipped, skipReason };
     })
-    .filter(({ event, progress }) => {
+    .filter(({ event, progress, wasSkipped }) => {
       // Search filter
       if (searchTerm && !event.name.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
       }
       
-      // Priority filter
+      // Priority filter - only filter completed events, show all pending/not analyzed events
       if (priorityFilter !== 'all' && progress?.status === 'completed' && progress.result) {
         const score = progress.result.totalScore || 0;
         if (priorityFilter === 'high' && score < 50) return false;
         if (priorityFilter === 'medium' && (score < 30 || score >= 50)) return false;
         if (priorityFilter === 'low' && score >= 30) return false;
+      }
+      
+      // Always show events that haven't been analyzed yet (so user knows they exist)
+      // unless priority filter is set and they don't have a score
+      if (!progress || progress.status === 'pending') {
+        return true; // Show all pending/not analyzed events
       }
       
       return true;
@@ -4882,9 +5400,35 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
           
           {/* Results count */}
           <div className="mt-3 pt-3 border-t border-slate-200">
-            <p className="text-xs text-slate-600">
-              Showing <strong className="text-slate-900">{filteredAndSortedEvents.length}</strong> of <strong className="text-slate-900">{eventsList.length}</strong> events
-            </p>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <p className="text-xs text-slate-600">
+                  Showing <strong className="text-slate-900">{filteredAndSortedEvents.length}</strong> of <strong className="text-slate-900">{eventsList.length}</strong> events
+                </p>
+                {priorityFilter !== 'all' && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    ℹ️ Filtered by priority: <strong>{priorityFilter}</strong> (score {priorityFilter === 'high' ? '≥50' : priorityFilter === 'medium' ? '30-49' : '<30'})
+                  </p>
+                )}
+              </div>
+              {notAnalyzedCount > 0 && (
+                <p className="text-xs text-amber-600 font-medium">
+                  ⚠️ {notAnalyzedCount} events not analyzed (only first {MAX_EVENTS_ANALYZED} are analyzed)
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-4 mt-2">
+              {analyzedCount > 0 && (
+                <p className="text-xs text-slate-500">
+                  Analyzed: <strong className="text-slate-700">{analyzedCount}</strong> events
+                </p>
+              )}
+              {filteredAndSortedEvents.length < eventsList.length && priorityFilter === 'all' && (
+                <p className="text-xs text-slate-500">
+                  {eventsList.length - filteredAndSortedEvents.length} events hidden by search filter
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -4913,13 +5457,14 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                     </td>
                   </tr>
                 ) : (
-                  filteredAndSortedEvents.map(({ event, idx, progress }) => (
+                  filteredAndSortedEvents.map(({ event, idx, progress, wasSkipped, skipReason }) => (
                     <tr 
                       key={event.id || idx} 
                       className={`hover:bg-slate-50 transition-colors ${
                         progress?.status === 'completed' ? 'bg-green-50/30' :
                         progress?.status === 'analyzing' ? 'bg-blue-50/30' :
-                        progress?.status === 'error' ? 'bg-red-50/30' : ''
+                        progress?.status === 'error' ? 'bg-red-50/30' :
+                        wasSkipped ? 'bg-amber-50/30' : ''
                       }`}
                     >
                       <td className="px-4 py-3 text-sm font-medium text-slate-600">{idx + 1}</td>
@@ -4959,12 +5504,20 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                               ? 'bg-blue-100 text-blue-800'
                               : progress?.status === 'error'
                               ? 'bg-red-100 text-red-800'
+                              : wasSkipped
+                              ? 'bg-amber-100 text-amber-800'
                               : 'bg-slate-100 text-slate-600'
                           }`}>
                             {progress?.status === 'completed' ? 'Completed' :
                              progress?.status === 'analyzing' ? 'Analyzing' :
-                             progress?.status === 'error' ? 'Error' : 'Pending'}
+                             progress?.status === 'error' ? 'Error' :
+                             wasSkipped ? 'Not Analyzed' : 'Pending'}
                           </span>
+                          {wasSkipped && skipReason && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200" title={skipReason}>
+                              ⚠️ {skipReason}
+                            </span>
+                          )}
                           {progress?.status === 'completed' && progress.result && (() => {
                             const eventName = (progress.result.companyName || event.name || '').toLowerCase().trim();
                             return savedToDatabase.has(eventName) ? (
@@ -5143,9 +5696,12 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
 
       {/* Expanded Details */}
       {eventsList.map((event, idx) => {
-        const progress = organizationProgress.find(p => 
-          p.companyName === event.name || p.result?.companyName === event.name
-        );
+        const eventNameLower = (event.name || '').toLowerCase().trim();
+        const progress = organizationProgress.find(p => {
+          const pNameLower = (p.companyName || '').toLowerCase().trim();
+          const resultNameLower = (p.result?.companyName || '').toLowerCase().trim();
+          return pNameLower === eventNameLower || resultNameLower === eventNameLower;
+        });
         if (!expandedOrgs.has(event.name)) return null;
         
         // Show details even if no progress result - display event data
@@ -8648,9 +9204,6 @@ const App = () => {
       if (failCount > 0) {
         console.warn(`⚠️ Failed to save ${failCount} leads`);
       }
-      
-      // Show alert with summary
-      alert(summaryMessage);
       
       // Refresh leads from API
       console.log('🔄 Refreshing leads list from database...');
