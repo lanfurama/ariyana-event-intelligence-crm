@@ -44,291 +44,18 @@ import { extractRetryDelay, isRateLimitError } from './services/gptService';
 import { chatMessagesApi, type ChatMessageDB } from './services/apiService';
 import { usersApi, leadsApi, emailTemplatesApi, emailLogsApi } from './services/apiService';
 
+// Import components
+import { LoginView } from './components/LoginView';
+import { Sidebar } from './components/Sidebar';
+import { StatusBadge, InfoItem, EditField, EditTextArea } from './components/common';
+import { mapLeadFromDB, mapLeadToDB } from './utils/leadUtils';
+import { formatMarkdown, formatInlineMarkdown } from './utils/markdownUtils';
+
 // --- Components ---
+// LoginView is now imported from components/LoginView
+// Sidebar and NavItem are now imported from components/Sidebar and components/common/NavItem
 
-// 0. Login View
-const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showWarning, setShowWarning] = useState(true);
-
-  useEffect(() => {
-    // Fetch users from API
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const fetchedUsers = await usersApi.getAll();
-        setUsers(fetchedUsers);
-        if (fetchedUsers.length > 0) {
-          setSelectedUser(fetchedUsers[0].username);
-        }
-      } catch (err: any) {
-        console.error('Error fetching users:', err);
-        // Only show warning in UI if it's an API connection error
-        if (err.message && err.message.includes('Cannot connect to API')) {
-          setError(err.message);
-          // Log to console for debugging
-          console.warn('⚠️ Backend API not available. Using local data.');
-        } else {
-          setError(err.message || 'Failed to load users');
-        }
-        // Fallback to constants if API fails
-        setUsers(USERS);
-        if (USERS.length > 0) {
-          setSelectedUser(USERS[0].username);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, []);
-
-  const handleLogin = async () => {
-    if (!selectedUser) return;
-    
-    try {
-      const user = await usersApi.getByUsername(selectedUser);
-      if (user) {
-        onLogin(user);
-      } else {
-        // Fallback: try to find in local users array
-        const localUser = users.find(u => u.username === selectedUser);
-        if (localUser) {
-          onLogin(localUser);
-        } else {
-          setError('User not found');
-        }
-      }
-    } catch (err: any) {
-      console.error('Error logging in:', err);
-      // Fallback: try to find in local users array
-      const localUser = users.find(u => u.username === selectedUser);
-      if (localUser) {
-        onLogin(localUser);
-      } else {
-        setError(err.message || 'Failed to login');
-      }
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden p-8 text-center">
-          <Loader2 className="animate-spin mx-auto mb-4 text-blue-600" size={32} />
-          <p className="text-slate-600">Loading users...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border border-slate-200">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10">
-            <h1 className="text-3xl font-bold text-white mb-1.5 tracking-tight">Ariyana CRM</h1>
-            <p className="text-blue-50 text-sm font-medium">Event Intelligence System</p>
-          </div>
-        </div>
-        <div className="p-6 space-y-5 bg-white">
-          {error && error.includes('Cannot connect to API') && showWarning && (
-            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-sm space-y-2 relative">
-              <button
-                onClick={() => setShowWarning(false)}
-                className="absolute top-2 right-2 text-yellow-600 hover:text-yellow-800"
-                aria-label="Close warning"
-              >
-                <X size={16} />
-              </button>
-              <p className="font-semibold">⚠️ Warning:</p>
-              <p>{error}</p>
-              <div className="text-xs mt-2 text-yellow-700 space-y-1">
-                {import.meta.env.DEV ? (
-                  <p>
-                    Make sure the backend API is running: <code className="bg-yellow-100 px-1 rounded">npm run dev:api</code>
-                    <br />
-                    <span className="text-yellow-600 italic">(App is using local data. You can dismiss this warning.)</span>
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    <p>In production, please check:</p>
-                    <ul className="list-disc list-inside ml-2 space-y-0.5">
-                      <li>Backend API is deployed and accessible at <code className="bg-yellow-100 px-1 rounded">/api/v1</code></li>
-                      <li>API routes are properly configured in Vercel</li>
-                      <li>Database connection is working</li>
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          {error && !error.includes('Cannot connect to API') && (
-            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
-              <p className="font-semibold">❌ Error:</p>
-              <p>{error}</p>
-            </div>
-          )}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Select User Role</label>
-            <div className="relative">
-              <select 
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                className="w-full p-3.5 pl-11 border-2 border-slate-200 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white text-slate-900 font-medium transition-all hover:border-slate-300"
-                disabled={users.length === 0}
-              >
-                {users.map(u => (
-                  <option key={u.username} value={u.username}>
-                    {u.name} — {u.role}
-                  </option>
-                ))}
-              </select>
-              <Users className="absolute left-3.5 top-4 text-slate-400" size={18} />
-            </div>
-          </div>
-          
-          <button 
-            onClick={handleLogin}
-            disabled={!selectedUser || users.length === 0}
-            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 flex justify-center items-center transform hover:scale-[1.02] disabled:transform-none"
-          >
-            Sign In <ChevronRight size={18} className="ml-2" />
-          </button>
-          
-          <div className="text-center text-xs text-slate-500 mt-4 font-medium">
-             🔒 Access is restricted to authorized personnel only.
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 1. Sidebar
-const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onToggle }: { activeTab: string, setActiveTab: (t: string) => void, user: User, onLogout: () => void, isOpen: boolean, onToggle: () => void }) => (
-  <>
-    {/* Sidebar */}
-    <div className={`w-52 bg-gradient-to-b from-slate-900 to-slate-800 text-white flex flex-col h-screen fixed left-0 top-0 border-r border-slate-700/50 shadow-2xl z-20 transition-transform duration-300 ease-in-out ${
-      isOpen ? 'translate-x-0' : '-translate-x-full'
-    }`}>
-      <div className="p-4 border-b border-slate-700/50 bg-slate-900/50 flex items-center justify-between">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-400 bg-clip-text text-transparent tracking-tight">Ariyana CRM</h1>
-          <p className="text-xs text-slate-400 mt-1 font-medium tracking-wide">Event Intelligence System</p>
-        </div>
-        <button
-          onClick={onToggle}
-          className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-300 hover:text-white"
-          title="Close sidebar"
-        >
-          <ChevronLeft size={20} />
-        </button>
-      </div>
-    
-    <div className="p-3 border-b border-slate-700/50 bg-slate-800/30 flex items-center space-x-3">
-       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 overflow-hidden border-2 border-blue-400/50 shadow-lg">
-          <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" />
-       </div>
-       <div className="flex-1 min-w-0">
-         <p className="text-sm font-bold text-white truncate">{user.name}</p>
-         <p className="text-xs text-blue-300 uppercase font-semibold tracking-wider">{user.role}</p>
-       </div>
-    </div>
-
-    <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-      <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" id="dashboard" active={activeTab} onClick={setActiveTab} />
-      <NavItem icon={<Users size={20} />} label="ICCA Leads" id="leads" active={activeTab} onClick={setActiveTab} />
-      
-      {/* Restrict Strategy to Director */}
-      {user.role === 'Director' && (
-        <NavItem icon={<BrainCircuit size={20} />} label="Intelligent Data" id="intelligent" active={activeTab} onClick={setActiveTab} />
-      )}
-      
-      <NavItem icon={<Film size={20} />} label="Video Analysis" id="analysis" active={activeTab} onClick={setActiveTab} />
-      <NavItem icon={<MessageSquare size={20} />} label="AI Assistant" id="chat" active={activeTab} onClick={setActiveTab} />
-      
-      {/* Email Templates - Only Director and Sales can manage */}
-      {(user.role === 'Director' || user.role === 'Sales') && (
-        <NavItem icon={<Mail size={20} />} label="Email Templates" id="email-templates" active={activeTab} onClick={setActiveTab} />
-      )}
-      
-      <NavItem icon={<UserIcon size={20} />} label="My Profile" id="profile" active={activeTab} onClick={setActiveTab} />
-    </nav>
-    
-    <div className="p-3 border-t border-slate-700/50 bg-slate-900/50 space-y-2">
-      <button 
-        onClick={onLogout}
-        className="w-full flex items-center space-x-3 px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all duration-200 text-sm font-medium group"
-      >
-        <LogOut size={16} className="group-hover:translate-x-0.5 transition-transform" />
-        <span>Sign Out</span>
-      </button>
-      <div className="text-xs text-slate-500 text-center font-medium">
-        Powered by AI
-      </div>
-    </div>
-  </div>
-  
-  {/* Toggle Button - Show when sidebar is closed */}
-  {!isOpen && (
-    <button
-      onClick={onToggle}
-      className="fixed left-4 top-4 z-30 p-2 bg-slate-900 text-white rounded-lg shadow-lg hover:bg-slate-800 transition-all duration-200 hover:scale-110"
-      title="Open sidebar"
-    >
-      <Menu size={20} />
-    </button>
-  )}
-  </>
-);
-
-const NavItem = ({ icon, label, id, active, onClick }: any) => (
-  <button 
-    onClick={() => onClick(id)}
-    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
-      active === id 
-        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-900/50 font-semibold' 
-        : 'text-slate-300 hover:bg-slate-800/50 hover:text-white font-medium'
-    }`}
-  >
-    <span className={active === id ? 'transform group-hover:scale-110 transition-transform' : ''}>{icon}</span>
-    <span>{label}</span>
-  </button>
-);
-
-// Helper function to map database fields to frontend format
-const mapLeadFromDB = (dbLead: any): Lead => {
-  return {
-    id: dbLead.id,
-    companyName: dbLead.company_name || dbLead.companyName,
-    industry: dbLead.industry,
-    country: dbLead.country,
-    city: dbLead.city,
-    website: dbLead.website || '',
-    keyPersonName: dbLead.key_person_name || dbLead.keyPersonName,
-    keyPersonTitle: dbLead.key_person_title || dbLead.keyPersonTitle || '',
-    keyPersonEmail: dbLead.key_person_email || dbLead.keyPersonEmail || '',
-    keyPersonPhone: dbLead.key_person_phone || dbLead.keyPersonPhone || '',
-    keyPersonLinkedIn: dbLead.key_person_linkedin || dbLead.keyPersonLinkedIn || '',
-    totalEvents: dbLead.total_events || dbLead.totalEvents || 0,
-    vietnamEvents: dbLead.vietnam_events || dbLead.vietnamEvents || 0,
-    notes: dbLead.notes || '',
-    status: dbLead.status,
-    lastContacted: dbLead.last_contacted || dbLead.lastContacted,
-    pastEventsHistory: dbLead.past_events_history || dbLead.pastEventsHistory,
-    secondaryPersonName: dbLead.secondary_person_name || dbLead.secondaryPersonName,
-    secondaryPersonTitle: dbLead.secondary_person_title || dbLead.secondaryPersonTitle,
-    secondaryPersonEmail: dbLead.secondary_person_email || dbLead.secondaryPersonEmail,
-    researchNotes: dbLead.research_notes || dbLead.researchNotes,
-    numberOfDelegates: dbLead.number_of_delegates || dbLead.numberOfDelegates,
-  };
-};
+// mapLeadFromDB and mapLeadToDB are now imported from utils/leadUtils
 
 // 2. Dashboard View
 const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => {
@@ -1157,22 +884,7 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
   );
 };
 
-const StatusBadge = ({ status }: { status: string }) => {
-  const dotColors: Record<string, string> = {
-    New: 'bg-blue-500',
-    Contacted: 'bg-amber-500',
-    Qualified: 'bg-violet-500',
-    Won: 'bg-emerald-500',
-    Lost: 'bg-rose-500',
-  };
-  const dot = dotColors[status] || 'bg-slate-400';
-  return (
-    <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200 bg-white text-slate-700">
-      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} aria-hidden="true" />
-      <span className="uppercase tracking-wide">{status}</span>
-    </span>
-  );
-};
+// StatusBadge is now imported from components/common/StatusBadge
 
 // 4. Lead Detail Modal (Enrichment + Email + Edit)
 const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () => void, onSave: (l: Lead) => void, user: User }) => {
@@ -1370,47 +1082,78 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
   } => {
     const result: { name?: string; title?: string; email?: string } = {};
     
-    console.log('🔍 [Parse] Parsing research result:', text.substring(0, 500));
+    console.log('🔍 [Parse] Parsing research result:', text.substring(0, 1000));
     
-    // First, try to parse structured format from prompt
-    const structuredPattern = /KEY PERSON CONTACT:[\s\S]*?Name:\s*([^\n]+)[\s\S]*?Title:\s*([^\n]+)[\s\S]*?Email:\s*([^\n]+)/i;
-    const structuredMatch = text.match(structuredPattern);
+    // First, try to parse structured format from prompt (more flexible patterns)
+    const structuredPatterns = [
+      // Pattern 1: Standard format with KEY PERSON CONTACT
+      /KEY PERSON CONTACT:[\s\S]*?Name:\s*([^\n]+)[\s\S]*?Title:\s*([^\n]+)[\s\S]*?Email:\s*([^\n]+)/i,
+      // Pattern 2: With dashes or bullets
+      /KEY PERSON CONTACT:[\s\S]*?Name:\s*([^\n]+)[\s\S]*?Title:\s*([^\n]+)[\s\S]*?Email:\s*([^\n]+)/i,
+      // Pattern 3: Without KEY PERSON CONTACT header
+      /Name:\s*([^\n]+)[\s\S]*?Title:\s*([^\n]+)[\s\S]*?Email:\s*([^\n]+)/i,
+      // Pattern 4: With different spacing
+      /Name\s*:\s*([^\n]+)[\s\S]*?Title\s*:\s*([^\n]+)[\s\S]*?Email\s*:\s*([^\n]+)/i,
+    ];
     
-    if (structuredMatch) {
-      const name = structuredMatch[1]?.trim();
-      const title = structuredMatch[2]?.trim();
-      const email = structuredMatch[3]?.trim();
+    for (const pattern of structuredPatterns) {
+      const structuredMatch = text.match(pattern);
       
-      // Check if not "Not found"
-      if (name && name.toLowerCase() !== 'not found' && name.length > 0) {
-        result.name = name;
-      }
-      if (title && title.toLowerCase() !== 'not found' && title.length > 0) {
-        result.title = title;
-      }
-      if (email && email.toLowerCase() !== 'not found' && email.includes('@')) {
-        result.email = email;
-      }
-      
-      if (result.name || result.title || result.email) {
-        console.log('✅ [Parse] Found structured format:', result);
-        return result;
+      if (structuredMatch) {
+        const name = structuredMatch[1]?.trim();
+        const title = structuredMatch[2]?.trim();
+        const email = structuredMatch[3]?.trim();
+        
+        // Check if not "Not found"
+        if (name && name.toLowerCase() !== 'not found' && name.length > 0 && !name.toLowerCase().includes('not available')) {
+          result.name = name;
+        }
+        if (title && title.toLowerCase() !== 'not found' && title.length > 0 && !title.toLowerCase().includes('not available')) {
+          result.title = title;
+        }
+        if (email && email.toLowerCase() !== 'not found' && email.includes('@') && !email.toLowerCase().includes('not available')) {
+          // Clean email (remove any trailing punctuation or text)
+          const cleanEmail = email.replace(/[^\w@.-]+$/, '').trim();
+          if (cleanEmail.includes('@')) {
+            result.email = cleanEmail;
+          }
+        }
+        
+        if (result.name || result.title || result.email) {
+          console.log('✅ [Parse] Found structured format:', result);
+          // Continue to try to find missing fields
+        }
       }
     }
     
-    // Fallback: Extract email (common patterns)
+    // Extract all emails from text (more comprehensive)
     const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-    const emails = text.match(emailRegex);
-    if (emails && emails.length > 0) {
+    const allEmails = text.match(emailRegex) || [];
+    
+    if (allEmails.length > 0) {
       // Filter out generic emails like info@, contact@, noreply@
-      const personEmails = emails.filter(e => {
+      const personEmails = allEmails.filter(e => {
         const local = e.split('@')[0].toLowerCase();
-        return !['info', 'contact', 'noreply', 'no-reply', 'admin', 'webmaster', 'support'].includes(local);
+        return !['info', 'contact', 'noreply', 'no-reply', 'admin', 'webmaster', 'support', 'web', 'mail', 'hello', 'general'].includes(local);
       });
-      if (personEmails.length > 0) {
+      
+      // If we have a name, try to find email that matches the name
+      if (result.name && personEmails.length > 0) {
+        const nameWords = result.name.toLowerCase().split(/\s+/);
+        const matchingEmail = personEmails.find(email => {
+          const emailLocal = email.split('@')[0].toLowerCase();
+          return nameWords.some(word => emailLocal.includes(word) || word.includes(emailLocal));
+        });
+        if (matchingEmail) {
+          result.email = matchingEmail;
+        } else {
+          result.email = personEmails[0];
+        }
+      } else if (personEmails.length > 0) {
         result.email = personEmails[0];
-      } else {
-        result.email = emails[0]; // Use first email if no person-specific found
+      } else if (allEmails.length > 0) {
+        // Use first email if no person-specific found
+        result.email = allEmails[0];
       }
     }
 
@@ -1480,6 +1223,32 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
     if (bestMatch) {
       result.name = bestMatch.name;
       result.title = bestMatch.title;
+      
+      // Try to find email near this name/title match
+      if (!result.email && result.name) {
+        const nameEscaped = result.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Find text around the name (within 200 characters)
+        const nameIndex = text.search(new RegExp(nameEscaped, 'i'));
+        if (nameIndex !== -1) {
+          const contextStart = Math.max(0, nameIndex - 100);
+          const contextEnd = Math.min(text.length, nameIndex + result.name.length + 200);
+          const context = text.substring(contextStart, contextEnd);
+          
+          // Find email in this context
+          const contextEmails = context.match(emailRegex);
+          if (contextEmails && contextEmails.length > 0) {
+            const personEmails = contextEmails.filter(e => {
+              const local = e.split('@')[0].toLowerCase();
+              return !['info', 'contact', 'noreply', 'no-reply', 'admin', 'webmaster', 'support', 'web', 'mail', 'hello', 'general'].includes(local);
+            });
+            if (personEmails.length > 0) {
+              result.email = personEmails[0];
+            } else {
+              result.email = contextEmails[0];
+            }
+          }
+        }
+      }
     }
 
     // If we have key person name from input, use it
@@ -1491,6 +1260,29 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
       const match = text.match(namePattern);
       if (match && match[2]) {
         result.title = match[2].trim();
+      }
+      
+      // Try to find email near this name
+      if (!result.email) {
+        const nameIndex = text.search(new RegExp(nameEscaped, 'i'));
+        if (nameIndex !== -1) {
+          const contextStart = Math.max(0, nameIndex - 100);
+          const contextEnd = Math.min(text.length, nameIndex + enrichKeyPerson.length + 200);
+          const context = text.substring(contextStart, contextEnd);
+          
+          const contextEmails = context.match(emailRegex);
+          if (contextEmails && contextEmails.length > 0) {
+            const personEmails = contextEmails.filter(e => {
+              const local = e.split('@')[0].toLowerCase();
+              return !['info', 'contact', 'noreply', 'no-reply', 'admin', 'webmaster', 'support', 'web', 'mail', 'hello', 'general'].includes(local);
+            });
+            if (personEmails.length > 0) {
+              result.email = personEmails[0];
+            } else {
+              result.email = contextEmails[0];
+            }
+          }
+        }
       }
     }
 
@@ -1854,7 +1646,7 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
                         <select 
                           value={editedLead.status} 
                           onChange={(e) => handleInputChange('status', e.target.value)}
-                          className="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
                         >
                           <option value="New">New</option>
                           <option value="Contacted">Contacted</option>
@@ -1874,7 +1666,7 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
                           type="number" 
                           value={editedLead.numberOfDelegates || ''} 
                           onChange={(e) => handleInputChange('numberOfDelegates', parseInt(e.target.value) || 0)}
-                          className="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                          className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
                         />
                      </div>
                    </div>
@@ -2438,42 +2230,7 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
   );
 };
 
-const InfoItem = ({ label, value, isLink }: any) => (
-  <div>
-    <span className="text-xs font-medium text-slate-400 block mb-1">{label}</span>
-    {isLink && value !== 'N/A' && value !== '-' ? (
-      <a href={value.startsWith('http') ? value : `https://${value}`} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-600 hover:underline break-all">
-        {value}
-      </a>
-    ) : (
-      <span className="text-sm font-medium text-slate-800 break-words">{value}</span>
-    )}
-  </div>
-);
-
-const EditField = ({ label, value, onChange }: any) => (
-  <div>
-    <label className="text-xs font-medium text-slate-500 block mb-1">{label}</label>
-    <input 
-      type="text" 
-      value={value || ''} 
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-    />
-  </div>
-);
-
-const EditTextArea = ({ label, value, onChange }: any) => (
-  <div className="mt-4">
-    <label className="text-xs font-medium text-slate-500 block mb-1">{label}</label>
-    <textarea 
-      rows={3}
-      value={value || ''} 
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-    />
-  </div>
-);
+// InfoItem, EditField, EditTextArea are now imported from components/common
 
 // 5. Intelligent Data View
 interface ParsedReport {
@@ -7769,130 +7526,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
 };
 
 // Helper function to format markdown text into React elements
-const formatMarkdown = (text: string): React.ReactNode => {
-  if (!text) return null;
-  
-  // Split by double newlines to create paragraphs
-  const paragraphs = text.split(/\n\n+/);
-  
-  return paragraphs.map((para, paraIdx) => {
-    if (!para.trim()) return null;
-    
-    // Split by single newlines for line breaks
-    const lines = para.split('\n');
-    
-    return (
-      <div key={paraIdx} className={paraIdx > 0 ? 'mt-3' : ''}>
-        {lines.map((line, lineIdx) => {
-          if (!line.trim()) return <br key={lineIdx} />;
-          
-          // Check if it's a list item
-          const listMatch = line.match(/^(\s*)([-*•]\s+|(\d+\.)\s+)(.+)$/);
-          if (listMatch) {
-            const isOrdered = !!listMatch[3];
-            const content = formatInlineMarkdown(listMatch[4]);
-            return (
-              <div key={lineIdx} className={`flex ${lineIdx > 0 ? 'mt-1' : ''}`}>
-                <span className="mr-2">{isOrdered ? listMatch[3] : '•'}</span>
-                <span>{content}</span>
-              </div>
-            );
-          }
-          
-          // Check if it's a heading
-          const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
-          if (headingMatch) {
-            const level = headingMatch[1].length;
-            const content = formatInlineMarkdown(headingMatch[2]);
-            const Tag = `h${level}` as keyof JSX.IntrinsicElements;
-            const className = level === 1 ? 'text-lg font-bold mt-4 mb-2' : 
-                             level === 2 ? 'text-base font-semibold mt-3 mb-1' : 
-                             'text-sm font-semibold mt-2 mb-1';
-            return <Tag key={lineIdx} className={className}>{content}</Tag>;
-          }
-          
-          // Regular paragraph line
-          return (
-            <p key={lineIdx} className={lineIdx > 0 ? 'mt-2' : ''}>
-              {formatInlineMarkdown(line)}
-            </p>
-          );
-        })}
-      </div>
-    );
-  });
-};
-
-// Helper to format inline markdown (bold, italic, code)
-const formatInlineMarkdown = (text: string): React.ReactNode => {
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  
-  // Pattern for **bold**, *italic*, `code`, and **bold with *italic***
-  const patterns = [
-    { regex: /\*\*([^*]+)\*\*/g, tag: 'strong', className: 'font-semibold' },
-    { regex: /\*([^*]+)\*/g, tag: 'em', className: 'italic' },
-    { regex: /`([^`]+)`/g, tag: 'code', className: 'bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono' },
-  ];
-  
-  // Find all matches
-  const matches: Array<{ start: number; end: number; type: string; content: string; className: string }> = [];
-  
-  patterns.forEach(({ regex, tag, className }) => {
-    let match;
-    regex.lastIndex = 0;
-    while ((match = regex.exec(text)) !== null) {
-      matches.push({
-        start: match.index,
-        end: match.index + match[0].length,
-        type: tag,
-        content: match[1],
-        className
-      });
-    }
-  });
-  
-  // Sort matches by position
-  matches.sort((a, b) => a.start - b.start);
-  
-  // Remove overlapping matches (keep the first one)
-  const filteredMatches: typeof matches = [];
-  for (let i = 0; i < matches.length; i++) {
-    const match = matches[i];
-    const overlaps = filteredMatches.some(m => 
-      (match.start >= m.start && match.start < m.end) ||
-      (match.end > m.start && match.end <= m.end)
-    );
-    if (!overlaps) {
-      filteredMatches.push(match);
-    }
-  }
-  
-  // Build React elements
-  filteredMatches.forEach((match, idx) => {
-    // Add text before match
-    if (match.start > lastIndex) {
-      parts.push(text.substring(lastIndex, match.start));
-    }
-    
-    // Add formatted content
-    const Tag = match.type as keyof JSX.IntrinsicElements;
-    parts.push(
-      <Tag key={idx} className={match.className}>
-        {match.content}
-      </Tag>
-    );
-    
-    lastIndex = match.end;
-  });
-  
-  // Add remaining text
-  if (lastIndex < text.length) {
-    parts.push(text.substring(lastIndex));
-  }
-  
-  return parts.length > 0 ? <>{parts}</> : text;
-};
+// formatMarkdown and formatInlineMarkdown are now imported from utils/markdownUtils
 
 // 6. Chat Assistant
 const ChatAssistant = ({ user }: { user: User }) => {
@@ -9240,32 +8874,7 @@ const App = () => {
   };
 
   // Helper function to map frontend format to database format
-  const mapLeadToDB = (lead: Lead): any => {
-    return {
-      id: lead.id,
-      company_name: lead.companyName,
-      industry: lead.industry,
-      country: lead.country,
-      city: lead.city,
-      website: lead.website || null,
-      key_person_name: lead.keyPersonName,
-      key_person_title: lead.keyPersonTitle || null,
-      key_person_email: lead.keyPersonEmail || null,
-      key_person_phone: lead.keyPersonPhone || null,
-      key_person_linkedin: lead.keyPersonLinkedIn || null,
-      total_events: lead.totalEvents || 0,
-      vietnam_events: lead.vietnamEvents || 0,
-      notes: lead.notes || null,
-      status: lead.status || 'New',
-      last_contacted: lead.lastContacted || null,
-      past_events_history: lead.pastEventsHistory || null,
-      research_notes: lead.researchNotes || null,
-      secondary_person_name: lead.secondaryPersonName || null,
-      secondary_person_title: lead.secondaryPersonTitle || null,
-      secondary_person_email: lead.secondaryPersonEmail || null,
-      number_of_delegates: lead.numberOfDelegates || null,
-    };
-  };
+  // mapLeadToDB is now imported from utils/leadUtils
 
   // Login Screen Check
   if (!user) {
