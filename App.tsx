@@ -332,6 +332,49 @@ const mapLeadFromDB = (dbLead: any): Lead => {
 
 // 2. Dashboard View
 const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => {
+  const [emailLogs, setEmailLogs] = useState<Array<{leadId: string, count: number, lastSent?: Date}>>([]);
+  const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
+
+  // Load email logs on mount
+  useEffect(() => {
+    loadEmailLogs();
+  }, []);
+
+  const loadEmailLogs = async () => {
+    setLoadingEmailLogs(true);
+    try {
+      const allLogs = await emailLogsApi.getAll();
+      
+      // Group by lead_id and count sent emails
+      const logsByLead = new Map<string, {count: number, lastSent?: Date}>();
+      
+      allLogs.forEach(log => {
+        if (log.status === 'sent' && log.lead_id) {
+          const existing = logsByLead.get(log.lead_id) || { count: 0 };
+          existing.count += 1;
+          
+          const logDate = log.date ? new Date(log.date) : null;
+          if (logDate && (!existing.lastSent || logDate > existing.lastSent)) {
+            existing.lastSent = logDate;
+          }
+          
+          logsByLead.set(log.lead_id, existing);
+        }
+      });
+      
+      const logsArray = Array.from(logsByLead.entries()).map(([leadId, data]) => ({
+        leadId,
+        ...data
+      }));
+      
+      setEmailLogs(logsArray);
+    } catch (error) {
+      console.error('Error loading email logs:', error);
+    } finally {
+      setLoadingEmailLogs(false);
+    }
+  };
+
   const stats = {
     total: leads.length,
     vietnam: leads.filter(l => l.vietnamEvents > 0).length,
@@ -339,11 +382,36 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
     qualified: leads.filter(l => l.status === 'Qualified').length
   };
 
+  // Calculate email statistics
+  const leadsWithEmails = new Set(emailLogs.map(log => log.leadId));
+  const sentEmailsCount = leadsWithEmails.size;
+  const unsentEmailsCount = leads.length - sentEmailsCount;
+  const totalEmailsSent = emailLogs.reduce((sum, log) => sum + log.count, 0);
+
+  // Calculate country statistics
+  const countryStats = useMemo(() => {
+    const countryMap = new Map<string, number>();
+    leads.forEach(lead => {
+      const country = lead.country || 'Unknown';
+      countryMap.set(country, (countryMap.get(country) || 0) + 1);
+    });
+    
+    return Array.from(countryMap.entries())
+      .map(([country, count]) => ({ name: country, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Top 10 countries
+  }, [leads]);
+
   const chartData = [
     { name: 'New', count: stats.new },
     { name: 'Contacted', count: leads.filter(l => l.status === 'Contacted').length },
     { name: 'Qualified', count: stats.qualified },
     { name: 'Won', count: leads.filter(l => l.status === 'Won').length },
+  ];
+
+  const emailChartData = [
+    { name: 'Sent', count: sentEmailsCount },
+    { name: 'Not Sent', count: unsentEmailsCount },
   ];
 
   if (loading) {
@@ -379,20 +447,72 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
         <StatCard title="Qualified" value={stats.qualified} icon={<ChevronRight size={18} />} />
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Leads with emails sent" value={sentEmailsCount} icon={<Mail size={18} />} />
+        <StatCard title="Leads without emails" value={unsentEmailsCount} icon={<Mail size={18} />} />
+        <StatCard title="Total emails sent" value={totalEmailsSent} icon={<Send size={18} />} />
+        <StatCard title="Top countries" value={countryStats.length} icon={<MapPin size={18} />} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="bg-white p-5 rounded-lg border border-slate-200">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">Pipeline status</h3>
+              <p className="text-sm text-slate-600 mt-1">Distribution across sales stages</p>
+            </div>
+          </div>
+
+          {stats.total === 0 ? (
+            <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
+              No leads yet. Add leads to see pipeline status.
+            </div>
+          ) : (
+            <PipelineBars data={chartData} />
+          )}
+        </div>
+
+        <div className="bg-white p-5 rounded-lg border border-slate-200">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">Email status</h3>
+              <p className="text-sm text-slate-600 mt-1">Leads with sent vs unsent emails</p>
+            </div>
+          </div>
+
+          {loadingEmailLogs ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className="animate-spin text-slate-600" size={20} />
+              <span className="ml-2 text-slate-600 text-sm">Loading email data…</span>
+            </div>
+          ) : stats.total === 0 ? (
+            <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
+              No leads yet. Add leads to see email statistics.
+            </div>
+          ) : (
+            <PipelineBars data={emailChartData} />
+          )}
+        </div>
+      </div>
+
       <div className="bg-white p-5 rounded-lg border border-slate-200">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">Pipeline status</h3>
-            <p className="text-sm text-slate-600 mt-1">Distribution across sales stages</p>
+            <h3 className="text-base font-semibold text-slate-900">Country distribution</h3>
+            <p className="text-sm text-slate-600 mt-1">Top countries by lead count</p>
           </div>
         </div>
 
         {stats.total === 0 ? (
           <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-            No leads yet. Add leads to see pipeline status.
+            No leads yet. Add leads to see country statistics.
+          </div>
+        ) : countryStats.length === 0 ? (
+          <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
+            No country data available.
           </div>
         ) : (
-          <PipelineBars data={chartData} />
+          <PipelineBars data={countryStats} />
         )}
       </div>
     </div>
@@ -456,6 +576,7 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [emailLogs, setEmailLogs] = useState<Array<{leadId: string, count: number, lastSent?: Date}>>([]);
   const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
+  const [sendingEmails, setSendingEmails] = useState(false);
 
   const filteredLeads = leads.filter(lead => 
     lead.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -547,7 +668,13 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     if (!template) return [];
 
     return filteredLeads
-      .filter(lead => lead.keyPersonEmail) // Only leads with email
+      .filter(lead => {
+        // Only leads with email
+        if (!lead.keyPersonEmail) return false;
+        // Skip leads that already have sent emails
+        const emailStatus = getEmailStatus(lead.id);
+        return !emailStatus.hasEmail;
+      })
       .map(lead => {
         // Replace template variables with lead data
         let subject = template.subject;
@@ -569,6 +696,73 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
         return { lead, subject, body };
       });
   }, [selectedTemplateId, filteredLeads, emailTemplates]);
+
+  // Calculate email stats
+  const emailStats = useMemo(() => {
+    const sentCount = filteredLeads.filter(lead => {
+      const status = getEmailStatus(lead.id);
+      return status.hasEmail;
+    }).length;
+    const notSentCount = filteredLeads.length - sentCount;
+    return { sent: sentCount, notSent: notSentCount };
+  }, [filteredLeads, emailLogs]);
+
+  const handleSendEmails = async () => {
+    if (preparedEmails.length === 0) {
+      alert('No emails prepared. Please select a template and ensure leads have email addresses.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to send ${preparedEmails.length} email(s)?`)) {
+      return;
+    }
+
+    setSendingEmails(true);
+    try {
+      const leadIds = preparedEmails.map(p => p.lead.id);
+      const emails = preparedEmails.map(p => ({
+        leadId: p.lead.id,
+        subject: p.subject,
+        body: p.body,
+      }));
+
+      const result = await leadsApi.sendEmails(leadIds, emails);
+
+      if (result.success) {
+        const summary = result.summary;
+        let message = `Email campaign completed!\n\n`;
+        message += `✅ Sent: ${summary.sent} of ${summary.attempted}\n`;
+        if (summary.failures && summary.failures.length > 0) {
+          message += `❌ Failed: ${summary.failures.length}\n`;
+        }
+        if (summary.message) {
+          message += `\n${summary.message}`;
+        }
+        alert(message);
+
+        // Update leads if any were updated
+        if (result.updatedLeads && result.updatedLeads.length > 0) {
+          result.updatedLeads.forEach(updatedLead => {
+            onUpdateLead(updatedLead);
+          });
+        }
+
+        // Reload email logs to show new sent emails
+        await loadEmailLogs();
+
+        // Close modal and reset
+        setShowEmailModal(false);
+        setSelectedTemplateId('');
+      } else {
+        alert('Failed to send emails. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Error sending emails:', error);
+      alert(`Error sending emails: ${error.message || 'Unknown error'}`);
+    } finally {
+      setSendingEmails(false);
+    }
+  };
 
   return (
     <div className="p-6 min-h-screen flex flex-col space-y-5">
@@ -619,16 +813,51 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
         </div>
       </div>
 
+      {/* Email Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Leads</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{filteredLeads.length}</p>
+            </div>
+            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
+              <Users size={24} className="text-slate-600" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white border border-green-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Email Sent</p>
+              <p className="text-2xl font-bold text-green-700 mt-1">{emailStats.sent}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <Mail size={24} className="text-green-600" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white border border-amber-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Not Sent</p>
+              <p className="text-2xl font-bold text-amber-700 mt-1">{emailStats.notSent}</p>
+            </div>
+            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+              <Mail size={24} className="text-amber-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white border border-slate-200 rounded-lg flex-1 overflow-hidden flex flex-col">
         <div className="overflow-x-auto overflow-y-auto flex-1">
           <table className="w-full">
             <thead className="bg-white border-b border-slate-200 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Company</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Industry</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Key Person</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Delegates</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Action</th>
               </tr>
@@ -641,9 +870,6 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
                       <div className="text-sm font-medium text-slate-900">{lead.companyName}</div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className="text-sm text-slate-600">{lead.industry}</span>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm text-slate-900">{lead.city}</div>
                       <div className="text-xs text-slate-500 mt-0.5">{lead.country}</div>
                     </td>
@@ -654,15 +880,12 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
                       )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className="text-sm text-slate-900 tabular-nums">{lead.numberOfDelegates || '-'}</span>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
                       {(() => {
                         const emailStatus = getEmailStatus(lead.id);
                         if (emailStatus.hasEmail) {
                           return (
                             <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-slate-700 bg-slate-100">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-green-700 bg-green-100">
                                 Sent
                               </span>
                               <span className="text-xs text-slate-500">
@@ -775,9 +998,7 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
                             </div>
                             <div>
                               <span className="text-xs font-medium text-slate-500 uppercase">Body:</span>
-                              <div className="text-sm text-slate-900 mt-1 whitespace-pre-wrap bg-white p-3 rounded border border-slate-200 max-h-40 overflow-y-auto">
-                                {template.body}
-                              </div>
+                              <div className="text-sm text-slate-900 mt-1 bg-white p-3 rounded border border-slate-200 max-h-40 overflow-y-auto" dangerouslySetInnerHTML={{ __html: template.body }} />
                             </div>
                           </div>
                         );
@@ -859,16 +1080,21 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
               </button>
               {preparedEmails.length > 0 && (
                 <button
-                  onClick={() => {
-                    // TODO: Implement actual email sending when ready
-                    console.log('Prepared emails (not sending yet):', preparedEmails);
-                    alert(`Prepared ${preparedEmails.length} emails. Email sending functionality will be implemented later.`);
-                  }}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center"
-                  disabled
+                  onClick={handleSendEmails}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={sendingEmails}
                 >
-                  <Send size={16} className="mr-2" />
-                  Send Emails (Coming Soon)
+                  {sendingEmails ? (
+                    <>
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={16} className="mr-2" />
+                      Send Emails ({preparedEmails.length})
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -1813,6 +2039,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   const [report, setReport] = useState('');
   const [parsedReport, setParsedReport] = useState<ParsedReport | null>(null);
   const [loading, setLoading] = useState(false);
+  const [expandedEvents, setExpandedEvents] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
   const [extractedLeads, setExtractedLeads] = useState<Lead[]>([]);
   const [rateLimitCountdown, setRateLimitCountdown] = useState<number | null>(null);
@@ -2374,8 +2601,11 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     
     console.log(`  └─ Found ${relatedContacts.length} related contacts for: ${orgName} (Orgs.ID: ${orgId})`);
     
+    // Get vietnamEvents from rawData if available (for leads from database)
+    const vietnamEvents = (event as any).vietnamEvents || rawData.vietnamEvents || rawData.VIETNAM_EVENTS;
+    
     // Calculate scores using backend logic - only for enabled criteria
-    const historyScore = scoringCriteria.history ? calculateHistoryScore(editions) : 0;
+    const historyScore = scoringCriteria.history ? calculateHistoryScore(editions, vietnamEvents) : 0;
     const regionScore = scoringCriteria.region ? calculateRegionScore(event.name, editions) : 0;
     const contactScore = scoringCriteria.contact ? calculateContactScore(rawData, relatedContacts) : 0;
     const delegatesScore = scoringCriteria.delegates ? calculateDelegatesScore(editions) : 0;
@@ -2388,14 +2618,17 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     console.log(`  └─ TOTAL SCORE: ${totalScore}/100 (Active criteria: ${[scoringCriteria.history && 'History', scoringCriteria.region && 'Region', scoringCriteria.contact && 'Contact', scoringCriteria.delegates && 'Delegates'].filter(Boolean).join(', ') || 'None'})`);
     console.log('');
     
-    // Count Vietnam events
-    let vietnamEvents = 0;
+    // Count Vietnam events from editions
+    let finalVietnamEvents = 0;
     editions.forEach((edition: any) => {
       const country = String(edition.COUNTRY || edition.Country || edition.country || '').toLowerCase().trim();
       if (country === 'vietnam' || country === 'vn') {
-        vietnamEvents++;
+        finalVietnamEvents++;
       }
     });
+    
+    // Use counted value if we have editions, otherwise use existing value
+    const finalVietnamEventsValue = editions.length > 0 ? finalVietnamEvents : (vietnamEvents || 0);
     
     // Format event history
     const pastEventsHistory = formatEventHistory(editions);
@@ -2579,7 +2812,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
       keyPersonTitle: keyPersonTitle || null,
       keyPersonEmail: email || null,
       keyPersonPhone: phone || null,
-      vietnamEvents: vietnamEvents,
+      vietnamEvents: finalVietnamEventsValue,
       totalEvents: editions.length || 1,
       numberOfDelegates: averageDelegates > 0 ? averageDelegates : null,
       totalScore: totalScore,
@@ -3230,6 +3463,36 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     
     try {
       for (const lead of leads) {
+        // Parse pastEventsHistory to create editions array
+        const editions: any[] = [];
+        if (lead.pastEventsHistory) {
+          // Parse format: "YEAR: City, Country; YEAR: City, Country"
+          const historyParts = lead.pastEventsHistory.split(';').filter(p => p.trim());
+          historyParts.forEach((part: string) => {
+            const match = part.match(/(\d{4}):\s*(.+?),\s*(.+)/);
+            if (match) {
+              const [, year, city, country] = match;
+              editions.push({
+                YEAR: year.trim(),
+                CITY: city.trim(),
+                COUNTRY: country.trim(),
+                TOTATTEND: lead.numberOfDelegates || null,
+                REGATTEND: lead.numberOfDelegates || null,
+              });
+            }
+          });
+        }
+        
+        // If no editions but have numberOfDelegates, create a dummy edition for scoring
+        if (editions.length === 0 && lead.numberOfDelegates) {
+          editions.push({
+            TOTATTEND: lead.numberOfDelegates,
+            REGATTEND: lead.numberOfDelegates,
+            COUNTRY: lead.country || '',
+            CITY: lead.city || '',
+          });
+        }
+        
         // Create a mock event object from lead data
         const mockEvent = {
           name: lead.companyName,
@@ -3243,7 +3506,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
             lead.keyPersonPhone ? `Phone: ${lead.keyPersonPhone}` : '',
             lead.numberOfDelegates ? `Delegates: ${lead.numberOfDelegates}` : '',
           ].filter(Boolean).join(', '),
-          editions: [], // No editions data for existing leads
+          editions: editions, // Use parsed editions from pastEventsHistory
           rawData: {
             INDUSTRY: lead.industry,
             COUNTRY: lead.country,
@@ -3253,7 +3516,9 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
             PHONE: lead.keyPersonPhone,
             TOTATTEND: lead.numberOfDelegates,
           },
-          eventHistory: lead.pastEventsHistory || ''
+          eventHistory: lead.pastEventsHistory || '',
+          organizationName: lead.companyName,
+          vietnamEvents: lead.vietnamEvents || 0,
         };
         
         // Score locally
@@ -5465,6 +5730,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 {parsedReport.partC.map((lead: any, idx: number) => {
                   const score = lead.totalScore || 0;
                   const isResearching = !lead.lastEnriched;
+                  const isExpanded = expandedEvents.has(idx);
                   
                   // Helper to render field value with AI badge or loading
                   const renderField = (value: any, fieldName: string, isLink: boolean = false) => {
@@ -5498,6 +5764,18 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                     );
                   };
                   
+                  const toggleExpand = () => {
+                    setExpandedEvents(prev => {
+                      const newSet = new Set(prev);
+                      if (newSet.has(idx)) {
+                        newSet.delete(idx);
+                      } else {
+                        newSet.add(idx);
+                      }
+                      return newSet;
+                    });
+                  };
+                  
                   return (
                     <div 
                       key={idx} 
@@ -5505,7 +5783,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                     >
                       {/* Header */}
                       <div className="bg-slate-800 text-white px-4 py-3 flex items-center justify-between">
-                        <h3 className="text-lg font-bold">Event Brief</h3>
+                        <h3 className="text-lg font-bold">Event Brief #{idx + 1}</h3>
                         <div className="flex items-center space-x-3">
                           <span className="text-sm">Score: <span className="font-bold text-yellow-400">{lead.totalScore}/100</span></span>
                           {lead.totalScore && (
@@ -5519,6 +5797,69 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                           )}
                         </div>
                       </div>
+                      
+                      {/* Collapsed Summary View */}
+                      {!isExpanded && (
+                        <div className="p-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                              <span className="text-xs font-semibold text-slate-500 uppercase">Event Name</span>
+                              <p className="text-base font-bold text-slate-900 mt-1">{lead.companyName || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-slate-500 uppercase">Industry</span>
+                              <p className="text-sm text-slate-800 mt-1">{lead.industry || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-slate-500 uppercase">Average Attendance</span>
+                              <p className="text-sm text-slate-800 mt-1">
+                                {lead.numberOfDelegates ? `${lead.numberOfDelegates.toLocaleString()} pax` : 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <span className="text-xs font-semibold text-slate-500 uppercase">Contact Person</span>
+                              <p className="text-sm text-slate-800 mt-1">
+                                {lead.keyPersonName || 'N/A'}
+                                {lead.keyPersonTitle && <span className="text-slate-500"> ({lead.keyPersonTitle})</span>}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-slate-500 uppercase">Website</span>
+                              <p className="text-sm mt-1">
+                                {lead.website ? (
+                                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                    {lead.website}
+                                  </a>
+                                ) : 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={toggleExpand}
+                            className="w-full mt-2 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg transition-colors flex items-center justify-center"
+                          >
+                            <ChevronDown size={18} className="mr-2" />
+                            Xem thêm chi tiết
+                          </button>
+                        </div>
+                      )}
+                      
+                      {/* Expanded Full Details */}
+                      {isExpanded && (
+                        <>
+                          <div className="p-4">
+                            <button
+                              onClick={toggleExpand}
+                              className="w-full mb-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors flex items-center justify-center"
+                            >
+                              <ChevronUp size={18} className="mr-2" />
+                              Thu gọn
+                            </button>
+                          </div>
                       
                       {/* AI Research Status Banner */}
                       {!lead.lastEnriched && (
@@ -6338,9 +6679,11 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                             </div>
                           </div>
                         )}
-                      </div>
-                    );
-                  })}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ) : (
@@ -7922,6 +8265,7 @@ const VideoAnalysisView = () => {
   const [analysis, setAnalysis] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [rateLimitCountdown, setRateLimitCountdown] = useState<number | null>(null);
+  const [videoAnalysisError, setVideoAnalysisError] = useState<string | null>(null);
 
   // Countdown effect for rate limit
   useEffect(() => {
@@ -7940,12 +8284,13 @@ const VideoAnalysisView = () => {
       const file = e.target.files[0];
       // 9MB Safety Limit for XHR
       if (file.size > 9 * 1024 * 1024) {
-        alert("File too large. Please upload an image or video under 9MB for this demo.");
+        setVideoAnalysisError("File too large. Please upload an image or video under 9MB for this demo.");
         return;
       }
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setAnalysis('');
+      setVideoAnalysisError(null); // Clear previous errors when new file is selected
     }
   };
 
@@ -7954,6 +8299,7 @@ const VideoAnalysisView = () => {
 
     setLoading(true);
     setRateLimitCountdown(null);
+    setVideoAnalysisError(null); // Clear previous errors
     try {
       // Convert to Base64
       const reader = new FileReader();
@@ -7963,17 +8309,19 @@ const VideoAnalysisView = () => {
           const base64Str = (reader.result as string).split(',')[1];
           const result = await GeminiService.analyzeVideoContent(base64Str, selectedFile.type);
           setAnalysis(result);
+          setVideoAnalysisError(null); // Clear error on success
         } catch (e: any) {
           console.error(e);
           if (isGeminiRateLimitError(e)) {
             const retryDelay = extractGeminiRetryDelay(e);
             if (retryDelay) {
               setRateLimitCountdown(retryDelay);
+              setVideoAnalysisError(null); // Rate limit countdown will be shown separately
             } else {
-              alert("Rate limit exceeded. Please try again later.");
+              setVideoAnalysisError("Rate limit exceeded. Please try again later.");
             }
           } else {
-            alert("Analysis failed.");
+            setVideoAnalysisError(`Analysis failed: ${e.message || 'Unknown error occurred'}`);
           }
         } finally {
           setLoading(false);
@@ -7981,7 +8329,7 @@ const VideoAnalysisView = () => {
       };
       reader.onerror = () => {
         setLoading(false);
-        alert("Error reading file");
+        setVideoAnalysisError("Error reading file. Please try uploading again.");
       };
     } catch (e: any) {
       console.error(e);
@@ -7989,11 +8337,12 @@ const VideoAnalysisView = () => {
         const retryDelay = extractGeminiRetryDelay(e);
         if (retryDelay) {
           setRateLimitCountdown(retryDelay);
+          setVideoAnalysisError(null); // Rate limit countdown will be shown separately
         } else {
-          alert("Rate limit exceeded. Please try again later.");
+          setVideoAnalysisError("Rate limit exceeded. Please try again later.");
         }
       } else {
-        alert("Analysis failed.");
+        setVideoAnalysisError(`Analysis failed: ${e.message || 'Unknown error occurred'}`);
       }
       setLoading(false);
     }
@@ -8052,6 +8401,24 @@ const VideoAnalysisView = () => {
             </div>
           )}
 
+          {videoAnalysisError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-800">Error</p>
+                  <p className="text-xs text-red-700 mt-1">{videoAnalysisError}</p>
+                </div>
+                <button
+                  onClick={() => setVideoAnalysisError(null)}
+                  className="text-red-600 hover:text-red-800 flex-shrink-0 ml-2 p-1 hover:bg-red-100 rounded"
+                  aria-label="Close error message"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
           <button 
             onClick={handleAnalyze}
             disabled={!selectedFile || loading || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
@@ -8076,6 +8443,13 @@ const VideoAnalysisView = () => {
           ) : analysis ? (
             <div className="prose prose-sm prose-indigo max-w-none text-slate-700 whitespace-pre-wrap">
               {analysis}
+            </div>
+          ) : videoAnalysisError ? (
+            <div className="flex items-center justify-center h-64 text-red-400 italic">
+              <div className="text-center">
+                <p className="mb-2">⚠️ Analysis could not be completed</p>
+                <p className="text-sm">Please check the error message above</p>
+              </div>
             </div>
           ) : (
             <div className="flex items-center justify-center h-64 text-slate-400 italic">

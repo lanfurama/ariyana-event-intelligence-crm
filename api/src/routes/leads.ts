@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { LeadModel } from '../models/LeadModel.js';
-import { sendLeadEmails } from '../utils/emailSender.js';
+import { EmailLogModel } from '../models/EmailLogModel.js';
+import { sendLeadEmails, sendLeadEmailsWithCustomContent, type CustomEmailContent } from '../utils/emailSender.js';
 import type { Lead } from '../types/index.js';
 
 const router = Router();
@@ -103,21 +104,62 @@ export default router;
 router.post('/send-emails', async (req: Request, res: Response) => {
   try {
     const leadIds = Array.isArray(req.body?.leadIds) ? (req.body.leadIds as string[]).filter(Boolean) : [];
+    const customEmails = Array.isArray(req.body?.emails) ? (req.body.emails as CustomEmailContent[]) : undefined;
+    
     const leads = leadIds.length > 0 ? await LeadModel.getByIds(leadIds) : await LeadModel.getAll();
 
     if (leads.length === 0) {
       return res.status(404).json({ error: 'No leads available for email dispatch.' });
     }
 
-    const emailSummary = await sendLeadEmails(leads);
+    // Use custom emails if provided, otherwise use default template
+    const emailSummary = customEmails && customEmails.length > 0
+      ? await sendLeadEmailsWithCustomContent(leads, customEmails)
+      : await sendLeadEmails(leads);
 
     let updatedLeads: Lead[] = [];
     if (emailSummary.successIds && emailSummary.successIds.length > 0) {
       const timestamp = new Date().toISOString();
+      
+      // Create a map of leadId to subject from sent emails
+      const subjectMap = new Map<string, string>();
+      if (emailSummary.sentEmails) {
+        emailSummary.sentEmails.forEach(email => {
+          subjectMap.set(email.leadId, email.subject);
+        });
+      }
+
       const updated = await Promise.all(
         emailSummary.successIds.map(async (leadId) => {
           try {
-            return await LeadModel.update(leadId, { status: 'Contacted', last_contacted: timestamp });
+            // Update lead status
+            const updatedLead = await LeadModel.update(leadId, { status: 'Contacted', last_contacted: timestamp });
+            
+            // Create email log with the actual subject that was sent
+            const subject = subjectMap.get(leadId);
+            const lead = leads.find(l => l.id === leadId);
+            
+            if (subject && lead) {
+              const emailLogId = `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+              
+              try {
+                await EmailLogModel.create({
+                  id: emailLogId,
+                  lead_id: leadId,
+                  date: new Date(timestamp),
+                  subject: subject,
+                  status: 'sent',
+                });
+                console.log(`✅ Email log created for lead ${leadId}: ${subject}`);
+              } catch (logError) {
+                console.error(`❌ Error creating email log for lead ${leadId}:`, logError);
+                // Don't fail the whole operation if log creation fails
+              }
+            } else {
+              console.warn(`⚠️ No subject found for lead ${leadId}, skipping email log creation`);
+            }
+            
+            return updatedLead;
           } catch (updateError) {
             console.error(`Error updating lead ${leadId} after email send:`, updateError);
             return null;
@@ -125,6 +167,33 @@ router.post('/send-emails', async (req: Request, res: Response) => {
         })
       );
       updatedLeads = updated.filter((lead): lead is NonNullable<typeof lead> => Boolean(lead));
+    }
+
+    // Create email logs for failed emails
+    if (emailSummary.failures && emailSummary.failures.length > 0) {
+      const timestamp = new Date().toISOString();
+      
+      await Promise.all(
+        emailSummary.failures.map(async (failure) => {
+          // Only create log if we have leadId and subject (attempted to send but failed)
+          if (failure.leadId && failure.subject) {
+            try {
+              const emailLogId = `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+              await EmailLogModel.create({
+                id: emailLogId,
+                lead_id: failure.leadId,
+                date: new Date(timestamp),
+                subject: failure.subject,
+                status: 'failed',
+              });
+              console.log(`⚠️ Failed email log created for lead ${failure.leadId}: ${failure.subject} - ${failure.error}`);
+            } catch (logError) {
+              console.error(`❌ Error creating failed email log for lead ${failure.leadId}:`, logError);
+              // Don't fail the whole operation if log creation fails
+            }
+          }
+        })
+      );
     }
 
     res.json({

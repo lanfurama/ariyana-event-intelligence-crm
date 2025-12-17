@@ -134,6 +134,12 @@ export const leadsApi = {
   delete: (id: string) => apiCall<void>(`/leads/${id}`, {
     method: 'DELETE',
   }),
+  sendEmails: (leadIds: string[], emails?: Array<{ leadId: string; subject: string; body: string }>) => {
+    return apiCall<{ success: boolean; summary: any; updatedLeads: Lead[] }>('/leads/send-emails', {
+      method: 'POST',
+      body: JSON.stringify({ leadIds, emails }),
+    });
+  },
 };
 
 // Email Templates API

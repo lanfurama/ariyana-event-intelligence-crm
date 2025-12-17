@@ -1,6 +1,6 @@
 export type UserRole = 'Director' | 'Sales' | 'Viewer';
 export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Won' | 'Lost';
-export type EmailLogStatus = 'sent' | 'draft';
+export type EmailLogStatus = 'sent' | 'draft' | 'failed';
 
 export interface User {
   username: string;

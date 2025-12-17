@@ -1,5 +1,13 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 import type { Lead as LeadRow } from '../types/index.js';
+
+// Load .env from project root (3 levels up from api/src/utils)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 interface EventForEmail {
   name: string;
@@ -18,6 +26,8 @@ export interface EmailFailure {
   eventName: string;
   email?: string;
   error: string;
+  leadId?: string; // Add leadId to track which lead failed
+  subject?: string; // Add subject to log failed emails
 }
 
 export interface EmailSendResult {
@@ -28,6 +38,7 @@ export interface EmailSendResult {
   message?: string;
   successIds?: string[];
   missingContactIds?: string[];
+  sentEmails?: Array<{ leadId: string; subject: string }>; // Track sent emails with subjects
 }
 
 let cachedTransporter: nodemailer.Transporter | null = null;
@@ -305,6 +316,7 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
     failures: [],
     successIds: [],
     missingContactIds: [],
+    sentEmails: [],
   };
 
   if (!leads || leads.length === 0) {
@@ -330,6 +342,7 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
       summary.failures.push({
         eventName: lead.company_name,
         error: 'No contact email available for this lead.',
+        leadId: lead.id,
       });
       summary.missingContactIds?.push(lead.id);
       continue;
@@ -351,11 +364,128 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
       });
       summary.sent += 1;
       summary.successIds?.push(lead.id);
+      summary.sentEmails?.push({ leadId: lead.id, subject });
+    } catch (error: any) {
+      const { subject } = buildLeadEmailBody(lead, contact);
+      summary.failures.push({
+        eventName: lead.company_name,
+        email: contact.email,
+        error: error?.message || 'Unknown SMTP error',
+        leadId: lead.id,
+        subject: subject,
+      });
+    }
+  }
+
+  if (summary.sent === 0 && summary.failures.length > 0) {
+    summary.message = 'Email campaign completed with no successful deliveries. Check failures for details.';
+  } else if (summary.sent > 0 && summary.failures.length === 0) {
+    summary.message = 'All selected leads were contacted successfully.';
+  } else if (summary.sent > 0 && summary.failures.length > 0) {
+    summary.message = 'Email campaign completed with partial success. Review failures for leads that need attention.';
+  }
+
+  return summary;
+}
+
+export interface CustomEmailContent {
+  leadId: string;
+  subject: string;
+  body: string; // HTML body
+}
+
+export async function sendLeadEmailsWithCustomContent(
+  leads: LeadRow[],
+  customEmails: CustomEmailContent[]
+): Promise<EmailSendResult> {
+  const summary: EmailSendResult = {
+    attempted: 0,
+    sent: 0,
+    failures: [],
+    successIds: [],
+    missingContactIds: [],
+    sentEmails: [],
+  };
+
+  if (!leads || leads.length === 0) {
+    summary.message = 'No leads supplied for email dispatch.';
+    return summary;
+  }
+
+  const transporter = getTransporter();
+  if (!transporter) {
+    return {
+      attempted: 0,
+      sent: 0,
+      failures: [],
+      skipped: true,
+      message: transporterInitError ?? 'Email transport could not be initialized.',
+    };
+  }
+
+  // Create a map of leadId to custom email content
+  const emailMap = new Map<string, CustomEmailContent>();
+  customEmails.forEach(email => {
+    emailMap.set(email.leadId, email);
+  });
+
+  for (const lead of leads) {
+    const contact = buildLeadContactInfo(lead);
+
+    if (!contact.email) {
+      summary.failures.push({
+        eventName: lead.company_name,
+        error: 'No contact email available for this lead.',
+        leadId: lead.id,
+      });
+      summary.missingContactIds?.push(lead.id);
+      continue;
+    }
+
+    const customEmail = emailMap.get(lead.id);
+    if (!customEmail) {
+      summary.failures.push({
+        eventName: lead.company_name,
+        error: 'No custom email content provided for this lead.',
+        leadId: lead.id,
+      });
+      continue;
+    }
+
+    summary.attempted += 1;
+
+    try {
+      // Convert HTML body to text for plain text version
+      const textBody = customEmail.body
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .trim();
+
+      await transporter.sendMail({
+        from: defaultFromEmail
+          ? `"Ariyana Convention Centre" <${defaultFromEmail}>`
+          : '"Ariyana Convention Centre" <marketing@furamavietnam.com>',
+        to: contact.email,
+        replyTo: defaultFromEmail || undefined,
+        subject: customEmail.subject,
+        text: textBody,
+        html: customEmail.body,
+      });
+      summary.sent += 1;
+      summary.successIds?.push(lead.id);
+      summary.sentEmails?.push({ leadId: lead.id, subject: customEmail.subject });
     } catch (error: any) {
       summary.failures.push({
         eventName: lead.company_name,
         email: contact.email,
         error: error?.message || 'Unknown SMTP error',
+        leadId: lead.id,
+        subject: customEmail.subject,
       });
     }
   }
