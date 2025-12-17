@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -36,13 +36,13 @@ import {
   Menu
 } from 'lucide-react';
 import { INITIAL_LEADS, EMAIL_TEMPLATES, USERS } from './constants';
-import { Lead, ChatMessage, User } from './types';
+import { Lead, ChatMessage, User, EmailTemplate } from './types';
 import * as GeminiService from './services/geminiService';
 import * as GPTService from './services/gptService';
 import { extractRetryDelay as extractGeminiRetryDelay, isRateLimitError as isGeminiRateLimitError } from './services/geminiService';
 import { extractRetryDelay, isRateLimitError } from './services/gptService';
 import { chatMessagesApi, type ChatMessageDB } from './services/apiService';
-import { usersApi, leadsApi } from './services/apiService';
+import { usersApi, leadsApi, emailTemplatesApi, emailLogsApi } from './services/apiService';
 
 // --- Components ---
 
@@ -252,6 +252,13 @@ const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onToggle }: 
       
       <NavItem icon={<Film size={20} />} label="Video Analysis" id="analysis" active={activeTab} onClick={setActiveTab} />
       <NavItem icon={<MessageSquare size={20} />} label="AI Assistant" id="chat" active={activeTab} onClick={setActiveTab} />
+      
+      {/* Email Templates - Only Director and Sales can manage */}
+      {(user.role === 'Director' || user.role === 'Sales') && (
+        <NavItem icon={<Mail size={20} />} label="Email Templates" id="email-templates" active={activeTab} onClick={setActiveTab} />
+      )}
+      
+      <NavItem icon={<UserIcon size={20} />} label="My Profile" id="profile" active={activeTab} onClick={setActiveTab} />
     </nav>
     
     <div className="p-3 border-t border-slate-700/50 bg-slate-900/50 space-y-2">
@@ -443,6 +450,12 @@ const StatCard = ({
 // 3. Leads View
 const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { leads: Lead[], onSelectLead: (lead: Lead) => void, onUpdateLead: (lead: Lead) => void, user: User, onAddLead?: () => void }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [emailLogs, setEmailLogs] = useState<Array<{leadId: string, count: number, lastSent?: Date}>>([]);
+  const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
 
   const filteredLeads = leads.filter(lead => 
     lead.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -450,6 +463,112 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     lead.keyPersonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.industry.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Load email logs on mount
+  useEffect(() => {
+    loadEmailLogs();
+  }, [leads]);
+
+  // Load email templates when modal opens
+  useEffect(() => {
+    if (showEmailModal) {
+      loadEmailTemplates();
+    }
+  }, [showEmailModal]);
+
+  const loadEmailLogs = async () => {
+    if (leads.length === 0) return;
+    
+    setLoadingEmailLogs(true);
+    try {
+      // Load all email logs
+      const allLogs = await emailLogsApi.getAll();
+      
+      // Group by lead_id and count sent emails
+      const logsByLead = new Map<string, {count: number, lastSent?: Date}>();
+      
+      allLogs.forEach(log => {
+        if (log.status === 'sent' && log.lead_id) {
+          const existing = logsByLead.get(log.lead_id) || { count: 0 };
+          existing.count += 1;
+          
+          // Track most recent sent date
+          const logDate = log.date ? new Date(log.date) : null;
+          if (logDate && (!existing.lastSent || logDate > existing.lastSent)) {
+            existing.lastSent = logDate;
+          }
+          
+          logsByLead.set(log.lead_id, existing);
+        }
+      });
+      
+      // Convert to array format
+      const logsArray = Array.from(logsByLead.entries()).map(([leadId, data]) => ({
+        leadId,
+        ...data
+      }));
+      
+      setEmailLogs(logsArray);
+    } catch (error) {
+      console.error('Error loading email logs:', error);
+    } finally {
+      setLoadingEmailLogs(false);
+    }
+  };
+
+  // Helper to get email status for a lead
+  const getEmailStatus = (leadId: string) => {
+    const log = emailLogs.find(l => l.leadId === leadId);
+    return log ? { hasEmail: true, count: log.count, lastSent: log.lastSent } : { hasEmail: false, count: 0 };
+  };
+
+  const loadEmailTemplates = async () => {
+    setLoadingTemplates(true);
+    try {
+      const templates = await emailTemplatesApi.getAll();
+      setEmailTemplates(templates);
+      if (templates.length > 0 && !selectedTemplateId) {
+        setSelectedTemplateId(templates[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading email templates:', error);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  // Prepare emails using useMemo to avoid infinite loops
+  const preparedEmails = useMemo(() => {
+    if (!selectedTemplateId || filteredLeads.length === 0 || emailTemplates.length === 0) {
+      return [];
+    }
+
+    const template = emailTemplates.find(t => t.id === selectedTemplateId);
+    if (!template) return [];
+
+    return filteredLeads
+      .filter(lead => lead.keyPersonEmail) // Only leads with email
+      .map(lead => {
+        // Replace template variables with lead data
+        let subject = template.subject;
+        let body = template.body;
+
+        // Replace common placeholders
+        subject = subject.replace(/\{\{companyName\}\}/g, lead.companyName || '');
+        subject = subject.replace(/\{\{keyPersonName\}\}/g, lead.keyPersonName || '');
+        subject = subject.replace(/\{\{city\}\}/g, lead.city || '');
+        subject = subject.replace(/\{\{country\}\}/g, lead.country || '');
+
+        body = body.replace(/\{\{companyName\}\}/g, lead.companyName || '');
+        body = body.replace(/\{\{keyPersonName\}\}/g, lead.keyPersonName || '');
+        body = body.replace(/\{\{keyPersonTitle\}\}/g, lead.keyPersonTitle || '');
+        body = body.replace(/\{\{city\}\}/g, lead.city || '');
+        body = body.replace(/\{\{country\}\}/g, lead.country || '');
+        body = body.replace(/\{\{industry\}\}/g, lead.industry || '');
+
+        return { lead, subject, body };
+      });
+  }, [selectedTemplateId, filteredLeads, emailTemplates]);
 
   return (
     <div className="p-6 min-h-screen flex flex-col space-y-5">
@@ -482,75 +601,102 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
           </div>
           {/* Only Director and Sales can add manual leads */}
           {(user.role === 'Director' || user.role === 'Sales') && (
-            <button 
-              onClick={onAddLead}
-              className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
-            >
-              <Plus size={18} className="mr-2" /> Add Lead
-            </button>
+            <>
+              <button 
+                onClick={() => setShowEmailModal(true)}
+                className="bg-indigo-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shrink-0 inline-flex items-center"
+              >
+                <Mail size={18} className="mr-2" /> Send Mail to All
+              </button>
+              <button 
+                onClick={onAddLead}
+                className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
+              >
+                <Plus size={18} className="mr-2" /> Add Lead
+              </button>
+            </>
           )}
         </div>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-lg flex-1 overflow-hidden flex flex-col">
         <div className="overflow-x-auto overflow-y-auto flex-1">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 sticky top-0 z-10">
+          <table className="w-full">
+            <thead className="bg-white border-b border-slate-200 sticky top-0 z-10">
               <tr>
-                <th className="px-3 py-2.5 w-64 text-xs font-semibold uppercase tracking-wider text-slate-600">Company</th>
-                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Industry</th>
-                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Location</th>
-                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Key person</th>
-                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Delegates</th>
-                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Status</th>
-                <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Company</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Industry</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Key Person</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Delegates</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="bg-white divide-y divide-slate-100">
               {filteredLeads.length > 0 ? (
                 filteredLeads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-3 py-3">
-                      <div className="font-semibold text-slate-900">{lead.companyName}</div>
+                  <tr key={lead.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm font-medium text-slate-900">{lead.companyName}</div>
                     </td>
-                    <td className="px-3 py-3">
-                      <span className="text-slate-700">{lead.industry}</span>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="text-sm text-slate-600">{lead.industry}</span>
                     </td>
-                    <td className="px-3 py-3">
-                      <div className="flex flex-col">
-                         <span className="text-slate-800">{lead.city}</span>
-                         <span className="text-xs text-slate-500 mt-0.5">{lead.country}</span>
-                      </div>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm text-slate-900">{lead.city}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">{lead.country}</div>
                     </td>
-                    <td className="px-3 py-3">
-                      <div className="flex flex-col">
-                        <span className="text-slate-800">{lead.keyPersonName}</span>
-                        <span className="text-xs text-slate-500 mt-0.5">{lead.keyPersonTitle}</span>
-                      </div>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm text-slate-900">{lead.keyPersonName}</div>
+                      {lead.keyPersonTitle && (
+                        <div className="text-xs text-slate-500 mt-0.5">{lead.keyPersonTitle}</div>
+                      )}
                     </td>
-                    <td className="px-3 py-3">
-                      <span className="text-slate-800 font-medium tabular-nums">{lead.numberOfDelegates || '-'}</span>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="text-sm text-slate-900 tabular-nums">{lead.numberOfDelegates || '-'}</span>
                     </td>
-                    <td className="px-3 py-3">
-                      <StatusBadge status={lead.status} />
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {(() => {
+                        const emailStatus = getEmailStatus(lead.id);
+                        if (emailStatus.hasEmail) {
+                          return (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-slate-700 bg-slate-100">
+                                Sent
+                              </span>
+                              <span className="text-xs text-slate-500">
+                                {emailStatus.count}x
+                              </span>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-slate-500 bg-slate-50">
+                              Not sent
+                            </span>
+                          );
+                        }
+                      })()}
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <button 
                         onClick={() => onSelectLead(lead)}
-                        className="text-slate-700 hover:text-slate-900 font-medium inline-flex items-center text-sm"
+                        className="text-sm text-slate-600 hover:text-slate-900 font-medium inline-flex items-center"
                       >
-                        View <ChevronRight size={16} className="ml-1 transition-transform group-hover:translate-x-0.5" />
+                        View
+                        <ChevronRight size={14} className="ml-1" />
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="p-10 text-center">
+                  <td colSpan={7} className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center">
                       <Search className="text-slate-300 mb-2" size={32} />
-                      <p className="text-slate-700 font-medium">No leads found</p>
-                      <p className="text-slate-500 text-sm mt-1">Try adjusting your search terms</p>
+                      <p className="text-sm text-slate-600 font-medium">No leads found</p>
+                      <p className="text-xs text-slate-500 mt-1">Try adjusting your search terms</p>
                     </div>
                   </td>
                 </tr>
@@ -559,6 +705,176 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
           </table>
         </div>
       </div>
+
+      {/* Email Template Selection Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Send Mail to All Leads</h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  Select an email template and preview prepared emails (not sending yet)
+                </p>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowEmailModal(false);
+                  setSelectedTemplateId('');
+                }}
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {loadingTemplates ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="animate-spin text-indigo-600" size={32} />
+                  <span className="ml-3 text-slate-600">Loading email templates...</span>
+                </div>
+              ) : emailTemplates.length === 0 ? (
+                <div className="text-center py-12">
+                  <Mail className="text-slate-300 mx-auto mb-3" size={48} />
+                  <p className="text-slate-700 font-medium">No email templates found</p>
+                  <p className="text-slate-500 text-sm mt-1">Please create an email template first</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Template Selection */}
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Select Email Template
+                    </label>
+                    <select
+                      value={selectedTemplateId}
+                      onChange={(e) => setSelectedTemplateId(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    >
+                      {emailTemplates.map(template => (
+                        <option key={template.id} value={template.id}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Template Preview */}
+                  {selectedTemplateId && (
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                      <h3 className="text-sm font-semibold text-slate-700 mb-3">Template Preview</h3>
+                      {(() => {
+                        const template = emailTemplates.find(t => t.id === selectedTemplateId);
+                        if (!template) return null;
+                        return (
+                          <div className="space-y-3">
+                            <div>
+                              <span className="text-xs font-medium text-slate-500 uppercase">Subject:</span>
+                              <p className="text-sm text-slate-900 mt-1">{template.subject}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs font-medium text-slate-500 uppercase">Body:</span>
+                              <div className="text-sm text-slate-900 mt-1 whitespace-pre-wrap bg-white p-3 rounded border border-slate-200 max-h-40 overflow-y-auto">
+                                {template.body}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  {/* Prepared Emails List */}
+                  {preparedEmails.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-slate-700">
+                          Prepared Emails ({preparedEmails.length} of {filteredLeads.length} leads with email)
+                        </h3>
+                        <span className="text-xs text-slate-500">
+                          {filteredLeads.length - preparedEmails.length} leads without email will be skipped
+                        </span>
+                      </div>
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {preparedEmails.map((prepared, idx) => (
+                          <div key={prepared.lead.id} className="bg-white border border-slate-200 rounded-lg p-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs">
+                                    {idx + 1}
+                                  </span>
+                                  <span className="font-semibold text-slate-900">{prepared.lead.companyName}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1 ml-8">
+                                  To: {prepared.lead.keyPersonEmail} ({prepared.lead.keyPersonName})
+                                </p>
+                              </div>
+                            </div>
+                            <div className="ml-8 space-y-2">
+                              <div>
+                                <span className="text-xs font-medium text-slate-500">Subject:</span>
+                                <p className="text-sm text-slate-900 mt-0.5">{prepared.subject}</p>
+                              </div>
+                              <div>
+                                <span className="text-xs font-medium text-slate-500">Body Preview:</span>
+                                <p className="text-sm text-slate-700 mt-0.5 line-clamp-2">
+                                  {prepared.body.substring(0, 150)}...
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedTemplateId && preparedEmails.length === 0 && filteredLeads.some(l => l.keyPersonEmail) && (
+                    <div className="text-center py-8 text-slate-500">
+                      <Loader2 className="animate-spin text-indigo-600 mx-auto mb-2" size={24} />
+                      <p>Preparing emails...</p>
+                    </div>
+                  )}
+
+                  {selectedTemplateId && !filteredLeads.some(l => l.keyPersonEmail) && (
+                    <div className="text-center py-8">
+                      <Mail className="text-slate-300 mx-auto mb-2" size={32} />
+                      <p className="text-slate-500">No leads with email addresses found</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowEmailModal(false);
+                  setSelectedTemplateId('');
+                }}
+                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+              >
+                Close
+              </button>
+              {preparedEmails.length > 0 && (
+                <button
+                  onClick={() => {
+                    // TODO: Implement actual email sending when ready
+                    console.log('Prepared emails (not sending yet):', preparedEmails);
+                    alert(`Prepared ${preparedEmails.length} emails. Email sending functionality will be implemented later.`);
+                  }}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center"
+                  disabled
+                >
+                  <Send size={16} className="mr-2" />
+                  Send Emails (Coming Soon)
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -601,6 +917,9 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [attachments, setAttachments] = useState<any[]>([]);
   const [emailRateLimitCountdown, setEmailRateLimitCountdown] = useState<number | null>(null);
+  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [emailBodyViewMode, setEmailBodyViewMode] = useState<'code' | 'preview'>('preview');
 
   const canEdit = user.role === 'Director' || user.role === 'Sales';
 
@@ -611,6 +930,58 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
     setEnrichKeyPerson(lead.keyPersonName || '');
     setEnrichCity(lead.city || '');
   }, [lead]);
+
+  // Load email templates when email tab is opened
+  useEffect(() => {
+    if (activeTab === 'email') {
+      loadEmailTemplates();
+    }
+  }, [activeTab]);
+
+  const loadEmailTemplates = async () => {
+    setLoadingTemplates(true);
+    try {
+      const templates = await emailTemplatesApi.getAll();
+      setEmailTemplates(templates);
+      
+      // Auto-select first template if available and no template is selected
+      if (templates.length > 0 && !selectedTemplate && !draftedEmail) {
+        const firstTemplateId = templates[0].id;
+        setSelectedTemplate(firstTemplateId);
+        
+        // Auto-fill email with first template
+        const template = templates[0];
+        if (template) {
+          let subject = template.subject;
+          let body = template.body;
+
+          // Replace common placeholders (support both {{variable}} and [variable] formats)
+          subject = subject.replace(/\{\{companyName\}\}/g, lead.companyName || '');
+          subject = subject.replace(/\{\{keyPersonName\}\}/g, lead.keyPersonName || '');
+          subject = subject.replace(/\{\{city\}\}/g, lead.city || '');
+          subject = subject.replace(/\{\{country\}\}/g, lead.country || '');
+          subject = subject.replace(/\[Company Name\]/g, lead.companyName || '');
+          subject = subject.replace(/\[Key Person Name\]/g, lead.keyPersonName || '');
+
+          body = body.replace(/\{\{companyName\}\}/g, lead.companyName || '');
+          body = body.replace(/\{\{keyPersonName\}\}/g, lead.keyPersonName || '');
+          body = body.replace(/\{\{keyPersonTitle\}\}/g, lead.keyPersonTitle || '');
+          body = body.replace(/\{\{city\}\}/g, lead.city || '');
+          body = body.replace(/\{\{country\}\}/g, lead.country || '');
+          body = body.replace(/\{\{industry\}\}/g, lead.industry || '');
+          body = body.replace(/\[Company Name\]/g, lead.companyName || '');
+          body = body.replace(/\[Key Person Name\]/g, lead.keyPersonName || '');
+
+          setDraftedEmail({ subject, body });
+          setEmailSent(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading email templates:', error);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
 
   const handleInputChange = (field: keyof Lead, value: any) => {
     setEditedLead(prev => ({ ...prev, [field]: value }));
@@ -692,12 +1063,30 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
     setSelectedTemplate(tmplId);
     if (!tmplId) return;
 
-    const template = EMAIL_TEMPLATES.find(t => t.id === tmplId);
+    const template = emailTemplates.find(t => t.id === tmplId);
     if (template) {
-      setDraftedEmail({
-        subject: template.subject.replace('[Company Name]', lead.companyName),
-        body: template.body.replace('[Key Person Name]', lead.keyPersonName).replace('[Company Name]', lead.companyName)
-      });
+      // Replace template variables with lead data
+      let subject = template.subject;
+      let body = template.body;
+
+      // Replace common placeholders (support both {{variable}} and [variable] formats)
+      subject = subject.replace(/\{\{companyName\}\}/g, lead.companyName || '');
+      subject = subject.replace(/\{\{keyPersonName\}\}/g, lead.keyPersonName || '');
+      subject = subject.replace(/\{\{city\}\}/g, lead.city || '');
+      subject = subject.replace(/\{\{country\}\}/g, lead.country || '');
+      subject = subject.replace(/\[Company Name\]/g, lead.companyName || '');
+      subject = subject.replace(/\[Key Person Name\]/g, lead.keyPersonName || '');
+
+      body = body.replace(/\{\{companyName\}\}/g, lead.companyName || '');
+      body = body.replace(/\{\{keyPersonName\}\}/g, lead.keyPersonName || '');
+      body = body.replace(/\{\{keyPersonTitle\}\}/g, lead.keyPersonTitle || '');
+      body = body.replace(/\{\{city\}\}/g, lead.city || '');
+      body = body.replace(/\{\{country\}\}/g, lead.country || '');
+      body = body.replace(/\{\{industry\}\}/g, lead.industry || '');
+      body = body.replace(/\[Company Name\]/g, lead.companyName || '');
+      body = body.replace(/\[Key Person Name\]/g, lead.keyPersonName || '');
+
+      setDraftedEmail({ subject, body });
       setEmailSent(false);
     }
   };
@@ -739,7 +1128,7 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
     }
   };
 
-  const handleSendEmail = () => {
+  const handleSendEmail = async () => {
     if (!lead.keyPersonEmail) {
       alert("No email address found for this contact. Please add an email address in the 'Info' tab.");
       return;
@@ -757,6 +1146,40 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
       
       // Open email client
       window.open(mailtoLink, '_blank');
+
+      // Create email log in database with lead_id
+      try {
+        const emailLogId = `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const emailLog = {
+          id: emailLogId,
+          lead_id: lead.id,
+          date: new Date().toISOString(),
+          subject: draftedEmail.subject,
+          status: 'sent' as const,
+        };
+        
+        await emailLogsApi.create(emailLog);
+        console.log('✅ Email log created in database:', emailLogId);
+        
+        // Also create attachments if any
+        if (attachments.length > 0) {
+          for (const attachment of attachments) {
+            try {
+              await emailLogsApi.createAttachment(emailLogId, {
+                email_log_id: emailLogId,
+                name: attachment.name,
+                size: attachment.size,
+                type: attachment.type,
+              });
+            } catch (attachError) {
+              console.error('Error creating attachment log:', attachError);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error creating email log in database:', error);
+        // Continue even if log creation fails - don't block user
+      }
 
       // Update local state
       const newHistory = [
@@ -1149,16 +1572,27 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-medium text-slate-700 block mb-2">Choose a Template</label>
-                    <select 
-                      className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none cursor-pointer hover:border-slate-400 transition-colors"
-                      value={selectedTemplate}
-                      onChange={handleTemplateChange}
-                    >
-                      <option value="">-- Select Template --</option>
-                      {EMAIL_TEMPLATES.map(t => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
+                    {loadingTemplates ? (
+                      <div className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-500 flex items-center">
+                        <Loader2 className="animate-spin mr-2" size={16} />
+                        Loading templates...
+                      </div>
+                    ) : emailTemplates.length === 0 ? (
+                      <div className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 text-center">
+                        No email templates found in database
+                      </div>
+                    ) : (
+                      <select 
+                        className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none cursor-pointer hover:border-slate-400 transition-colors"
+                        value={selectedTemplate}
+                        onChange={handleTemplateChange}
+                      >
+                        <option value="">-- Select Template --</option>
+                        {emailTemplates.map(t => (
+                          <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   
                   <div className="text-center text-xs text-slate-400">OR</div>
@@ -1189,12 +1623,67 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
                     />
                   </div>
                   <div className="p-4 flex-1 flex flex-col">
-                    <textarea 
-                      className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none mb-2 transition-colors" 
-                      value={draftedEmail.body}
-                      onChange={(e) => setDraftedEmail({...draftedEmail, body: e.target.value})}
-                      placeholder="Email body content..."
-                    ></textarea>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-slate-700">Email Body</label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEmailBodyViewMode('code')}
+                          className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                            emailBodyViewMode === 'code'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          HTML Code
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEmailBodyViewMode('preview')}
+                          className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                            emailBodyViewMode === 'preview'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          Preview
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {emailBodyViewMode === 'code' ? (
+                      <textarea 
+                        className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none mb-2 transition-colors font-mono" 
+                        value={draftedEmail.body}
+                        onChange={(e) => setDraftedEmail({...draftedEmail, body: e.target.value})}
+                        placeholder="<html>...\n\nUse HTML format with variables like {{keyPersonName}}, {{companyName}}, etc."
+                      ></textarea>
+                    ) : (
+                      <div 
+                        className="w-full flex-1 border border-slate-200 rounded-lg bg-white overflow-auto mb-2"
+                        style={{ minHeight: '300px' }}
+                      >
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          onInput={(e) => {
+                            const html = e.currentTarget.innerHTML;
+                            setDraftedEmail({...draftedEmail, body: html});
+                          }}
+                          onBlur={(e) => {
+                            const html = e.currentTarget.innerHTML;
+                            setDraftedEmail({...draftedEmail, body: html});
+                          }}
+                          dangerouslySetInnerHTML={{ __html: draftedEmail.body || '<div style="padding: 20px; color: #666; text-align: center;">Click here to start editing your email. Use variables like {{keyPersonName}}, {{companyName}}, etc.</div>' }}
+                          className="p-3 min-h-[300px] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset"
+                          style={{
+                            fontFamily: 'Arial, sans-serif',
+                            lineHeight: '1.6',
+                            color: '#333'
+                          }}
+                        />
+                      </div>
+                    )}
                     
                     <div className="border-t border-slate-100 pt-2">
                        <div className="flex items-center justify-between mb-2">
@@ -1350,14 +1839,24 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   const [analysisError, setAnalysisError] = useState<string | null>(null); // Track analysis errors
   const [selectedEventForModal, setSelectedEventForModal] = useState<{ name: string; data: string; id?: string; dataQualityScore?: number; issues?: any[]; rawData?: any } | null>(null); // Event selected for modal view
   const [allExcelData, setAllExcelData] = useState<string>(''); // Store all Excel textData for cross-sheet lookup
+  const [excelContacts, setExcelContacts] = useState<any[]>([]); // Store contacts from org_contacts sheet
   const [emailSendSummary, setEmailSendSummary] = useState<EmailSendSummary | null>(null);
   const [analyzingEvents, setAnalyzingEvents] = useState<Set<string>>(new Set()); // Track which events are currently being analyzed
   const [completedLeadsMap, setCompletedLeadsMap] = useState<Map<string, any>>(new Map()); // Map event name -> lead result
   const [completingDataMap, setCompletingDataMap] = useState<Map<string, boolean>>(new Map()); // Track which events are being auto-filled
+  const [savedToDatabase, setSavedToDatabase] = useState<Set<string>>(new Set()); // Track which events have been saved to database
   const [searchTerm, setSearchTerm] = useState(''); // Search filter for events
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all'); // Priority filter
   const [sortBy, setSortBy] = useState<'score' | 'name' | 'status'>('score'); // Sort option
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // Sort order
+  // Scoring criteria toggles - all disabled by default (auto off)
+  const [scoringCriteria, setScoringCriteria] = useState({
+    history: false,
+    region: false,
+    contact: false,
+    delegates: false,
+    iccaQualification: false
+  });
   
   // Helper function to calculate data quality score
   const calculateDataQuality = (result: any): number => {
@@ -1427,6 +1926,14 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
           const fetchedLeads = await leadsApi.getAll();
           const mappedLeads = fetchedLeads.map(mapLeadFromDB);
           setExistingLeads(mappedLeads);
+          
+          // Mark events that are already in database
+          const existingNames = new Set(mappedLeads.map(l => l.companyName?.toLowerCase().trim()).filter(Boolean));
+          setSavedToDatabase(prev => {
+            const newSet = new Set(prev);
+            existingNames.forEach(name => newSet.add(name));
+            return newSet;
+          });
         } catch (error: any) {
           console.error('Error fetching leads for analysis:', error);
           // Fallback to INITIAL_LEADS if API fails
@@ -1455,10 +1962,10 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     // Sort by totalScore descending
     const sortedResults = [...results].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
     
-    // Filter: Only show events with MEDIUM or HIGH priority (score >= 30)
-    // LOW priority events (score < 30) are excluded from recommendations
+    // Show all events, but prioritize those with score >= 30
+    // Include all events to allow user to see all results
     const qualifiedEvents = sortedResults.filter(event => (event.totalScore || 0) >= 30);
-    const topEvents = qualifiedEvents.slice(0, 15); // Top 15 qualified events
+    const topEvents = sortedResults.slice(0, 20); // Top 20 events (or all if less than 20)
 
     let report = `# Phân tích và chọn lọc Events\n\n`;
     report += `**Tổng số events đã import:** ${totalEvents}\n`;
@@ -1470,7 +1977,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     report += `**Top events được đề xuất:** ${topEvents.length}\n\n`;
 
     report += `## PHẦN A: XẾP HẠNG EVENTS PHÙ HỢP NHẤT\n\n`;
-    report += `*Chỉ hiển thị events có điểm ≥ 30 (MEDIUM hoặc HIGH priority)*\n\n`;
+    report += `*Hiển thị tất cả events đã phân tích (ưu tiên events có điểm ≥ 30)*\n\n`;
     report += `| Hạng | Tên Event | Điểm tổng | Điểm lịch sử | Điểm khu vực | Điểm liên hệ | Điểm quy mô | Lý do điểm | Chiến lược tiếp theo |\n`;
     report += `| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n`;
 
@@ -1718,7 +2225,11 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
       
       setExcelSummary(result.summary);
       setImportData(result.textData); // Set cleaned text data for analysis
+      setAllExcelData(result.textData || ''); // Store all data for cross-sheet lookup in scoreEventLocally
       setEmailSendSummary(result.emailResults || null);
+      setExcelContacts(result.contacts || []); // Store contacts from org_contacts sheet
+      console.log(`📇 [Excel Upload] Loaded ${result.contacts?.length || 0} contacts from org_contacts sheet`);
+      console.log(`📊 [Excel Upload] Stored ${(result.textData || '').length} characters of Excel data for analysis`);
       
       // Use events from API response (with data quality analysis)
       const responseEvents = result.events || result.organizations; // Prefer events, fallback to organizations for backward compatibility
@@ -1736,7 +2247,7 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
           
           return {
             name: eventData.name,
-            organizationName: eventData.organizationName,
+            organizationName: eventData.organizationName || eventData.name, // Ensure organizationName exists
             data: dataParts.join(', '),
             rawData: eventData.rawData || {}, // Keep raw data object for better parsing in modal
             id: eventData.name.toLowerCase().replace(/\s+/g, '_'),
@@ -1780,36 +2291,101 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
   
   
   const scoreEventLocally = async (event: any, allExcelData: string): Promise<any> => {
-    console.log(`📊 [Local Scoring] Scoring event: ${event.name}`);
+    try {
+      console.log(`📊 [Local Scoring] Scoring event: ${event.name}`);
+      
+      if (!event || !event.name) {
+        throw new Error('Event is missing or has no name');
+      }
+      
+      // Extract editions from event
+      const editions = (event as any).editions || [];
+      const rawData = (event as any).rawData || {};
+      
+      console.log(`  └─ Editions found: ${editions.length}`);
+      console.log(`  └─ Excel contacts available: ${excelContacts?.length || 0}`);
     
-    // Extract editions from event
-    const editions = (event as any).editions || [];
-    const rawData = (event as any).rawData || {};
-    
-    console.log(`  └─ Editions found: ${editions.length}`);
-    
-    // Find related contacts from allExcelData if available
+    // Find related contacts from org_contacts sheet
     const relatedContacts: any[] = [];
-    // TODO: Parse contacts from allExcelData if needed
     
-    // Calculate scores using backend logic
-    // const historyScore = calculateHistoryScore(editions);
-    // const regionScore = calculateRegionScore(event.name, editions);
-    // const contactScore = calculateContactScore(rawData, relatedContacts);
-    // const delegatesScore = calculateDelegatesScore(editions);
-    // const totalScore = historyScore + regionScore + contactScore + delegatesScore;
-
-    const historyScore = 80;
-    const regionScore = 80;
-    const contactScore = 80;
-    const delegatesScore = 80;
-    const totalScore = 80;
+    // Get organization name from event (could be organizationName or event name)
+    const orgName = (event as any).organizationName || event.name;
+    const orgNameLower = orgName?.toLowerCase().trim() || '';
     
-    console.log(`  ├─ History Score: ${historyScore}/25 (Vietnam/SEA events)`);
-    console.log(`  ├─ Region Score: ${regionScore}/25 (Asia/Pacific relevance)`);
-    console.log(`  ├─ Contact Score: ${contactScore}/25 (Email/Phone availability)`);
-    console.log(`  ├─ Delegates Score: ${delegatesScore}/25 (Event size)`);
-    console.log(`  └─ TOTAL SCORE: ${totalScore}/100`);
+    // Get Organization ID from rawData (for Orgs sheet, this is the ID field)
+    // CRITICAL: Orgs sheet has column "ID", which links to "OrgID" column in Org_Contacts sheet
+    // Match: Orgs.ID === Org_Contacts.OrgID
+    const orgId = rawData.ID || rawData.id || rawData['ID'] ||
+                  rawData.ORGID || rawData.OrgID || rawData.orgId || rawData.ORGANIZATION_ID ||
+                  rawData.OrgId || rawData.Organization_ID || rawData['Organization ID'] || rawData['ORG ID'] || '';
+    
+    // Also try to get Series ID (for backward compatibility with Editions sheet)
+    const seriesId = rawData.SERIESID || rawData.SeriesID || rawData.seriesId || rawData.SERIES_ID || 
+                     rawData.SeriesId || rawData.Series_ID || rawData['Series ID'] || rawData['SERIES ID'] || '';
+    
+    // Find matching contacts from excelContacts
+    if (excelContacts && excelContacts.length > 0) {
+      console.log(`  └─ Searching ${excelContacts.length} contacts for: ${orgName}`);
+      console.log(`  └─ Organization ID from Orgs sheet (ID): ${orgId || 'NOT FOUND'}`);
+      console.log(`  └─ Event rawData keys:`, Object.keys(rawData).slice(0, 20).join(', '));
+      
+      excelContacts.forEach((contact: any, idx: number) => {
+        // Get contact OrgID (from Org_Contacts sheet - this links to ID from Orgs sheet)
+        // CRITICAL: Org_Contacts.OrgID === Orgs.ID
+        const contactOrgId = contact.OrgID || contact.ORGID || contact.orgId || contact.OrgId || 
+                            contact['OrgID'] || contact['ORGID'] || contact['Organization ID'] || '';
+        
+        // Also get contact organization name for fallback matching
+        const contactOrgName = contact.OrgName || contact.ORGNAME || contact.orgName || 
+                              contact.ORGANIZATION_NAME || contact.OrganizationName || contact.organization_name || 
+                              contact.ORG_NAME || contact.org_name ||
+                              contact.Organization_Name || contact['Organization Name'] || contact['ORGANIZATION NAME'] ||
+                              contact.ORG || contact.Org || contact.org ||
+                              contact.ORGANIZATION || contact.Organization || contact.organization ||
+                              '';
+        const contactOrgNameLower = contactOrgName.toLowerCase().trim();
+        
+        // PRIORITY 1: Match by OrgID (most reliable - Orgs.ID === Org_Contacts.OrgID)
+        // This is the primary linking mechanism between Orgs and Org_Contacts sheets
+        const matchesOrgId = orgId && contactOrgId && String(orgId).trim() === String(contactOrgId).trim();
+        
+        // PRIORITY 2: Match by organization name (fallback if OrgID not available)
+        const matchesOrgName = contactOrgNameLower && orgNameLower && 
+                              (contactOrgNameLower === orgNameLower || 
+                               contactOrgNameLower.includes(orgNameLower) || 
+                               orgNameLower.includes(contactOrgNameLower));
+        
+        // PRIORITY 3: Match by Series ID (for backward compatibility with Editions sheet)
+        const contactSeriesId = contact.SERIESID || contact.SeriesID || contact.seriesId || contact.SERIES_ID ||
+                                contact.SeriesId || contact.Series_ID || contact['Series ID'] || contact['SERIES ID'] || '';
+        const matchesSeriesId = seriesId && contactSeriesId && String(seriesId).trim() === String(contactSeriesId).trim();
+        
+        if (matchesOrgId || matchesOrgName || matchesSeriesId) {
+          const matchType = matchesOrgId ? 'OrgID (Orgs.ID === Org_Contacts.OrgID)' : 
+                           matchesOrgName ? 'OrgName' : 'SeriesID';
+          console.log(`  └─ ✅ MATCHED contact ${idx + 1}: Org_Contacts.OrgID="${contactOrgId}" matches Orgs.ID="${orgId}" (match type: ${matchType})`);
+          console.log(`  └─ Contact: ${contact.FullName || 'N/A'}, Title: ${contact.Title || 'N/A'}, Email: ${contact.Email || 'N/A'}`);
+          relatedContacts.push(contact);
+        }
+      });
+    } else {
+      console.log(`  └─ ⚠️ No contacts available (excelContacts: ${excelContacts?.length || 0})`);
+    }
+    
+    console.log(`  └─ Found ${relatedContacts.length} related contacts for: ${orgName} (Orgs.ID: ${orgId})`);
+    
+    // Calculate scores using backend logic - only for enabled criteria
+    const historyScore = scoringCriteria.history ? calculateHistoryScore(editions) : 0;
+    const regionScore = scoringCriteria.region ? calculateRegionScore(event.name, editions) : 0;
+    const contactScore = scoringCriteria.contact ? calculateContactScore(rawData, relatedContacts) : 0;
+    const delegatesScore = scoringCriteria.delegates ? calculateDelegatesScore(editions) : 0;
+    const totalScore = historyScore + regionScore + contactScore + delegatesScore;
+    
+    console.log(`  ├─ History Score: ${historyScore}/25 ${scoringCriteria.history ? '(Vietnam/SEA events)' : '(DISABLED)'}`);
+    console.log(`  ├─ Region Score: ${regionScore}/25 ${scoringCriteria.region ? '(Asia/Pacific relevance)' : '(DISABLED)'}`);
+    console.log(`  ├─ Contact Score: ${contactScore}/25 ${scoringCriteria.contact ? '(Email/Phone availability)' : '(DISABLED)'}`);
+    console.log(`  ├─ Delegates Score: ${delegatesScore}/25 ${scoringCriteria.delegates ? '(Event size)' : '(DISABLED)'}`);
+    console.log(`  └─ TOTAL SCORE: ${totalScore}/100 (Active criteria: ${[scoringCriteria.history && 'History', scoringCriteria.region && 'Region', scoringCriteria.contact && 'Contact', scoringCriteria.delegates && 'Delegates'].filter(Boolean).join(', ') || 'None'})`);
     console.log('');
     
     // Count Vietnam events
@@ -1850,8 +2426,134 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     const country = rawData.COUNTRY || rawData.Country || rawData.country || '';
     const city = rawData.CITY || rawData.City || rawData.city || '';
     const website = rawData.WEBSITE || rawData.Website || rawData.website || rawData.URL || '';
-    const email = rawData.EMAIL || rawData.Email || rawData.email || '';
-    const phone = rawData.PHONE || rawData.Phone || rawData.phone || '';
+    
+    // Extract contact info - PRIORITY: from org_contacts sheet, fallback to rawData
+    let email = '';
+    let phone = '';
+    let keyPersonName = '';
+    let keyPersonTitle = '';
+    
+    // First, try to get from relatedContacts (org_contacts sheet)
+    if (relatedContacts.length > 0) {
+      // Use first contact (or find the most relevant one - prefer contacts with email)
+      // Sort contacts: prioritize those with email, then title, then name
+      const sortedContacts = [...relatedContacts].sort((a, b) => {
+        const aHasEmail = !!(a.Email || a.EMAIL || a.email);
+        const bHasEmail = !!(b.Email || b.EMAIL || b.email);
+        if (aHasEmail !== bHasEmail) return bHasEmail ? 1 : -1;
+        
+        const aHasTitle = !!(a.Title || a.TITLE || a.title);
+        const bHasTitle = !!(b.Title || b.TITLE || b.title);
+        if (aHasTitle !== bHasTitle) return bHasTitle ? 1 : -1;
+        
+        return 0;
+      });
+      
+      const primaryContact = sortedContacts[0];
+      
+      console.log(`  └─ Extracting from contact, available keys:`, Object.keys(primaryContact).slice(0, 20).join(', '));
+      
+      // PRIORITY: Use normalized fields from excelImport.ts (FullName, Title, Email, Phone)
+      // These are already combined from FirstName + MiddleName + LastName
+      keyPersonName = primaryContact.FullName || primaryContact.FULLNAME || primaryContact.fullName || '';
+      
+      // If FullName not available, combine FirstName + MiddleName + LastName manually
+      if (!keyPersonName) {
+        const firstName = primaryContact.FirstName || primaryContact.FIRSTNAME || primaryContact.firstName || 
+                         primaryContact['First Name'] || primaryContact['FIRST NAME'] || '';
+        const middleName = primaryContact.MiddleName || primaryContact.MIDDLENAME || primaryContact.middleName || 
+                          primaryContact['Middle Name'] || primaryContact['MIDDLE NAME'] || '';
+        const lastName = primaryContact.LastName || primaryContact.LASTNAME || primaryContact.lastName || 
+                        primaryContact['Last Name'] || primaryContact['LAST NAME'] || '';
+        const nameParts = [firstName, middleName, lastName].filter(part => part && part.trim().length > 0);
+        keyPersonName = nameParts.length > 0 ? nameParts.join(' ').trim() : '';
+      }
+      
+      // Fallback to other name field variations if still empty
+      if (!keyPersonName) {
+        keyPersonName = primaryContact.NAME || primaryContact.Name || primaryContact.name || 
+                       primaryContact.CONTACT_NAME || primaryContact.ContactName || primaryContact.contact_name ||
+                       primaryContact.FULL_NAME || primaryContact.full_name ||
+                       primaryContact['Name'] || primaryContact['NAME'] || primaryContact['Contact Name'] ||
+                       primaryContact['Full Name'] || primaryContact['FULL NAME'] ||
+                       primaryContact.keyPersonName || '';
+      }
+      
+      // Extract title - PRIORITY: normalized Title field
+      keyPersonTitle = primaryContact.Title || primaryContact.TITLE || primaryContact.title || 
+                      primaryContact['Title'] || primaryContact['TITLE'] || '';
+      
+      // Fallback to other title field variations
+      if (!keyPersonTitle) {
+        keyPersonTitle = primaryContact.JOB_TITLE || primaryContact.JobTitle || primaryContact.job_title ||
+                        primaryContact.POSITION || primaryContact.Position || primaryContact.position ||
+                        primaryContact.ROLE || primaryContact.Role || primaryContact.role ||
+                        primaryContact['Job Title'] || primaryContact['JOB TITLE'] ||
+                        primaryContact['Position'] || primaryContact['POSITION'] ||
+                        primaryContact.keyPersonTitle || '';
+      }
+      
+      // Extract email - PRIORITY: normalized Email field
+      email = primaryContact.Email || primaryContact.EMAIL || primaryContact.email || 
+              primaryContact['Email'] || primaryContact['EMAIL'] || '';
+      
+      // Fallback to other email field variations
+      if (!email) {
+        email = primaryContact.CONTACT_EMAIL || primaryContact.ContactEmail || primaryContact.contact_email ||
+                primaryContact.EMAIL_ADDRESS || primaryContact.EmailAddress || primaryContact.email_address ||
+                primaryContact['Contact Email'] || primaryContact['CONTACT EMAIL'] ||
+                primaryContact['E-mail'] || primaryContact['E-Mail'] || primaryContact['E-MAIL'] ||
+                primaryContact.keyPersonEmail || '';
+      }
+      
+      // Extract phone - PRIORITY: normalized Phone field
+      phone = primaryContact.Phone || primaryContact.PHONE || primaryContact.phone || 
+              primaryContact['Phone'] || primaryContact['PHONE'] || '';
+      
+      // Fallback to other phone field variations
+      if (!phone) {
+        phone = primaryContact.CONTACT_PHONE || primaryContact.ContactPhone || primaryContact.contact_phone ||
+                primaryContact.TEL || primaryContact.Tel || primaryContact.tel ||
+                primaryContact.TELEPHONE || primaryContact.Telephone || primaryContact.telephone ||
+                primaryContact['Contact Phone'] || primaryContact['CONTACT PHONE'] ||
+                primaryContact['Tel'] || primaryContact['TEL'] ||
+                primaryContact.keyPersonPhone || '';
+      }
+      
+      console.log(`  └─ Extracted from org_contacts: Name="${keyPersonName}", Email="${email}", Title="${keyPersonTitle}", Phone="${phone}"`);
+      
+      // If still empty, try to find any field that might contain email/name/title
+      if (!email || !keyPersonName) {
+        console.log(`  └─ ⚠️ Still missing data, checking all contact fields...`);
+        Object.keys(primaryContact).forEach(key => {
+          const value = String(primaryContact[key] || '').trim();
+          if (!email && value.includes('@') && value.includes('.')) {
+            email = value;
+            console.log(`  └─ Found email in field "${key}": ${email}`);
+          }
+          if (!keyPersonName && value.length > 3 && /^[A-Z][a-z]+(\s+[A-Z][a-z]+)+$/.test(value)) {
+            keyPersonName = value;
+            console.log(`  └─ Found name in field "${key}": ${keyPersonName}`);
+          }
+        });
+      }
+    }
+    
+    // Fallback to rawData if not found in contacts
+    if (!email) {
+      email = rawData.EMAIL || rawData.Email || rawData.email || '';
+    }
+    if (!phone) {
+      phone = rawData.PHONE || rawData.Phone || rawData.phone || '';
+    }
+    if (!keyPersonName) {
+      keyPersonName = rawData.NAME || rawData.Name || rawData.name || 
+                     rawData.CONTACT_NAME || rawData.ContactName || '';
+    }
+    if (!keyPersonTitle) {
+      keyPersonTitle = rawData.TITLE || rawData.Title || rawData.title || 
+                      rawData.JOB_TITLE || rawData.JobTitle || '';
+    }
     
     // Get average delegates (more representative than max)
     const delegateValues: number[] = [];
@@ -1873,8 +2575,8 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
       country: country || null,
       city: city || null,
       website: website || null,
-      keyPersonName: null,
-      keyPersonTitle: null,
+      keyPersonName: keyPersonName || null,
+      keyPersonTitle: keyPersonTitle || null,
       keyPersonEmail: email || null,
       keyPersonPhone: phone || null,
       vietnamEvents: vietnamEvents,
@@ -1891,6 +2593,12 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
       nextStepStrategy: totalScore >= 50 ? 'High priority - Contact immediately' : totalScore >= 30 ? 'Medium priority - Follow up' : 'Low priority - Monitor',
       status: 'New'
     };
+    } catch (error: any) {
+      console.error(`❌ [Local Scoring] Error scoring event "${event?.name || 'unknown'}":`, error);
+      console.error(`❌ [Local Scoring] Error message:`, error.message);
+      console.error(`❌ [Local Scoring] Error stack:`, error.stack);
+      throw error; // Re-throw to be caught by caller
+    }
   };
   
   // Helper functions for scoring
@@ -2638,11 +3346,10 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         return { ...prev, partC: newPartC };
       });
       
-      alert(`✅ Research completed for ${lead.companyName}!\n\nEnriched data has been added to the event's notes section.`);
+      console.log(`✅ Research completed for ${lead.companyName}! Enriched data has been added to the event's notes section.`);
       
     } catch (error: any) {
       console.error(`❌ [Auto-Fill] Error for ${lead.companyName}:`, error);
-      alert(`❌ Failed to research data for ${lead.companyName}:\n${error.message || 'Unknown error'}`);
     } finally {
       // Remove from processing
       setCompletingDataMap(prev => {
@@ -2668,7 +3375,8 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     setParsedReport(null);
     setExtractedLeads([]);
     setRateLimitCountdown(null);
-    setOrganizationProgress([]);
+    // DON'T reset organizationProgress - preserve existing scores
+    // setOrganizationProgress([]);
     setIsBatchMode(false);
     
     const startTime = Date.now();
@@ -2678,14 +3386,128 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
       // This ensures imported Excel/CSV files are analyzed, not leads from database
       if (eventsList.length > 0) {
          console.log(`📥 [Strategic Analysis] Processing ${eventsList.length} events from imported file...`);
+         
+         // Save all events to database before analysis
+         console.log('💾 [Event Save] Saving all events from import to database...');
+         try {
+           const eventsToSave: Lead[] = [];
            
-           // Initialize progress tracking
-           // Initialize progress with 'analyzing' status for all events
-           const initialProgress: OrganizationProgress[] = eventsList.map(event => ({
-             companyName: event.name,
-             status: 'analyzing'
-           }));
-           setOrganizationProgress(initialProgress);
+           for (let i = 0; i < eventsList.length; i++) {
+             const event = eventsList[i];
+             try {
+               // Extract basic data from event rawData
+               const editions = (event as any).editions || [];
+               const rawData = event.rawData || {};
+               
+               // Try to extract contact info from excelContacts if available
+               const eventNameLower = event.name.toLowerCase().trim();
+               let keyPersonName = '';
+               let keyPersonTitle = '';
+               let keyPersonEmail = '';
+               let keyPersonPhone = '';
+               
+               // Find matching contact from excelContacts
+               if (excelContacts && excelContacts.length > 0) {
+                 const matchingContact = excelContacts.find((contact: any) => {
+                   const contactOrgName = (contact.OrgName || contact.orgName || '').toLowerCase().trim();
+                   return contactOrgName === eventNameLower;
+                 });
+                 
+                 if (matchingContact) {
+                   keyPersonName = matchingContact.FullName || matchingContact.fullName || 
+                                   `${matchingContact.FirstName || ''} ${matchingContact.MiddleName || ''} ${matchingContact.LastName || ''}`.trim() || '';
+                   keyPersonTitle = matchingContact.Title || matchingContact.title || '';
+                   keyPersonEmail = matchingContact.Email || matchingContact.email || '';
+                   keyPersonPhone = matchingContact.Phone || matchingContact.phone || '';
+                 }
+               }
+               
+               // Create lead from event data
+               const newLead: Lead = {
+                 id: 'imported_event_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 5),
+                 companyName: event.name.trim(),
+                 industry: rawData.Industry || rawData.industry || rawData.INDUSTRY || '',
+                 country: rawData.Country || rawData.country || rawData.COUNTRY || '',
+                 city: rawData.City || rawData.city || rawData.CITY || '',
+                 website: rawData.Website || rawData.website || rawData.WEBSITE || '',
+                 keyPersonName: keyPersonName || rawData['Key Person Name'] || rawData.keyPersonName || '',
+                 keyPersonTitle: keyPersonTitle || rawData['Key Person Title'] || rawData.keyPersonTitle || '',
+                 keyPersonEmail: keyPersonEmail || rawData['Key Person Email'] || rawData.keyPersonEmail || '',
+                 keyPersonPhone: keyPersonPhone || rawData['Key Person Phone'] || rawData.keyPersonPhone || '',
+                 keyPersonLinkedIn: rawData['Key Person LinkedIn'] || rawData.keyPersonLinkedIn || '',
+                 totalEvents: editions.length || 1,
+                 vietnamEvents: 0,
+                 notes: '',
+                 status: 'New',
+                 pastEventsHistory: (event as any).eventHistory || '',
+               };
+               
+               eventsToSave.push(newLead);
+             } catch (error: any) {
+               console.error(`❌ [Event Save] Error processing event "${event.name}":`, error);
+               // Create a minimal lead even if extraction fails
+               const minimalLead: Lead = {
+                 id: 'imported_event_' + Date.now() + '_' + i + '_' + Math.random().toString(36).substr(2, 5),
+                 companyName: event.name.trim(),
+                 industry: '',
+                 country: '',
+                 city: '',
+                 website: '',
+                 keyPersonName: '',
+                 keyPersonTitle: '',
+                 keyPersonEmail: '',
+                 keyPersonPhone: '',
+                 keyPersonLinkedIn: '',
+                 totalEvents: 1,
+                 vietnamEvents: 0,
+                 notes: '',
+                 status: 'New',
+               };
+               eventsToSave.push(minimalLead);
+             }
+           }
+           
+           // Save all events to database
+           if (eventsToSave.length > 0) {
+             console.log(`💾 [Event Save] Saving ${eventsToSave.length} events to database...`);
+             await onSaveToLeads(eventsToSave);
+             console.log(`✅ [Event Save] Successfully saved ${eventsToSave.length} events to database`);
+           }
+         } catch (error: any) {
+           console.error('❌ [Event Save] Error saving events to database:', error);
+           // Continue with analysis even if save fails
+         }
+           
+           // Initialize progress tracking - preserve existing completed results
+           setOrganizationProgress(prev => {
+             // Create a map of existing completed results
+             const existingResults = new Map<string, OrganizationProgress>();
+             prev.forEach(p => {
+               if (p.status === 'completed' && p.result) {
+                 const key = (p.companyName || '').toLowerCase().trim();
+                 existingResults.set(key, p);
+               }
+             });
+             
+             // Initialize progress for all events, preserving existing completed results
+             const initialProgress: OrganizationProgress[] = eventsList.map(event => {
+               const eventKey = (event.name || '').toLowerCase().trim();
+               const existing = existingResults.get(eventKey);
+               
+               // If we have an existing completed result, keep it
+               if (existing && existing.status === 'completed' && existing.result) {
+                 return existing; // Preserve existing score and result
+               }
+               
+               // Otherwise, create new analyzing entry
+               return {
+                 companyName: event.name,
+                 status: 'analyzing'
+               };
+             });
+             
+             return initialProgress;
+           });
            setIsBatchMode(true);
            
           // Process events one by one and display results immediately
@@ -2718,111 +3540,49 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
             console.log(`📊 [Agent ${agentId}] Event has ${editions.length} editions`);
             
             try {
-              // STEP 1: Pre-check eligibility using GPT
-              console.log(`🔍 [Agent ${agentId}] Checking eligibility for: ${event.name}`);
-              let eligibilityCheck = null;
-              try {
-                const eventDataStr = JSON.stringify(event.rawData || {}).substring(0, 1000);
-                const pastHistory = formatEventHistory(editions);
-                eligibilityCheck = await GPTService.checkEventEligibility(
-                  event.name,
-                  eventDataStr,
-                  pastHistory
-                );
-                console.log(`✅ [Agent ${agentId}] Eligibility check completed for "${event.name}":`, {
-                  eligible: eligibilityCheck.isEligible,
-                  vietnamHistory: eligibilityCheck.hasVietnamHistory,
-                  iccaQualified: eligibilityCheck.isICCAQualified,
-                  iccaQualifiedReason: eligibilityCheck.iccaQualifiedReason,
-                  recentActivity: eligibilityCheck.hasRecentActivity,
-                  recommendation: eligibilityCheck.recommendation
-                });
-                
-                // Log detailed ICCA qualification check
-                if (!eligibilityCheck.isICCAQualified) {
-                  console.log(`🚫 [Agent ${agentId}] Event "${event.name}" is NOT ICCA qualified. Reason: ${eligibilityCheck.iccaQualifiedReason || 'No reason provided'}`);
-                } else {
-                  console.log(`✅ [Agent ${agentId}] Event "${event.name}" IS ICCA qualified. Reason: ${eligibilityCheck.iccaQualifiedReason || 'Confirmed'}`);
-                }
-              } catch (eligibilityError: any) {
-                console.warn(`⚠️  [Agent ${agentId}] Eligibility check failed, continuing with analysis:`, eligibilityError.message);
-                // Continue with analysis even if eligibility check fails - ICCA is not mandatory
-                eligibilityCheck = null;
+              // STEP 1: Score event using backend logic (NO AI)
+              console.log(`📊 [Agent ${agentId}] Scoring event using backend logic: ${event.name}`);
+              console.log(`📊 [Agent ${agentId}] Excel data available: ${allExcelData ? `${allExcelData.length} chars` : 'NO'}`);
+              console.log(`📊 [Agent ${agentId}] Contacts available: ${excelContacts?.length || 0}`);
+              
+              // Validate required data
+              if (!event || !event.name) {
+                throw new Error('Event is missing or has no name');
               }
               
-              // NOTE: ICCA qualification is NOT mandatory - all events will be analyzed and scored
-              // ICCA status will be checked and displayed for reference, but won't filter events
-              
-              // STEP 2: Score event using backend logic
               const result = await scoreEventLocally(event, allExcelData);
               
-              // STEP 3: Research missing eventBrief fields using AI
-              console.log(`🔍 [Agent ${agentId}] Researching eventBrief fields for: ${event.name}`);
-              let eventBriefData: any = {};
-              try {
-                const eventDataStr = JSON.stringify({
-                  eventName: event.name,
-                  rawData: event.rawData || {},
-                  editions: editions.slice(0, 5), // Limit to first 5 editions
-                  pastEventsHistory: result.pastEventsHistory || formatEventHistory(editions),
-                  numberOfDelegates: result.numberOfDelegates,
-                  industry: result.industry
-                }).substring(0, 2000);
-                
-                // Call GPT to research eventBrief fields
-                const aiResult = await GPTService.generateStrategicAnalysis(eventDataStr);
-                const parsed = parseReport(aiResult);
-                
-                if (parsed.partC && Array.isArray(parsed.partC) && parsed.partC.length > 0) {
-                  const aiLead = parsed.partC[0];
-                  if (aiLead.eventBrief) {
-                    eventBriefData = aiLead.eventBrief;
-                    console.log(`✅ [Agent ${agentId}] AI research completed for eventBrief fields`);
-                  }
-                }
-              } catch (researchError: any) {
-                console.warn(`⚠️  [Agent ${agentId}] EventBrief research failed, using defaults:`, researchError.message);
-                // Continue with default values
+              if (!result) {
+                throw new Error('scoreEventLocally returned null/undefined');
               }
               
               if (result) {
                 const originalEventName = event.name.trim();
                 
-                // Merge eventBrief data from AI research - PRESERVE ALL AI FIELDS
-                const mergedEventBrief = {
-                  // First, spread all AI-researched fields to preserve everything
-                  ...eventBriefData,
-                  // Ensure critical fields are filled even if AI didn't provide them (only as fallback)
-                  breakoutRooms: eventBriefData.breakoutRooms || (result.numberOfDelegates ? 
+                // Create eventBrief with default values (NO AI research)
+                const eventBrief = {
+                  breakoutRooms: result.numberOfDelegates ? 
                     (result.numberOfDelegates >= 1000 ? "15+ rooms" : 
                      result.numberOfDelegates >= 500 ? "8-12 rooms" : 
-                     result.numberOfDelegates >= 300 ? "5-7 rooms" : "3-5 rooms") : ""),
-                  roomSizes: eventBriefData.roomSizes || (result.numberOfDelegates ? 
+                     result.numberOfDelegates >= 300 ? "5-7 rooms" : "3-5 rooms") : "",
+                  roomSizes: result.numberOfDelegates ? 
                     (result.numberOfDelegates >= 1000 ? "500-800 sqm main hall, 100-150 sqm breakout rooms" : 
                      result.numberOfDelegates >= 500 ? "300-500 sqm main hall, 80-120 sqm breakout rooms" : 
-                     "200-300 sqm main hall, 50-80 sqm breakout rooms") : ""),
-                  openYear: eventBriefData.openYear || null,
-                  // CRITICAL: Preserve all Local Host fields from AI
-                  localHostName: eventBriefData.localHostName || "",
-                  localHostTitle: eventBriefData.localHostTitle || "",
-                  localHostEmail: eventBriefData.localHostEmail || "",
-                  localHostPhone: eventBriefData.localHostPhone || "",
-                  localHostOrganization: eventBriefData.localHostOrganization || "",
-                  localHostWebsite: eventBriefData.localHostWebsite || "",
-                  // CRITICAL: Preserve Local Strengths & Weaknesses from AI
-                  localStrengths: eventBriefData.localStrengths || "",
-                  // CRITICAL: Preserve Layout Event from AI
-                  layout: eventBriefData.layout || "",
-                  // CRITICAL: Preserve Conference Registration from AI
-                  conferenceRegistration: eventBriefData.conferenceRegistration || "",
-                  // CRITICAL: Preserve Info on Last/Upcoming Events from AI
-                  infoOnLastUpcomingEvents: eventBriefData.infoOnLastUpcomingEvents || "",
-                  competitors: eventBriefData.competitors || "",
-                  sponsors: eventBriefData.sponsors || "",
-                  // STRICT: Only set "yes" if explicitly confirmed ICCA qualified
-                  iccaQualified: (eligibilityCheck?.isICCAQualified === true || 
-                                 eventBriefData.iccaQualified?.toLowerCase().trim() === 'yes') 
-                                 ? "yes" : "no"
+                     "200-300 sqm main hall, 50-80 sqm breakout rooms") : "",
+                  openYear: null,
+                  localHostName: "",
+                  localHostTitle: "",
+                  localHostEmail: "",
+                  localHostPhone: "",
+                  localHostOrganization: "",
+                  localHostWebsite: "",
+                  localStrengths: "",
+                  layout: "",
+                  conferenceRegistration: "",
+                  infoOnLastUpcomingEvents: "",
+                  competitors: "",
+                  sponsors: "",
+                  iccaQualified: "no"
                 };
                 
                 const newLead = {
@@ -2835,23 +3595,72 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                   pastEventsHistory: result.pastEventsHistory || (event as any).eventHistory || '',
                   editions: editions, // Include editions for history display
                   agentId: agentId, // Track which agent processed this
-                  eligibilityCheck: eligibilityCheck, // Include eligibility check results
-                  eventBrief: mergedEventBrief, // Include AI-researched eventBrief data
+                  eventBrief: eventBrief, // Include default eventBrief data
                   // Also add top-level fields from eventBrief for backward compatibility
-                  openYear: mergedEventBrief.openYear,
-                  breakoutRooms: mergedEventBrief.breakoutRooms,
-                  roomSizes: mergedEventBrief.roomSizes,
-                  localStrengths: mergedEventBrief.localStrengths,
-                  competitors: mergedEventBrief.competitors,
-                  sponsors: mergedEventBrief.sponsors,
-                  layout: mergedEventBrief.layout,
-                  iccaQualified: mergedEventBrief.iccaQualified
+                  openYear: eventBrief.openYear,
+                  breakoutRooms: eventBrief.breakoutRooms,
+                  roomSizes: eventBrief.roomSizes,
+                  localStrengths: eventBrief.localStrengths,
+                  competitors: eventBrief.competitors,
+                  sponsors: eventBrief.sponsors,
+                  layout: eventBrief.layout,
+                  iccaQualified: eventBrief.iccaQualified
                 };
+                
+                // VALIDATION: Check for email and key person name
+                // NOTE: We allow events even if missing these fields - they can be enriched later
+                // Only log warning, don't reject
+                console.log(`🔍 [Agent ${agentId}] Validating fields for: ${event.name}`);
+                const hasEmail = newLead.keyPersonEmail && newLead.keyPersonEmail.trim() !== '';
+                const hasKeyPersonName = newLead.keyPersonName && newLead.keyPersonName.trim() !== '';
+                
+                if (!hasEmail || !hasKeyPersonName) {
+                  console.log(`⚠️  [Agent ${agentId}] Event "${event.name}" missing some fields (will still be included)`);
+                  console.log(`   Email: ${hasEmail ? '✅' : '❌'}, KeyPersonName: ${hasKeyPersonName ? '✅' : '❌'}`);
+                  console.log(`   Note: Event will be included but may need data enrichment`);
+                  
+                  // Add to problems array if missing
+                  if (!hasEmail) {
+                    if (!newLead.problems) newLead.problems = [];
+                    if (!newLead.problems.includes('Missing email')) {
+                      newLead.problems.push('Missing email');
+                    }
+                  }
+                  if (!hasKeyPersonName) {
+                    if (!newLead.problems) newLead.problems = [];
+                    if (!newLead.problems.includes('Missing key person name')) {
+                      newLead.problems.push('Missing key person name');
+                    }
+                  }
+                }
                 
                 // Log event history
                 console.log(`📊 [Agent ${agentId}] Event history for "${event.name}":`, newLead.pastEventsHistory);
                 console.log(`📊 [Agent ${agentId}] Total editions: ${editions.length}`);
                 console.log(`✅ [Agent ${agentId}] Completed scoring for: ${event.name} (Score: ${result.totalScore})`);
+                console.log(`✅ [Agent ${agentId}] Validation passed - Email: ${newLead.keyPersonEmail}, KeyPerson: ${newLead.keyPersonName}`);
+                
+                // CRITICAL: Update organizationProgress to 'completed' status
+                // Use case-insensitive matching to ensure we find the right progress entry
+                // Preserve existing score if new score is 0 or invalid
+                setOrganizationProgress(prev => prev.map(p => {
+                  const pNameLower = (p.companyName || '').toLowerCase().trim();
+                  const eventNameLower = (event.name || '').toLowerCase().trim();
+                  if (pNameLower === eventNameLower) {
+                    const newScore = newLead.totalScore || 0;
+                    const existingScore = p.result?.totalScore || 0;
+                    
+                    // If new score is 0 but we have an existing valid score, preserve the existing result
+                    if (newScore === 0 && existingScore > 0) {
+                      console.log(`⚠️  [Agent ${agentId}] New score is 0, preserving existing score ${existingScore} for: ${event.name}`);
+                      return { ...p, status: 'completed' }; // Keep existing result
+                    }
+                    
+                    console.log(`✅ [Agent ${agentId}] Updating progress to 'completed' for: ${event.name} (Score: ${newScore})`);
+                    return { ...p, status: 'completed', result: newLead };
+                  }
+                  return p;
+                }));
                 
                 // Update completed leads map - this will replace skeleton with actual result
                 setCompletedLeadsMap(prev => {
@@ -2869,6 +3678,20 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 
                 return { success: true, lead: newLead, agentId, eventName: event.name };
               }
+              
+              // If no result returned, mark as error
+              setOrganizationProgress(prev => prev.map(p => 
+                p.companyName === event.name 
+                  ? { ...p, status: 'error', error: 'No result returned from scoring' }
+                  : p
+              ));
+              
+              setAnalyzingEvents(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(event.name);
+                return newSet;
+              });
+              
               return { success: false, agentId, eventName: event.name, error: 'No result returned' };
             } catch (eventError: any) {
               console.error(`❌ [Agent ${agentId}] Failed to score event ${event.name}:`, eventError);
@@ -2878,6 +3701,20 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               if (eventError.error?.message) {
                 errorMsg = eventError.error.message;
               }
+              
+              // CRITICAL: Update organizationProgress to clear 'analyzing' status
+              setOrganizationProgress(prev => prev.map(p => 
+                p.companyName === event.name 
+                  ? { ...p, status: 'error', error: errorMsg }
+                  : p
+              ));
+              
+              // Remove from analyzing set
+              setAnalyzingEvents(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(event.name);
+                return newSet;
+              });
               
               // Check if it's a rate limit error
               if (isRateLimitError(eventError) || errorMsg.includes('429') || errorMsg.includes('quota') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
@@ -2900,6 +3737,19 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 setAnalysisError(genericErrorMsg);
                 return { success: false, agentId, eventName: event.name, error: errorMsg };
               }
+            } finally {
+              // CRITICAL: Ensure status is cleared even if there's an unexpected error
+              // This is a safety net to prevent stuck "Analyzing" status
+              setOrganizationProgress(prev => prev.map(p => {
+                if (p.companyName === event.name && p.status === 'analyzing') {
+                  // Only update if still in analyzing state (not already completed/error)
+                  // This prevents overwriting completed/error status
+                  if (!p.result && !p.error) {
+                    return { ...p, status: 'error', error: 'Analysis was interrupted' };
+                  }
+                }
+                return p;
+              }));
             }
           };
           
@@ -2930,6 +3780,17 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                   if (result.skipped) {
                     skippedCount++;
                     console.log(`⏭️  [Agent Pool] Event "${result.eventName}" skipped: ${result.reason || 'Not ICCA qualified'}`);
+                    // Update progress for skipped events
+                    setOrganizationProgress(prev => prev.map(p => 
+                      p.companyName === batch[index].name 
+                        ? { ...p, status: 'error', error: result.reason || 'Skipped' }
+                        : p
+                    ));
+                    setAnalyzingEvents(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(batch[index].name);
+                      return newSet;
+                    });
                   } else if (result.success && result.lead) {
                     // NOTE: ICCA qualification is NOT mandatory - add all events to results
                     // ICCA status will be displayed for reference but won't filter events
@@ -2949,6 +3810,28 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                       return newMap;
                     });
                     
+                    // CRITICAL: Update organizationProgress to 'completed' status
+                    // Use case-insensitive matching to ensure we find the right progress entry
+                    // Preserve existing score if new score is 0 or invalid
+                    setOrganizationProgress(prev => prev.map(p => {
+                      const pNameLower = (p.companyName || '').toLowerCase().trim();
+                      const batchNameLower = (batch[index].name || '').toLowerCase().trim();
+                      if (pNameLower === batchNameLower) {
+                        const newScore = result.lead.totalScore || 0;
+                        const existingScore = p.result?.totalScore || 0;
+                        
+                        // If new score is 0 but we have an existing valid score, preserve the existing result
+                        if (newScore === 0 && existingScore > 0) {
+                          console.log(`⚠️  [Agent Pool] New score is 0, preserving existing score ${existingScore} for: ${batch[index].name}`);
+                          return { ...p, status: 'completed' }; // Keep existing result
+                        }
+                        
+                        console.log(`✅ [Agent Pool] Updating progress to 'completed' for: ${batch[index].name} (Score: ${newScore})`);
+                        return { ...p, status: 'completed', result: result.lead };
+                      }
+                      return p;
+                    }));
+                    
                     // Remove from analyzing set
                     setAnalyzingEvents(prev => {
                       const newSet = new Set(prev);
@@ -2964,9 +3847,36 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                   } else if (result.isRateLimit) {
                     console.error(`❌ [Agent Pool] Rate limit hit by Agent ${result.agentId}`);
                     setAnalysisError(`Rate limit exceeded. Please wait before retrying.`);
+                    // Update progress for rate limit error
+                    setOrganizationProgress(prev => prev.map(p => 
+                      p.companyName === batch[index].name 
+                        ? { ...p, status: 'error', error: 'Rate limit exceeded' }
+                        : p
+                    ));
+                  } else if (!result.success) {
+                    // Handle other failures
+                    setOrganizationProgress(prev => prev.map(p => 
+                      p.companyName === batch[index].name 
+                        ? { ...p, status: 'error', error: result.error || 'Analysis failed' }
+                        : p
+                    ));
                   }
                 } else {
                   console.error(`❌ [Agent Pool] Agent failed:`, settled.reason);
+                  // Update progress for rejected promises
+                  const eventName = batch[index]?.name;
+                  if (eventName) {
+                    setOrganizationProgress(prev => prev.map(p => 
+                      p.companyName === eventName 
+                        ? { ...p, status: 'error', error: settled.reason?.message || 'Agent promise rejected' }
+                        : p
+                    ));
+                    setAnalyzingEvents(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(eventName);
+                      return newSet;
+                    });
+                  }
                 }
               });
               
@@ -3031,6 +3941,27 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
            
            const totalTime = Date.now() - startTime;
            console.log(`🎉 [Strategic Analysis] Analysis completed: ${allResults.length}/${eventsList.length} events analyzed in ${(totalTime / 1000).toFixed(2)}s`);
+           
+           // Auto-save to database after analysis completes
+           if (allResults.length > 0) {
+             console.log('💾 [Auto-Save] Auto-saving analyzed leads to database...');
+             try {
+               await onSaveToLeads(allResults);
+               console.log('✅ [Auto-Save] Successfully auto-saved', allResults.length, 'leads to database');
+               
+               // Mark all saved events
+               const savedNames = new Set(allResults.map(r => r.companyName?.toLowerCase().trim()).filter(Boolean));
+               setSavedToDatabase(prev => {
+                 const newSet = new Set(prev);
+                 savedNames.forEach(name => newSet.add(name));
+                 return newSet;
+               });
+             } catch (error: any) {
+               console.error('❌ [Auto-Save] Error auto-saving leads:', error);
+               // Don't show alert for auto-save errors, just log
+             }
+           }
+           
            setLoading(false);
            return;
       } else {
@@ -3088,7 +4019,6 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
       console.log('💾 Saving', extractedLeads.length, 'leads to database...');
       await onSaveToLeads(extractedLeads);
       console.log('✅ Successfully saved', extractedLeads.length, 'leads to database');
-      alert(`✅ Successfully saved ${extractedLeads.length} leads to database!`);
       
       // Refresh existing leads if in 'existing' mode
       if (inputMode === 'existing') {
@@ -3102,7 +4032,6 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
       setParsedReport(null); // Clear parsed report
     } catch (error: any) {
       console.error('❌ Error saving leads:', error);
-      alert(`❌ Error saving leads: ${error.message || 'Please check console for details'}`);
     } finally {
       setSaving(false);
     }
@@ -3373,69 +4302,125 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
               <strong className="text-purple-600"> Contact (25đ)</strong>, <strong className="text-orange-600">Delegates (25đ)</strong>,
               và <strong className="text-slate-900">1 tiêu chí qualification</strong>: <strong className="text-teal-600">ICCA Qualification</strong>.
             </p>
+            
+            {/* Scoring Criteria Toggles */}
+            <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-slate-700">Bật/Tắt Tiêu Chí Scoring:</p>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setScoringCriteria({
+                      history: true,
+                      region: true,
+                      contact: true,
+                      delegates: true,
+                      iccaQualification: true
+                    })}
+                    className="px-2 py-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
+                  >
+                    Bật tất cả
+                  </button>
+                  <button
+                    onClick={() => setScoringCriteria({
+                      history: false,
+                      region: false,
+                      contact: false,
+                      delegates: false,
+                      iccaQualification: false
+                    })}
+                    className="px-2 py-1 text-xs font-medium text-white bg-slate-500 hover:bg-slate-600 rounded transition-colors"
+                  >
+                    Tắt tất cả
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={scoringCriteria.history}
+                    onChange={(e) => setScoringCriteria(prev => ({ ...prev, history: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-xs text-slate-700">History</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={scoringCriteria.region}
+                    onChange={(e) => setScoringCriteria(prev => ({ ...prev, region: e.target.checked }))}
+                    className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
+                  />
+                  <span className="text-xs text-slate-700">Region</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={scoringCriteria.contact}
+                    onChange={(e) => setScoringCriteria(prev => ({ ...prev, contact: e.target.checked }))}
+                    className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
+                  />
+                  <span className="text-xs text-slate-700">Contact</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={scoringCriteria.delegates}
+                    onChange={(e) => setScoringCriteria(prev => ({ ...prev, delegates: e.target.checked }))}
+                    className="w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500"
+                  />
+                  <span className="text-xs text-slate-700">Delegates</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={scoringCriteria.iccaQualification}
+                    onChange={(e) => setScoringCriteria(prev => ({ ...prev, iccaQualification: e.target.checked }))}
+                    className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                  />
+                  <span className="text-xs text-slate-700">ICCA Qual</span>
+                </label>
+              </div>
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <strong className="text-blue-900 block mb-2">1. History Score (0-25)</strong>
-                <ul className="ml-4 space-y-1 text-blue-700 list-disc">
-                  <li>25đ: Đã tổ chức tại Vietnam</li>
-                  <li>15đ: Đã tổ chức tại Southeast Asia</li>
-                </ul>
+              <div className={`bg-blue-50 border border-blue-200 rounded-lg p-3 ${!scoringCriteria.history ? 'opacity-50' : ''}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <strong className="text-blue-900">1. History Score (0-25)</strong>
+                  {!scoringCriteria.history && <span className="text-xs text-slate-500 italic">(Tắt)</span>}
+                </div>
+                <p className="text-blue-700 text-xs">25đ: Vietnam | 15đ: Đông Nam Á</p>
               </div>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <strong className="text-green-900 block mb-2">2. Region Score (0-25)</strong>
-                <ul className="ml-4 space-y-1 text-green-700 list-disc">
-                  <li>25đ: Tên event có "ASEAN/Asia/Pacific"</li>
-                  <li>15đ: Đã tổ chức tại châu Á</li>
-                </ul>
+              <div className={`bg-green-50 border border-green-200 rounded-lg p-3 ${!scoringCriteria.region ? 'opacity-50' : ''}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <strong className="text-green-900">2. Region Score (0-25)</strong>
+                  {!scoringCriteria.region && <span className="text-xs text-slate-500 italic">(Tắt)</span>}
+                </div>
+                <p className="text-green-700 text-xs">25đ: Tên có "ASEAN/Asia/Pacific" | 15đ: Địa điểm châu Á</p>
               </div>
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                <strong className="text-purple-900 block mb-2">3. Contact Score (0-25)</strong>
-                <ul className="ml-4 space-y-1 text-purple-700 list-disc">
-                  <li>25đ: Có cả email và phone</li>
-                  <li>20đ: Có email và tên người liên hệ</li>
-                  <li>15đ: Chỉ có email</li>
-                  <li>10đ: Chỉ có tên người liên hệ</li>
-                </ul>
+              <div className={`bg-purple-50 border border-purple-200 rounded-lg p-3 ${!scoringCriteria.contact ? 'opacity-50' : ''}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <strong className="text-purple-900">3. Contact Score (0-25)</strong>
+                  {!scoringCriteria.contact && <span className="text-xs text-slate-500 italic">(Tắt)</span>}
+                </div>
+                <p className="text-purple-700 text-xs">25đ: Email + Phone | 20đ: Email + Tên | 15đ: Email | 10đ: Tên</p>
               </div>
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                <strong className="text-orange-900 block mb-2">4. Delegates Score (0-25)</strong>
-                <ul className="ml-4 space-y-1 text-orange-700 list-disc">
-                  <li>25đ: ≥500 delegates</li>
-                  <li>20đ: ≥300 delegates</li>
-                  <li>10đ: ≥100 delegates</li>
-                </ul>
+              <div className={`bg-orange-50 border border-orange-200 rounded-lg p-3 ${!scoringCriteria.delegates ? 'opacity-50' : ''}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <strong className="text-orange-900">4. Delegates Score (0-25)</strong>
+                  {!scoringCriteria.delegates && <span className="text-xs text-slate-500 italic">(Tắt)</span>}
+                </div>
+                <p className="text-orange-700 text-xs">25đ: ≥500 | 20đ: ≥300 | 10đ: ≥100</p>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t border-slate-200">
-              <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
-                <strong className="text-teal-900 block mb-2">5. ICCA Qualification (Bắt buộc - 3 Quy tắc Vàng)</strong>
-                <p className="text-xs text-teal-700 mb-2">Event phải thỏa mãn <strong className="text-teal-900">TẤT CẢ 3 quy tắc</strong> để được coi là ICCA Qualified:</p>
-                <ul className="ml-4 space-y-1.5 text-teal-700 list-disc text-xs">
-                  <li><strong>Quy tắc 1 - Rotation (Luân phiên):</strong> Event phải rotate giữa ít nhất 3 quốc gia khác nhau</li>
-                  <li><strong>Quy tắc 2 - Size (Quy mô):</strong> Phải có ít nhất 50 ONSITE participants (virtual không tính)</li>
-                  <li><strong>Quy tắc 3 - Regularity (Thường kỳ):</strong> Phải tổ chức thường xuyên (annual/biennial/triennial, không phải one-off)</li>
-                </ul>
-                <p className="text-xs text-teal-600 mt-2 italic">
-                  <strong>Organizer:</strong> Phải là International Association (không phải corporate). 
-                  <strong> Loại trừ:</strong> Trade shows, corporate meetings, sporting events, religious/political events.
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-slate-200 bg-slate-50 rounded-lg p-3">
-              <strong className="text-slate-900 block mb-2">Priority Classification:</strong>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-red-50 border border-red-200 rounded p-2">
-                  <strong className="text-red-900">High (≥50)</strong>
-                  <p className="text-xs text-red-700 mt-1">Contact immediately</p>
+              <div className={`bg-teal-50 border border-teal-200 rounded-lg p-3 ${!scoringCriteria.iccaQualification ? 'opacity-50' : ''}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <strong className="text-teal-900">5. ICCA Qualification</strong>
+                  {!scoringCriteria.iccaQualification && <span className="text-xs text-slate-500 italic">(Tắt)</span>}
                 </div>
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-2">
-                  <strong className="text-yellow-900">Medium (30-49)</strong>
-                  <p className="text-xs text-yellow-700 mt-1">Follow up</p>
-                </div>
-                <div className="bg-slate-100 border border-slate-300 rounded p-2">
-                  <strong className="text-slate-700">Low (&lt;30)</strong>
-                  <p className="text-xs text-slate-600 mt-1">Monitor</p>
-                </div>
+                <p className="text-teal-700 text-xs">3 quy tắc: Rotation (≥3 nước) | Size (≥50 onsite) | Regularity (annual/biennial/triennial)</p>
+                <p className="text-teal-600 text-xs mt-1 italic">Organizer: International Association | Loại trừ: Trade shows, corporate, sporting, religious/political</p>
               </div>
             </div>
           </div>
@@ -3701,19 +4686,29 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                       
                       {/* Status */}
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          progress?.status === 'completed' 
-                            ? 'bg-green-100 text-green-800' 
-                            : progress?.status === 'analyzing'
-                            ? 'bg-blue-100 text-blue-800'
-                            : progress?.status === 'error'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}>
-                          {progress?.status === 'completed' ? 'Completed' :
-                           progress?.status === 'analyzing' ? 'Analyzing' :
-                           progress?.status === 'error' ? 'Error' : 'Pending'}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            progress?.status === 'completed' 
+                              ? 'bg-green-100 text-green-800' 
+                              : progress?.status === 'analyzing'
+                              ? 'bg-blue-100 text-blue-800'
+                              : progress?.status === 'error'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {progress?.status === 'completed' ? 'Completed' :
+                             progress?.status === 'analyzing' ? 'Analyzing' :
+                             progress?.status === 'error' ? 'Error' : 'Pending'}
+                          </span>
+                          {progress?.status === 'completed' && progress.result && (() => {
+                            const eventName = (progress.result.companyName || event.name || '').toLowerCase().trim();
+                            return savedToDatabase.has(eventName) ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
+                                ✓ Đã lưu vào database
+                              </span>
+                            ) : null;
+                          })()}
+                        </div>
                       </td>
                       
                       {/* Score */}
@@ -6335,7 +7330,592 @@ const ChatAssistant = ({ user }: { user: User }) => {
   );
 };
 
-// 7. Video Analysis View
+// 6. Email Templates Management View
+const EmailTemplatesView = () => {
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [formData, setFormData] = useState({ name: '', subject: '', body: '' });
+  const [formErrors, setFormErrors] = useState<{ name?: string; subject?: string; body?: string }>({});
+  const [bodyViewMode, setBodyViewMode] = useState<'code' | 'preview'>('preview');
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const loadTemplates = async () => {
+    setLoading(true);
+    try {
+      const data = await emailTemplatesApi.getAll();
+      setTemplates(data);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+      alert('Failed to load email templates');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = () => {
+    setEditingTemplate(null);
+    setFormData({ name: '', subject: '', body: '' });
+    setFormErrors({});
+    setBodyViewMode('preview');
+    setShowModal(true);
+  };
+
+  const handleEdit = (template: EmailTemplate) => {
+    setEditingTemplate(template);
+    setFormData({
+      name: template.name,
+      subject: template.subject,
+      body: template.body,
+    });
+    setFormErrors({});
+    setBodyViewMode('preview');
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this template?')) return;
+    
+    try {
+      await emailTemplatesApi.delete(id);
+      await loadTemplates();
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      alert('Failed to delete template');
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: { name?: string; subject?: string; body?: string } = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Template name is required';
+    }
+    if (!formData.subject.trim()) {
+      errors.subject = 'Subject is required';
+    }
+    if (!formData.body.trim()) {
+      errors.body = 'Body is required';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) return;
+
+    try {
+      if (editingTemplate) {
+        // Update existing
+        await emailTemplatesApi.update(editingTemplate.id, formData);
+      } else {
+        // Create new
+        const newTemplate: EmailTemplate = {
+          id: `template-${Date.now()}`,
+          name: formData.name.trim(),
+          subject: formData.subject.trim(),
+          body: formData.body.trim(),
+        };
+        await emailTemplatesApi.create(newTemplate);
+      }
+      
+      await loadTemplates();
+      setShowModal(false);
+      setFormData({ name: '', subject: '', body: '' });
+      setEditingTemplate(null);
+    } catch (error) {
+      console.error('Error saving template:', error);
+      alert('Failed to save template');
+    }
+  };
+
+  const handleCancel = () => {
+    setShowModal(false);
+    setFormData({ name: '', subject: '', body: '' });
+    setEditingTemplate(null);
+    setFormErrors({});
+    setBodyViewMode('preview');
+  };
+
+  return (
+    <div className="p-6 min-h-screen flex flex-col space-y-5">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Email Templates</h2>
+            <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-semibold">
+              {templates.length} {templates.length === 1 ? 'template' : 'templates'}
+            </span>
+          </div>
+          <p className="text-sm text-slate-600 mt-1">Manage email templates for lead outreach</p>
+        </div>
+        
+        <button
+          onClick={handleCreate}
+          className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
+        >
+          <Plus size={18} className="mr-2" /> New Template
+        </button>
+      </div>
+
+      {/* Available Variables Info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="text-sm font-semibold text-blue-900 mb-2 flex items-center">
+          <Sparkles size={16} className="mr-2" />
+          Available Variables
+        </h3>
+        <p className="text-xs text-blue-700 mb-2">
+          Use these placeholders in your templates (they will be replaced with actual lead data):
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {['{{companyName}}', '{{keyPersonName}}', '{{keyPersonTitle}}', '{{city}}', '{{country}}', '{{industry}}'].map((varName) => (
+            <code key={varName} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono">
+              {varName}
+            </code>
+          ))}
+        </div>
+      </div>
+
+      {/* Templates Table */}
+      <div className="bg-white border border-slate-200 rounded-lg flex-1 overflow-hidden flex flex-col">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin text-indigo-600" size={32} />
+            <span className="ml-3 text-slate-600">Loading templates...</span>
+          </div>
+        ) : templates.length === 0 ? (
+          <div className="text-center py-12">
+            <Mail className="text-slate-300 mx-auto mb-3" size={48} />
+            <p className="text-slate-700 font-medium">No email templates found</p>
+            <p className="text-slate-500 text-sm mt-1">Create your first template to get started</p>
+            <button
+              onClick={handleCreate}
+              className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center"
+            >
+              <Plus size={16} className="mr-2" /> Create Template
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 sticky top-0 z-10">
+                <tr>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">Name</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">Subject</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">Body Preview</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {templates.map((template) => (
+                  <tr key={template.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-4">
+                      <div className="font-semibold text-slate-900">{template.name}</div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="text-sm text-slate-700 max-w-md truncate">{template.subject}</div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="text-sm text-slate-600 max-w-md line-clamp-2">
+                        {template.body.substring(0, 100)}...
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(template)}
+                          className="text-indigo-600 hover:text-indigo-800 font-medium text-sm inline-flex items-center"
+                        >
+                          <Edit2 size={16} className="mr-1" /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(template.id)}
+                          className="text-red-600 hover:text-red-800 font-medium text-sm inline-flex items-center"
+                        >
+                          <X size={16} className="mr-1" /> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Create/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  {editingTemplate ? 'Edit Template' : 'Create New Template'}
+                </h2>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  {editingTemplate ? 'Update your email template' : 'Create a new email template for lead outreach'}
+                </p>
+              </div>
+              <button
+                onClick={handleCancel}
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* Template Name */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Template Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g., Introduction Email, Follow Up"
+                  className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none ${
+                    formErrors.name ? 'border-red-300' : 'border-slate-300'
+                  }`}
+                />
+                {formErrors.name && (
+                  <p className="text-xs text-red-600 mt-1">{formErrors.name}</p>
+                )}
+              </div>
+
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Subject <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  placeholder="e.g., Invitation to {{companyName}} - Host Your Next Event in Danang"
+                  className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none ${
+                    formErrors.subject ? 'border-red-300' : 'border-slate-300'
+                  }`}
+                />
+                {formErrors.subject && (
+                  <p className="text-xs text-red-600 mt-1">{formErrors.subject}</p>
+                )}
+              </div>
+
+              {/* Body */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Email Body <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setBodyViewMode('code')}
+                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                        bodyViewMode === 'code'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      HTML Code
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBodyViewMode('preview')}
+                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                        bodyViewMode === 'preview'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      Preview
+                    </button>
+                  </div>
+                </div>
+                
+                {bodyViewMode === 'code' ? (
+                  <textarea
+                    value={formData.body}
+                    onChange={(e) => setFormData({ ...formData, body: e.target.value })}
+                    placeholder="<html>...\n\nUse HTML format with variables like {{keyPersonName}}, {{companyName}}, etc."
+                    rows={15}
+                    className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none font-mono ${
+                      formErrors.body ? 'border-red-300' : 'border-slate-300'
+                    }`}
+                  />
+                ) : (
+                  <div 
+                    className="w-full border rounded-lg border-slate-300 bg-white overflow-auto"
+                    style={{ minHeight: '500px', maxHeight: '600px' }}
+                  >
+                    <div
+                      contentEditable
+                      suppressContentEditableWarning
+                      onInput={(e) => {
+                        const html = e.currentTarget.innerHTML;
+                        setFormData({ ...formData, body: html });
+                      }}
+                      onBlur={(e) => {
+                        const html = e.currentTarget.innerHTML;
+                        setFormData({ ...formData, body: html });
+                      }}
+                      dangerouslySetInnerHTML={{ __html: formData.body || '<div style="padding: 20px; color: #666; text-align: center;">Click here to start editing your email template. Use variables like {{keyPersonName}}, {{companyName}}, etc.</div>' }}
+                      className="p-4 min-h-[500px] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset"
+                      style={{
+                        fontFamily: 'Arial, sans-serif',
+                        lineHeight: '1.6',
+                        color: '#333'
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {formErrors.body && (
+                  <p className="text-xs text-red-600 mt-1">{formErrors.body}</p>
+                )}
+                <p className="text-xs text-slate-500 mt-1">
+                  Use HTML format. Variables like {'{{companyName}}'}, {'{{keyPersonName}}'}, etc. will be replaced with actual lead data.
+                </p>
+              </div>
+
+              {/* Preview Section - Only show when in code mode */}
+              {bodyViewMode === 'code' && formData.subject && formData.body && (
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-3">Quick Preview</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-xs font-medium text-slate-500 uppercase">Subject:</span>
+                      <p className="text-sm text-slate-900 mt-1 bg-white p-2 rounded border border-slate-200">
+                        {formData.subject}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-slate-500 uppercase">Body (HTML):</span>
+                      <div className="text-xs text-slate-600 mt-1 bg-white p-3 rounded border border-slate-200 max-h-40 overflow-y-auto font-mono">
+                        {formData.body.substring(0, 500)}{formData.body.length > 500 ? '...' : ''}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center"
+              >
+                <Save size={16} className="mr-2" />
+                {editingTemplate ? 'Update Template' : 'Create Template'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// 7. User Profile View
+const UserProfileView = ({ user, onUpdateUser }: { user: User, onUpdateUser: (user: User) => void }) => {
+  const [formData, setFormData] = useState({
+    name: user.name,
+    avatar: user.avatar || '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState<{ name?: string }>({});
+  const [successMessage, setSuccessMessage] = useState<string>('');
+
+  const validateForm = (): boolean => {
+    const errors: { name?: string } = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setSuccessMessage('');
+    try {
+      const updatedUser = await usersApi.update(user.username, {
+        name: formData.name.trim(),
+        avatar: formData.avatar.trim() || undefined,
+      });
+      
+      if (updatedUser) {
+        onUpdateUser(updatedUser);
+        setSuccessMessage('Profile updated successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      name: user.name,
+      avatar: user.avatar || '',
+    });
+    setFormErrors({});
+    setSuccessMessage('');
+  };
+
+  return (
+    <div className="p-6 min-h-screen flex flex-col space-y-5">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">My Profile</h2>
+          <p className="text-sm text-slate-600 mt-1">Manage your account information</p>
+        </div>
+      </div>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-sm text-green-800">{successMessage}</p>
+        </div>
+      )}
+
+      {/* Profile Form */}
+      <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <div className="space-y-6">
+          {/* Avatar Section */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Avatar URL
+            </label>
+            <div className="flex items-center space-x-4">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 overflow-hidden border-2 border-blue-400/50 shadow-lg flex-shrink-0">
+                {formData.avatar ? (
+                  <img src={formData.avatar} alt="avatar" className="w-full h-full object-cover" onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }} />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={formData.avatar}
+                  onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
+                  placeholder="https://example.com/avatar.jpg"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                />
+                <p className="text-xs text-slate-500 mt-1">Enter a URL for your profile picture</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Username (Read-only) */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Username
+            </label>
+            <input
+              type="text"
+              value={user.username}
+              disabled
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-500 cursor-not-allowed"
+            />
+            <p className="text-xs text-slate-500 mt-1">Username cannot be changed</p>
+          </div>
+
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Full Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter your full name"
+              className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none ${
+                formErrors.name ? 'border-red-300' : 'border-slate-300'
+              }`}
+            />
+            {formErrors.name && (
+              <p className="text-xs text-red-600 mt-1">{formErrors.name}</p>
+            )}
+          </div>
+
+          {/* Role (Read-only) */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Role
+            </label>
+            <input
+              type="text"
+              value={user.role}
+              disabled
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-500 cursor-not-allowed"
+            />
+            <p className="text-xs text-slate-500 mt-1">Role cannot be changed</p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-6 pt-6 border-t border-slate-200 flex justify-end gap-3">
+          <button
+            onClick={handleCancel}
+            disabled={loading}
+            className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save size={16} className="mr-2" />
+                Save Changes
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 8. Video Analysis View
 const VideoAnalysisView = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -6584,6 +8164,16 @@ const App = () => {
     }
   };
 
+  const handleUpdateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    // Update user in localStorage
+    try {
+      localStorage.setItem('ariyana_user', JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error('Error updating user in localStorage:', error);
+    }
+  };
+
   const handleLogout = () => {
     setUser(null);
     // Clear localStorage
@@ -6623,28 +8213,70 @@ const App = () => {
     
     try {
       console.log('💾 Starting to save', newLeads.length, 'leads to database...');
+      
+      // Load existing leads to check for duplicates
+      console.log('🔍 Checking for duplicates in database...');
+      const existingLeads = await leadsApi.getAll();
+      const existingCompanyNames = new Set(existingLeads.map(l => l.company_name?.toLowerCase().trim()).filter(Boolean));
+      
       let successCount = 0;
       let failCount = 0;
+      let duplicateCount = 0;
       
       // Create leads in database via API
       for (const lead of newLeads) {
         try {
+          // Check for duplicate by company name (case-insensitive)
+          const companyNameLower = lead.companyName?.toLowerCase().trim();
+          if (companyNameLower && existingCompanyNames.has(companyNameLower)) {
+            console.log(`⏭️  Skipping duplicate lead: ${lead.companyName} (already exists in database)`);
+            duplicateCount++;
+            continue;
+          }
+          
           const mappedLead = mapLeadToDB(lead);
           console.log('💾 Saving lead:', lead.companyName);
           await leadsApi.create(mappedLead);
           successCount++;
+          
+          // Add to existing set to avoid duplicates in same batch
+          if (companyNameLower) {
+            existingCompanyNames.add(companyNameLower);
+          }
+          
           console.log('✅ Saved lead:', lead.companyName);
         } catch (error: any) {
-          console.error('❌ Error creating lead:', lead.companyName, error);
-          failCount++;
+          // Check if error is due to duplicate (unique constraint violation)
+          if (error.message?.includes('duplicate') || error.message?.includes('unique') || error.message?.includes('already exists')) {
+            console.log(`⏭️  Skipping duplicate lead: ${lead.companyName} (database constraint)`);
+            duplicateCount++;
+          } else {
+            console.error('❌ Error creating lead:', lead.companyName, error);
+            failCount++;
+          }
           // Continue with other leads even if one fails
         }
       }
       
+      // Show summary to user
+      let summaryMessage = `✅ Successfully saved ${successCount} lead${successCount !== 1 ? 's' : ''} to database`;
+      if (duplicateCount > 0) {
+        summaryMessage += `\n⏭️  Skipped ${duplicateCount} duplicate lead${duplicateCount !== 1 ? 's' : ''} (already exists)`;
+      }
+      if (failCount > 0) {
+        summaryMessage += `\n⚠️ Failed to save ${failCount} lead${failCount !== 1 ? 's' : ''}`;
+      }
+      
       console.log(`✅ Successfully saved ${successCount}/${newLeads.length} leads to database`);
+      if (duplicateCount > 0) {
+        console.log(`⏭️  Skipped ${duplicateCount} duplicate leads`);
+      }
       if (failCount > 0) {
         console.warn(`⚠️ Failed to save ${failCount} leads`);
       }
+      
+      // Show alert with summary
+      alert(summaryMessage);
       
       // Refresh leads from API
       console.log('🔄 Refreshing leads list from database...');
@@ -6727,6 +8359,12 @@ const App = () => {
         return <VideoAnalysisView />;
       case 'chat':
         return <ChatAssistant user={user} />;
+      case 'email-templates':
+        // Only Director and Sales can access
+        if (user.role !== 'Director' && user.role !== 'Sales') return <Dashboard leads={leads} />;
+        return <EmailTemplatesView />;
+      case 'profile':
+        return <UserProfileView user={user} onUpdateUser={handleUpdateUser} />;
       default:
         return <Dashboard leads={leads} />;
     }

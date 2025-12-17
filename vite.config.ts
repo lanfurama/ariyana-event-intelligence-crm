@@ -14,14 +14,22 @@ export default defineConfig(async ({ mode, command }) => {
     // Only load when command === 'serve' (dev server), not 'build'
     if (!isBuild && mode === 'development') {
       try {
-        // Use dynamic import - works in ESM and prevents build-time analysis
-        const pluginModule = await import('./vite-plugin-api.js');
+        // Use dynamic import with .ts extension - Vite/tsx will handle it
+        // Try .js first (compiled), then .ts (source)
+        let pluginModule;
+        try {
+          pluginModule = await import('./vite-plugin-api.js');
+        } catch {
+          // Fallback to .ts if .js doesn't exist
+          pluginModule = await import('./vite-plugin-api.ts');
+        }
         plugins.push(pluginModule.vitePluginApi());
         console.log('✅ vite-plugin-api loaded successfully');
       } catch (err: any) {
         console.error('❌ vite-plugin-api could not be loaded:', err.message);
         console.error('   Full error:', err);
         console.warn('   API routes will not work - make sure vite-plugin-api.ts exists');
+        // Don't throw - allow dev server to continue without API plugin
       }
     }
     
@@ -48,6 +56,23 @@ export default defineConfig(async ({ mode, command }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      // Optimize esbuild configuration to avoid conflicts
+      optimizeDeps: {
+        esbuildOptions: {
+          target: 'es2022',
+        },
+      },
+      build: {
+        // Increase chunk size warning limit
+        chunkSizeWarningLimit: 1000,
+        // Use esbuild for minification (faster)
+        minify: 'esbuild',
+        rollupOptions: {
+          output: {
+            manualChunks: undefined,
+          },
+        },
       }
     };
 });

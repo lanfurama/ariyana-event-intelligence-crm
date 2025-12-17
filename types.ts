@@ -1,5 +1,6 @@
 export interface EmailLog {
   id: string;
+  lead_id?: string;
   date: string;
   subject: string;
   status: 'sent' | 'draft';

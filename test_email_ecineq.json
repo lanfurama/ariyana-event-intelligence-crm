@@ -1,0 +1,30 @@
+{
+  "testEmail": {
+    "to": "youngbuffaok2@gmail.com",
+    "lead": {
+      "id": "test_ecineq_001",
+      "company_name": "Society for the Study of Economic Inequality -ECINEQ-",
+      "industry": "Economics",
+      "country": "Italy",
+      "city": "Rome",
+      "website": "https://www.ecineq.org/",
+      "key_person_name": "Flaviana Palmisano",
+      "key_person_title": "Secretariat",
+      "key_person_email": "flaviana.palmisano@uniroma1.it",
+      "key_person_phone": null,
+      "total_events": 1,
+      "vietnam_events": 0,
+      "number_of_delegates": 250,
+      "past_events_history": "Rome, Italy | DISTINCT COUNTRIES: 1 (italy)",
+      "research_notes": "Biennial event, World/International rotation area",
+      "status": "New"
+    },
+    "emailContent": {
+      "subject": "Proposal to host Society for the Study of Economic Inequality -ECINEQ- event at Ariyana Convention Centre",
+      "text": "Dear Flaviana Palmisano,\n\nAs a key organization in the Economics sector, we would like to invite Society for the Study of Economic Inequality -ECINEQ- to consider Danang, Vietnam for an upcoming edition.\n\nWe believe Danang offers a compelling rotation option in Asia for your future meetings.\nOur convention centre can comfortably host 250+ delegates with premium meeting facilities, breakout rooms, and exhibition space.\nWe understand your community engages stakeholders across Rome, Italy and would love to partner with you on a future edition.\n\nAriyana Convention Centre Danang is the award-winning venue that proudly hosted APEC 2017. Our experienced international team is ready to support your bidding process and tailor a proposal to your requirements.\n\nMay we arrange a short call to discuss how we can support your next event in Vietnam?\n\nWarm regards,\nSales & Marketing Team\nAriyana Convention Centre Danang\nmarketing@furamavietnam.com",
+      "html": "<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { background-color: #1e40af; color: white; padding: 20px; text-align: center; }\n    .content { padding: 20px; background-color: #f9fafb; }\n    .footer { padding: 20px; text-align: center; color: #666; font-size: 12px; }\n    .highlight { color: #1e40af; font-weight: bold; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h2>Ariyana Convention Centre Danang</h2>\n    </div>\n    <div class=\"content\">\n      <p>Dear Flaviana Palmisano,</p>\n      \n      <p>As a key organization in the <span class=\"highlight\">Economics</span> sector, we would like to invite <strong>Society for the Study of Economic Inequality -ECINEQ-</strong> to consider Danang, Vietnam for an upcoming edition.</p>\n      \n      <p>We believe Danang offers a compelling rotation option in Asia for your future meetings.</p>\n      \n      <p>Our convention centre can comfortably host <strong>250+ delegates</strong> with premium meeting facilities, breakout rooms, and exhibition space.</p>\n      \n      <p>We understand your community engages stakeholders across <strong>Rome, Italy</strong> and would love to partner with you on a future edition.</p>\n      \n      <p><strong>Ariyana Convention Centre Danang</strong> is the award-winning venue that proudly hosted <strong>APEC 2017</strong>. Our experienced international team is ready to support your bidding process and tailor a proposal to your requirements.</p>\n      \n      <p>May we arrange a short call to discuss how we can support your next event in Vietnam?</p>\n      \n      <p>Warm regards,<br>\n      Sales & Marketing Team<br>\n      Ariyana Convention Centre Danang<br>\n      <a href=\"mailto:marketing@furamavietnam.com\">marketing@furamavietnam.com</a></p>\n    </div>\n    <div class=\"footer\">\n      <p>This is a test email sent to: youngbuffaok2@gmail.com</p>\n      <p>Lead: Society for the Study of Economic Inequality -ECINEQ-</p>\n    </div>\n  </div>\n</body>\n</html>"
+    }
+  }
+}
+
+
