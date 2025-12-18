@@ -183,19 +183,41 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
   const unsentEmailsCount = leads.length - sentEmailsCount;
   const totalEmailsSent = filteredEmailLogs.reduce((sum, log) => sum + log.count, 0);
 
-  // Calculate country statistics
+  // Calculate country statistics - filtered by time period
   const countryStats = useMemo(() => {
     const countryMap = new Map<string, number>();
+    
+    // Helper function to capitalize first letter of each word
+    const capitalizeWords = (str: string): string => {
+      return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    };
+    
+    // Get lead IDs that have emails sent in the filtered time period
+    const filteredLeadIds = new Set(filteredEmailLogs.map(log => log.leadId));
+    
+    // Only count leads that have emails sent in the filtered period
     leads.forEach(lead => {
-      const country = lead.country || 'Unknown';
-      countryMap.set(country, (countryMap.get(country) || 0) + 1);
+      if (filteredLeadIds.has(lead.id)) {
+        // Normalize country name: trim, lowercase for grouping, then capitalize for display
+        const countryRaw = (lead.country || 'Unknown').trim();
+        const countryKey = countryRaw.toLowerCase();
+        const countryDisplay = capitalizeWords(countryRaw);
+        countryMap.set(countryKey, (countryMap.get(countryKey) || 0) + 1);
+      }
     });
     
     return Array.from(countryMap.entries())
-      .map(([country, count]) => ({ name: country, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10); // Top 10 countries
-  }, [leads]);
+      .map(([countryKey, count]) => ({ 
+        name: capitalizeWords(countryKey), 
+        count 
+      }))
+      .sort((a, b) => b.count - a.count);
+      // Show all countries, not just top 10
+  }, [leads, filteredEmailLogs]);
 
   const chartData = [
     { name: 'New', count: stats.new },
@@ -305,47 +327,6 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
         <StatCard title="Total emails sent" value={totalEmailsSent} icon={<Send size={18} />} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-white p-5 rounded-lg border border-slate-200">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <h3 className="text-base font-semibold text-slate-900">Pipeline status</h3>
-              <p className="text-sm text-slate-600 mt-1">Distribution across sales stages</p>
-            </div>
-          </div>
-
-          {stats.total === 0 ? (
-            <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-              No leads yet. Add leads to see pipeline status.
-            </div>
-          ) : (
-            <PipelineBars data={chartData} />
-          )}
-        </div>
-
-        <div className="bg-white p-5 rounded-lg border border-slate-200">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <h3 className="text-base font-semibold text-slate-900">Email status</h3>
-              <p className="text-sm text-slate-600 mt-1">Leads with sent vs unsent emails</p>
-            </div>
-          </div>
-
-          {loadingEmailLogs ? (
-            <div className="flex items-center justify-center h-32">
-              <Loader2 className="animate-spin text-slate-600" size={20} />
-              <span className="ml-2 text-slate-600 text-sm">Loading email data…</span>
-            </div>
-          ) : stats.total === 0 ? (
-            <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-              No leads yet. Add leads to see email statistics.
-            </div>
-          ) : (
-            <PipelineBars data={emailChartData} />
-          )}
-        </div>
-      </div>
-
       <div className="bg-white p-5 rounded-lg border border-slate-200">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
@@ -366,6 +347,63 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
           <PipelineBars data={countryStats} />
         )}
       </div>
+    </div>
+  );
+};
+
+const EmailActivityChart = ({ emailLogs }: { emailLogs: EmailLog[] }) => {
+  const dailyActivity = useMemo(() => {
+    const now = new Date();
+    const days = [];
+    const activityMap = new Map<string, number>();
+
+    // Initialize last 7 days
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+      const dayNumber = date.getDate();
+      days.push({ dateKey, label: `${dayName} ${dayNumber}`, count: 0 });
+      activityMap.set(dateKey, 0);
+    }
+
+    // Count emails per day
+    emailLogs.forEach(log => {
+      if (log.status === 'sent' && log.date) {
+        const logDate = new Date(log.date);
+        const dateKey = logDate.toISOString().split('T')[0];
+        const existing = activityMap.get(dateKey) || 0;
+        activityMap.set(dateKey, existing + 1);
+      }
+    });
+
+    // Update days with counts
+    return days.map(day => ({
+      ...day,
+      count: activityMap.get(day.dateKey) || 0
+    }));
+  }, [emailLogs]);
+
+  const max = Math.max(...dailyActivity.map(d => d.count)) || 1;
+
+  return (
+    <div className="space-y-3">
+      {dailyActivity.map((d) => {
+        const pct = max > 0 ? Math.round((d.count / max) * 100) : 0;
+        return (
+          <div key={d.dateKey} className="grid grid-cols-[80px_1fr_44px] items-center gap-3">
+            <div className="text-xs font-medium text-slate-700">{d.label}</div>
+            <div className="h-2.5 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+              <div
+                className="h-full bg-slate-900 rounded-full transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="text-xs font-semibold text-slate-900 text-right tabular-nums">{d.count}</div>
+          </div>
+        );
+      })}
     </div>
   );
 };
