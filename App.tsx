@@ -60,7 +60,9 @@ import { formatMarkdown, formatInlineMarkdown } from './utils/markdownUtils';
 // 2. Dashboard View
 const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => {
   const [emailLogs, setEmailLogs] = useState<Array<{leadId: string, count: number, lastSent?: Date}>>([]);
+  const [allEmailLogs, setAllEmailLogs] = useState<EmailLog[]>([]);
   const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
+  const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'yesterday' | 'this-week' | 'this-month'>('all');
 
   // Load email logs on mount
   useEffect(() => {
@@ -71,6 +73,7 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
     setLoadingEmailLogs(true);
     try {
       const allLogs = await emailLogsApi.getAll();
+      setAllEmailLogs(allLogs);
       
       // Group by lead_id and count sent emails
       const logsByLead = new Map<string, {count: number, lastSent?: Date}>();
@@ -109,11 +112,76 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
     qualified: leads.filter(l => l.status === 'Qualified').length
   };
 
+  // Filter email logs by time period
+  const filteredEmailLogs = useMemo(() => {
+    if (timeFilter === 'all') {
+      return emailLogs;
+    }
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    const yesterdayEnd = new Date(todayStart);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - 7);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const sentLogs = allEmailLogs.filter(log => log.status === 'sent' && log.date);
+    let filteredLogs: EmailLog[] = [];
+
+    switch (timeFilter) {
+      case 'today':
+        filteredLogs = sentLogs.filter(log => {
+          const logDate = new Date(log.date);
+          return logDate >= todayStart;
+        });
+        break;
+      case 'yesterday':
+        filteredLogs = sentLogs.filter(log => {
+          const logDate = new Date(log.date);
+          return logDate >= yesterdayStart && logDate < todayStart;
+        });
+        break;
+      case 'this-week':
+        filteredLogs = sentLogs.filter(log => {
+          const logDate = new Date(log.date);
+          return logDate >= weekStart;
+        });
+        break;
+      case 'this-month':
+        filteredLogs = sentLogs.filter(log => {
+          const logDate = new Date(log.date);
+          return logDate >= monthStart;
+        });
+        break;
+    }
+
+    // Group filtered logs by lead_id
+    const logsByLead = new Map<string, {count: number, lastSent?: Date}>();
+    filteredLogs.forEach(log => {
+      if (log.lead_id) {
+        const existing = logsByLead.get(log.lead_id) || { count: 0 };
+        existing.count += 1;
+        const logDate = log.date ? new Date(log.date) : null;
+        if (logDate && (!existing.lastSent || logDate > existing.lastSent)) {
+          existing.lastSent = logDate;
+        }
+        logsByLead.set(log.lead_id, existing);
+      }
+    });
+
+    return Array.from(logsByLead.entries()).map(([leadId, data]) => ({
+      leadId,
+      ...data
+    }));
+  }, [timeFilter, allEmailLogs, emailLogs]);
+
   // Calculate email statistics
-  const leadsWithEmails = new Set(emailLogs.map(log => log.leadId));
+  const leadsWithEmails = new Set(filteredEmailLogs.map(log => log.leadId));
   const sentEmailsCount = leadsWithEmails.size;
   const unsentEmailsCount = leads.length - sentEmailsCount;
-  const totalEmailsSent = emailLogs.reduce((sum, log) => sum + log.count, 0);
+  const totalEmailsSent = filteredEmailLogs.reduce((sum, log) => sum + log.count, 0);
 
   // Calculate country statistics
   const countryStats = useMemo(() => {
@@ -166,7 +234,7 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
           <p className="text-sm text-slate-600 mt-1">Monitor pipeline status and key metrics</p>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Total leads" value={stats.total} icon={<Users size={18} />} />
         <StatCard title="Vietnam events" value={stats.vietnam} icon={<Search size={18} />} />
@@ -174,11 +242,67 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
         <StatCard title="Qualified" value={stats.qualified} icon={<ChevronRight size={18} />} />
       </div>
 
+      {/* Time Filter */}
+      <div className="bg-white border border-slate-200 rounded-lg p-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-700 mr-2">Filter by:</span>
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1">
+            <button
+              onClick={() => setTimeFilter('all')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                timeFilter === 'all'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              All Time
+            </button>
+            <button
+              onClick={() => setTimeFilter('today')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                timeFilter === 'today'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Today
+            </button>
+            <button
+              onClick={() => setTimeFilter('yesterday')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                timeFilter === 'yesterday'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Yesterday
+            </button>
+            <button
+              onClick={() => setTimeFilter('this-week')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                timeFilter === 'this-week'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              This Week
+            </button>
+            <button
+              onClick={() => setTimeFilter('this-month')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                timeFilter === 'this-month'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              This Month
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Leads with emails sent" value={sentEmailsCount} icon={<Mail size={18} />} />
-        <StatCard title="Leads without emails" value={unsentEmailsCount} icon={<Mail size={18} />} />
         <StatCard title="Total emails sent" value={totalEmailsSent} icon={<Send size={18} />} />
-        <StatCard title="Top countries" value={countryStats.length} icon={<MapPin size={18} />} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -281,13 +405,13 @@ const StatCard = ({
   value: number;
   icon: React.ReactNode;
 }) => (
-  <div className="bg-white p-4 rounded-lg border border-slate-200">
-    <div className="flex items-center justify-between gap-3">
-      <div className="min-w-0">
+  <div className="bg-white p-3 rounded-lg border border-slate-200">
+    <div className="flex items-center justify-between gap-2">
+      <div className="min-w-0 flex-1">
         <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{title}</p>
         <p className="text-2xl font-semibold text-slate-900 tracking-tight mt-1 tabular-nums">{value}</p>
       </div>
-      <div className="h-9 w-9 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+      <div className="h-8 w-8 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 flex-shrink-0">
         {icon}
       </div>
     </div>
@@ -297,12 +421,13 @@ const StatCard = ({
 // 3. Leads View
 const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { leads: Lead[], onSelectLead: (lead: Lead) => void, onUpdateLead: (lead: Lead) => void, user: User, onAddLead?: () => void }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [emailFilter, setEmailFilter] = useState<'all' | 'sent' | 'unsent'>('all');
+  const [emailFilter, setEmailFilter] = useState<'all' | 'sent' | 'unsent' | 'no-key-person-email' | 'has-key-person-email'>('all');
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [emailLogs, setEmailLogs] = useState<Array<{leadId: string, count: number, lastSent?: Date}>>([]);
+  const [allEmailLogs, setAllEmailLogs] = useState<EmailLog[]>([]);
   const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
   const [sendingEmails, setSendingEmails] = useState(false);
 
@@ -315,16 +440,25 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       // Search filter
+      const searchLower = searchTerm.toLowerCase();
       const matchesSearch = 
-        lead.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.keyPersonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.industry.toLowerCase().includes(searchTerm.toLowerCase());
+        (lead.companyName || '').toLowerCase().includes(searchLower) ||
+        (lead.city || '').toLowerCase().includes(searchLower) ||
+        (lead.keyPersonName || '').toLowerCase().includes(searchLower) ||
+        (lead.industry || '').toLowerCase().includes(searchLower);
       
       if (!matchesSearch) return false;
 
       // Email filter
       if (emailFilter === 'all') return true;
+      
+      if (emailFilter === 'no-key-person-email') {
+        return !lead.keyPersonEmail || lead.keyPersonEmail.trim() === '';
+      }
+      
+      if (emailFilter === 'has-key-person-email') {
+        return !!(lead.keyPersonEmail && lead.keyPersonEmail.trim() !== '');
+      }
       
       const emailStatus = getEmailStatus(lead.id);
       if (emailFilter === 'sent') {
@@ -356,6 +490,9 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     try {
       // Load all email logs
       const allLogs = await emailLogsApi.getAll();
+      
+      // Store all logs for time-based statistics
+      setAllEmailLogs(allLogs);
       
       // Group by lead_id and count sent emails
       const logsByLead = new Map<string, {count: number, lastSent?: Date}>();
@@ -453,6 +590,51 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     return { sent: sentCount, notSent: notSentCount };
   }, [filteredLeads, emailLogs]);
 
+  // Calculate key person info stats
+  const keyPersonStats = useMemo(() => {
+    const withKeyPersonInfo = filteredLeads.filter(lead => {
+      // Check if lead has at least one of: email, phone, or linkedin
+      return !!(lead.keyPersonEmail || lead.keyPersonPhone || lead.keyPersonLinkedIn);
+    }).length;
+    return { withInfo: withKeyPersonInfo, withoutInfo: filteredLeads.length - withKeyPersonInfo };
+  }, [filteredLeads]);
+
+  // Calculate email stats by time period
+  const emailTimeStats = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    const yesterdayEnd = new Date(todayStart);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - 7);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const sentLogs = allEmailLogs.filter(log => log.status === 'sent' && log.date);
+    
+    const today = sentLogs.filter(log => {
+      const logDate = new Date(log.date);
+      return logDate >= todayStart;
+    }).length;
+
+    const yesterday = sentLogs.filter(log => {
+      const logDate = new Date(log.date);
+      return logDate >= yesterdayStart && logDate < todayStart;
+    }).length;
+
+    const thisWeek = sentLogs.filter(log => {
+      const logDate = new Date(log.date);
+      return logDate >= weekStart;
+    }).length;
+
+    const thisMonth = sentLogs.filter(log => {
+      const logDate = new Date(log.date);
+      return logDate >= monthStart;
+    }).length;
+
+    return { today, yesterday, thisWeek, thisMonth };
+  }, [allEmailLogs]);
+
   const handleSendEmails = async () => {
     if (preparedEmails.length === 0) {
       alert('No emails prepared. Please select a template and ensure leads have email addresses.');
@@ -512,24 +694,36 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
 
   return (
     <div className="p-6 min-h-screen flex flex-col space-y-5">
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Leads</h2>
-            <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-semibold">
-              {filteredLeads.length} {filteredLeads.length === 1 ? 'lead' : 'leads'}
-              {searchTerm && filteredLeads.length !== leads.length && (
-                <span className="text-slate-500 font-normal ml-1">
-                  of {leads.length}
-                </span>
-              )}
-            </span>
-          </div>
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Leads</h2>
           <p className="text-sm text-slate-600 mt-1">Manage and track your event leads</p>
         </div>
         
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-80">
+        {/* Only Director and Sales can add manual leads */}
+        {(user.role === 'Director' || user.role === 'Sales') && (
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowEmailModal(true)}
+              className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
+            >
+              <Mail size={18} className="mr-2" /> Send Mail to All
+            </button>
+            <button 
+              onClick={onAddLead}
+              className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
+            >
+              <Plus size={18} className="mr-2" /> Add Lead
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Search and Filters */}
+      <div className="bg-white border border-slate-200 rounded-lg p-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+          <div className="relative flex-1 w-full md:w-auto">
             <input 
               type="text"
               placeholder="Search by company, city, person, or industry..."
@@ -540,13 +734,13 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
           </div>
           {/* Email Filter */}
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1">
             <button
               onClick={() => setEmailFilter('all')}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 emailFilter === 'all'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               All
@@ -555,8 +749,8 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
               onClick={() => setEmailFilter('sent')}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 emailFilter === 'sent'
-                  ? 'bg-green-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               Sent
@@ -565,66 +759,35 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
               onClick={() => setEmailFilter('unsent')}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 emailFilter === 'unsent'
-                  ? 'bg-amber-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               Not Sent
             </button>
+            <button
+              onClick={() => setEmailFilter('no-key-person-email')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                emailFilter === 'no-key-person-email'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              No Key Person Email
+            </button>
+            <button
+              onClick={() => setEmailFilter('has-key-person-email')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                emailFilter === 'has-key-person-email'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Has Key Person Email
+            </button>
           </div>
-          {/* Only Director and Sales can add manual leads */}
-          {(user.role === 'Director' || user.role === 'Sales') && (
-            <>
-              <button 
-                onClick={() => setShowEmailModal(true)}
-                className="bg-indigo-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shrink-0 inline-flex items-center"
-              >
-                <Mail size={18} className="mr-2" /> Send Mail to All
-              </button>
-              <button 
-                onClick={onAddLead}
-                className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
-              >
-                <Plus size={18} className="mr-2" /> Add Lead
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Email Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Leads</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{filteredLeads.length}</p>
-            </div>
-            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-              <Users size={24} className="text-slate-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white border border-green-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Email Sent</p>
-              <p className="text-2xl font-bold text-green-700 mt-1">{emailStats.sent}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Mail size={24} className="text-green-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white border border-amber-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Not Sent</p>
-              <p className="text-2xl font-bold text-amber-700 mt-1">{emailStats.notSent}</p>
-            </div>
-            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Mail size={24} className="text-amber-600" />
-            </div>
+          <div className="text-sm text-slate-600">
+            Showing <span className="font-semibold text-slate-900">{filteredLeads.length}</span> of <span className="font-semibold text-slate-900">{leads.length}</span> leads
           </div>
         </div>
       </div>
@@ -8782,19 +8945,43 @@ const App = () => {
       console.log('🔍 Checking for duplicates in database...');
       const existingLeads = await leadsApi.getAll();
       const existingCompanyNames = new Set(existingLeads.map(l => l.company_name?.toLowerCase().trim()).filter(Boolean));
+      // Create a map for quick lookup: company_name (lowercase) -> lead
+      const existingLeadsMap = new Map<string, any>();
+      existingLeads.forEach(l => {
+        const key = l.company_name?.toLowerCase().trim();
+        if (key) {
+          existingLeadsMap.set(key, l);
+        }
+      });
       
       let successCount = 0;
       let failCount = 0;
       let duplicateCount = 0;
+      let updatedCount = 0;
       
       // Create leads in database via API
       for (const lead of newLeads) {
         try {
           // Check for duplicate by company name (case-insensitive)
           const companyNameLower = lead.companyName?.toLowerCase().trim();
-          if (companyNameLower && existingCompanyNames.has(companyNameLower)) {
-            console.log(`⏭️  Skipping duplicate lead: ${lead.companyName} (already exists in database)`);
-            duplicateCount++;
+          const existingLead = companyNameLower ? existingLeadsMap.get(companyNameLower) : null;
+          
+          if (existingLead) {
+            // Lead already exists - check if we need to update key_person_email
+            const existingKeyPersonEmail = existingLead.key_person_email || existingLead.keyPersonEmail || '';
+            const importKeyPersonEmail = lead.keyPersonEmail || '';
+            
+            if (!existingKeyPersonEmail.trim() && importKeyPersonEmail.trim()) {
+              // Update key_person_email if it's null in database but exists in import
+              console.log(`🔄 Updating key_person_email for existing lead: ${lead.companyName}`);
+              const updateData = mapLeadToDB(lead);
+              await leadsApi.update(existingLead.id, { key_person_email: importKeyPersonEmail.trim() });
+              updatedCount++;
+              console.log(`✅ Updated key_person_email for: ${lead.companyName}`);
+            } else {
+              console.log(`⏭️  Skipping duplicate lead: ${lead.companyName} (already exists in database)`);
+              duplicateCount++;
+            }
             continue;
           }
           
@@ -8806,6 +8993,7 @@ const App = () => {
           // Add to existing set to avoid duplicates in same batch
           if (companyNameLower) {
             existingCompanyNames.add(companyNameLower);
+            existingLeadsMap.set(companyNameLower, { id: mappedLead.id, company_name: mappedLead.company_name });
           }
           
           console.log('✅ Saved lead:', lead.companyName);
@@ -8824,6 +9012,9 @@ const App = () => {
       
       // Show summary to user
       let summaryMessage = `✅ Successfully saved ${successCount} lead${successCount !== 1 ? 's' : ''} to database`;
+      if (updatedCount > 0) {
+        summaryMessage += `\n🔄 Updated key_person_email for ${updatedCount} existing lead${updatedCount !== 1 ? 's' : ''}`;
+      }
       if (duplicateCount > 0) {
         summaryMessage += `\n⏭️  Skipped ${duplicateCount} duplicate lead${duplicateCount !== 1 ? 's' : ''} (already exists)`;
       }
@@ -8832,6 +9023,9 @@ const App = () => {
       }
       
       console.log(`✅ Successfully saved ${successCount}/${newLeads.length} leads to database`);
+      if (updatedCount > 0) {
+        console.log(`🔄 Updated key_person_email for ${updatedCount} existing leads`);
+      }
       if (duplicateCount > 0) {
         console.log(`⏭️  Skipped ${duplicateCount} duplicate leads`);
       }
