@@ -318,271 +318,176 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
 
   if (loading) {
     return (
-      <div className="p-6 space-y-5 animate-fade-in">
-        <div className="flex items-start justify-between gap-4">
+      <div className="p-4 space-y-4 animate-fade-in max-w-7xl mx-auto">
+        <div className="flex items-start justify-between gap-4 mb-1">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h2>
-            <p className="text-sm text-slate-600 mt-1">Overview of pipeline and key metrics</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
           </div>
         </div>
-        <div className="flex items-center justify-center h-56 bg-white rounded-lg border border-slate-200">
-          <Loader2 className="animate-spin text-slate-600" size={24} />
-          <span className="ml-3 text-slate-600 text-sm font-medium">Loading leads…</span>
+        <div className="flex items-center justify-center h-48 bg-white rounded-lg border border-slate-200">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="animate-spin text-slate-600" size={24} />
+            <span className="text-slate-600 text-sm">Đang tải…</span>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-5 animate-fade-in">
-      <div className="flex items-start justify-between gap-4">
+    <div className="p-4 space-y-4 animate-fade-in max-w-7xl mx-auto">
+      {/* Header Section */}
+      <div className="flex items-start justify-between gap-4 mb-1">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h2>
-          <p className="text-sm text-slate-600 mt-1">Monitor pipeline status and key metrics</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total leads" value={stats.total} icon={<Users size={18} />} />
-        <StatCard title="Vietnam events" value={stats.vietnam} icon={<Search size={18} />} />
-        <StatCard title="New opportunities" value={stats.new} icon={<Plus size={18} />} />
-        <StatCard title="Qualified" value={stats.qualified} icon={<ChevronRight size={18} />} />
       </div>
 
       {/* Time Filter */}
       <div className="bg-white border border-slate-200 rounded-lg p-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-700 mr-2">Filter by:</span>
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1">
-            <button
-              onClick={() => setTimeFilter('all')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                timeFilter === 'all'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              All Time
-            </button>
-            <button
-              onClick={() => setTimeFilter('today')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                timeFilter === 'today'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              Today
-            </button>
-            <button
-              onClick={() => setTimeFilter('yesterday')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                timeFilter === 'yesterday'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              Yesterday
-            </button>
-            <button
-              onClick={() => setTimeFilter('this-week')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                timeFilter === 'this-week'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              This Week
-            </button>
-            <button
-              onClick={() => setTimeFilter('this-month')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                timeFilter === 'this-month'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              This Month
-            </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-slate-700">Lọc:</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {[
+              { key: 'all', label: 'Tất cả' },
+              { key: 'today', label: 'Hôm nay' },
+              { key: 'yesterday', label: 'Hôm qua' },
+              { key: 'this-week', label: 'Tuần này' },
+              { key: 'this-month', label: 'Tháng này' }
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTimeFilter(key as typeof timeFilter)}
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  timeFilter === key
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard 
+          title="Tổng số leads" 
+          value={stats.total} 
+          icon={<Users size={18} />}
+          color="blue"
+        />
+        <StatCard 
+          title="Sự kiện Việt Nam" 
+          value={stats.vietnam} 
+          icon={<Search size={18} />}
+          color="green"
+        />
+        <StatCard 
+          title="Cơ hội mới" 
+          value={stats.new} 
+          icon={<Plus size={18} />}
+          color="orange"
+        />
+        <StatCard 
+          title="Đã đủ điều kiện" 
+          value={stats.qualified} 
+          icon={<CheckCircle size={18} />}
+          color="purple"
+        />
+      </div>
+
       {/* Email Sent Section */}
-      <div className="bg-white p-5 rounded-lg border border-slate-200">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">Email Sent</h3>
-            <p className="text-sm text-slate-600 mt-1">Track emails sent to leads</p>
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-blue-50 px-4 py-3 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <Send size={18} className="text-blue-600" />
+            <h3 className="text-base font-semibold text-slate-900">Email đã gửi</h3>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total emails sent" value={totalEmailsSent} icon={<Send size={18} />} />
-          <StatCard 
-            title="Leads contacted" 
-            value={sentEmailsCount} 
-            icon={<Users size={18} />}
-            subtitle={`${unsentEmailsCount} not contacted`}
-          />
-          <StatCard 
-            title="Emails today" 
-            value={allEmailLogs.filter(log => {
-              if (log.status !== 'sent' || !log.date) return false;
-              const todayStart = new Date();
-              todayStart.setHours(0, 0, 0, 0);
-              return new Date(log.date) >= todayStart;
-            }).length} 
-            icon={<Calendar size={18} />}
-          />
-          <StatCard 
-            title="Emails this week" 
-            value={allEmailLogs.filter(log => {
-              if (log.status !== 'sent' || !log.date) return false;
-              const weekStart = new Date();
-              weekStart.setDate(weekStart.getDate() - 7);
-              weekStart.setHours(0, 0, 0, 0);
-              return new Date(log.date) >= weekStart;
-            }).length} 
-            icon={<Mail size={18} />}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Today</div>
-            <div className="text-2xl font-semibold text-slate-900">
-              {allEmailLogs.filter(log => {
-                if (log.status !== 'sent' || !log.date) return false;
-                const todayStart = new Date();
-                todayStart.setHours(0, 0, 0, 0);
-                return new Date(log.date) >= todayStart;
-              }).length}
-            </div>
-            <div className="text-xs text-slate-600 mt-1">emails sent</div>
-          </div>
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Yesterday</div>
-            <div className="text-2xl font-semibold text-slate-900">
-              {allEmailLogs.filter(log => {
-                if (log.status !== 'sent' || !log.date) return false;
-                const todayStart = new Date();
-                todayStart.setHours(0, 0, 0, 0);
-                const yesterdayStart = new Date(todayStart);
-                yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-                const logDate = new Date(log.date);
-                return logDate >= yesterdayStart && logDate < todayStart;
-              }).length}
-            </div>
-            <div className="text-xs text-slate-600 mt-1">emails sent</div>
-          </div>
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">This Week</div>
-            <div className="text-2xl font-semibold text-slate-900">
-              {allEmailLogs.filter(log => {
-                if (log.status !== 'sent' || !log.date) return false;
-                const weekStart = new Date();
-                weekStart.setDate(weekStart.getDate() - 7);
-                weekStart.setHours(0, 0, 0, 0);
-                return new Date(log.date) >= weekStart;
-              }).length}
-            </div>
-            <div className="text-xs text-slate-600 mt-1">emails sent</div>
-          </div>
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">This Month</div>
-            <div className="text-2xl font-semibold text-slate-900">
-              {allEmailLogs.filter(log => {
-                if (log.status !== 'sent' || !log.date) return false;
-                const monthStart = new Date();
-                monthStart.setDate(1);
-                monthStart.setHours(0, 0, 0, 0);
-                return new Date(log.date) >= monthStart;
-              }).length}
-            </div>
-            <div className="text-xs text-slate-600 mt-1">emails sent</div>
+        
+        <div className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard 
+              title="Tổng email đã gửi" 
+              value={totalEmailsSent} 
+              icon={<Send size={18} />}
+              color="blue"
+            />
+            <StatCard 
+              title="Leads đã liên hệ" 
+              value={sentEmailsCount} 
+              icon={<Users size={18} />}
+              subtitle={`${unsentEmailsCount} chưa liên hệ`}
+              color="indigo"
+            />
           </div>
         </div>
       </div>
 
       {/* Email Replies Section */}
-      <div className="bg-white p-5 rounded-lg border border-slate-200">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">Email Replies</h3>
-            <p className="text-sm text-slate-600 mt-1">Track response rates and engagement</p>
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-green-50 px-4 py-3 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <MessageSquare size={18} className="text-green-600" />
+            <h3 className="text-base font-semibold text-slate-900">Phản hồi Email</h3>
           </div>
         </div>
+        
+        <div className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <StatCard 
+              title="Tổng phản hồi" 
+              value={emailRepliesStats.total} 
+              icon={<MessageSquare size={18} />}
+              color="green"
+            />
+            <StatCard 
+              title="Leads đã phản hồi" 
+              value={emailRepliesStats.uniqueLeads} 
+              icon={<CheckCircle size={18} />}
+              color="emerald"
+            />
+            <StatCard 
+              title="Tỷ lệ phản hồi" 
+              value={`${emailRepliesStats.replyRate}%`} 
+              icon={<TrendingUp size={18} />}
+              color="teal"
+            />
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-          <StatCard 
-            title="Total replies" 
-            value={emailRepliesStats.total} 
-            icon={<MessageSquare size={18} />}
-            subtitle={timeFilter !== 'all' ? `Filtered by ${timeFilter}` : 'All time'}
-          />
-          <StatCard 
-            title="Leads replied" 
-            value={emailRepliesStats.uniqueLeads} 
-            icon={<CheckCircle size={18} />}
-          />
-          <StatCard 
-            title="Reply rate" 
-            value={`${emailRepliesStats.replyRate}%`} 
-            icon={<TrendingUp size={18} />}
-            subtitle={totalEmailsSent > 0 ? `${emailRepliesStats.total} of ${totalEmailsSent} emails` : undefined}
-          />
+          {emailRepliesStats.allTime === 0 && (
+            <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
+              <p className="text-sm text-slate-600">Chưa có phản hồi email</p>
+            </div>
+          )}
         </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Today</div>
-            <div className="text-2xl font-semibold text-slate-900">{emailRepliesStats.breakdown.today}</div>
-            <div className="text-xs text-slate-600 mt-1">replies</div>
-          </div>
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Yesterday</div>
-            <div className="text-2xl font-semibold text-slate-900">{emailRepliesStats.breakdown.yesterday}</div>
-            <div className="text-xs text-slate-600 mt-1">replies</div>
-          </div>
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">This Week</div>
-            <div className="text-2xl font-semibold text-slate-900">{emailRepliesStats.breakdown.thisWeek}</div>
-            <div className="text-xs text-slate-600 mt-1">replies</div>
-          </div>
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">This Month</div>
-            <div className="text-2xl font-semibold text-slate-900">{emailRepliesStats.breakdown.thisMonth}</div>
-            <div className="text-xs text-slate-600 mt-1">replies</div>
-          </div>
-        </div>
-
-        {emailRepliesStats.allTime === 0 && (
-          <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-            No email replies yet. Replies will appear here once leads respond to your emails.
-          </div>
-        )}
       </div>
 
-      <div className="bg-white p-5 rounded-lg border border-slate-200">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">Country distribution</h3>
-            <p className="text-sm text-slate-600 mt-1">Top countries by lead count</p>
+      {/* Country Distribution Section */}
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-purple-50 px-4 py-3 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <MapPin size={18} className="text-purple-600" />
+            <h3 className="text-base font-semibold text-slate-900">Phân bố theo Quốc gia</h3>
           </div>
         </div>
-
-        {stats.total === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-            No leads yet. Add leads to see country statistics.
-          </div>
-        ) : countryStats.length === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-            No country data available.
-          </div>
-        ) : (
-          <PipelineBars data={countryStats} />
-        )}
+        
+        <div className="p-4">
+          {stats.total === 0 ? (
+            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
+              <p className="text-sm text-slate-600">Chưa có leads</p>
+            </div>
+          ) : countryStats.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
+              <p className="text-sm text-slate-600">Không có dữ liệu quốc gia</p>
+            </div>
+          ) : (
+            <PipelineBars data={countryStats} />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -648,25 +553,41 @@ const EmailActivityChart = ({ emailLogs }: { emailLogs: EmailLog[] }) => {
 const PipelineBars = ({ data }: { data: { name: string, count: number }[] }) => {
   const max = Math.max(...data.map(d => d.count)) || 1;
 
+  const colors = [
+    { bg: 'bg-purple-500', dot: 'bg-purple-500' },
+    { bg: 'bg-pink-500', dot: 'bg-pink-500' },
+    { bg: 'bg-indigo-500', dot: 'bg-indigo-500' },
+    { bg: 'bg-blue-500', dot: 'bg-blue-500' },
+    { bg: 'bg-cyan-500', dot: 'bg-cyan-500' },
+    { bg: 'bg-teal-500', dot: 'bg-teal-500' },
+    { bg: 'bg-emerald-500', dot: 'bg-emerald-500' },
+  ];
+
   return (
     <div className="space-y-3">
-      {data.map((d) => {
+      {data.map((d, index) => {
         const pct = Math.round((d.count / max) * 100);
+        const color = colors[index % colors.length];
+        
         return (
-          <div key={d.name} className="grid grid-cols-[120px_1fr_44px] items-center gap-3">
-            <div className="text-sm font-medium text-slate-700">{d.name}</div>
-            <div className="h-2.5 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+          <div key={d.name}>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <div className={`h-2.5 w-2.5 rounded-full ${color.dot}`}></div>
+                <div className="text-sm font-medium text-slate-700">{d.name}</div>
+              </div>
+              <div className="text-sm font-semibold text-slate-900 tabular-nums">{d.count}</div>
+            </div>
+            <div className="h-3 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
               <div
-                className="h-full bg-slate-700"
+                className={`h-full ${color.bg} rounded-full transition-all duration-500 ease-out`}
                 style={{ width: `${pct}%` }}
                 aria-label={`${d.name} ${d.count}`}
               />
             </div>
-            <div className="text-sm tabular-nums text-slate-700 text-right">{d.count}</div>
           </div>
         );
       })}
-      <p className="text-xs text-slate-500 pt-1">Bars are scaled relative to the largest stage.</p>
     </div>
   );
 };
@@ -676,32 +597,48 @@ const StatCard = ({
   value,
   icon,
   subtitle,
+  color = 'slate',
 }: {
   title: string;
   value: number | string;
   icon: React.ReactNode;
   subtitle?: string;
-}) => (
-  <div className="bg-white p-3 rounded-lg border border-slate-200">
-    <div className="flex items-center justify-between gap-2">
-      <div className="min-w-0 flex-1">
-        <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{title}</p>
-        <p className="text-2xl font-semibold text-slate-900 tracking-tight mt-1 tabular-nums">{value}</p>
-        {subtitle && (
-          <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
-        )}
-      </div>
-      <div className="h-8 w-8 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 flex-shrink-0">
-        {icon}
+  color?: 'blue' | 'green' | 'orange' | 'purple' | 'indigo' | 'cyan' | 'teal' | 'emerald' | 'slate';
+}) => {
+  const colorClasses = {
+    blue: 'bg-blue-50 border-blue-200 text-blue-600',
+    green: 'bg-green-50 border-green-200 text-green-600',
+    orange: 'bg-orange-50 border-orange-200 text-orange-600',
+    purple: 'bg-purple-50 border-purple-200 text-purple-600',
+    indigo: 'bg-indigo-50 border-indigo-200 text-indigo-600',
+    cyan: 'bg-cyan-50 border-cyan-200 text-cyan-600',
+    teal: 'bg-teal-50 border-teal-200 text-teal-600',
+    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-600',
+    slate: 'bg-slate-100 border-slate-200 text-slate-700',
+  };
+
+  return (
+    <div className="bg-white p-3 rounded-lg border border-slate-200">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">{title}</p>
+          <p className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums">{value}</p>
+          {subtitle && (
+            <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+          )}
+        </div>
+        <div className={`h-10 w-10 rounded-lg ${colorClasses[color]} flex items-center justify-center flex-shrink-0`}>
+          {icon}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // 3. Leads View
 const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { leads: Lead[], onSelectLead: (lead: Lead) => void, onUpdateLead: (lead: Lead) => void, user: User, onAddLead?: () => void }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [emailFilter, setEmailFilter] = useState<'all' | 'sent' | 'unsent' | 'no-key-person-email' | 'has-key-person-email'>('all');
+  const [emailFilter, setEmailFilter] = useState<'all' | 'sent' | 'unsent' | 'no-key-person-email' | 'has-key-person-email' | 'replied'>('all');
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -717,6 +654,11 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
   const getEmailStatus = (leadId: string) => {
     const log = emailLogs.find(l => l.leadId === leadId);
     return log ? { hasEmail: true, count: log.count, lastSent: log.lastSent } : { hasEmail: false, count: 0 };
+  };
+
+  // Check if lead has replied
+  const hasReplied = (leadId: string) => {
+    return emailReplies.some(r => r.leadId === leadId);
   };
 
   const filteredLeads = useMemo(() => {
@@ -749,9 +691,14 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
         return !emailStatus.hasEmail;
       }
       
+      if (emailFilter === 'replied') {
+        // Must have sent email AND have reply
+        return emailStatus.hasEmail && hasReplied(lead.id);
+      }
+      
       return true;
     });
-  }, [leads, searchTerm, emailFilter, emailLogs]);
+  }, [leads, searchTerm, emailFilter, emailLogs, emailReplies]);
 
   // Load email logs on mount
   useEffect(() => {
@@ -771,11 +718,6 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     } catch (error) {
       console.error('Error loading email replies:', error);
     }
-  };
-
-  // Check if lead has replied
-  const hasReplied = (leadId: string) => {
-    return emailReplies.some(r => r.leadId === leadId);
   };
 
   // Handle marking reply
@@ -1110,6 +1052,16 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
               }`}
             >
               Has Key Person Email
+            </button>
+            <button
+              onClick={() => setEmailFilter('replied')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                emailFilter === 'replied'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Replied
             </button>
           </div>
           <div className="text-sm text-slate-600">
