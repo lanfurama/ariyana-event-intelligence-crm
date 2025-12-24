@@ -37,6 +37,7 @@ export default defineConfig(async ({ mode, command }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        allowedHosts: ['data.horecfex.com'],
         // Proxy for production or if vite-plugin-api is not available
         proxy: env.VITE_API_URL ? {
           '/api/v1': {
