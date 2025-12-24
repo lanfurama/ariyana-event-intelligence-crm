@@ -327,7 +327,7 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
         <div className="flex items-center justify-center h-48 bg-white rounded-lg border border-slate-200">
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="animate-spin text-slate-600" size={24} />
-            <span className="text-slate-600 text-sm">Đang tải…</span>
+            <span className="text-slate-600 text-sm">Loading…</span>
           </div>
         </div>
       </div>
@@ -346,14 +346,14 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
       {/* Time Filter */}
       <div className="bg-white border border-slate-200 rounded-lg p-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-slate-700">Lọc:</span>
+          <span className="text-sm font-medium text-slate-700">Filter:</span>
           <div className="flex items-center gap-2 flex-wrap">
             {[
-              { key: 'all', label: 'Tất cả' },
-              { key: 'today', label: 'Hôm nay' },
-              { key: 'yesterday', label: 'Hôm qua' },
-              { key: 'this-week', label: 'Tuần này' },
-              { key: 'this-month', label: 'Tháng này' }
+              { key: 'all', label: 'All Time' },
+              { key: 'today', label: 'Today' },
+              { key: 'yesterday', label: 'Yesterday' },
+              { key: 'this-week', label: 'This Week' },
+              { key: 'this-month', label: 'This Month' }
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -374,25 +374,25 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard 
-          title="Tổng số leads" 
+          title="Total Leads" 
           value={stats.total} 
           icon={<Users size={18} />}
           color="blue"
         />
         <StatCard 
-          title="Sự kiện Việt Nam" 
+          title="Vietnam Events" 
           value={stats.vietnam} 
           icon={<Search size={18} />}
           color="green"
         />
         <StatCard 
-          title="Cơ hội mới" 
+          title="New Opportunities" 
           value={stats.new} 
           icon={<Plus size={18} />}
           color="orange"
         />
         <StatCard 
-          title="Đã đủ điều kiện" 
+          title="Qualified" 
           value={stats.qualified} 
           icon={<CheckCircle size={18} />}
           color="purple"
@@ -404,23 +404,23 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
         <div className="bg-blue-50 px-4 py-3 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <Send size={18} className="text-blue-600" />
-            <h3 className="text-base font-semibold text-slate-900">Email đã gửi</h3>
+            <h3 className="text-base font-semibold text-slate-900">Email Sent</h3>
           </div>
         </div>
         
         <div className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard 
-              title="Tổng email đã gửi" 
+              title="Total Emails Sent" 
               value={totalEmailsSent} 
               icon={<Send size={18} />}
               color="blue"
             />
             <StatCard 
-              title="Leads đã liên hệ" 
+              title="Leads Contacted" 
               value={sentEmailsCount} 
               icon={<Users size={18} />}
-              subtitle={`${unsentEmailsCount} chưa liên hệ`}
+              subtitle={`${unsentEmailsCount} not contacted`}
               color="indigo"
             />
           </div>
@@ -432,26 +432,26 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
         <div className="bg-green-50 px-4 py-3 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <MessageSquare size={18} className="text-green-600" />
-            <h3 className="text-base font-semibold text-slate-900">Phản hồi Email</h3>
+            <h3 className="text-base font-semibold text-slate-900">Email Replies</h3>
           </div>
         </div>
         
         <div className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <StatCard 
-              title="Tổng phản hồi" 
+              title="Total Replies" 
               value={emailRepliesStats.total} 
               icon={<MessageSquare size={18} />}
               color="green"
             />
             <StatCard 
-              title="Leads đã phản hồi" 
+              title="Leads Replied" 
               value={emailRepliesStats.uniqueLeads} 
               icon={<CheckCircle size={18} />}
               color="emerald"
             />
             <StatCard 
-              title="Tỷ lệ phản hồi" 
+              title="Reply Rate" 
               value={`${emailRepliesStats.replyRate}%`} 
               icon={<TrendingUp size={18} />}
               color="teal"
@@ -460,7 +460,7 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
 
           {emailRepliesStats.allTime === 0 && (
             <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
-              <p className="text-sm text-slate-600">Chưa có phản hồi email</p>
+              <p className="text-sm text-slate-600">No email replies yet</p>
             </div>
           )}
         </div>
@@ -471,18 +471,18 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
         <div className="bg-purple-50 px-4 py-3 border-b border-slate-200">
           <div className="flex items-center gap-2">
             <MapPin size={18} className="text-purple-600" />
-            <h3 className="text-base font-semibold text-slate-900">Phân bố theo Quốc gia</h3>
+            <h3 className="text-base font-semibold text-slate-900">Country Distribution</h3>
           </div>
         </div>
         
         <div className="p-4">
           {stats.total === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
-              <p className="text-sm text-slate-600">Chưa có leads</p>
+              <p className="text-sm text-slate-600">No leads yet</p>
             </div>
           ) : countryStats.length === 0 ? (
             <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
-              <p className="text-sm text-slate-600">Không có dữ liệu quốc gia</p>
+              <p className="text-sm text-slate-600">No country data available</p>
             </div>
           ) : (
             <PipelineBars data={countryStats} />
