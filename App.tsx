@@ -42,7 +42,7 @@ import * as GPTService from './services/gptService';
 import { extractRetryDelay as extractGeminiRetryDelay, isRateLimitError as isGeminiRateLimitError } from './services/geminiService';
 import { extractRetryDelay, isRateLimitError } from './services/gptService';
 import { chatMessagesApi, type ChatMessageDB } from './services/apiService';
-import { usersApi, leadsApi, emailTemplatesApi, emailLogsApi } from './services/apiService';
+import { usersApi, leadsApi, emailTemplatesApi, emailLogsApi, emailRepliesApi } from './services/apiService';
 
 // Import components
 import { LoginView } from './components/LoginView';
@@ -1120,6 +1120,9 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [emailBodyViewMode, setEmailBodyViewMode] = useState<'code' | 'preview'>('preview');
+  const [emailReplies, setEmailReplies] = useState<EmailReply[]>([]);
+  const [loadingReplies, setLoadingReplies] = useState(false);
+  const [checkingInbox, setCheckingInbox] = useState(false);
 
   const canEdit = user.role === 'Director' || user.role === 'Sales';
 
@@ -1131,12 +1134,13 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
     setEnrichCity(lead.city || '');
   }, [lead]);
 
-  // Load email templates when email tab is opened
+  // Load email templates and replies when email tab is opened
   useEffect(() => {
     if (activeTab === 'email') {
       loadEmailTemplates();
+      loadEmailReplies();
     }
-  }, [activeTab]);
+  }, [activeTab, lead.id]);
 
   const loadEmailTemplates = async () => {
     setLoadingTemplates(true);
@@ -1180,6 +1184,32 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
       console.error('Error loading email templates:', error);
     } finally {
       setLoadingTemplates(false);
+    }
+  };
+
+  const loadEmailReplies = async () => {
+    setLoadingReplies(true);
+    try {
+      const replies = await emailRepliesApi.getAll(lead.id);
+      setEmailReplies(replies);
+    } catch (error) {
+      console.error('Error loading email replies:', error);
+    } finally {
+      setLoadingReplies(false);
+    }
+  };
+
+  const handleCheckInbox = async () => {
+    setCheckingInbox(true);
+    try {
+      const result = await emailRepliesApi.checkInbox({ maxEmails: 50 });
+      alert(`✅ Checked inbox: ${result.processedCount} new reply(ies) found`);
+      await loadEmailReplies(); // Reload replies after checking
+    } catch (error: any) {
+      console.error('Error checking inbox:', error);
+      alert(`❌ Error checking inbox: ${error.message || 'Unknown error'}`);
+    } finally {
+      setCheckingInbox(false);
     }
   };
 
@@ -1968,6 +1998,53 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
                       </ul>
                      </div>
                   )}
+
+                  {/* Email Replies */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Replies</label>
+                      {canEdit && (
+                        <button
+                          onClick={handleCheckInbox}
+                          disabled={checkingInbox}
+                          className="text-xs px-2 py-1 bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                        >
+                          {checkingInbox ? (
+                            <>
+                              <Loader2 size={12} className="animate-spin" />
+                              Checking...
+                            </>
+                          ) : (
+                            <>
+                              <Mail size={12} />
+                              Check Inbox
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    {loadingReplies ? (
+                      <div className="text-xs text-slate-400 p-2">Loading replies...</div>
+                    ) : emailReplies.length > 0 ? (
+                      <ul className="mt-2 space-y-2">
+                        {emailReplies.map(reply => (
+                          <li key={reply.id} className="text-xs p-3 bg-green-50 rounded border border-green-100">
+                            <div className="flex justify-between items-start mb-1">
+                              <div>
+                                <span className="font-bold text-green-900">{reply.from_name || reply.from_email}</span>
+                                <span className="text-green-600 ml-2">({reply.from_email})</span>
+                              </div>
+                              <span className="text-green-500">{new Date(reply.reply_date).toLocaleDateString()}</span>
+                            </div>
+                            <div className="font-semibold text-green-800 mb-1">{reply.subject}</div>
+                            <div className="text-green-700 mt-1 line-clamp-2">{reply.body.substring(0, 200)}{reply.body.length > 200 ? '...' : ''}</div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="text-xs text-slate-400 p-2 bg-slate-50 rounded border border-slate-100">No replies yet</div>
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -2423,6 +2500,61 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
                   </button>
                 </div>
               )}
+
+              {/* Email Replies Section */}
+              <div className="border-t border-slate-200 pt-4 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-slate-900">Email Replies</h3>
+                  <button
+                    onClick={handleCheckInbox}
+                    disabled={checkingInbox}
+                    className="text-xs px-3 py-1.5 bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+                  >
+                    {checkingInbox ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={14} />
+                        Check Inbox
+                      </>
+                    )}
+                  </button>
+                </div>
+                {loadingReplies ? (
+                  <div className="text-center py-4 text-slate-400 text-sm">
+                    <Loader2 className="animate-spin mx-auto mb-2" size={20} />
+                    Loading replies...
+                  </div>
+                ) : emailReplies.length > 0 ? (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {emailReplies.map(reply => (
+                      <div key={reply.id} className="p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <div className="font-semibold text-green-900 text-sm">
+                              {reply.from_name || reply.from_email}
+                            </div>
+                            <div className="text-xs text-green-600">{reply.from_email}</div>
+                          </div>
+                          <div className="text-xs text-green-500">
+                            {new Date(reply.reply_date).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="font-medium text-green-800 text-sm mb-1">{reply.subject}</div>
+                        <div className="text-xs text-green-700 line-clamp-3">{reply.body}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-lg border border-slate-100">
+                    <Mail className="mx-auto mb-2 text-slate-300" size={24} />
+                    No replies yet. Click "Check Inbox" to check for new replies.
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

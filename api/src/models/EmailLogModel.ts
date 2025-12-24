@@ -23,8 +23,8 @@ export class EmailLogModel {
 
   static async create(emailLog: EmailLog): Promise<EmailLog> {
     const result = await query(
-      `INSERT INTO email_logs (id, lead_id, date, subject, status) 
-       VALUES ($1, $2, $3, $4, $5) 
+      `INSERT INTO email_logs (id, lead_id, date, subject, status, message_id) 
+       VALUES ($1, $2, $3, $4, $5, $6) 
        RETURNING *`,
       [
         emailLog.id,
@@ -32,6 +32,7 @@ export class EmailLogModel {
         typeof emailLog.date === 'string' ? new Date(emailLog.date) : emailLog.date,
         emailLog.subject,
         emailLog.status,
+        (emailLog as any).message_id || null,
       ]
     );
     return result.rows[0];
@@ -59,6 +60,10 @@ export class EmailLogModel {
     if (emailLog.status !== undefined) {
       fields.push(`status = $${paramCount++}`);
       values.push(emailLog.status);
+    }
+    if ((emailLog as any).message_id !== undefined) {
+      fields.push(`message_id = $${paramCount++}`);
+      values.push((emailLog as any).message_id);
     }
 
     if (fields.length === 0) {

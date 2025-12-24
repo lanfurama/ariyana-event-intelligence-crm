@@ -1,4 +1,4 @@
-import type { User, Lead, EmailTemplate, EmailLog, EmailLogAttachment, LeadWithEmailCount, ChatMessage } from '../types';
+import type { User, Lead, EmailTemplate, EmailLog, EmailLogAttachment, EmailReply, LeadWithEmailCount, ChatMessage } from '../types';
 
 // Always use relative path /api/v1 - works in both dev and production
 // In development, Vite proxy will forward /api/v1 requests to backend
@@ -183,6 +183,32 @@ export const emailLogsApi = {
     body: JSON.stringify(attachment),
   }),
   deleteAttachment: (attachmentId: number) => apiCall<void>(`/email-logs/attachments/${attachmentId}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Email Replies API
+export const emailRepliesApi = {
+  getAll: (leadId?: string, emailLogId?: string) => {
+    const params = new URLSearchParams();
+    if (leadId) params.append('leadId', leadId);
+    if (emailLogId) params.append('emailLogId', emailLogId);
+    const query = params.toString();
+    return apiCall<EmailReply[]>(`/email-replies${query ? `?${query}` : ''}`);
+  },
+  getById: (id: string) => apiCall<EmailReply>(`/email-replies/${id}`),
+  checkInbox: (options?: { since?: string; maxEmails?: number; subjectFilter?: string }) => apiCall<{ success: boolean; processedCount: number; message: string }>('/email-replies/check-inbox', {
+    method: 'POST',
+    body: JSON.stringify(options || {}),
+  }),
+  countBySubject: (subjectFilter: string, options?: { since?: string; includeRead?: boolean }) => {
+    const params = new URLSearchParams();
+    params.append('subject', subjectFilter);
+    if (options?.since) params.append('since', options.since);
+    if (options?.includeRead) params.append('includeRead', 'true');
+    return apiCall<{ success: boolean; count: number; subjectFilter: string; message: string }>(`/email-replies/count-by-subject?${params.toString()}`);
+  },
+  delete: (id: string) => apiCall<void>(`/email-replies/${id}`, {
     method: 'DELETE',
   }),
 };
