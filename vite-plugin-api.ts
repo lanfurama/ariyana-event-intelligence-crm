@@ -36,6 +36,7 @@ let usersRouter: any;
 let emailTemplatesRouter: any;
 let leadsRouter: any;
 let emailLogsRouter: any;
+let emailRepliesRouter: any;
 let chatMessagesRouter: any;
 let geminiRouter: any;
 let gptRouter: any;
@@ -68,6 +69,7 @@ async function loadRoutes() {
         './api/src/routes/emailTemplates.js',
         './api/src/routes/leads.js',
         './api/src/routes/emailLogs.js',
+        './api/src/routes/emailReplies.js',
         './api/src/routes/chatMessages.js',
         './api/src/routes/gemini.js',
         './api/src/routes/gpt.js',
@@ -99,13 +101,14 @@ async function loadRoutes() {
       emailTemplatesRouter = routes[1].default;
       leadsRouter = routes[2].default;
       emailLogsRouter = routes[3].default;
-      chatMessagesRouter = routes[4].default;
-      geminiRouter = routes[5].default;
-      gptRouter = routes[6].default;
-      excelImportRouter = routes[7].default;
-      csvImportRouter = routes[8].default;
-      eventBriefRouter = routes[9].default;
-      query = routes[10].query;
+      emailRepliesRouter = routes[4].default;
+      chatMessagesRouter = routes[5].default;
+      geminiRouter = routes[6].default;
+      gptRouter = routes[7].default;
+      excelImportRouter = routes[8].default;
+      csvImportRouter = routes[9].default;
+      eventBriefRouter = routes[10].default;
+      query = routes[11].query;
       
       console.log('✅ Routes loaded successfully');
     } catch (error: any) {
@@ -174,6 +177,7 @@ export function vitePluginApi(): Plugin {
       app.use('/email-templates', emailTemplatesRouter);
       app.use('/leads', leadsRouter);
       app.use('/email-logs', emailLogsRouter);
+      app.use('/email-replies', emailRepliesRouter);
       app.use('/chat-messages', chatMessagesRouter);
       app.use('/gemini', geminiRouter);
       app.use('/gpt', gptRouter);
@@ -191,6 +195,7 @@ export function vitePluginApi(): Plugin {
             emailTemplates: '/api/v1/email-templates',
             leads: '/api/v1/leads',
             emailLogs: '/api/v1/email-logs',
+            emailReplies: '/api/v1/email-replies',
             chatMessages: '/api/v1/chat-messages',
             gemini: '/api/v1/gemini',
             health: '/api/v1/health',

@@ -62,11 +62,14 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
   const [emailLogs, setEmailLogs] = useState<Array<{leadId: string, count: number, lastSent?: Date}>>([]);
   const [allEmailLogs, setAllEmailLogs] = useState<EmailLog[]>([]);
   const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
+  const [allEmailReplies, setAllEmailReplies] = useState<any[]>([]);
+  const [loadingEmailReplies, setLoadingEmailReplies] = useState(false);
   const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'yesterday' | 'this-week' | 'this-month'>('all');
 
-  // Load email logs on mount
+  // Load email logs and replies on mount
   useEffect(() => {
     loadEmailLogs();
+    loadEmailReplies();
   }, []);
 
   const loadEmailLogs = async () => {
@@ -102,6 +105,18 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
       console.error('Error loading email logs:', error);
     } finally {
       setLoadingEmailLogs(false);
+    }
+  };
+
+  const loadEmailReplies = async () => {
+    setLoadingEmailReplies(true);
+    try {
+      const replies = await emailRepliesApi.getAll();
+      setAllEmailReplies(replies);
+    } catch (error) {
+      console.error('Error loading email replies:', error);
+    } finally {
+      setLoadingEmailReplies(false);
     }
   };
 
@@ -182,6 +197,76 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
   const sentEmailsCount = leadsWithEmails.size;
   const unsentEmailsCount = leads.length - sentEmailsCount;
   const totalEmailsSent = filteredEmailLogs.reduce((sum, log) => sum + log.count, 0);
+
+  // Calculate email replies statistics by time period
+  const emailRepliesStats = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - 7);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let filteredReplies = allEmailReplies;
+    
+    if (timeFilter !== 'all') {
+      filteredReplies = allEmailReplies.filter(reply => {
+        const replyDate = reply.reply_date ? new Date(reply.reply_date) : null;
+        if (!replyDate) return false;
+        
+        switch (timeFilter) {
+          case 'today':
+            return replyDate >= todayStart;
+          case 'yesterday':
+            return replyDate >= yesterdayStart && replyDate < todayStart;
+          case 'this-week':
+            return replyDate >= weekStart;
+          case 'this-month':
+            return replyDate >= monthStart;
+          default:
+            return true;
+        }
+      });
+    }
+
+    const totalReplies = filteredReplies.length;
+    const uniqueLeadsReplied = new Set(filteredReplies.map(r => r.lead_id)).size;
+    
+    // Calculate reply rate (replies / emails sent)
+    const replyRate = totalEmailsSent > 0 
+      ? ((totalReplies / totalEmailsSent) * 100).toFixed(1)
+      : '0.0';
+
+    // Calculate replies by time period for breakdown
+    const today = allEmailReplies.filter(r => {
+      const replyDate = r.reply_date ? new Date(r.reply_date) : null;
+      return replyDate && replyDate >= todayStart;
+    }).length;
+
+    const yesterday = allEmailReplies.filter(r => {
+      const replyDate = r.reply_date ? new Date(r.reply_date) : null;
+      return replyDate && replyDate >= yesterdayStart && replyDate < todayStart;
+    }).length;
+
+    const thisWeek = allEmailReplies.filter(r => {
+      const replyDate = r.reply_date ? new Date(r.reply_date) : null;
+      return replyDate && replyDate >= weekStart;
+    }).length;
+
+    const thisMonth = allEmailReplies.filter(r => {
+      const replyDate = r.reply_date ? new Date(r.reply_date) : null;
+      return replyDate && replyDate >= monthStart;
+    }).length;
+
+    return {
+      total: totalReplies,
+      uniqueLeads: uniqueLeadsReplied,
+      replyRate: parseFloat(replyRate),
+      breakdown: { today, yesterday, thisWeek, thisMonth },
+      allTime: allEmailReplies.length
+    };
+  }, [allEmailReplies, timeFilter, totalEmailsSent]);
 
   // Calculate country statistics - filtered by time period
   const countryStats = useMemo(() => {
@@ -323,8 +408,160 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total emails sent" value={totalEmailsSent} icon={<Send size={18} />} />
+      {/* Email Sent Section */}
+      <div className="bg-white p-5 rounded-lg border border-slate-200">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-base font-semibold text-slate-900">Email Sent</h3>
+            <p className="text-sm text-slate-600 mt-1">Track emails sent to leads</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard title="Total emails sent" value={totalEmailsSent} icon={<Send size={18} />} />
+          <StatCard 
+            title="Leads contacted" 
+            value={sentEmailsCount} 
+            icon={<Users size={18} />}
+            subtitle={`${unsentEmailsCount} not contacted`}
+          />
+          <StatCard 
+            title="Emails today" 
+            value={allEmailLogs.filter(log => {
+              if (log.status !== 'sent' || !log.date) return false;
+              const todayStart = new Date();
+              todayStart.setHours(0, 0, 0, 0);
+              return new Date(log.date) >= todayStart;
+            }).length} 
+            icon={<Calendar size={18} />}
+          />
+          <StatCard 
+            title="Emails this week" 
+            value={allEmailLogs.filter(log => {
+              if (log.status !== 'sent' || !log.date) return false;
+              const weekStart = new Date();
+              weekStart.setDate(weekStart.getDate() - 7);
+              weekStart.setHours(0, 0, 0, 0);
+              return new Date(log.date) >= weekStart;
+            }).length} 
+            icon={<Mail size={18} />}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Today</div>
+            <div className="text-2xl font-semibold text-slate-900">
+              {allEmailLogs.filter(log => {
+                if (log.status !== 'sent' || !log.date) return false;
+                const todayStart = new Date();
+                todayStart.setHours(0, 0, 0, 0);
+                return new Date(log.date) >= todayStart;
+              }).length}
+            </div>
+            <div className="text-xs text-slate-600 mt-1">emails sent</div>
+          </div>
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Yesterday</div>
+            <div className="text-2xl font-semibold text-slate-900">
+              {allEmailLogs.filter(log => {
+                if (log.status !== 'sent' || !log.date) return false;
+                const todayStart = new Date();
+                todayStart.setHours(0, 0, 0, 0);
+                const yesterdayStart = new Date(todayStart);
+                yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+                const logDate = new Date(log.date);
+                return logDate >= yesterdayStart && logDate < todayStart;
+              }).length}
+            </div>
+            <div className="text-xs text-slate-600 mt-1">emails sent</div>
+          </div>
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">This Week</div>
+            <div className="text-2xl font-semibold text-slate-900">
+              {allEmailLogs.filter(log => {
+                if (log.status !== 'sent' || !log.date) return false;
+                const weekStart = new Date();
+                weekStart.setDate(weekStart.getDate() - 7);
+                weekStart.setHours(0, 0, 0, 0);
+                return new Date(log.date) >= weekStart;
+              }).length}
+            </div>
+            <div className="text-xs text-slate-600 mt-1">emails sent</div>
+          </div>
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">This Month</div>
+            <div className="text-2xl font-semibold text-slate-900">
+              {allEmailLogs.filter(log => {
+                if (log.status !== 'sent' || !log.date) return false;
+                const monthStart = new Date();
+                monthStart.setDate(1);
+                monthStart.setHours(0, 0, 0, 0);
+                return new Date(log.date) >= monthStart;
+              }).length}
+            </div>
+            <div className="text-xs text-slate-600 mt-1">emails sent</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Email Replies Section */}
+      <div className="bg-white p-5 rounded-lg border border-slate-200">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-base font-semibold text-slate-900">Email Replies</h3>
+            <p className="text-sm text-slate-600 mt-1">Track response rates and engagement</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+          <StatCard 
+            title="Total replies" 
+            value={emailRepliesStats.total} 
+            icon={<MessageSquare size={18} />}
+            subtitle={timeFilter !== 'all' ? `Filtered by ${timeFilter}` : 'All time'}
+          />
+          <StatCard 
+            title="Leads replied" 
+            value={emailRepliesStats.uniqueLeads} 
+            icon={<CheckCircle size={18} />}
+          />
+          <StatCard 
+            title="Reply rate" 
+            value={`${emailRepliesStats.replyRate}%`} 
+            icon={<TrendingUp size={18} />}
+            subtitle={totalEmailsSent > 0 ? `${emailRepliesStats.total} of ${totalEmailsSent} emails` : undefined}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Today</div>
+            <div className="text-2xl font-semibold text-slate-900">{emailRepliesStats.breakdown.today}</div>
+            <div className="text-xs text-slate-600 mt-1">replies</div>
+          </div>
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Yesterday</div>
+            <div className="text-2xl font-semibold text-slate-900">{emailRepliesStats.breakdown.yesterday}</div>
+            <div className="text-xs text-slate-600 mt-1">replies</div>
+          </div>
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">This Week</div>
+            <div className="text-2xl font-semibold text-slate-900">{emailRepliesStats.breakdown.thisWeek}</div>
+            <div className="text-xs text-slate-600 mt-1">replies</div>
+          </div>
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">This Month</div>
+            <div className="text-2xl font-semibold text-slate-900">{emailRepliesStats.breakdown.thisMonth}</div>
+            <div className="text-xs text-slate-600 mt-1">replies</div>
+          </div>
+        </div>
+
+        {emailRepliesStats.allTime === 0 && (
+          <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
+            No email replies yet. Replies will appear here once leads respond to your emails.
+          </div>
+        )}
       </div>
 
       <div className="bg-white p-5 rounded-lg border border-slate-200">
@@ -438,16 +675,21 @@ const StatCard = ({
   title,
   value,
   icon,
+  subtitle,
 }: {
   title: string;
-  value: number;
+  value: number | string;
   icon: React.ReactNode;
+  subtitle?: string;
 }) => (
   <div className="bg-white p-3 rounded-lg border border-slate-200">
     <div className="flex items-center justify-between gap-2">
       <div className="min-w-0 flex-1">
         <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{title}</p>
         <p className="text-2xl font-semibold text-slate-900 tracking-tight mt-1 tabular-nums">{value}</p>
+        {subtitle && (
+          <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+        )}
       </div>
       <div className="h-8 w-8 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 flex-shrink-0">
         {icon}
@@ -468,6 +710,8 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
   const [allEmailLogs, setAllEmailLogs] = useState<EmailLog[]>([]);
   const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
   const [sendingEmails, setSendingEmails] = useState(false);
+  const [emailReplies, setEmailReplies] = useState<Array<{leadId: string}>>([]);
+  const [markingReplies, setMarkingReplies] = useState<Set<string>>(new Set());
 
   // Helper to get email status for a lead
   const getEmailStatus = (leadId: string) => {
@@ -512,7 +756,51 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
   // Load email logs on mount
   useEffect(() => {
     loadEmailLogs();
+    loadEmailReplies();
   }, [leads]);
+
+  // Load email replies
+  const loadEmailReplies = async () => {
+    if (leads.length === 0) return;
+    
+    try {
+      const allReplies = await emailRepliesApi.getAll();
+      // Store lead IDs that have replies
+      const leadIdsWithReplies = new Set(allReplies.map(reply => reply.lead_id));
+      setEmailReplies(Array.from(leadIdsWithReplies).map(leadId => ({ leadId })));
+    } catch (error) {
+      console.error('Error loading email replies:', error);
+    }
+  };
+
+  // Check if lead has replied
+  const hasReplied = (leadId: string) => {
+    return emailReplies.some(r => r.leadId === leadId);
+  };
+
+  // Handle marking reply
+  const handleMarkReply = async (leadId: string) => {
+    if (hasReplied(leadId)) {
+      // Already replied, do nothing or show message
+      return;
+    }
+
+    setMarkingReplies(prev => new Set(prev).add(leadId));
+    try {
+      await emailRepliesApi.create(leadId);
+      // Reload replies to update UI
+      await loadEmailReplies();
+    } catch (error: any) {
+      console.error('Error marking reply:', error);
+      alert(`Error marking reply: ${error.message || 'Unknown error'}`);
+    } finally {
+      setMarkingReplies(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(leadId);
+        return newSet;
+      });
+    }
+  };
 
   // Load email templates when modal opens
   useEffect(() => {
@@ -883,13 +1171,56 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
                       })()}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <button 
-                        onClick={() => onSelectLead(lead)}
-                        className="text-sm text-slate-600 hover:text-slate-900 font-medium inline-flex items-center"
-                      >
-                        View
-                        <ChevronRight size={14} className="ml-1" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const emailStatus = getEmailStatus(lead.id);
+                          const replied = hasReplied(lead.id);
+                          const isMarking = markingReplies.has(lead.id);
+                          
+                          // Only show reply button if email was sent
+                          if (emailStatus.hasEmail) {
+                            return (
+                              <button
+                                onClick={() => handleMarkReply(lead.id)}
+                                disabled={replied || isMarking}
+                                className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                                  replied
+                                    ? 'bg-green-100 text-green-700 cursor-default'
+                                    : isMarking
+                                    ? 'bg-slate-100 text-slate-500 cursor-wait'
+                                    : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                }`}
+                                title={replied ? 'Already marked as replied' : 'Mark as replied'}
+                              >
+                                {isMarking ? (
+                                  <>
+                                    <Loader2 size={12} className="mr-1 animate-spin" />
+                                    Marking...
+                                  </>
+                                ) : replied ? (
+                                  <>
+                                    <CheckCircle size={12} className="mr-1" />
+                                    Replied
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle size={12} className="mr-1" />
+                                    Mark Reply
+                                  </>
+                                )}
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
+                        <button 
+                          onClick={() => onSelectLead(lead)}
+                          className="text-sm text-slate-600 hover:text-slate-900 font-medium inline-flex items-center"
+                        >
+                          View
+                          <ChevronRight size={14} className="ml-1" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

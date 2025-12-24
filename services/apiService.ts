@@ -197,6 +197,10 @@ export const emailRepliesApi = {
     return apiCall<EmailReply[]>(`/email-replies${query ? `?${query}` : ''}`);
   },
   getById: (id: string) => apiCall<EmailReply>(`/email-replies/${id}`),
+  create: (leadId: string) => apiCall<EmailReply>('/email-replies', {
+    method: 'POST',
+    body: JSON.stringify({ leadId }),
+  }),
   checkInbox: (options?: { since?: string; maxEmails?: number; subjectFilter?: string }) => apiCall<{ success: boolean; processedCount: number; message: string }>('/email-replies/check-inbox', {
     method: 'POST',
     body: JSON.stringify(options || {}),

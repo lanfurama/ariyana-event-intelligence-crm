@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { EmailReplyModel } from '../models/EmailReplyModel.js';
 import { ImapService } from '../utils/imapService.js';
+import { EmailLogModel } from '../models/EmailLogModel.js';
 
 const router = Router();
 
@@ -32,6 +33,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // POST /api/email-replies/check-inbox - Manually trigger inbox check for replies
+// This must come before POST / to avoid route conflicts
 router.post('/check-inbox', async (req: Request, res: Response) => {
   try {
     const { since, maxEmails, subjectFilter } = req.body;
@@ -54,6 +56,53 @@ router.post('/check-inbox', async (req: Request, res: Response) => {
       error: error.message || 'Failed to check inbox',
       details: error.stack,
     });
+  }
+});
+
+// POST /api/email-replies - Create a manual email reply (marked by user)
+router.post('/', async (req: Request, res: Response) => {
+  try {
+    const { leadId } = req.body;
+
+    if (!leadId) {
+      return res.status(400).json({ error: 'leadId is required' });
+    }
+
+    // Get the latest email log for this lead
+    const emailLogs = await EmailLogModel.getAll(leadId);
+    if (emailLogs.length === 0) {
+      return res.status(400).json({ error: 'No email logs found for this lead' });
+    }
+
+    const latestEmailLog = emailLogs[0]; // Already sorted by date DESC
+
+    // Check if reply already exists for this email log
+    const existingReplies = await EmailReplyModel.getAll(leadId, latestEmailLog.id);
+    if (existingReplies.length > 0) {
+      return res.status(400).json({ error: 'Reply already exists for this lead' });
+    }
+
+    // Create a manual email reply record
+    const emailReply = {
+      id: `reply-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      email_log_id: latestEmailLog.id,
+      lead_id: leadId,
+      from_email: '', // Will be empty for manual entries
+      from_name: '', // Will be empty for manual entries
+      subject: latestEmailLog.subject ? `Re: ${latestEmailLog.subject}` : 'Re: Email Reply',
+      body: 'Manually marked as replied',
+      html_body: null,
+      reply_date: new Date(),
+      message_id: null,
+      in_reply_to: latestEmailLog.message_id || null,
+      references_header: null,
+    };
+
+    const createdReply = await EmailReplyModel.create(emailReply);
+    res.status(201).json(createdReply);
+  } catch (error: any) {
+    console.error('Error creating manual email reply:', error);
+    res.status(500).json({ error: error.message || 'Failed to create email reply' });
   }
 });
 
