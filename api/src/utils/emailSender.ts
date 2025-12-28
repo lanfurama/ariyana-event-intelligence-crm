@@ -38,7 +38,7 @@ export interface EmailSendResult {
   message?: string;
   successIds?: string[];
   missingContactIds?: string[];
-  sentEmails?: Array<{ leadId: string; subject: string }>; // Track sent emails with subjects
+  sentEmails?: Array<{ leadId: string; subject: string; messageId?: string }>; // Track sent emails with subjects and message IDs
 }
 
 let cachedTransporter: nodemailer.Transporter | null = null;
@@ -352,7 +352,7 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
 
     try {
       const { subject, text, html } = buildLeadEmailBody(lead, contact);
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: defaultFromEmail
           ? `"Ariyana Convention Centre" <${defaultFromEmail}>`
           : '"Ariyana Convention Centre" <marketing@furamavietnam.com>',
@@ -364,7 +364,11 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
       });
       summary.sent += 1;
       summary.successIds?.push(lead.id);
-      summary.sentEmails?.push({ leadId: lead.id, subject });
+      summary.sentEmails?.push({ 
+        leadId: lead.id, 
+        subject,
+        messageId: info.messageId || undefined
+      });
     } catch (error: any) {
       const { subject } = buildLeadEmailBody(lead, contact);
       summary.failures.push({
@@ -466,7 +470,7 @@ export async function sendLeadEmailsWithCustomContent(
         .replace(/&#39;/g, "'")
         .trim();
 
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: defaultFromEmail
           ? `"Ariyana Convention Centre" <${defaultFromEmail}>`
           : '"Ariyana Convention Centre" <marketing@furamavietnam.com>',
@@ -478,7 +482,11 @@ export async function sendLeadEmailsWithCustomContent(
       });
       summary.sent += 1;
       summary.successIds?.push(lead.id);
-      summary.sentEmails?.push({ leadId: lead.id, subject: customEmail.subject });
+      summary.sentEmails?.push({ 
+        leadId: lead.id, 
+        subject: customEmail.subject,
+        messageId: info.messageId || undefined
+      });
     } catch (error: any) {
       summary.failures.push({
         eventName: lead.company_name,

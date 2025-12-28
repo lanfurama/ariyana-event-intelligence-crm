@@ -121,11 +121,15 @@ router.post('/send-emails', async (req: Request, res: Response) => {
     if (emailSummary.successIds && emailSummary.successIds.length > 0) {
       const timestamp = new Date().toISOString();
       
-      // Create a map of leadId to subject from sent emails
+      // Create maps of leadId to subject and messageId from sent emails
       const subjectMap = new Map<string, string>();
+      const messageIdMap = new Map<string, string>();
       if (emailSummary.sentEmails) {
         emailSummary.sentEmails.forEach(email => {
           subjectMap.set(email.leadId, email.subject);
+          if (email.messageId) {
+            messageIdMap.set(email.leadId, email.messageId);
+          }
         });
       }
 
@@ -135,8 +139,9 @@ router.post('/send-emails', async (req: Request, res: Response) => {
             // Update lead status
             const updatedLead = await LeadModel.update(leadId, { status: 'Contacted', last_contacted: timestamp });
             
-            // Create email log with the actual subject that was sent
+            // Create email log with the actual subject and message_id that was sent
             const subject = subjectMap.get(leadId);
+            const messageId = messageIdMap.get(leadId);
             const lead = leads.find(l => l.id === leadId);
             
             if (subject && lead) {
@@ -149,8 +154,9 @@ router.post('/send-emails', async (req: Request, res: Response) => {
                   date: new Date(timestamp),
                   subject: subject,
                   status: 'sent',
+                  message_id: messageId || null,
                 });
-                console.log(`✅ Email log created for lead ${leadId}: ${subject}`);
+                console.log(`✅ Email log created for lead ${leadId}: ${subject}${messageId ? ` (Message-ID: ${messageId})` : ''}`);
               } catch (logError) {
                 console.error(`❌ Error creating email log for lead ${leadId}:`, logError);
                 // Don't fail the whole operation if log creation fails

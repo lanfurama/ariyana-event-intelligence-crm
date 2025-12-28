@@ -7,6 +7,7 @@ import usersRouter from './routes/users.js';
 import emailTemplatesRouter from './routes/emailTemplates.js';
 import leadsRouter from './routes/leads.js';
 import emailLogsRouter from './routes/emailLogs.js';
+import emailRepliesRouter from './routes/emailReplies.js';
 import chatMessagesRouter from './routes/chatMessages.js';
 import geminiRouter from './routes/gemini.js';
 import excelImportRouter from './routes/excelImport.js';
@@ -80,6 +81,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/email-templates', emailTemplatesRouter);
 app.use('/api/leads', leadsRouter);
 app.use('/api/email-logs', emailLogsRouter);
+app.use('/api/email-replies', emailRepliesRouter);
 app.use('/api/chat-messages', chatMessagesRouter);
 app.use('/api/gemini', geminiRouter);
 app.use('/api/excel-import', excelImportRouter);
@@ -95,6 +97,7 @@ app.get('/', (req, res) => {
       emailTemplates: '/api/email-templates',
       leads: '/api/leads',
       emailLogs: '/api/email-logs',
+      emailReplies: '/api/email-replies',
       chatMessages: '/api/chat-messages',
       gemini: '/api/gemini',
       excelImport: '/api/excel-import',

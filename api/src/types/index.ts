@@ -53,6 +53,23 @@ export interface EmailLog {
   date: Date | string;
   subject: string;
   status: EmailLogStatus;
+  message_id?: string;
+  created_at?: Date;
+}
+
+export interface EmailReply {
+  id: string;
+  email_log_id: string;
+  lead_id: string;
+  from_email: string;
+  from_name?: string;
+  subject: string;
+  body: string;
+  html_body?: string;
+  reply_date: Date | string;
+  message_id?: string;
+  in_reply_to?: string;
+  references_header?: string;
   created_at?: Date;
 }
 

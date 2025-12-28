@@ -42,7 +42,7 @@ import * as GPTService from './services/gptService';
 import { extractRetryDelay as extractGeminiRetryDelay, isRateLimitError as isGeminiRateLimitError } from './services/geminiService';
 import { extractRetryDelay, isRateLimitError } from './services/gptService';
 import { chatMessagesApi, type ChatMessageDB } from './services/apiService';
-import { usersApi, leadsApi, emailTemplatesApi, emailLogsApi } from './services/apiService';
+import { usersApi, leadsApi, emailTemplatesApi, emailLogsApi, emailRepliesApi } from './services/apiService';
 
 // Import components
 import { LoginView } from './components/LoginView';
@@ -60,17 +60,23 @@ import { formatMarkdown, formatInlineMarkdown } from './utils/markdownUtils';
 // 2. Dashboard View
 const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => {
   const [emailLogs, setEmailLogs] = useState<Array<{leadId: string, count: number, lastSent?: Date}>>([]);
+  const [allEmailLogs, setAllEmailLogs] = useState<EmailLog[]>([]);
   const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
+  const [allEmailReplies, setAllEmailReplies] = useState<any[]>([]);
+  const [loadingEmailReplies, setLoadingEmailReplies] = useState(false);
+  const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'yesterday' | 'this-week' | 'this-month'>('all');
 
-  // Load email logs on mount
+  // Load email logs and replies on mount
   useEffect(() => {
     loadEmailLogs();
+    loadEmailReplies();
   }, []);
 
   const loadEmailLogs = async () => {
     setLoadingEmailLogs(true);
     try {
       const allLogs = await emailLogsApi.getAll();
+      setAllEmailLogs(allLogs);
       
       // Group by lead_id and count sent emails
       const logsByLead = new Map<string, {count: number, lastSent?: Date}>();
@@ -102,6 +108,18 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
     }
   };
 
+  const loadEmailReplies = async () => {
+    setLoadingEmailReplies(true);
+    try {
+      const replies = await emailRepliesApi.getAll();
+      setAllEmailReplies(replies);
+    } catch (error) {
+      console.error('Error loading email replies:', error);
+    } finally {
+      setLoadingEmailReplies(false);
+    }
+  };
+
   const stats = {
     total: leads.length,
     vietnam: leads.filter(l => l.vietnamEvents > 0).length,
@@ -109,25 +127,182 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
     qualified: leads.filter(l => l.status === 'Qualified').length
   };
 
+  // Filter email logs by time period
+  const filteredEmailLogs = useMemo(() => {
+    if (timeFilter === 'all') {
+      return emailLogs;
+    }
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    const yesterdayEnd = new Date(todayStart);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - 7);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const sentLogs = allEmailLogs.filter(log => log.status === 'sent' && log.date);
+    let filteredLogs: EmailLog[] = [];
+
+    switch (timeFilter) {
+      case 'today':
+        filteredLogs = sentLogs.filter(log => {
+          const logDate = new Date(log.date);
+          return logDate >= todayStart;
+        });
+        break;
+      case 'yesterday':
+        filteredLogs = sentLogs.filter(log => {
+          const logDate = new Date(log.date);
+          return logDate >= yesterdayStart && logDate < todayStart;
+        });
+        break;
+      case 'this-week':
+        filteredLogs = sentLogs.filter(log => {
+          const logDate = new Date(log.date);
+          return logDate >= weekStart;
+        });
+        break;
+      case 'this-month':
+        filteredLogs = sentLogs.filter(log => {
+          const logDate = new Date(log.date);
+          return logDate >= monthStart;
+        });
+        break;
+    }
+
+    // Group filtered logs by lead_id
+    const logsByLead = new Map<string, {count: number, lastSent?: Date}>();
+    filteredLogs.forEach(log => {
+      if (log.lead_id) {
+        const existing = logsByLead.get(log.lead_id) || { count: 0 };
+        existing.count += 1;
+        const logDate = log.date ? new Date(log.date) : null;
+        if (logDate && (!existing.lastSent || logDate > existing.lastSent)) {
+          existing.lastSent = logDate;
+        }
+        logsByLead.set(log.lead_id, existing);
+      }
+    });
+
+    return Array.from(logsByLead.entries()).map(([leadId, data]) => ({
+      leadId,
+      ...data
+    }));
+  }, [timeFilter, allEmailLogs, emailLogs]);
+
   // Calculate email statistics
-  const leadsWithEmails = new Set(emailLogs.map(log => log.leadId));
+  const leadsWithEmails = new Set(filteredEmailLogs.map(log => log.leadId));
   const sentEmailsCount = leadsWithEmails.size;
   const unsentEmailsCount = leads.length - sentEmailsCount;
-  const totalEmailsSent = emailLogs.reduce((sum, log) => sum + log.count, 0);
+  const totalEmailsSent = filteredEmailLogs.reduce((sum, log) => sum + log.count, 0);
 
-  // Calculate country statistics
+  // Calculate email replies statistics by time period
+  const emailRepliesStats = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - 7);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let filteredReplies = allEmailReplies;
+    
+    if (timeFilter !== 'all') {
+      filteredReplies = allEmailReplies.filter(reply => {
+        const replyDate = reply.reply_date ? new Date(reply.reply_date) : null;
+        if (!replyDate) return false;
+        
+        switch (timeFilter) {
+          case 'today':
+            return replyDate >= todayStart;
+          case 'yesterday':
+            return replyDate >= yesterdayStart && replyDate < todayStart;
+          case 'this-week':
+            return replyDate >= weekStart;
+          case 'this-month':
+            return replyDate >= monthStart;
+          default:
+            return true;
+        }
+      });
+    }
+
+    const totalReplies = filteredReplies.length;
+    const uniqueLeadsReplied = new Set(filteredReplies.map(r => r.lead_id)).size;
+    
+    // Calculate reply rate (replies / emails sent)
+    const replyRate = totalEmailsSent > 0 
+      ? ((totalReplies / totalEmailsSent) * 100).toFixed(1)
+      : '0.0';
+
+    // Calculate replies by time period for breakdown
+    const today = allEmailReplies.filter(r => {
+      const replyDate = r.reply_date ? new Date(r.reply_date) : null;
+      return replyDate && replyDate >= todayStart;
+    }).length;
+
+    const yesterday = allEmailReplies.filter(r => {
+      const replyDate = r.reply_date ? new Date(r.reply_date) : null;
+      return replyDate && replyDate >= yesterdayStart && replyDate < todayStart;
+    }).length;
+
+    const thisWeek = allEmailReplies.filter(r => {
+      const replyDate = r.reply_date ? new Date(r.reply_date) : null;
+      return replyDate && replyDate >= weekStart;
+    }).length;
+
+    const thisMonth = allEmailReplies.filter(r => {
+      const replyDate = r.reply_date ? new Date(r.reply_date) : null;
+      return replyDate && replyDate >= monthStart;
+    }).length;
+
+    return {
+      total: totalReplies,
+      uniqueLeads: uniqueLeadsReplied,
+      replyRate: parseFloat(replyRate),
+      breakdown: { today, yesterday, thisWeek, thisMonth },
+      allTime: allEmailReplies.length
+    };
+  }, [allEmailReplies, timeFilter, totalEmailsSent]);
+
+  // Calculate country statistics - filtered by time period
   const countryStats = useMemo(() => {
     const countryMap = new Map<string, number>();
+    
+    // Helper function to capitalize first letter of each word
+    const capitalizeWords = (str: string): string => {
+      return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    };
+    
+    // Get lead IDs that have emails sent in the filtered time period
+    const filteredLeadIds = new Set(filteredEmailLogs.map(log => log.leadId));
+    
+    // Only count leads that have emails sent in the filtered period
     leads.forEach(lead => {
-      const country = lead.country || 'Unknown';
-      countryMap.set(country, (countryMap.get(country) || 0) + 1);
+      if (filteredLeadIds.has(lead.id)) {
+        // Normalize country name: trim, lowercase for grouping, then capitalize for display
+        const countryRaw = (lead.country || 'Unknown').trim();
+        const countryKey = countryRaw.toLowerCase();
+        const countryDisplay = capitalizeWords(countryRaw);
+        countryMap.set(countryKey, (countryMap.get(countryKey) || 0) + 1);
+      }
     });
     
     return Array.from(countryMap.entries())
-      .map(([country, count]) => ({ name: country, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10); // Top 10 countries
-  }, [leads]);
+      .map(([countryKey, count]) => ({ 
+        name: capitalizeWords(countryKey), 
+        count 
+      }))
+      .sort((a, b) => b.count - a.count);
+      // Show all countries, not just top 10
+  }, [leads, filteredEmailLogs]);
 
   const chartData = [
     { name: 'New', count: stats.new },
@@ -143,105 +318,234 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
 
   if (loading) {
     return (
-      <div className="p-6 space-y-5 animate-fade-in">
-        <div className="flex items-start justify-between gap-4">
+      <div className="p-4 space-y-4 animate-fade-in max-w-7xl mx-auto">
+        <div className="flex items-start justify-between gap-4 mb-1">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h2>
-            <p className="text-sm text-slate-600 mt-1">Overview of pipeline and key metrics</p>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
           </div>
         </div>
-        <div className="flex items-center justify-center h-56 bg-white rounded-lg border border-slate-200">
-          <Loader2 className="animate-spin text-slate-600" size={24} />
-          <span className="ml-3 text-slate-600 text-sm font-medium">Loading leads…</span>
+        <div className="flex items-center justify-center h-48 bg-white rounded-lg border border-slate-200">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="animate-spin text-slate-600" size={24} />
+            <span className="text-slate-600 text-sm">Loading…</span>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-5 animate-fade-in">
-      <div className="flex items-start justify-between gap-4">
+    <div className="p-4 space-y-4 animate-fade-in max-w-7xl mx-auto">
+      {/* Header Section */}
+      <div className="flex items-start justify-between gap-4 mb-1">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Dashboard</h2>
-          <p className="text-sm text-slate-600 mt-1">Monitor pipeline status and key metrics</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total leads" value={stats.total} icon={<Users size={18} />} />
-        <StatCard title="Vietnam events" value={stats.vietnam} icon={<Search size={18} />} />
-        <StatCard title="New opportunities" value={stats.new} icon={<Plus size={18} />} />
-        <StatCard title="Qualified" value={stats.qualified} icon={<ChevronRight size={18} />} />
+
+      {/* Time Filter */}
+      <div className="bg-white border border-slate-200 rounded-lg p-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-slate-700">Filter:</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {[
+              { key: 'all', label: 'All Time' },
+              { key: 'today', label: 'Today' },
+              { key: 'yesterday', label: 'Yesterday' },
+              { key: 'this-week', label: 'This Week' },
+              { key: 'this-month', label: 'This Month' }
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTimeFilter(key as typeof timeFilter)}
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  timeFilter === key
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Leads with emails sent" value={sentEmailsCount} icon={<Mail size={18} />} />
-        <StatCard title="Leads without emails" value={unsentEmailsCount} icon={<Mail size={18} />} />
-        <StatCard title="Total emails sent" value={totalEmailsSent} icon={<Send size={18} />} />
-        <StatCard title="Top countries" value={countryStats.length} icon={<MapPin size={18} />} />
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard 
+          title="Total Leads" 
+          value={stats.total} 
+          icon={<Users size={18} />}
+          color="blue"
+        />
+        <StatCard 
+          title="Vietnam Events" 
+          value={stats.vietnam} 
+          icon={<Search size={18} />}
+          color="green"
+        />
+        <StatCard 
+          title="New Opportunities" 
+          value={stats.new} 
+          icon={<Plus size={18} />}
+          color="orange"
+        />
+        <StatCard 
+          title="Qualified" 
+          value={stats.qualified} 
+          icon={<CheckCircle size={18} />}
+          color="purple"
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-white p-5 rounded-lg border border-slate-200">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <h3 className="text-base font-semibold text-slate-900">Pipeline status</h3>
-              <p className="text-sm text-slate-600 mt-1">Distribution across sales stages</p>
-            </div>
+      {/* Email Sent Section */}
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-blue-50 px-4 py-3 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <Send size={18} className="text-blue-600" />
+            <h3 className="text-base font-semibold text-slate-900">Email Sent</h3>
+          </div>
+        </div>
+        
+        <div className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard 
+              title="Total Emails Sent" 
+              value={totalEmailsSent} 
+              icon={<Send size={18} />}
+              color="blue"
+            />
+            <StatCard 
+              title="Leads Contacted" 
+              value={sentEmailsCount} 
+              icon={<Users size={18} />}
+              subtitle={`${unsentEmailsCount} not contacted`}
+              color="indigo"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Email Replies Section */}
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-green-50 px-4 py-3 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <MessageSquare size={18} className="text-green-600" />
+            <h3 className="text-base font-semibold text-slate-900">Email Replies</h3>
+          </div>
+        </div>
+        
+        <div className="p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <StatCard 
+              title="Total Replies" 
+              value={emailRepliesStats.total} 
+              icon={<MessageSquare size={18} />}
+              color="green"
+            />
+            <StatCard 
+              title="Leads Replied" 
+              value={emailRepliesStats.uniqueLeads} 
+              icon={<CheckCircle size={18} />}
+              color="emerald"
+            />
+            <StatCard 
+              title="Reply Rate" 
+              value={`${emailRepliesStats.replyRate}%`} 
+              icon={<TrendingUp size={18} />}
+              color="teal"
+            />
           </div>
 
+          {emailRepliesStats.allTime === 0 && (
+            <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
+              <p className="text-sm text-slate-600">No email replies yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Country Distribution Section */}
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        <div className="bg-purple-50 px-4 py-3 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <MapPin size={18} className="text-purple-600" />
+            <h3 className="text-base font-semibold text-slate-900">Country Distribution</h3>
+          </div>
+        </div>
+        
+        <div className="p-4">
           {stats.total === 0 ? (
-            <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-              No leads yet. Add leads to see pipeline status.
+            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
+              <p className="text-sm text-slate-600">No leads yet</p>
+            </div>
+          ) : countryStats.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
+              <p className="text-sm text-slate-600">No country data available</p>
             </div>
           ) : (
-            <PipelineBars data={chartData} />
-          )}
-        </div>
-
-        <div className="bg-white p-5 rounded-lg border border-slate-200">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <h3 className="text-base font-semibold text-slate-900">Email status</h3>
-              <p className="text-sm text-slate-600 mt-1">Leads with sent vs unsent emails</p>
-            </div>
-          </div>
-
-          {loadingEmailLogs ? (
-            <div className="flex items-center justify-center h-32">
-              <Loader2 className="animate-spin text-slate-600" size={20} />
-              <span className="ml-2 text-slate-600 text-sm">Loading email data…</span>
-            </div>
-          ) : stats.total === 0 ? (
-            <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-              No leads yet. Add leads to see email statistics.
-            </div>
-          ) : (
-            <PipelineBars data={emailChartData} />
+            <PipelineBars data={countryStats} />
           )}
         </div>
       </div>
+    </div>
+  );
+};
 
-      <div className="bg-white p-5 rounded-lg border border-slate-200">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">Country distribution</h3>
-            <p className="text-sm text-slate-600 mt-1">Top countries by lead count</p>
-          </div>
-        </div>
+const EmailActivityChart = ({ emailLogs }: { emailLogs: EmailLog[] }) => {
+  const dailyActivity = useMemo(() => {
+    const now = new Date();
+    const days = [];
+    const activityMap = new Map<string, number>();
 
-        {stats.total === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-            No leads yet. Add leads to see country statistics.
+    // Initialize last 7 days
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+      const dayNumber = date.getDate();
+      days.push({ dateKey, label: `${dayName} ${dayNumber}`, count: 0 });
+      activityMap.set(dateKey, 0);
+    }
+
+    // Count emails per day
+    emailLogs.forEach(log => {
+      if (log.status === 'sent' && log.date) {
+        const logDate = new Date(log.date);
+        const dateKey = logDate.toISOString().split('T')[0];
+        const existing = activityMap.get(dateKey) || 0;
+        activityMap.set(dateKey, existing + 1);
+      }
+    });
+
+    // Update days with counts
+    return days.map(day => ({
+      ...day,
+      count: activityMap.get(day.dateKey) || 0
+    }));
+  }, [emailLogs]);
+
+  const max = Math.max(...dailyActivity.map(d => d.count)) || 1;
+
+  return (
+    <div className="space-y-3">
+      {dailyActivity.map((d) => {
+        const pct = max > 0 ? Math.round((d.count / max) * 100) : 0;
+        return (
+          <div key={d.dateKey} className="grid grid-cols-[80px_1fr_44px] items-center gap-3">
+            <div className="text-xs font-medium text-slate-700">{d.label}</div>
+            <div className="h-2.5 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+              <div
+                className="h-full bg-slate-900 rounded-full transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="text-xs font-semibold text-slate-900 text-right tabular-nums">{d.count}</div>
           </div>
-        ) : countryStats.length === 0 ? (
-          <div className="rounded-md border border-dashed border-slate-200 p-6 text-sm text-slate-600">
-            No country data available.
-          </div>
-        ) : (
-          <PipelineBars data={countryStats} />
-        )}
-      </div>
+        );
+      })}
     </div>
   );
 };
@@ -249,25 +553,41 @@ const Dashboard = ({ leads, loading }: { leads: Lead[], loading?: boolean }) => 
 const PipelineBars = ({ data }: { data: { name: string, count: number }[] }) => {
   const max = Math.max(...data.map(d => d.count)) || 1;
 
+  const colors = [
+    { bg: 'bg-purple-500', dot: 'bg-purple-500' },
+    { bg: 'bg-pink-500', dot: 'bg-pink-500' },
+    { bg: 'bg-indigo-500', dot: 'bg-indigo-500' },
+    { bg: 'bg-blue-500', dot: 'bg-blue-500' },
+    { bg: 'bg-cyan-500', dot: 'bg-cyan-500' },
+    { bg: 'bg-teal-500', dot: 'bg-teal-500' },
+    { bg: 'bg-emerald-500', dot: 'bg-emerald-500' },
+  ];
+
   return (
     <div className="space-y-3">
-      {data.map((d) => {
+      {data.map((d, index) => {
         const pct = Math.round((d.count / max) * 100);
+        const color = colors[index % colors.length];
+        
         return (
-          <div key={d.name} className="grid grid-cols-[120px_1fr_44px] items-center gap-3">
-            <div className="text-sm font-medium text-slate-700">{d.name}</div>
-            <div className="h-2.5 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+          <div key={d.name}>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <div className={`h-2.5 w-2.5 rounded-full ${color.dot}`}></div>
+                <div className="text-sm font-medium text-slate-700">{d.name}</div>
+              </div>
+              <div className="text-sm font-semibold text-slate-900 tabular-nums">{d.count}</div>
+            </div>
+            <div className="h-3 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
               <div
-                className="h-full bg-slate-700"
+                className={`h-full ${color.bg} rounded-full transition-all duration-500 ease-out`}
                 style={{ width: `${pct}%` }}
                 aria-label={`${d.name} ${d.count}`}
               />
             </div>
-            <div className="text-sm tabular-nums text-slate-700 text-right">{d.count}</div>
           </div>
         );
       })}
-      <p className="text-xs text-slate-500 pt-1">Bars are scaled relative to the largest stage.</p>
     </div>
   );
 };
@@ -276,35 +596,59 @@ const StatCard = ({
   title,
   value,
   icon,
+  subtitle,
+  color = 'slate',
 }: {
   title: string;
-  value: number;
+  value: number | string;
   icon: React.ReactNode;
-}) => (
-  <div className="bg-white p-4 rounded-lg border border-slate-200">
-    <div className="flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{title}</p>
-        <p className="text-2xl font-semibold text-slate-900 tracking-tight mt-1 tabular-nums">{value}</p>
-      </div>
-      <div className="h-9 w-9 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
-        {icon}
+  subtitle?: string;
+  color?: 'blue' | 'green' | 'orange' | 'purple' | 'indigo' | 'cyan' | 'teal' | 'emerald' | 'slate';
+}) => {
+  const colorClasses = {
+    blue: 'bg-blue-50 border-blue-200 text-blue-600',
+    green: 'bg-green-50 border-green-200 text-green-600',
+    orange: 'bg-orange-50 border-orange-200 text-orange-600',
+    purple: 'bg-purple-50 border-purple-200 text-purple-600',
+    indigo: 'bg-indigo-50 border-indigo-200 text-indigo-600',
+    cyan: 'bg-cyan-50 border-cyan-200 text-cyan-600',
+    teal: 'bg-teal-50 border-teal-200 text-teal-600',
+    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-600',
+    slate: 'bg-slate-100 border-slate-200 text-slate-700',
+  };
+
+  return (
+    <div className="bg-white p-3 rounded-lg border border-slate-200">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">{title}</p>
+          <p className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums">{value}</p>
+          {subtitle && (
+            <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+          )}
+        </div>
+        <div className={`h-10 w-10 rounded-lg ${colorClasses[color]} flex items-center justify-center flex-shrink-0`}>
+          {icon}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // 3. Leads View
 const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { leads: Lead[], onSelectLead: (lead: Lead) => void, onUpdateLead: (lead: Lead) => void, user: User, onAddLead?: () => void }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [emailFilter, setEmailFilter] = useState<'all' | 'sent' | 'unsent'>('all');
+  const [emailFilter, setEmailFilter] = useState<'all' | 'sent' | 'unsent' | 'no-key-person-email' | 'has-key-person-email' | 'replied'>('all');
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [emailLogs, setEmailLogs] = useState<Array<{leadId: string, count: number, lastSent?: Date}>>([]);
+  const [allEmailLogs, setAllEmailLogs] = useState<EmailLog[]>([]);
   const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
   const [sendingEmails, setSendingEmails] = useState(false);
+  const [emailReplies, setEmailReplies] = useState<Array<{leadId: string}>>([]);
+  const [markingReplies, setMarkingReplies] = useState<Set<string>>(new Set());
 
   // Helper to get email status for a lead
   const getEmailStatus = (leadId: string) => {
@@ -312,19 +656,33 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     return log ? { hasEmail: true, count: log.count, lastSent: log.lastSent } : { hasEmail: false, count: 0 };
   };
 
+  // Check if lead has replied
+  const hasReplied = (leadId: string) => {
+    return emailReplies.some(r => r.leadId === leadId);
+  };
+
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       // Search filter
+      const searchLower = searchTerm.toLowerCase();
       const matchesSearch = 
-        lead.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.keyPersonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lead.industry.toLowerCase().includes(searchTerm.toLowerCase());
+        (lead.companyName || '').toLowerCase().includes(searchLower) ||
+        (lead.city || '').toLowerCase().includes(searchLower) ||
+        (lead.keyPersonName || '').toLowerCase().includes(searchLower) ||
+        (lead.industry || '').toLowerCase().includes(searchLower);
       
       if (!matchesSearch) return false;
 
       // Email filter
       if (emailFilter === 'all') return true;
+      
+      if (emailFilter === 'no-key-person-email') {
+        return !lead.keyPersonEmail || lead.keyPersonEmail.trim() === '';
+      }
+      
+      if (emailFilter === 'has-key-person-email') {
+        return !!(lead.keyPersonEmail && lead.keyPersonEmail.trim() !== '');
+      }
       
       const emailStatus = getEmailStatus(lead.id);
       if (emailFilter === 'sent') {
@@ -333,14 +691,58 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
         return !emailStatus.hasEmail;
       }
       
+      if (emailFilter === 'replied') {
+        // Must have sent email AND have reply
+        return emailStatus.hasEmail && hasReplied(lead.id);
+      }
+      
       return true;
     });
-  }, [leads, searchTerm, emailFilter, emailLogs]);
+  }, [leads, searchTerm, emailFilter, emailLogs, emailReplies]);
 
   // Load email logs on mount
   useEffect(() => {
     loadEmailLogs();
+    loadEmailReplies();
   }, [leads]);
+
+  // Load email replies
+  const loadEmailReplies = async () => {
+    if (leads.length === 0) return;
+    
+    try {
+      const allReplies = await emailRepliesApi.getAll();
+      // Store lead IDs that have replies
+      const leadIdsWithReplies = new Set(allReplies.map(reply => reply.lead_id));
+      setEmailReplies(Array.from(leadIdsWithReplies).map(leadId => ({ leadId })));
+    } catch (error) {
+      console.error('Error loading email replies:', error);
+    }
+  };
+
+  // Handle marking reply
+  const handleMarkReply = async (leadId: string) => {
+    if (hasReplied(leadId)) {
+      // Already replied, do nothing or show message
+      return;
+    }
+
+    setMarkingReplies(prev => new Set(prev).add(leadId));
+    try {
+      await emailRepliesApi.create(leadId);
+      // Reload replies to update UI
+      await loadEmailReplies();
+    } catch (error: any) {
+      console.error('Error marking reply:', error);
+      alert(`Error marking reply: ${error.message || 'Unknown error'}`);
+    } finally {
+      setMarkingReplies(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(leadId);
+        return newSet;
+      });
+    }
+  };
 
   // Load email templates when modal opens
   useEffect(() => {
@@ -356,6 +758,9 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     try {
       // Load all email logs
       const allLogs = await emailLogsApi.getAll();
+      
+      // Store all logs for time-based statistics
+      setAllEmailLogs(allLogs);
       
       // Group by lead_id and count sent emails
       const logsByLead = new Map<string, {count: number, lastSent?: Date}>();
@@ -453,6 +858,51 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     return { sent: sentCount, notSent: notSentCount };
   }, [filteredLeads, emailLogs]);
 
+  // Calculate key person info stats
+  const keyPersonStats = useMemo(() => {
+    const withKeyPersonInfo = filteredLeads.filter(lead => {
+      // Check if lead has at least one of: email, phone, or linkedin
+      return !!(lead.keyPersonEmail || lead.keyPersonPhone || lead.keyPersonLinkedIn);
+    }).length;
+    return { withInfo: withKeyPersonInfo, withoutInfo: filteredLeads.length - withKeyPersonInfo };
+  }, [filteredLeads]);
+
+  // Calculate email stats by time period
+  const emailTimeStats = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    const yesterdayEnd = new Date(todayStart);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(weekStart.getDate() - 7);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const sentLogs = allEmailLogs.filter(log => log.status === 'sent' && log.date);
+    
+    const today = sentLogs.filter(log => {
+      const logDate = new Date(log.date);
+      return logDate >= todayStart;
+    }).length;
+
+    const yesterday = sentLogs.filter(log => {
+      const logDate = new Date(log.date);
+      return logDate >= yesterdayStart && logDate < todayStart;
+    }).length;
+
+    const thisWeek = sentLogs.filter(log => {
+      const logDate = new Date(log.date);
+      return logDate >= weekStart;
+    }).length;
+
+    const thisMonth = sentLogs.filter(log => {
+      const logDate = new Date(log.date);
+      return logDate >= monthStart;
+    }).length;
+
+    return { today, yesterday, thisWeek, thisMonth };
+  }, [allEmailLogs]);
+
   const handleSendEmails = async () => {
     if (preparedEmails.length === 0) {
       alert('No emails prepared. Please select a template and ensure leads have email addresses.');
@@ -512,24 +962,36 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
 
   return (
     <div className="p-6 min-h-screen flex flex-col space-y-5">
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Leads</h2>
-            <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-semibold">
-              {filteredLeads.length} {filteredLeads.length === 1 ? 'lead' : 'leads'}
-              {searchTerm && filteredLeads.length !== leads.length && (
-                <span className="text-slate-500 font-normal ml-1">
-                  of {leads.length}
-                </span>
-              )}
-            </span>
-          </div>
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Leads</h2>
           <p className="text-sm text-slate-600 mt-1">Manage and track your event leads</p>
         </div>
         
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-80">
+        {/* Only Director and Sales can add manual leads */}
+        {(user.role === 'Director' || user.role === 'Sales') && (
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowEmailModal(true)}
+              className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
+            >
+              <Mail size={18} className="mr-2" /> Send Mail to All
+            </button>
+            <button 
+              onClick={onAddLead}
+              className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
+            >
+              <Plus size={18} className="mr-2" /> Add Lead
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Search and Filters */}
+      <div className="bg-white border border-slate-200 rounded-lg p-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+          <div className="relative flex-1 w-full md:w-auto">
             <input 
               type="text"
               placeholder="Search by company, city, person, or industry..."
@@ -540,13 +1002,13 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
           </div>
           {/* Email Filter */}
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1">
             <button
               onClick={() => setEmailFilter('all')}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 emailFilter === 'all'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               All
@@ -555,8 +1017,8 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
               onClick={() => setEmailFilter('sent')}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 emailFilter === 'sent'
-                  ? 'bg-green-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               Sent
@@ -565,66 +1027,45 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
               onClick={() => setEmailFilter('unsent')}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 emailFilter === 'unsent'
-                  ? 'bg-amber-600 text-white'
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
               Not Sent
             </button>
+            <button
+              onClick={() => setEmailFilter('no-key-person-email')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                emailFilter === 'no-key-person-email'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              No Key Person Email
+            </button>
+            <button
+              onClick={() => setEmailFilter('has-key-person-email')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                emailFilter === 'has-key-person-email'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Has Key Person Email
+            </button>
+            <button
+              onClick={() => setEmailFilter('replied')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                emailFilter === 'replied'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              Replied
+            </button>
           </div>
-          {/* Only Director and Sales can add manual leads */}
-          {(user.role === 'Director' || user.role === 'Sales') && (
-            <>
-              <button 
-                onClick={() => setShowEmailModal(true)}
-                className="bg-indigo-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shrink-0 inline-flex items-center"
-              >
-                <Mail size={18} className="mr-2" /> Send Mail to All
-              </button>
-              <button 
-                onClick={onAddLead}
-                className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
-              >
-                <Plus size={18} className="mr-2" /> Add Lead
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Email Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Leads</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{filteredLeads.length}</p>
-            </div>
-            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-              <Users size={24} className="text-slate-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white border border-green-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Email Sent</p>
-              <p className="text-2xl font-bold text-green-700 mt-1">{emailStats.sent}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Mail size={24} className="text-green-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white border border-amber-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Not Sent</p>
-              <p className="text-2xl font-bold text-amber-700 mt-1">{emailStats.notSent}</p>
-            </div>
-            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Mail size={24} className="text-amber-600" />
-            </div>
+          <div className="text-sm text-slate-600">
+            Showing <span className="font-semibold text-slate-900">{filteredLeads.length}</span> of <span className="font-semibold text-slate-900">{leads.length}</span> leads
           </div>
         </div>
       </div>
@@ -682,13 +1123,56 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
                       })()}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <button 
-                        onClick={() => onSelectLead(lead)}
-                        className="text-sm text-slate-600 hover:text-slate-900 font-medium inline-flex items-center"
-                      >
-                        View
-                        <ChevronRight size={14} className="ml-1" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const emailStatus = getEmailStatus(lead.id);
+                          const replied = hasReplied(lead.id);
+                          const isMarking = markingReplies.has(lead.id);
+                          
+                          // Only show reply button if email was sent
+                          if (emailStatus.hasEmail) {
+                            return (
+                              <button
+                                onClick={() => handleMarkReply(lead.id)}
+                                disabled={replied || isMarking}
+                                className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                                  replied
+                                    ? 'bg-green-100 text-green-700 cursor-default'
+                                    : isMarking
+                                    ? 'bg-slate-100 text-slate-500 cursor-wait'
+                                    : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                                }`}
+                                title={replied ? 'Already marked as replied' : 'Mark as replied'}
+                              >
+                                {isMarking ? (
+                                  <>
+                                    <Loader2 size={12} className="mr-1 animate-spin" />
+                                    Marking...
+                                  </>
+                                ) : replied ? (
+                                  <>
+                                    <CheckCircle size={12} className="mr-1" />
+                                    Replied
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle size={12} className="mr-1" />
+                                    Mark Reply
+                                  </>
+                                )}
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
+                        <button 
+                          onClick={() => onSelectLead(lead)}
+                          className="text-sm text-slate-600 hover:text-slate-900 font-medium inline-flex items-center"
+                        >
+                          View
+                          <ChevronRight size={14} className="ml-1" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -919,6 +1403,9 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [emailBodyViewMode, setEmailBodyViewMode] = useState<'code' | 'preview'>('preview');
+  const [emailReplies, setEmailReplies] = useState<EmailReply[]>([]);
+  const [loadingReplies, setLoadingReplies] = useState(false);
+  const [checkingInbox, setCheckingInbox] = useState(false);
 
   const canEdit = user.role === 'Director' || user.role === 'Sales';
 
@@ -930,12 +1417,13 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
     setEnrichCity(lead.city || '');
   }, [lead]);
 
-  // Load email templates when email tab is opened
+  // Load email templates and replies when email tab is opened
   useEffect(() => {
     if (activeTab === 'email') {
       loadEmailTemplates();
+      loadEmailReplies();
     }
-  }, [activeTab]);
+  }, [activeTab, lead.id]);
 
   const loadEmailTemplates = async () => {
     setLoadingTemplates(true);
@@ -979,6 +1467,32 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
       console.error('Error loading email templates:', error);
     } finally {
       setLoadingTemplates(false);
+    }
+  };
+
+  const loadEmailReplies = async () => {
+    setLoadingReplies(true);
+    try {
+      const replies = await emailRepliesApi.getAll(lead.id);
+      setEmailReplies(replies);
+    } catch (error) {
+      console.error('Error loading email replies:', error);
+    } finally {
+      setLoadingReplies(false);
+    }
+  };
+
+  const handleCheckInbox = async () => {
+    setCheckingInbox(true);
+    try {
+      const result = await emailRepliesApi.checkInbox({ maxEmails: 50 });
+      alert(`✅ Checked inbox: ${result.processedCount} new reply(ies) found`);
+      await loadEmailReplies(); // Reload replies after checking
+    } catch (error: any) {
+      console.error('Error checking inbox:', error);
+      alert(`❌ Error checking inbox: ${error.message || 'Unknown error'}`);
+    } finally {
+      setCheckingInbox(false);
     }
   };
 
@@ -1767,6 +2281,53 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
                       </ul>
                      </div>
                   )}
+
+                  {/* Email Replies */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Replies</label>
+                      {canEdit && (
+                        <button
+                          onClick={handleCheckInbox}
+                          disabled={checkingInbox}
+                          className="text-xs px-2 py-1 bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                        >
+                          {checkingInbox ? (
+                            <>
+                              <Loader2 size={12} className="animate-spin" />
+                              Checking...
+                            </>
+                          ) : (
+                            <>
+                              <Mail size={12} />
+                              Check Inbox
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    {loadingReplies ? (
+                      <div className="text-xs text-slate-400 p-2">Loading replies...</div>
+                    ) : emailReplies.length > 0 ? (
+                      <ul className="mt-2 space-y-2">
+                        {emailReplies.map(reply => (
+                          <li key={reply.id} className="text-xs p-3 bg-green-50 rounded border border-green-100">
+                            <div className="flex justify-between items-start mb-1">
+                              <div>
+                                <span className="font-bold text-green-900">{reply.from_name || reply.from_email}</span>
+                                <span className="text-green-600 ml-2">({reply.from_email})</span>
+                              </div>
+                              <span className="text-green-500">{new Date(reply.reply_date).toLocaleDateString()}</span>
+                            </div>
+                            <div className="font-semibold text-green-800 mb-1">{reply.subject}</div>
+                            <div className="text-green-700 mt-1 line-clamp-2">{reply.body.substring(0, 200)}{reply.body.length > 200 ? '...' : ''}</div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="text-xs text-slate-400 p-2 bg-slate-50 rounded border border-slate-100">No replies yet</div>
+                    )}
+                  </div>
                 </>
               )}
             </div>
@@ -2222,6 +2783,61 @@ const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () =
                   </button>
                 </div>
               )}
+
+              {/* Email Replies Section */}
+              <div className="border-t border-slate-200 pt-4 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-slate-900">Email Replies</h3>
+                  <button
+                    onClick={handleCheckInbox}
+                    disabled={checkingInbox}
+                    className="text-xs px-3 py-1.5 bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+                  >
+                    {checkingInbox ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={14} />
+                        Check Inbox
+                      </>
+                    )}
+                  </button>
+                </div>
+                {loadingReplies ? (
+                  <div className="text-center py-4 text-slate-400 text-sm">
+                    <Loader2 className="animate-spin mx-auto mb-2" size={20} />
+                    Loading replies...
+                  </div>
+                ) : emailReplies.length > 0 ? (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {emailReplies.map(reply => (
+                      <div key={reply.id} className="p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <div className="font-semibold text-green-900 text-sm">
+                              {reply.from_name || reply.from_email}
+                            </div>
+                            <div className="text-xs text-green-600">{reply.from_email}</div>
+                          </div>
+                          <div className="text-xs text-green-500">
+                            {new Date(reply.reply_date).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="font-medium text-green-800 text-sm mb-1">{reply.subject}</div>
+                        <div className="text-xs text-green-700 line-clamp-3">{reply.body}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-lg border border-slate-100">
+                    <Mail className="mx-auto mb-2 text-slate-300" size={24} />
+                    No replies yet. Click "Check Inbox" to check for new replies.
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -8782,19 +9398,43 @@ const App = () => {
       console.log('🔍 Checking for duplicates in database...');
       const existingLeads = await leadsApi.getAll();
       const existingCompanyNames = new Set(existingLeads.map(l => l.company_name?.toLowerCase().trim()).filter(Boolean));
+      // Create a map for quick lookup: company_name (lowercase) -> lead
+      const existingLeadsMap = new Map<string, any>();
+      existingLeads.forEach(l => {
+        const key = l.company_name?.toLowerCase().trim();
+        if (key) {
+          existingLeadsMap.set(key, l);
+        }
+      });
       
       let successCount = 0;
       let failCount = 0;
       let duplicateCount = 0;
+      let updatedCount = 0;
       
       // Create leads in database via API
       for (const lead of newLeads) {
         try {
           // Check for duplicate by company name (case-insensitive)
           const companyNameLower = lead.companyName?.toLowerCase().trim();
-          if (companyNameLower && existingCompanyNames.has(companyNameLower)) {
-            console.log(`⏭️  Skipping duplicate lead: ${lead.companyName} (already exists in database)`);
-            duplicateCount++;
+          const existingLead = companyNameLower ? existingLeadsMap.get(companyNameLower) : null;
+          
+          if (existingLead) {
+            // Lead already exists - check if we need to update key_person_email
+            const existingKeyPersonEmail = existingLead.key_person_email || existingLead.keyPersonEmail || '';
+            const importKeyPersonEmail = lead.keyPersonEmail || '';
+            
+            if (!existingKeyPersonEmail.trim() && importKeyPersonEmail.trim()) {
+              // Update key_person_email if it's null in database but exists in import
+              console.log(`🔄 Updating key_person_email for existing lead: ${lead.companyName}`);
+              const updateData = mapLeadToDB(lead);
+              await leadsApi.update(existingLead.id, { key_person_email: importKeyPersonEmail.trim() });
+              updatedCount++;
+              console.log(`✅ Updated key_person_email for: ${lead.companyName}`);
+            } else {
+              console.log(`⏭️  Skipping duplicate lead: ${lead.companyName} (already exists in database)`);
+              duplicateCount++;
+            }
             continue;
           }
           
@@ -8806,6 +9446,7 @@ const App = () => {
           // Add to existing set to avoid duplicates in same batch
           if (companyNameLower) {
             existingCompanyNames.add(companyNameLower);
+            existingLeadsMap.set(companyNameLower, { id: mappedLead.id, company_name: mappedLead.company_name });
           }
           
           console.log('✅ Saved lead:', lead.companyName);
@@ -8824,6 +9465,9 @@ const App = () => {
       
       // Show summary to user
       let summaryMessage = `✅ Successfully saved ${successCount} lead${successCount !== 1 ? 's' : ''} to database`;
+      if (updatedCount > 0) {
+        summaryMessage += `\n🔄 Updated key_person_email for ${updatedCount} existing lead${updatedCount !== 1 ? 's' : ''}`;
+      }
       if (duplicateCount > 0) {
         summaryMessage += `\n⏭️  Skipped ${duplicateCount} duplicate lead${duplicateCount !== 1 ? 's' : ''} (already exists)`;
       }
@@ -8832,6 +9476,9 @@ const App = () => {
       }
       
       console.log(`✅ Successfully saved ${successCount}/${newLeads.length} leads to database`);
+      if (updatedCount > 0) {
+        console.log(`🔄 Updated key_person_email for ${updatedCount} existing leads`);
+      }
       if (duplicateCount > 0) {
         console.log(`⏭️  Skipped ${duplicateCount} duplicate leads`);
       }
