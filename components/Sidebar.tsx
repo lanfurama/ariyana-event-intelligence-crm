@@ -26,12 +26,12 @@ interface SidebarProps {
 export const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onToggle }: SidebarProps) => (
   <>
     {/* Sidebar */}
-    <div className={`w-52 bg-gradient-to-b from-slate-900 to-slate-800 text-white flex flex-col h-screen fixed left-0 top-0 border-r border-slate-700/50 shadow-2xl z-20 transition-transform duration-300 ease-in-out ${
+    <div className={`w-52 bg-slate-800 text-white flex flex-col h-screen fixed left-0 top-0 border-r border-slate-700/30 shadow-sm z-20 transition-transform duration-300 ease-in-out ${
       isOpen ? 'translate-x-0' : '-translate-x-full'
     }`}>
-      <div className="p-4 border-b border-slate-700/50 bg-slate-900/50 flex items-center justify-between">
+      <div className="p-4 border-b border-slate-700/30 flex items-center justify-between">
         <div className="flex-1">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-400 bg-clip-text text-transparent tracking-tight">Ariyana CRM</h1>
+          <h1 className="text-2xl font-bold text-blue-400 tracking-tight">Ariyana CRM</h1>
           <p className="text-xs text-slate-400 mt-1 font-medium tracking-wide">Event Intelligence System</p>
         </div>
         <button
@@ -43,8 +43,8 @@ export const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onTog
         </button>
       </div>
     
-    <div className="p-3 border-b border-slate-700/50 bg-slate-800/30 flex items-center space-x-3">
-       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 overflow-hidden border-2 border-blue-400/50 shadow-lg">
+    <div className="p-3 border-b border-slate-700/30 flex items-center space-x-3">
+       <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-slate-600/50">
           <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" />
        </div>
        <div className="flex-1 min-w-0">
@@ -73,7 +73,7 @@ export const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onTog
       <NavItem icon={<UserIcon size={20} />} label="My Profile" id="profile" active={activeTab} onClick={setActiveTab} />
     </nav>
     
-    <div className="p-3 border-t border-slate-700/50 bg-slate-900/50 space-y-2">
+    <div className="p-3 border-t border-slate-700/30 space-y-2">
       <button 
         onClick={onLogout}
         className="w-full flex items-center space-x-3 px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all duration-200 text-sm font-medium group"
@@ -91,7 +91,7 @@ export const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onTog
   {!isOpen && (
     <button
       onClick={onToggle}
-      className="fixed left-4 top-4 z-30 p-2 bg-slate-900 text-white rounded-lg shadow-lg hover:bg-slate-800 transition-all duration-200 hover:scale-110"
+      className="fixed left-4 top-4 z-30 p-2 bg-slate-800 text-white rounded-lg shadow-sm hover:bg-slate-700 transition-all duration-200"
       title="Open sidebar"
     >
       <Menu size={20} />
