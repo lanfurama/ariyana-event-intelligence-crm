@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { INITIAL_LEADS, EMAIL_TEMPLATES, USERS } from './constants';
 import { Lead, ChatMessage, User, EmailTemplate } from './types';
+import * as XLSX from 'xlsx';
 import * as GeminiService from './services/geminiService';
 import * as GPTService from './services/gptService';
 import { extractRetryDelay as extractGeminiRetryDelay, isRateLimitError as isGeminiRateLimitError } from './services/geminiService';
@@ -960,38 +961,117 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
     }
   };
 
+  const handleExportExcel = () => {
+    try {
+      // Prepare data for export
+      const exportData = filteredLeads.map(lead => {
+        const emailStatus = getEmailStatus(lead.id);
+        const replied = hasReplied(lead.id);
+        
+        return {
+          'Company Name': lead.companyName || '',
+          'Industry': lead.industry || '',
+          'Country': lead.country || '',
+          'City': lead.city || '',
+          'Website': lead.website || '',
+          'Key Person Name': lead.keyPersonName || '',
+          'Key Person Title': lead.keyPersonTitle || '',
+          'Key Person Email': lead.keyPersonEmail || '',
+          'Key Person Phone': lead.keyPersonPhone || '',
+          'Key Person LinkedIn': lead.keyPersonLinkedIn || '',
+          'Total Events': lead.totalEvents || 0,
+          'Vietnam Events': lead.vietnamEvents || 0,
+          'Status': lead.status || '',
+          'Email Sent': emailStatus.hasEmail ? 'Yes' : 'No',
+          'Email Count': emailStatus.count || 0,
+          'Last Email Sent': emailStatus.lastSent ? new Date(emailStatus.lastSent).toLocaleDateString() : '',
+          'Replied': replied ? 'Yes' : 'No',
+          'Notes': lead.notes || ''
+        };
+      });
+
+      // Create workbook and worksheet
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Leads');
+
+      // Set column widths for better readability
+      const colWidths = [
+        { wch: 25 }, // Company Name
+        { wch: 20 }, // Industry
+        { wch: 15 }, // Country
+        { wch: 15 }, // City
+        { wch: 30 }, // Website
+        { wch: 20 }, // Key Person Name
+        { wch: 25 }, // Key Person Title
+        { wch: 30 }, // Key Person Email
+        { wch: 20 }, // Key Person Phone
+        { wch: 40 }, // Key Person LinkedIn
+        { wch: 12 }, // Total Events
+        { wch: 15 }, // Vietnam Events
+        { wch: 15 }, // Status
+        { wch: 12 }, // Email Sent
+        { wch: 12 }, // Email Count
+        { wch: 18 }, // Last Email Sent
+        { wch: 10 }, // Replied
+        { wch: 50 }  // Notes
+      ];
+      ws['!cols'] = colWidths;
+
+      // Generate filename with current date
+      const dateStr = new Date().toISOString().split('T')[0];
+      const filename = `leads_export_${dateStr}.xlsx`;
+
+      // Write file and trigger download
+      XLSX.writeFile(wb, filename);
+    } catch (error: any) {
+      console.error('Error exporting to Excel:', error);
+      alert(`Error exporting to Excel: ${error.message || 'Unknown error'}`);
+    }
+  };
+
   return (
-    <div className="p-6 min-h-screen flex flex-col space-y-5">
+    <div className="p-6 w-full max-w-full flex flex-col space-y-5 overflow-hidden min-h-0">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
         <div>
           <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Leads</h2>
           <p className="text-sm text-slate-600 mt-1">Manage and track your event leads</p>
         </div>
         
-        {/* Only Director and Sales can add manual leads */}
-        {(user.role === 'Director' || user.role === 'Sales') && (
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setShowEmailModal(true)}
-              className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
-            >
-              <Mail size={18} className="mr-2" /> Send Mail to All
-            </button>
-            <button 
-              onClick={onAddLead}
-              className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
-            >
-              <Plus size={18} className="mr-2" /> Add Lead
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Export Excel - Available for all users */}
+          <button 
+            onClick={handleExportExcel}
+            className="bg-green-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shrink-0 inline-flex items-center"
+          >
+            <FileSpreadsheet size={18} className="mr-2" /> Export Excel
+          </button>
+          
+          {/* Only Director and Sales can add manual leads and send emails */}
+          {(user.role === 'Director' || user.role === 'Sales') && (
+            <>
+              <button 
+                onClick={() => setShowEmailModal(true)}
+                className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
+              >
+                <Mail size={18} className="mr-2" /> Send Mail to All
+              </button>
+              <button 
+                onClick={onAddLead}
+                className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shrink-0 inline-flex items-center"
+              >
+                <Plus size={18} className="mr-2" /> Add Lead
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white border border-slate-200 rounded-lg p-3">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
-          <div className="relative flex-1 w-full md:w-auto">
+      <div className="bg-white border border-slate-200 rounded-lg p-3 shrink-0">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-3 flex-wrap">
+          <div className="relative flex-1 w-full md:w-auto min-w-0">
             <input 
               type="text"
               placeholder="Search by company, city, person, or industry..."
@@ -1002,7 +1082,7 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
           </div>
           {/* Email Filter */}
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1 flex-wrap shrink-0">
             <button
               onClick={() => setEmailFilter('all')}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
@@ -1070,9 +1150,9 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-lg flex-1 overflow-hidden flex flex-col">
-        <div className="overflow-x-auto overflow-y-auto flex-1">
-          <table className="w-full">
+      <div className="bg-white border border-slate-200 rounded-lg flex-1 overflow-hidden flex flex-col min-h-0">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-w-0">
+          <table className="w-full min-w-max">
             <thead className="bg-white border-b border-slate-200 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Company</th>
@@ -9564,10 +9644,12 @@ const App = () => {
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
       
-      <main className={`flex-1 relative transition-all duration-300 ease-in-out ${
+      <main className={`flex-1 relative transition-all duration-300 ease-in-out overflow-hidden ${
         sidebarOpen ? 'ml-52' : 'ml-0'
       }`}>
-        {renderContent()}
+        <div className="h-full w-full overflow-auto">
+          {renderContent()}
+        </div>
       </main>
 
       {selectedLead && (
