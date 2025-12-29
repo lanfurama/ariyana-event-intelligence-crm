@@ -963,22 +963,19 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
 
   const handleExportExcel = () => {
     try {
-      // Prepare data for export
+      // Prepare data for export (using filteredLeads which already applies emailFilter)
       const exportData = filteredLeads.map(lead => {
         const emailStatus = getEmailStatus(lead.id);
         const replied = hasReplied(lead.id);
         
         return {
           'Company Name': lead.companyName || '',
-          'Industry': lead.industry || '',
           'Country': lead.country || '',
-          'City': lead.city || '',
           'Website': lead.website || '',
           'Key Person Name': lead.keyPersonName || '',
           'Key Person Title': lead.keyPersonTitle || '',
           'Key Person Email': lead.keyPersonEmail || '',
           'Key Person Phone': lead.keyPersonPhone || '',
-          'Key Person LinkedIn': lead.keyPersonLinkedIn || '',
           'Total Events': lead.totalEvents || 0,
           'Vietnam Events': lead.vietnamEvents || 0,
           'Status': lead.status || '',
@@ -995,18 +992,15 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Leads');
 
-      // Set column widths for better readability
+      // Set column widths for better readability (removed Industry, City, Key Person LinkedIn)
       const colWidths = [
         { wch: 25 }, // Company Name
-        { wch: 20 }, // Industry
         { wch: 15 }, // Country
-        { wch: 15 }, // City
         { wch: 30 }, // Website
         { wch: 20 }, // Key Person Name
         { wch: 25 }, // Key Person Title
         { wch: 30 }, // Key Person Email
         { wch: 20 }, // Key Person Phone
-        { wch: 40 }, // Key Person LinkedIn
         { wch: 12 }, // Total Events
         { wch: 15 }, // Vietnam Events
         { wch: 15 }, // Status
@@ -1018,9 +1012,10 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
       ];
       ws['!cols'] = colWidths;
 
-      // Generate filename with current date
+      // Generate filename with current date and filter info
       const dateStr = new Date().toISOString().split('T')[0];
-      const filename = `leads_export_${dateStr}.xlsx`;
+      const filterLabel = emailFilter !== 'all' ? `_${emailFilter}` : '';
+      const filename = `leads_export${filterLabel}_${dateStr}.xlsx`;
 
       // Write file and trigger download
       XLSX.writeFile(wb, filename);
@@ -1082,67 +1077,20 @@ const LeadsView = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }: { lea
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
           </div>
           {/* Email Filter */}
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1 flex-wrap shrink-0">
-            <button
-              onClick={() => setEmailFilter('all')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                emailFilter === 'all'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
+          <div className="relative flex items-center shrink-0">
+            <select
+              value={emailFilter}
+              onChange={(e) => setEmailFilter(e.target.value as typeof emailFilter)}
+              className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2 pr-10 text-sm text-slate-900 font-medium cursor-pointer hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300 transition-colors"
             >
-              All
-            </button>
-            <button
-              onClick={() => setEmailFilter('sent')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                emailFilter === 'sent'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              Sent
-            </button>
-            <button
-              onClick={() => setEmailFilter('unsent')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                emailFilter === 'unsent'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              Not Sent
-            </button>
-            <button
-              onClick={() => setEmailFilter('no-key-person-email')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                emailFilter === 'no-key-person-email'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              No Key Person Email
-            </button>
-            <button
-              onClick={() => setEmailFilter('has-key-person-email')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                emailFilter === 'has-key-person-email'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              Has Key Person Email
-            </button>
-            <button
-              onClick={() => setEmailFilter('replied')}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                emailFilter === 'replied'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              Replied
-            </button>
+              <option value="all">All</option>
+              <option value="sent">Sent</option>
+              <option value="unsent">Not Sent</option>
+              <option value="no-key-person-email">No Key Person Email</option>
+              <option value="has-key-person-email">Has Key Person Email</option>
+              <option value="replied">Replied</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
           </div>
           <div className="text-sm text-slate-600">
             Showing <span className="font-semibold text-slate-900">{filteredLeads.length}</span> of <span className="font-semibold text-slate-900">{leads.length}</span> leads
@@ -5501,190 +5449,126 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
     });
 
   return (
-    <div className="p-6 min-h-screen overflow-y-auto space-y-6">
-      {/* Header Section */}
-      <div className="flex items-start justify-between">
-        <div>
+    <div className="p-6 min-h-screen overflow-y-auto space-y-5">
+      {/* Header Section - Optimized */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Event Intelligence Dashboard</h2>
-          <p className="text-sm text-slate-600 mt-1">Phân tích và ưu tiên hóa events tự động với Backend Scoring Engine</p>
+          <p className="text-sm text-slate-600 mt-1">Tự động phân tích và xếp hạng events với Backend Scoring Engine</p>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg inline-flex items-center text-sm font-semibold cursor-pointer transition-colors shadow-sm">
-            <FileSpreadsheet size={16} className="mr-2" /> Upload Excel/CSV
+        <label className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg inline-flex items-center text-sm font-semibold cursor-pointer transition-colors shadow-sm shrink-0">
+          <FileSpreadsheet size={18} className="mr-2" /> Upload Excel/CSV
+          <input
+            type="file"
+            onChange={handleFileImport}
+            accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            className="hidden"
+          />
+        </label>
+      </div>
+
+      {/* Scoring Engine Info - Compact */}
+      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles size={18} className="text-indigo-600" />
+            <h3 className="text-sm font-bold text-slate-900">Scoring Criteria</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setScoringCriteria({
+                history: true,
+                region: true,
+                contact: true,
+                delegates: true,
+                iccaQualification: true
+              })}
+              className="px-2.5 py-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
+            >
+              All On
+            </button>
+            <button
+              onClick={() => setScoringCriteria({
+                history: false,
+                region: false,
+                contact: false,
+                delegates: false,
+                iccaQualification: false
+              })}
+              className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded transition-colors"
+            >
+              All Off
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-white/50 transition-colors">
             <input
-              type="file"
-              onChange={handleFileImport}
-              accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              className="hidden"
+              type="checkbox"
+              checked={scoringCriteria.history}
+              onChange={(e) => setScoringCriteria(prev => ({ ...prev, history: e.target.checked }))}
+              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
             />
+            <span className="text-xs font-medium text-slate-700">History (25đ)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-white/50 transition-colors">
+            <input
+              type="checkbox"
+              checked={scoringCriteria.region}
+              onChange={(e) => setScoringCriteria(prev => ({ ...prev, region: e.target.checked }))}
+              className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
+            />
+            <span className="text-xs font-medium text-slate-700">Region (25đ)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-white/50 transition-colors">
+            <input
+              type="checkbox"
+              checked={scoringCriteria.contact}
+              onChange={(e) => setScoringCriteria(prev => ({ ...prev, contact: e.target.checked }))}
+              className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
+            />
+            <span className="text-xs font-medium text-slate-700">Contact (25đ)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-white/50 transition-colors">
+            <input
+              type="checkbox"
+              checked={scoringCriteria.delegates}
+              onChange={(e) => setScoringCriteria(prev => ({ ...prev, delegates: e.target.checked }))}
+              className="w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500"
+            />
+            <span className="text-xs font-medium text-slate-700">Delegates (25đ)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-white/50 transition-colors">
+            <input
+              type="checkbox"
+              checked={scoringCriteria.iccaQualification}
+              onChange={(e) => setScoringCriteria(prev => ({ ...prev, iccaQualification: e.target.checked }))}
+              className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+            />
+            <span className="text-xs font-medium text-slate-700">ICCA Qual</span>
           </label>
         </div>
       </div>
 
-      {/* Scoring Engine Info - Collapsible */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-        <details className="group">
-          <summary className="text-sm font-semibold text-slate-900 cursor-pointer hover:text-slate-700 flex items-center justify-between">
-            <span className="flex items-center">
-              <Sparkles size={16} className="mr-2 text-indigo-500" />
-              Backend Scoring Engine - 5 Tiêu chí đánh giá
-            </span>
-            <ChevronDown size={16} className="text-slate-400 group-open:rotate-180 transition-transform" />
-          </summary>
-          <div className="mt-4 pt-4 border-t border-slate-200">
-            <p className="text-sm text-slate-700 leading-relaxed mb-4">
-              Hệ thống tự động phân tích và xếp hạng events dựa trên <strong className="text-slate-900">4 tiêu chí scoring</strong>:
-              <strong className="text-blue-600"> History (25đ)</strong>, <strong className="text-green-600">Region (25đ)</strong>, 
-              <strong className="text-purple-600"> Contact (25đ)</strong>, <strong className="text-orange-600">Delegates (25đ)</strong>,
-              và <strong className="text-slate-900">1 tiêu chí qualification</strong>: <strong className="text-teal-600">ICCA Qualification</strong>.
-            </p>
-            
-            {/* Scoring Criteria Toggles */}
-            <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-slate-700">Bật/Tắt Tiêu Chí Scoring:</p>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setScoringCriteria({
-                      history: true,
-                      region: true,
-                      contact: true,
-                      delegates: true,
-                      iccaQualification: true
-                    })}
-                    className="px-2 py-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
-                  >
-                    Bật tất cả
-                  </button>
-                  <button
-                    onClick={() => setScoringCriteria({
-                      history: false,
-                      region: false,
-                      contact: false,
-                      delegates: false,
-                      iccaQualification: false
-                    })}
-                    className="px-2 py-1 text-xs font-medium text-white bg-slate-500 hover:bg-slate-600 rounded transition-colors"
-                  >
-                    Tắt tất cả
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={scoringCriteria.history}
-                    onChange={(e) => setScoringCriteria(prev => ({ ...prev, history: e.target.checked }))}
-                    className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-xs text-slate-700">History</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={scoringCriteria.region}
-                    onChange={(e) => setScoringCriteria(prev => ({ ...prev, region: e.target.checked }))}
-                    className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
-                  />
-                  <span className="text-xs text-slate-700">Region</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={scoringCriteria.contact}
-                    onChange={(e) => setScoringCriteria(prev => ({ ...prev, contact: e.target.checked }))}
-                    className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
-                  />
-                  <span className="text-xs text-slate-700">Contact</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={scoringCriteria.delegates}
-                    onChange={(e) => setScoringCriteria(prev => ({ ...prev, delegates: e.target.checked }))}
-                    className="w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500"
-                  />
-                  <span className="text-xs text-slate-700">Delegates</span>
-                </label>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={scoringCriteria.iccaQualification}
-                    onChange={(e) => setScoringCriteria(prev => ({ ...prev, iccaQualification: e.target.checked }))}
-                    className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
-                  />
-                  <span className="text-xs text-slate-700">ICCA Qual</span>
-                </label>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className={`bg-blue-50 border border-blue-200 rounded-lg p-3 ${!scoringCriteria.history ? 'opacity-50' : ''}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <strong className="text-blue-900">1. History Score (0-25)</strong>
-                  {!scoringCriteria.history && <span className="text-xs text-slate-500 italic">(Tắt)</span>}
-                </div>
-                <p className="text-blue-700 text-xs">25đ: Vietnam | 15đ: Đông Nam Á</p>
-              </div>
-              <div className={`bg-green-50 border border-green-200 rounded-lg p-3 ${!scoringCriteria.region ? 'opacity-50' : ''}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <strong className="text-green-900">2. Region Score (0-25)</strong>
-                  {!scoringCriteria.region && <span className="text-xs text-slate-500 italic">(Tắt)</span>}
-                </div>
-                <p className="text-green-700 text-xs">25đ: Tên có "ASEAN/Asia/Pacific" | 15đ: Địa điểm châu Á</p>
-              </div>
-              <div className={`bg-purple-50 border border-purple-200 rounded-lg p-3 ${!scoringCriteria.contact ? 'opacity-50' : ''}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <strong className="text-purple-900">3. Contact Score (0-25)</strong>
-                  {!scoringCriteria.contact && <span className="text-xs text-slate-500 italic">(Tắt)</span>}
-                </div>
-                <p className="text-purple-700 text-xs">25đ: Email + Phone | 20đ: Email + Tên | 15đ: Email | 10đ: Tên</p>
-              </div>
-              <div className={`bg-orange-50 border border-orange-200 rounded-lg p-3 ${!scoringCriteria.delegates ? 'opacity-50' : ''}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <strong className="text-orange-900">4. Delegates Score (0-25)</strong>
-                  {!scoringCriteria.delegates && <span className="text-xs text-slate-500 italic">(Tắt)</span>}
-                </div>
-                <p className="text-orange-700 text-xs">25đ: ≥500 | 20đ: ≥300 | 10đ: ≥100</p>
-              </div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <div className={`bg-teal-50 border border-teal-200 rounded-lg p-3 ${!scoringCriteria.iccaQualification ? 'opacity-50' : ''}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <strong className="text-teal-900">5. ICCA Qualification</strong>
-                  {!scoringCriteria.iccaQualification && <span className="text-xs text-slate-500 italic">(Tắt)</span>}
-                </div>
-                <p className="text-teal-700 text-xs">3 quy tắc: Rotation (≥3 nước) | Size (≥50 onsite) | Regularity (annual/biennial/triennial)</p>
-                <p className="text-teal-600 text-xs mt-1 italic">Organizer: International Association | Loại trừ: Trade shows, corporate, sporting, religious/political</p>
-              </div>
-            </div>
-          </div>
-        </details>
-      </div>
-
-      {/* File Upload Status */}
+      {/* File Upload Status - Compact */}
       {uploadingExcel && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <Loader2 className="animate-spin text-blue-600" size={20} />
-            <div>
-              <p className="text-sm font-semibold text-blue-800">Processing file...</p>
-              <p className="text-xs text-blue-700 mt-0.5">Please wait while we analyze your data</p>
-            </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="flex items-center gap-3">
+            <Loader2 className="animate-spin text-blue-600" size={18} />
+            <p className="text-sm font-medium text-blue-800">Processing file...</p>
           </div>
         </div>
       )}
 
       {excelFile && excelSummary && !uploadingExcel && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <FileSpreadsheet size={20} className="text-green-600" />
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <FileSpreadsheet size={18} className="text-green-600" />
               <div>
                 <p className="text-sm font-semibold text-green-800">{excelFile.name}</p>
-                <p className="text-xs text-green-700 mt-0.5">
-                  {excelSummary.totalRows} rows • {excelSummary.totalSheets} sheets • {eventsList.length} events detected
+                <p className="text-xs text-green-700">
+                  {excelSummary.totalRows} rows • {excelSummary.totalSheets} sheets • {eventsList.length} events
                 </p>
               </div>
             </div>
@@ -5696,9 +5580,9 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 setImportData('');
                 setEmailSendSummary(null);
               }}
-              className="text-green-600 hover:text-green-800 p-1"
+              className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-100 transition-colors"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           </div>
         </div>
@@ -5796,46 +5680,42 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         )}
 
 
-      {/* Filters and Search Bar */}
+      {/* Filters and Search Bar - Optimized */}
       {eventsList.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
+          <div className="flex flex-col md:flex-row gap-3">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input
                   type="text"
-                  placeholder="Search events by name..."
+                  placeholder="Search events..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
             </div>
             
             {/* Priority Filter */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-medium text-slate-700 whitespace-nowrap">Priority:</label>
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value as any)}
-                className="px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
-              >
-                <option value="all">All Priorities</option>
-                <option value="high">High (≥50)</option>
-                <option value="medium">Medium (30-49)</option>
-                <option value="low">Low (&lt;30)</option>
-              </select>
-            </div>
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value as any)}
+              className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="all">All Priorities</option>
+              <option value="high">High (≥50)</option>
+              <option value="medium">Medium (30-49)</option>
+              <option value="low">Low (&lt;30)</option>
+            </select>
 
             {/* Sort By */}
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-medium text-slate-700 whitespace-nowrap">Sort by:</label>
+            <div className="flex items-center gap-1">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="score">Score</option>
                 <option value="name">Name</option>
@@ -5846,42 +5726,24 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
                 className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
                 title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
               >
-                {sortOrder === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                {sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
             </div>
           </div>
           
-          {/* Results count */}
-          <div className="mt-3 pt-3 border-t border-slate-200">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <p className="text-xs text-slate-600">
-                  Showing <strong className="text-slate-900">{filteredAndSortedEvents.length}</strong> of <strong className="text-slate-900">{eventsList.length}</strong> events
-                </p>
-                {priorityFilter !== 'all' && (
-                  <p className="text-xs text-blue-600 mt-1">
-                    ℹ️ Filtered by priority: <strong>{priorityFilter}</strong> (score {priorityFilter === 'high' ? '≥50' : priorityFilter === 'medium' ? '30-49' : '<30'})
-                  </p>
-                )}
-              </div>
-              {notAnalyzedCount > 0 && (
-                <p className="text-xs text-amber-600 font-medium">
-                  ⚠️ {notAnalyzedCount} events not analyzed (only first {MAX_EVENTS_ANALYZED} are analyzed)
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-4 mt-2">
+          {/* Results count - Compact */}
+          <div className="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2">
+            <p className="text-xs text-slate-600">
+              Showing <strong className="text-slate-900">{filteredAndSortedEvents.length}</strong> of <strong className="text-slate-900">{eventsList.length}</strong> events
               {analyzedCount > 0 && (
-                <p className="text-xs text-slate-500">
-                  Analyzed: <strong className="text-slate-700">{analyzedCount}</strong> events
-                </p>
+                <span className="ml-2">• Analyzed: <strong className="text-slate-700">{analyzedCount}</strong></span>
               )}
-              {filteredAndSortedEvents.length < eventsList.length && priorityFilter === 'all' && (
-                <p className="text-xs text-slate-500">
-                  {eventsList.length - filteredAndSortedEvents.length} events hidden by search filter
-                </p>
-              )}
-            </div>
+            </p>
+            {notAnalyzedCount > 0 && (
+              <p className="text-xs text-amber-600 font-medium">
+                ⚠️ {notAnalyzedCount} not analyzed
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -6082,16 +5944,16 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty State - Optimized */}
       {eventsList.length === 0 && !uploadingExcel && (
-        <div className="bg-white rounded-lg shadow-sm border-2 border-dashed border-slate-300 p-12 text-center">
-          <FileSpreadsheet size={64} className="mx-auto mb-4 text-slate-300" />
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No Events Yet</h3>
-          <p className="text-sm text-slate-600 mb-6 max-w-md mx-auto">
-            Upload an Excel or CSV file to start analyzing events. The system will automatically score and prioritize them based on 4 criteria.
+        <div className="bg-white rounded-lg shadow-sm border-2 border-dashed border-slate-300 p-10 text-center">
+          <FileSpreadsheet size={56} className="mx-auto mb-3 text-slate-300" />
+          <h3 className="text-lg font-semibold text-slate-900 mb-1">No Events Yet</h3>
+          <p className="text-sm text-slate-600 mb-5 max-w-sm mx-auto">
+            Upload an Excel or CSV file to start analyzing and scoring events automatically.
           </p>
-          <label className="inline-flex items-center px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold cursor-pointer transition-colors shadow-md">
-            <FileSpreadsheet size={18} className="mr-2" /> Upload Excel/CSV File
+          <label className="inline-flex items-center px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold cursor-pointer transition-colors shadow-sm">
+            <FileSpreadsheet size={16} className="mr-2" /> Upload File
             <input
               type="file"
               onChange={handleFileImport}
@@ -6102,48 +5964,41 @@ const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLeads: Lead
         </div>
       )}
 
-      {/* Run Strategy Analysis Button */}
+      {/* Run Analysis Button - Compact */}
       {eventsList.length > 0 && (
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-4 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-slate-600">
-              Ready to analyze <span className="font-semibold text-slate-800">{eventsList.length}</span> event{eventsList.length > 1 ? 's' : ''}
+        <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-200 flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-slate-700">
+              {eventsList.length} event{eventsList.length > 1 ? 's' : ''} ready to analyze
             </p>
             {loading && (
-              <p className="text-xs text-blue-600 mt-1">
-                Analyzing events one by one... This may take a few minutes.
-              </p>
-            )}
-            {researchingEditions.size > 0 && !loading && (
-              <p className="text-xs text-purple-600 mt-1">
-                Researching edition leadership information... Please wait.
-              </p>
+              <p className="text-xs text-blue-600 mt-0.5">Analyzing events... This may take a few minutes.</p>
             )}
           </div>
-           <button 
-             onClick={handleAnalyze} 
+          <button 
+            onClick={handleAnalyze} 
             disabled={loading || researchingEditions.size > 0 || eventsList.length === 0 || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 flex items-center shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-           >
-             {loading ? (
-               <>
-                 <Loader2 className="animate-spin mr-2" size={18} />
-                 <span>Analyzing...</span>
-               </>
-             ) : researchingEditions.size > 0 ? (
-               <>
-                 <Loader2 className="animate-spin mr-2" size={18} />
-                 <span>Researching...</span>
-               </>
-             ) : (
-               <>
-                 <BrainCircuit className="mr-2" size={18} />
-                 {rateLimitCountdown !== null && rateLimitCountdown > 0 
-                   ? `Retry in ${rateLimitCountdown}s` 
-                   : 'Run Strategy Analysis'}
-               </>
-             )}
-           </button>
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin" size={16} />
+                <span>Analyzing...</span>
+              </>
+            ) : researchingEditions.size > 0 ? (
+              <>
+                <Loader2 className="animate-spin" size={16} />
+                <span>Researching...</span>
+              </>
+            ) : (
+              <>
+                <BrainCircuit size={16} />
+                {rateLimitCountdown !== null && rateLimitCountdown > 0 
+                  ? `Retry in ${rateLimitCountdown}s` 
+                  : 'Analyze Events'}
+              </>
+            )}
+          </button>
         </div>
       )}
 
@@ -8569,10 +8424,44 @@ const EmailTemplatesView = () => {
   const [formData, setFormData] = useState({ name: '', subject: '', body: '' });
   const [formErrors, setFormErrors] = useState<{ name?: string; subject?: string; body?: string }>({});
   const [bodyViewMode, setBodyViewMode] = useState<'code' | 'preview'>('preview');
+  const contentEditableRef = useRef<HTMLDivElement>(null);
+  const isInternalEditRef = useRef(false);
 
   useEffect(() => {
     loadTemplates();
   }, []);
+
+  // Sync contentEditable innerHTML when switching to preview mode or when formData.body changes externally
+  const prevBodyViewModeRef = useRef(bodyViewMode);
+  const prevBodyRef = useRef(formData.body);
+  
+  useEffect(() => {
+    if (showModal && bodyViewMode === 'preview' && contentEditableRef.current) {
+      const switchedToPreview = prevBodyViewModeRef.current !== 'preview' || prevBodyViewModeRef.current === 'code';
+      const bodyChangedExternally = prevBodyRef.current !== formData.body && !isInternalEditRef.current;
+      const isInitialLoad = !prevBodyRef.current && formData.body;
+      
+      // Only update innerHTML when:
+      // 1. Switching from code mode to preview mode
+      // 2. Body changed externally (not from user editing in preview mode)
+      // 3. Initial load when modal opens
+      if (switchedToPreview || bodyChangedExternally || isInitialLoad) {
+        const newContent = formData.body || '<div style="padding: 20px; color: #666; text-align: center;">Click here to start editing your email template. Use variables like {{keyPersonName}}, {{companyName}}, etc.</div>';
+        // Only update if different to avoid unnecessary DOM manipulation
+        if (contentEditableRef.current.innerHTML !== newContent) {
+          contentEditableRef.current.innerHTML = newContent;
+        }
+      }
+      
+      prevBodyViewModeRef.current = bodyViewMode;
+      prevBodyRef.current = formData.body;
+    } else {
+      prevBodyViewModeRef.current = bodyViewMode;
+      if (formData.body) {
+        prevBodyRef.current = formData.body;
+      }
+    }
+  }, [formData.body, bodyViewMode, showModal]);
 
   const loadTemplates = async () => {
     setLoading(true);
@@ -8593,6 +8482,8 @@ const EmailTemplatesView = () => {
     setFormErrors({});
     setBodyViewMode('preview');
     setShowModal(true);
+    // Reset internal edit flag when opening modal
+    isInternalEditRef.current = false;
   };
 
   const handleEdit = (template: EmailTemplate) => {
@@ -8605,6 +8496,8 @@ const EmailTemplatesView = () => {
     setFormErrors({});
     setBodyViewMode('preview');
     setShowModal(true);
+    // Reset internal edit flag when opening modal
+    isInternalEditRef.current = false;
   };
 
   const handleDelete = async (id: string) => {
@@ -8849,7 +8742,14 @@ const EmailTemplatesView = () => {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => setBodyViewMode('code')}
+                      onClick={() => {
+                        // Save content from preview before switching
+                        if (bodyViewMode === 'preview' && contentEditableRef.current) {
+                          setFormData({ ...formData, body: contentEditableRef.current.innerHTML });
+                        }
+                        isInternalEditRef.current = false;
+                        setBodyViewMode('code');
+                      }}
                       className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                         bodyViewMode === 'code'
                           ? 'bg-indigo-600 text-white'
@@ -8860,7 +8760,10 @@ const EmailTemplatesView = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setBodyViewMode('preview')}
+                      onClick={() => {
+                        isInternalEditRef.current = false;
+                        setBodyViewMode('preview');
+                      }}
                       className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                         bodyViewMode === 'preview'
                           ? 'bg-indigo-600 text-white'
@@ -8888,17 +8791,19 @@ const EmailTemplatesView = () => {
                     style={{ minHeight: '500px', maxHeight: '600px' }}
                   >
                     <div
+                      ref={contentEditableRef}
                       contentEditable
                       suppressContentEditableWarning
                       onInput={(e) => {
+                        isInternalEditRef.current = true;
                         const html = e.currentTarget.innerHTML;
                         setFormData({ ...formData, body: html });
                       }}
                       onBlur={(e) => {
                         const html = e.currentTarget.innerHTML;
                         setFormData({ ...formData, body: html });
+                        isInternalEditRef.current = false;
                       }}
-                      dangerouslySetInnerHTML={{ __html: formData.body || '<div style="padding: 20px; color: #666; text-align: center;">Click here to start editing your email template. Use variables like {{keyPersonName}}, {{companyName}}, etc.</div>' }}
                       className="p-4 min-h-[500px] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset"
                       style={{
                         fontFamily: 'Arial, sans-serif',
