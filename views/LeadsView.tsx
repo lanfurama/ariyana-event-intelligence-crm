@@ -22,6 +22,7 @@ import {
 import { Lead, EmailTemplate, User, EmailLog } from '../types';
 import { emailLogsApi, emailRepliesApi, emailTemplatesApi, leadsApi } from '../services/apiService';
 import * as XLSX from 'xlsx';
+import { LeadsSkeleton } from '../components/common/LeadsSkeleton';
 
 interface LeadsViewProps {
     leads: Lead[];
@@ -29,9 +30,10 @@ interface LeadsViewProps {
     onUpdateLead: (lead: Lead) => void;
     user: User;
     onAddLead?: () => void;
+    loading?: boolean;
 }
 
-export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpdateLead, user, onAddLead }) => {
+export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpdateLead, user, onAddLead, loading }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [emailFilter, setEmailFilter] = useState<'all' | 'sent' | 'unsent' | 'no-key-person-email' | 'has-key-person-email' | 'replied'>('all');
     const [countryFilter, setCountryFilter] = useState<string>('all');
@@ -580,7 +582,9 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-3 pr-1 pb-2">
-                {filteredLeads.length > 0 ? (
+                {loading ? (
+                    <LeadsSkeleton />
+                ) : filteredLeads.length > 0 ? (
                     filteredLeads.map((lead) => {
                         // Generate a consistent color for the company avatar based on the name
                         const getAvatarColor = (name: string) => {

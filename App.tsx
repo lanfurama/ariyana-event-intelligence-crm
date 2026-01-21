@@ -69,6 +69,7 @@ const App = () => {
             onUpdateLead={updateLead}
             user={user}
             onAddLead={addNewLead}
+            loading={leadsLoading}
           />
         );
       case 'intelligent':
