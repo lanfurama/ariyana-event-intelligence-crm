@@ -43,6 +43,8 @@ export interface Lead {
   secondary_person_email?: string;
   research_notes?: string;
   number_of_delegates?: number;
+  lead_score?: number;
+  last_score_update?: Date | string;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -115,14 +117,14 @@ export interface EventBrief {
   internationalOrganisationName?: string;
   internationalOrganisationWebsite?: string;
   organizationProfile?: string;
-    localHostName?: string;
-    localHostTitle?: string;
-    localHostEmail?: string;
-    localHostPhone?: string;
-    localHostOrganization?: string;
-    localHostWebsite?: string;
-    localStrengths?: string;
-    conferenceRegistration?: string;
+  localHostName?: string;
+  localHostTitle?: string;
+  localHostEmail?: string;
+  localHostPhone?: string;
+  localHostOrganization?: string;
+  localHostWebsite?: string;
+  localStrengths?: string;
+  conferenceRegistration?: string;
   decisionMaker?: string;
   decisionMakingProcess?: string;
   keyBidCriteria?: string;

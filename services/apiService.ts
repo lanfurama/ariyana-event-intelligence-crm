@@ -22,14 +22,14 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
     // Check content-type header (don't read body yet)
     const contentType = response.headers.get('content-type') || '';
-    
+
     // Read response body once as text first (can parse JSON from text)
     const responseText = await response.text();
-    
+
     // Check if response is HTML (usually means proxy failed or route not found)
     if (contentType.includes('text/html') || responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
       console.error(`❌ API returned HTML instead of JSON:`, responseText.substring(0, 200));
-      
+
       const isDev = import.meta.env.DEV;
       if (isDev) {
         throw new Error(`API server returned HTML. Make sure backend is running or check API configuration.`);
@@ -70,12 +70,12 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
         throw new Error(`Cannot parse API response. Please ensure the backend API is deployed and accessible.`);
       }
     }
-    
+
     // Handle network errors (CORS, connection refused, etc.)
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       console.error(`❌ API call failed: ${API_BASE_URL}${endpoint}`, error);
       console.error(`   Error details:`, error.message);
-      
+
       // More helpful error message
       const isDev = import.meta.env.DEV;
       if (isDev) {
@@ -240,3 +240,44 @@ export const chatMessagesApi = {
     method: 'DELETE',
   }),
 };
+
+// Lead Scoring API
+export const leadScoringApi = {
+  calculateScore: (leadId: string) => apiCall<{
+    success: boolean;
+    leadId: string;
+    score: number;
+    factors: {
+      emailEngagement: number;
+      eventHistory: number;
+      contactQuality: number;
+      companySize: number;
+    };
+    reasoning: string;
+  }>(`/lead-scoring/${leadId}/calculate`, { method: 'POST' }),
+
+  batchCalculate: (leadIds: string[]) => apiCall<{
+    success: boolean;
+    total: number;
+    scores: Record<string, number>;
+  }>('/lead-scoring/batch', {
+    method: 'POST',
+    body: JSON.stringify({ leadIds }),
+  }),
+
+  getTopScored: (limit: number = 10) => apiCall<{
+    success: boolean;
+    leads: Lead[];
+  }>(`/lead-scoring/top?limit=${limit}`),
+
+  getDistribution: () => apiCall<{
+    success: boolean;
+    distribution: {
+      high: number;
+      medium: number;
+      low: number;
+      unscored: number;
+    };
+  }>('/lead-scoring/distribution'),
+};
+

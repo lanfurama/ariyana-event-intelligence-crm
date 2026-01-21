@@ -9,18 +9,18 @@ interface NavItemProps {
 }
 
 export const NavItem = ({ icon, label, id, active, onClick }: NavItemProps) => (
-  <button 
+  <button
     onClick={() => onClick(id)}
-    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${
-      active === id
-        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-        : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-    }`}
+    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium ${active === id
+        ? 'bg-gradient-to-r from-primary to-yellow-600 text-white shadow-lg shadow-primary/20' // Gold gradient for premium look
+        : 'text-slate-400 hover:text-white hover:bg-white/5'
+      }`}
   >
     {icon}
     <span>{label}</span>
   </button>
 );
+
 
 
 

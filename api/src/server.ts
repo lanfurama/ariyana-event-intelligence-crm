@@ -12,6 +12,7 @@ import chatMessagesRouter from './routes/chatMessages.js';
 import geminiRouter from './routes/gemini.js';
 import excelImportRouter from './routes/excelImport.js';
 import eventBriefRouter from './routes/eventBrief.js';
+import leadScoringRouter from './routes/leadScoring.js';
 import { query } from './config/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,7 +30,7 @@ const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     const allowedOrigins = [
       'http://localhost:5173',
       'http://localhost:3000',
@@ -37,7 +38,7 @@ const corsOptions = {
       'http://127.0.0.1:3000',
       process.env.CORS_ORIGIN
     ].filter(Boolean);
-    
+
     if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -54,8 +55,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Simple test endpoint (no database required)
 app.get('/test', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: 'API server is running',
     timestamp: new Date().toISOString()
   });
@@ -68,8 +69,8 @@ app.get('/health', async (req, res) => {
     res.json({ status: 'ok', database: 'connected' });
   } catch (error) {
     console.error('Database health check failed:', error);
-    res.status(500).json({ 
-      status: 'error', 
+    res.status(500).json({
+      status: 'error',
       database: 'disconnected',
       message: 'Database connection failed but API is running'
     });
@@ -86,6 +87,7 @@ app.use('/api/chat-messages', chatMessagesRouter);
 app.use('/api/gemini', geminiRouter);
 app.use('/api/excel-import', excelImportRouter);
 app.use('/api/event-brief', eventBriefRouter);
+app.use('/api/lead-scoring', leadScoringRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -101,6 +103,8 @@ app.get('/', (req, res) => {
       chatMessages: '/api/chat-messages',
       gemini: '/api/gemini',
       excelImport: '/api/excel-import',
+      eventBrief: '/api/event-brief',
+      leadScoring: '/api/lead-scoring',
       health: '/health',
     },
   });

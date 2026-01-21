@@ -107,6 +107,10 @@ export interface Lead {
   nextStepStrategy?: string;
   draftedEmail?: { subject: string; body: string };
   emailDrafted?: boolean;
+  
+  // Lead Scoring
+  leadScore?: number; // 0-100 AI-powered lead quality score
+  lastScoreUpdate?: string; // ISO timestamp of last scoring
 }
 
 export interface ChatMessage {

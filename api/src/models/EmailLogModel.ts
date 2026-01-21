@@ -21,6 +21,11 @@ export class EmailLogModel {
     return result.rows[0] || null;
   }
 
+  static async getByLeadId(leadId: string): Promise<EmailLog[]> {
+    const result = await query('SELECT * FROM email_logs WHERE lead_id = $1 ORDER BY date DESC', [leadId]);
+    return result.rows;
+  }
+
   static async create(emailLog: EmailLog): Promise<EmailLog> {
     const result = await query(
       `INSERT INTO email_logs (id, lead_id, date, subject, status, message_id) 

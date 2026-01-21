@@ -48,7 +48,7 @@ let query: any;
 async function loadRoutes() {
   if (!usersRouter) {
     console.log('📦 Loading routes from project root:', projectRoot);
-    
+
     try {
       // Register tsx ESM loader to handle TypeScript files
       // This allows Node.js to import .ts files in ESM context
@@ -60,7 +60,7 @@ async function loadRoutes() {
         console.log('⚠️ tsx ESM loader registration failed:', e.message);
         console.log('   Will try alternative import methods');
       }
-      
+
       // Use relative paths from project root with .js extension
       // TypeScript convention: import .ts files as .js
       // Vite/tsx will resolve .js to .ts files
@@ -78,9 +78,9 @@ async function loadRoutes() {
         './api/src/routes/eventBrief.js',
         './api/src/config/database.js',
       ];
-      
+
       console.log('  → Importing routes with relative paths from:', projectRoot);
-      
+
       const routes = await Promise.all(
         routePaths.map(async (relPath) => {
           try {
@@ -96,7 +96,7 @@ async function loadRoutes() {
           }
         })
       );
-      
+
       usersRouter = routes[0].default;
       emailTemplatesRouter = routes[1].default;
       leadsRouter = routes[2].default;
@@ -109,7 +109,7 @@ async function loadRoutes() {
       csvImportRouter = routes[9].default;
       eventBriefRouter = routes[10].default;
       query = routes[11].query;
-      
+
       console.log('✅ Routes loaded successfully');
     } catch (error: any) {
       console.error('❌ Failed to load routes:', error.message);
@@ -127,7 +127,7 @@ export function vitePluginApi(): Plugin {
     async configureServer(server) {
       // Load routes asynchronously (only when dev server starts)
       await loadRoutes();
-      
+
       // Create Express app
       app = express();
 
@@ -140,7 +140,7 @@ export function vitePluginApi(): Plugin {
             'http://127.0.0.1:3000',
             process.env.CORS_ORIGIN,
           ].filter(Boolean);
-          
+
           if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
             callback(null, true);
           } else {
@@ -163,8 +163,8 @@ export function vitePluginApi(): Plugin {
           res.json({ status: 'ok', database: 'connected' });
         } catch (error) {
           console.error('Database health check failed:', error);
-          res.status(500).json({ 
-            status: 'error', 
+          res.status(500).json({
+            status: 'error',
             database: 'disconnected',
             message: 'Database connection failed but API is running'
           });
@@ -222,6 +222,7 @@ export function vitePluginApi(): Plugin {
         try {
           // Express app handles the request
           app(req as any, res as any, (err?: any) => {
+            // Express stack is done
             if (err) {
               console.error('❌ API middleware error:', err);
               if (!res.headersSent) {
@@ -230,7 +231,15 @@ export function vitePluginApi(): Plugin {
                 res.end(JSON.stringify({ error: err.message || 'Internal server error' }));
               }
             } else {
-              next();
+              // Express didn't handle it or passed through.
+              // CRITICAL FIX: For API routes, we NEVER want to fall through to Vite's next()
+              // because that typically leads to index.html (SPA fallback) which breaks JSON parsing.
+              // Instead, we force a 404 JSON response.
+              if (!res.headersSent) {
+                res.statusCode = 404;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ error: 'Route not found' }));
+              }
             }
           });
         } catch (error: any) {

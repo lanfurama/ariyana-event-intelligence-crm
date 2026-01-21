@@ -30,6 +30,11 @@ export class EmailReplyModel {
     return result.rows[0] || null;
   }
 
+  static async getByLeadId(leadId: string): Promise<EmailReply[]> {
+    const result = await query('SELECT * FROM email_replies WHERE lead_id = $1 ORDER BY reply_date DESC', [leadId]);
+    return result.rows;
+  }
+
   static async create(emailReply: EmailReply): Promise<EmailReply> {
     const result = await query(
       `INSERT INTO email_replies (
