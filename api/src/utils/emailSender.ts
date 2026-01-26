@@ -50,7 +50,7 @@ const emailUser = process.env.EMAIL_HOST_USER;
 const emailPassword = process.env.EMAIL_HOST_PASSWORD;
 const defaultFromEmail = process.env.DEFAULT_FROM_EMAIL || emailUser || '';
 
-function getTransporter(): nodemailer.Transporter | null {
+export function getTransporter(): nodemailer.Transporter | null {
   if (cachedTransporter) {
     return cachedTransporter;
   }

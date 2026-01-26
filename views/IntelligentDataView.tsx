@@ -2649,7 +2649,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Event Intelligence Dashboard</h2>
           <p className="text-sm text-slate-600 mt-1">Tự động phân tích và xếp hạng events với Backend Scoring Engine</p>
         </div>
-        <label className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg inline-flex items-center text-sm font-semibold cursor-pointer transition-colors shadow-sm shrink-0">
+        <label className="px-4 py-2.5 bg-slate-900 text-white rounded-lg inline-flex items-center text-sm font-semibold cursor-pointer shadow-sm shrink-0">
           <FileSpreadsheet size={18} className="mr-2" /> Upload Excel/CSV
           <input
             type="file"
@@ -2676,7 +2676,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                 delegates: true,
                 iccaQualification: true
               })}
-              className="px-2.5 py-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
+              className="px-2.5 py-1 text-xs font-medium text-white bg-indigo-600 rounded"
             >
               All On
             </button>
@@ -2688,14 +2688,14 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                 delegates: false,
                 iccaQualification: false
               })}
-              className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded transition-colors"
+              className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded"
             >
               All Off
             </button>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-white/50 transition-colors">
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded">
             <input
               type="checkbox"
               checked={scoringCriteria.history}
@@ -2704,7 +2704,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
             />
             <span className="text-xs font-medium text-slate-700">History (25đ)</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-white/50 transition-colors">
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded">
             <input
               type="checkbox"
               checked={scoringCriteria.region}
@@ -2713,7 +2713,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
             />
             <span className="text-xs font-medium text-slate-700">Region (25đ)</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-white/50 transition-colors">
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded">
             <input
               type="checkbox"
               checked={scoringCriteria.contact}
@@ -2722,7 +2722,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
             />
             <span className="text-xs font-medium text-slate-700">Contact (25đ)</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-white/50 transition-colors">
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded">
             <input
               type="checkbox"
               checked={scoringCriteria.delegates}
@@ -2731,7 +2731,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
             />
             <span className="text-xs font-medium text-slate-700">Delegates (25đ)</span>
           </label>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded hover:bg-white/50 transition-colors">
+          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded">
             <input
               type="checkbox"
               checked={scoringCriteria.iccaQualification}
@@ -2773,7 +2773,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                 setImportData('');
                 setEmailSendSummary(null);
               }}
-              className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-100 transition-colors"
+              className="text-green-600 green-800 p-1 rounded green-100 "
             >
               <X size={16} />
             </button>
@@ -2848,7 +2848,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                 console.log('🔴 [UI] Closing error message');
                 setAnalysisError(null);
               }}
-              className="text-red-600 hover:text-red-800 flex-shrink-0 ml-2 p-1 hover:bg-red-100 rounded"
+              className="text-red-600 red-800 flex-shrink-0 ml-2 p-1 red-100 rounded"
               aria-label="Close error"
             >
               <X size={18} />
@@ -2957,7 +2957,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                 </select>
                 <button
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                  className="p-2 bg-slate-100  rounded-lg "
                   title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                 >
                   {sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -2974,7 +2974,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                     setStatusFilter('all');
                     setPriorityFilter('all');
                   }}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
+                  className="px-3 py-2 bg-slate-100  text-slate-700 rounded-lg text-sm font-medium  flex items-center gap-1"
                 >
                   <X size={14} />
                   Clear
@@ -3027,7 +3027,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                   filteredAndSortedEvents.map(({ event, idx, progress, wasSkipped, skipReason }) => (
                     <tr
                       key={event.id || idx}
-                      className={`hover:bg-slate-50 transition-colors ${progress?.status === 'completed' ? 'bg-green-50/30' :
+                      className={`${progress?.status === 'completed' ? 'bg-green-50/30' :
                         progress?.status === 'analyzing' ? 'bg-blue-50/30' :
                           progress?.status === 'error' ? 'bg-red-50/30' :
                             wasSkipped ? 'bg-amber-50/30' : ''
@@ -3129,7 +3129,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                   issues: (event as any).issues,
                                   rawData: (event as any).rawData
                                 })}
-                                className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                                className="p-1.5 text-slate-600 slate-900  rounded "
                                 title="View Details"
                               >
                                 <FileText size={16} />
@@ -3151,7 +3151,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                         }
                                       }}
                                       disabled={isResearching}
-                                      className="p-1.5 text-purple-600 hover:text-purple-900 hover:bg-purple-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      className="p-1.5 text-purple-600 purple-900 purple-100 rounded  disabled:opacity-50 disabled:cursor-not-allowed"
                                       title="Research Edition Leadership"
                                     >
                                       {isResearching ? (
@@ -3176,7 +3176,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                 issues: (event as any).issues,
                                 rawData: (event as any).rawData
                               })}
-                              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                              className="p-1.5 text-slate-600 slate-900  rounded "
                               title="View Raw Data"
                             >
                               <Search size={16} />
@@ -3201,7 +3201,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
           <p className="text-sm text-slate-600 mb-5 max-w-sm mx-auto">
             Upload an Excel or CSV file to start analyzing and scoring events automatically.
           </p>
-          <label className="inline-flex items-center px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold cursor-pointer transition-colors shadow-sm">
+          <label className="inline-flex items-center px-5 py-2.5 bg-slate-900  text-white rounded-lg font-semibold cursor-pointer  shadow-sm">
             <FileSpreadsheet size={16} className="mr-2" /> Upload File
             <input
               type="file"
@@ -3227,7 +3227,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
           <button
             onClick={handleAnalyze}
             disabled={loading || researchingEditions.size > 0 || eventsList.length === 0 || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold  flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed  shrink-0"
           >
             {loading ? (
               <>
@@ -3322,7 +3322,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
               {progress.result.keyPersonEmail && (
                 <div>
                   <span className="font-semibold text-slate-700">Email:</span>
-                  <a href={`mailto:${progress.result.keyPersonEmail}`} className="ml-2 text-indigo-600 hover:underline">
+                  <a href={`mailto:${progress.result.keyPersonEmail}`} className="ml-2 text-indigo-600 ">
                     {progress.result.keyPersonEmail}
                   </a>
                 </div>
@@ -3418,7 +3418,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
               {progress.result.keyPersonPhone && (
                 <div>
                   <span className="font-semibold text-slate-700">Phone:</span>
-                  <a href={`tel:${progress.result.keyPersonPhone}`} className="ml-2 text-indigo-600 hover:underline">
+                  <a href={`tel:${progress.result.keyPersonPhone}`} className="ml-2 text-indigo-600 ">
                     {progress.result.keyPersonPhone}
                   </a>
                 </div>
@@ -3492,7 +3492,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
             {organizationProgress.map((progress, idx) => (
               <div
                 key={idx}
-                className={`p-3 rounded-lg border transition-all ${progress.status === 'completed'
+                className={`p-3 rounded-lg border  ${progress.status === 'completed'
                   ? 'bg-green-50 border-green-200'
                   : progress.status === 'analyzing'
                     ? 'bg-blue-50 border-blue-200'
@@ -3551,7 +3551,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                     {/* Expand/Collapse Button */}
                     <button
                       onClick={() => toggleExpand(progress.result?.companyName || progress.companyName)}
-                      className="w-full flex items-center justify-between text-xs text-slate-600 hover:text-slate-800 mb-2 font-medium"
+                      className="w-full flex items-center justify-between text-xs text-slate-600 slate-800 mb-2 font-medium"
                     >
                       <span>View Details</span>
                       {expandedOrgs.has(progress.result?.companyName || progress.companyName) ? (
@@ -3641,7 +3641,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                             <span className="text-slate-500">📧</span>
                             <span className={progress.result.keyPersonEmail ? 'text-green-700 font-medium' : 'text-amber-700'}>
                               {progress.result.keyPersonEmail ? (
-                                <a href={`mailto:${progress.result.keyPersonEmail}`} className="hover:underline">
+                                <a href={`mailto:${progress.result.keyPersonEmail}`} className="">
                                   {progress.result.keyPersonEmail}
                                 </a>
                               ) : '✗ No Email'}
@@ -3658,7 +3658,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                           {progress.result.website && (
                             <div className="flex items-center space-x-1 col-span-2">
                               <span className="text-slate-500">🌐</span>
-                              <a href={progress.result.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                              <a href={progress.result.website} target="_blank" rel="noopener noreferrer" className="text-blue-600  truncate">
                                 {progress.result.website}
                               </a>
                             </div>
@@ -3773,7 +3773,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                   console.log('View details for:', lead);
                                 }
                               }}
-                              className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 flex items-center"
+                              className="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium  flex items-center"
                             >
                               <FileText size={12} className="mr-1" /> View Details
                             </button>
@@ -3782,7 +3782,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                 // Trigger data enrichment for this organization
                                 console.log('Enrich data for:', progress.result.companyName);
                               }}
-                              className="px-3 py-1.5 bg-purple-600 text-white rounded text-xs font-medium hover:bg-purple-700 flex items-center"
+                              className="px-3 py-1.5 bg-purple-600 text-white rounded text-xs font-medium  flex items-center"
                             >
                               <Sparkles size={12} className="mr-1" /> Enrich Data
                             </button>
@@ -3791,7 +3791,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                 href={progress.result.website}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-3 py-1.5 bg-indigo-600 text-white rounded text-xs font-medium hover:bg-indigo-700 flex items-center"
+                                className="px-3 py-1.5 bg-indigo-600 text-white rounded text-xs font-medium  flex items-center"
                               >
                                 <ExternalLink size={12} className="mr-1" /> Visit Website
                               </a>
@@ -3860,7 +3860,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                     return (
                       <>
                         {isLink && value ? (
-                          <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 ">
                             {displayValue}
                           </a>
                         ) : displayValue}
@@ -3898,7 +3898,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                           {lead.totalScore && (
                             <button
                               onClick={() => handleExportEventBrief(lead)}
-                              className="flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded transition-colors"
+                              className="flex items-center px-3 py-1.5 bg-blue-600  text-white text-xs font-semibold rounded "
                             >
                               <Download size={12} className="mr-1" />
                               Export
@@ -3939,7 +3939,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                               <span className="text-xs font-semibold text-slate-500 uppercase">Website</span>
                               <p className="text-sm mt-1">
                                 {lead.website ? (
-                                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                  <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 ">
                                     {lead.website}
                                   </a>
                                 ) : 'N/A'}
@@ -3949,7 +3949,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
 
                           <button
                             onClick={toggleExpand}
-                            className="w-full mt-2 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg transition-colors flex items-center justify-center"
+                            className="w-full mt-2 py-2 bg-indigo-50 indigo-100 text-indigo-700 font-semibold rounded-lg  flex items-center justify-center"
                           >
                             <ChevronDown size={18} className="mr-2" />
                             Xem thêm chi tiết
@@ -3963,7 +3963,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                           <div className="p-4">
                             <button
                               onClick={toggleExpand}
-                              className="w-full mb-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors flex items-center justify-center"
+                              className="w-full mb-4 py-2 bg-slate-100  text-slate-700 font-semibold rounded-lg  flex items-center justify-center"
                             >
                               <ChevronUp size={18} className="mr-2" />
                               Thu gọn
@@ -4535,7 +4535,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                   {lead.website && (
                                     <div className="flex items-start">
                                       <span className="text-xs font-semibold text-slate-500 w-20 flex-shrink-0">Website:</span>
-                                      <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all font-medium">
+                                      <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 blue-800  break-all font-medium">
                                         {lead.website}
                                       </a>
                                     </div>
@@ -4576,7 +4576,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                   {lead.keyPersonEmail && (
                                     <div className="flex items-start">
                                       <span className="text-xs font-semibold text-slate-500 w-20 flex-shrink-0">Email:</span>
-                                      <a href={`mailto:${lead.keyPersonEmail}`} className="text-sm text-blue-600 hover:text-blue-800 hover:underline break-all font-medium">
+                                      <a href={`mailto:${lead.keyPersonEmail}`} className="text-sm text-blue-600 blue-800  break-all font-medium">
                                         {lead.keyPersonEmail}
                                       </a>
                                     </div>
@@ -4584,7 +4584,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                   {lead.keyPersonPhone && (
                                     <div className="flex items-start">
                                       <span className="text-xs font-semibold text-slate-500 w-20 flex-shrink-0">Phone:</span>
-                                      <a href={`tel:${lead.keyPersonPhone}`} className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium">
+                                      <a href={`tel:${lead.keyPersonPhone}`} className="text-sm text-blue-600 blue-800  font-medium">
                                         {lead.keyPersonPhone}
                                       </a>
                                     </div>
@@ -4611,7 +4611,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                 </div>
                                 <button
                                   onClick={() => handleExportEventBrief(lead)}
-                                  className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-all shadow-md hover:shadow-lg"
+                                  className="flex items-center px-4 py-2 bg-blue-600  text-white text-xs font-semibold rounded-lg  shadow-md lg"
                                 >
                                   <Download size={14} className="mr-1.5" />
                                   Export Event Brief
@@ -4720,7 +4720,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                     <span className="font-semibold text-slate-600 block mb-1">International Organisation:</span>
                                     <p className="text-slate-800 font-medium">{lead.eventBrief.internationalOrganisationName}</p>
                                     {lead.eventBrief.internationalOrganisationWebsite && (
-                                      <a href={lead.eventBrief.internationalOrganisationWebsite} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm mt-0.5 block">
+                                      <a href={lead.eventBrief.internationalOrganisationWebsite} target="_blank" rel="noopener noreferrer" className="text-blue-600  text-sm mt-0.5 block">
                                         {lead.eventBrief.internationalOrganisationWebsite}
                                       </a>
                                     )}
@@ -4740,16 +4740,16 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                     {lead.eventBrief.localHostOrganization && <p className="text-slate-600 text-xs mt-0.5">{lead.eventBrief.localHostOrganization}</p>}
                                     {lead.eventBrief.localHostEmail && (
                                       <p className="text-slate-600 text-xs mt-0.5">
-                                        Email: <a href={`mailto:${lead.eventBrief.localHostEmail}`} className="text-blue-600 hover:underline">{lead.eventBrief.localHostEmail}</a>
+                                        Email: <a href={`mailto:${lead.eventBrief.localHostEmail}`} className="text-blue-600 ">{lead.eventBrief.localHostEmail}</a>
                                       </p>
                                     )}
                                     {lead.eventBrief.localHostPhone && (
                                       <p className="text-slate-600 text-xs mt-0.5">
-                                        Phone: <a href={`tel:${lead.eventBrief.localHostPhone}`} className="text-blue-600 hover:underline">{lead.eventBrief.localHostPhone}</a>
+                                        Phone: <a href={`tel:${lead.eventBrief.localHostPhone}`} className="text-blue-600 ">{lead.eventBrief.localHostPhone}</a>
                                       </p>
                                     )}
                                     {lead.eventBrief.localHostWebsite && (
-                                      <a href={lead.eventBrief.localHostWebsite} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-xs mt-0.5 block">
+                                      <a href={lead.eventBrief.localHostWebsite} target="_blank" rel="noopener noreferrer" className="text-blue-600  text-xs mt-0.5 block">
                                         {lead.eventBrief.localHostWebsite}
                                       </a>
                                     )}
@@ -4860,7 +4860,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                 link.click();
                 URL.revokeObjectURL(url);
               }}
-              className="text-sm px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded flex items-center"
+              className="text-sm px-4 py-2 bg-slate-100  text-slate-600 rounded flex items-center"
             >
               <Download size={16} className="mr-2" /> Download Full Report
             </button>
@@ -4891,7 +4891,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
               </div>
               <button
                 onClick={() => setSelectedEventForModal(null)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded transition-colors"
+                className="text-slate-400 slate-600 p-1.5 rounded "
               >
                 <X size={18} />
               </button>
@@ -5081,7 +5081,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                 </div>
                                 <div className="text-sm text-slate-800 break-words">
                                   {typeof value === 'string' && (value.toLowerCase().includes('http') || value.toLowerCase().startsWith('www')) ? (
-                                    <a href={value.startsWith('http') ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
+                                    <a href={value.startsWith('http') ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-blue-600  break-all">
                                       {value}
                                     </a>
                                   ) : String(value)}
@@ -5113,7 +5113,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
 
                                         if (valueStr.includes('@')) {
                                           displayValue = (
-                                            <a href={`mailto:${valueStr}`} className="text-blue-600 hover:underline">
+                                            <a href={`mailto:${valueStr}`} className="text-blue-600 ">
                                               {valueStr}
                                             </a>
                                           );
@@ -5121,14 +5121,14 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                           displayValue = (
                                             <a href={valueStr.startsWith('http') ? valueStr : `https://${valueStr}`}
                                               target="_blank" rel="noopener noreferrer"
-                                              className="text-blue-600 hover:underline break-all">
+                                              className="text-blue-600  break-all">
                                               {valueStr}
                                             </a>
                                           );
                                         }
 
                                         return (
-                                          <tr key={key} className="hover:bg-white">
+                                          <tr key={key} className="white">
                                             <td className="py-1 pr-4 align-top w-1/3">
                                               <span className="font-medium text-slate-700 text-xs">{formattedKey}</span>
                                             </td>
@@ -5251,13 +5251,13 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                     displayValue = (
                                       <a href={valueStr.startsWith('http') ? valueStr : `https://${valueStr}`}
                                         target="_blank" rel="noopener noreferrer"
-                                        className="text-blue-600 hover:underline break-all">
+                                        className="text-blue-600  break-all">
                                         {valueStr}
                                       </a>
                                     );
                                   } else if (valueStr.includes('@')) {
                                     displayValue = (
-                                      <a href={`mailto:${valueStr}`} className="text-blue-600 hover:underline">
+                                      <a href={`mailto:${valueStr}`} className="text-blue-600 ">
                                         {valueStr}
                                       </a>
                                     );
@@ -5272,7 +5272,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
                                     .trim();
 
                                   return (
-                                    <tr key={key} className="hover:bg-slate-50">
+                                    <tr key={key} className="slate-50">
                                       <td className="py-2 pr-4 align-top w-1/3">
                                         <span className="font-medium text-slate-700 text-xs">{formattedKey}</span>
                                       </td>
@@ -5292,7 +5292,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
 
                     {/* Raw Data (for debugging) */}
                     <details className="bg-slate-50 rounded border border-slate-200 px-4 py-2">
-                      <summary className="cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-800">
+                      <summary className="cursor-pointer text-xs font-medium text-slate-600 slate-800">
                         Raw Data (Click to expand)
                       </summary>
                       <pre className="mt-2 text-xs text-slate-600 bg-white p-2 rounded border border-slate-200 overflow-x-auto">
@@ -5308,7 +5308,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
             <div className="px-5 py-3 border-t border-slate-200 bg-white flex justify-end">
               <button
                 onClick={() => setSelectedEventForModal(null)}
-                className="px-4 py-1.5 bg-slate-600 hover:bg-slate-700 text-white text-sm rounded transition-colors"
+                className="px-4 py-1.5 bg-slate-600  text-white text-sm rounded "
               >
                 Đóng
               </button>

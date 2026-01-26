@@ -98,7 +98,7 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
             <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-sm space-y-2 relative">
               <button
                 onClick={() => setShowWarning(false)}
-                className="absolute top-2 right-2 text-yellow-600 hover:text-yellow-800"
+                className="absolute top-2 right-2 text-yellow-600"
                 aria-label="Close warning"
               >
                 <X size={16} />
@@ -137,7 +137,7 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
               <select 
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
-                className="w-full p-3.5 pl-11 border-2 border-slate-200 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white text-slate-900 font-medium transition-all hover:border-slate-300"
+                className="w-full p-3.5 pl-11 border-2 border-slate-200 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white text-slate-900 font-medium"
                 disabled={users.length === 0}
               >
                 {users.map(u => (
@@ -153,7 +153,7 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
           <button 
             onClick={handleLogin}
             disabled={!selectedUser || users.length === 0}
-            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 flex justify-center items-center transform hover:scale-[1.02] disabled:transform-none"
+            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-lg shadow-blue-500/30 flex justify-center items-center"
           >
             Sign In <ChevronRight size={18} className="ml-2" />
           </button>

@@ -281,3 +281,71 @@ export const leadScoringApi = {
   }>('/lead-scoring/distribution'),
 };
 
+// Email Reports API
+export interface EmailReportsConfig {
+  id: string;
+  recipient_email: string;
+  recipient_name?: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  day_of_week?: number;
+  day_of_month?: number;
+  time_hour: number;
+  time_minute: number;
+  timezone: string;
+  enabled: boolean;
+  include_stats: boolean;
+  include_new_leads: boolean;
+  include_email_activity: boolean;
+  include_top_leads: boolean;
+  top_leads_count: number;
+  last_sent_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmailReportsLog {
+  id: string;
+  config_id: string;
+  recipient_email: string;
+  report_type: 'daily' | 'weekly' | 'monthly';
+  period_start: string;
+  period_end: string;
+  sent_at: string;
+  status: 'sent' | 'failed';
+  error_message?: string;
+  stats_summary?: any;
+}
+
+export const emailReportsApi = {
+  getAll: (enabledOnly?: boolean) => apiCall<EmailReportsConfig[]>(
+    `/email-reports/config${enabledOnly ? '?enabled=true' : ''}`
+  ),
+  getById: (id: string) => apiCall<EmailReportsConfig>(`/email-reports/config/${id}`),
+  create: (config: Omit<EmailReportsConfig, 'id' | 'created_at' | 'updated_at' | 'last_sent_at'>) =>
+    apiCall<EmailReportsConfig>('/email-reports/config', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    }),
+  update: (id: string, config: Partial<EmailReportsConfig>) =>
+    apiCall<EmailReportsConfig>(`/email-reports/config/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    }),
+  delete: (id: string) =>
+    apiCall<{ message: string }>(`/email-reports/config/${id}`, {
+      method: 'DELETE',
+    }),
+  send: (id: string) =>
+    apiCall<{ message: string; success: boolean }>(`/email-reports/send/${id}`, {
+      method: 'POST',
+    }),
+  trigger: () =>
+    apiCall<{ message: string }>('/email-reports/trigger', {
+      method: 'POST',
+    }),
+  getLogs: (configId?: string, limit?: number) =>
+    apiCall<EmailReportsLog[]>(
+      `/email-reports/logs${configId ? `?config_id=${configId}` : ''}${limit ? `${configId ? '&' : '?'}limit=${limit}` : ''}`
+    ),
+};
+

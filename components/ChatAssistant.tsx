@@ -319,7 +319,7 @@ export const ChatAssistant = ({ user }: { user: User }) => {
       <div className="p-4 bg-white border-t border-slate-200">
         <div className="flex items-center space-x-2">
           <input
-            className="flex-1 p-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 p-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
             placeholder={rateLimitCountdown !== null && rateLimitCountdown > 0 ? `Wait ${rateLimitCountdown}s...` : "Ask about leads, email templates, or market trends..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -329,7 +329,7 @@ export const ChatAssistant = ({ user }: { user: User }) => {
           <button
             onClick={handleSend}
             disabled={loading || !input.trim() || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
-            className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="p-3 bg-blue-600 text-white rounded-lg disabled:opacity-50"
           >
             <Send size={20} />
           </button>

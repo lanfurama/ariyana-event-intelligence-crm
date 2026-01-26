@@ -105,7 +105,7 @@ export const VideoAnalysisView = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 flex flex-col items-center justify-center text-center hover:bg-slate-50 transition-colors bg-white">
+          <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 flex flex-col items-center justify-center text-center bg-white">
             <input
               type="file"
               accept="image/*,video/*"
@@ -122,7 +122,7 @@ export const VideoAnalysisView = () => {
                 )}
                 <button
                   onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow hover:bg-red-600"
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow"
                 >
                   <X size={14} />
                 </button>
@@ -161,7 +161,7 @@ export const VideoAnalysisView = () => {
                 </div>
                 <button
                   onClick={() => setVideoAnalysisError(null)}
-                  className="text-red-600 hover:text-red-800 flex-shrink-0 ml-2 p-1 hover:bg-red-100 rounded"
+                  className="text-red-600 flex-shrink-0 ml-2 p-1 rounded"
                   aria-label="Close error message"
                 >
                   <X size={16} />
@@ -173,7 +173,7 @@ export const VideoAnalysisView = () => {
           <button
             onClick={handleAnalyze}
             disabled={!selectedFile || loading || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
-            className="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg hover:bg-indigo-700 disabled:opacity-50 flex justify-center items-center shadow-lg shadow-indigo-200"
+            className="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg disabled:opacity-50 flex justify-center items-center shadow-lg shadow-indigo-200"
           >
             {loading ? <Loader2 className="animate-spin mr-2" /> : <BrainCircuit className="mr-2" />}
             {rateLimitCountdown !== null && rateLimitCountdown > 0

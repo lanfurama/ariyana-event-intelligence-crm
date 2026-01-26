@@ -12,6 +12,7 @@ const LeadDetail = React.lazy(() => import('./components/LeadDetail').then(modul
 const IntelligentDataView = React.lazy(() => import('./views/IntelligentDataView').then(module => ({ default: module.IntelligentDataView })));
 const ChatAssistant = React.lazy(() => import('./components/ChatAssistant').then(module => ({ default: module.ChatAssistant })));
 const EmailTemplatesView = React.lazy(() => import('./views/EmailTemplatesView').then(module => ({ default: module.EmailTemplatesView })));
+const EmailReportsView = React.lazy(() => import('./views/EmailReportsView').then(module => ({ default: module.EmailReportsView })));
 const UserProfileView = React.lazy(() => import('./views/UserProfileView').then(module => ({ default: module.UserProfileView })));
 const VideoAnalysisView = React.lazy(() => import('./views/VideoAnalysisView').then(module => ({ default: module.VideoAnalysisView })));
 
@@ -82,6 +83,9 @@ const App = () => {
       case 'email-templates':
         if (user.role !== 'Director' && user.role !== 'Sales') return <Dashboard leads={leads} />;
         return <EmailTemplatesView />;
+      case 'email-reports':
+        if (user.role !== 'Director') return <Dashboard leads={leads} />;
+        return <EmailReportsView />;
       case 'profile':
         return <UserProfileView user={user} onUpdateUser={updateUser} />;
       default:

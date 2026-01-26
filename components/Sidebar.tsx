@@ -9,7 +9,8 @@ import {
   LogOut,
   ChevronLeft,
   User as UserIcon,
-  Menu
+  Menu,
+  FileText
 } from 'lucide-react';
 import { User } from '../types';
 import { NavItem } from './common/NavItem';
@@ -34,7 +35,7 @@ export const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onTog
       </div>
       <button
         onClick={onToggle}
-        className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
+        className="p-1.5 rounded-lg text-slate-400"
         title="Close sidebar"
       >
         <ChevronLeft size={20} />
@@ -68,15 +69,20 @@ export const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onTog
         <NavItem icon={<Mail size={20} />} label="Email Templates" id="email-templates" active={activeTab} onClick={setActiveTab} />
       )}
 
+      {/* Email Reports - Only Director can manage */}
+      {user.role === 'Director' && (
+        <NavItem icon={<FileText size={20} />} label="Email Reports" id="email-reports" active={activeTab} onClick={setActiveTab} />
+      )}
+
       <NavItem icon={<UserIcon size={20} />} label="My Profile" id="profile" active={activeTab} onClick={setActiveTab} />
     </nav>
 
     <div className="p-3 border-t border-white/10 space-y-2">
       <button
         onClick={onLogout}
-        className="w-full flex items-center space-x-3 px-4 py-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200 text-sm font-medium group"
+        className="w-full flex items-center space-x-3 px-4 py-2 text-slate-400 rounded-lg text-sm font-medium"
       >
-        <LogOut size={16} className="group-hover:translate-x-0.5 transition-transform" />
+        <LogOut size={16} />
         <span>Sign Out</span>
       </button>
       <div className="text-xs text-slate-600 text-center font-medium">
@@ -90,7 +96,7 @@ export const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onTog
     !isOpen && (
       <button
         onClick={onToggle}
-        className="fixed left-4 top-4 z-30 p-2.5 bg-gradient-to-r from-primary to-yellow-600 text-white rounded-lg shadow-lg hover:shadow-primary/50 transition-all duration-200"
+        className="fixed left-4 top-4 z-30 p-2.5 bg-gradient-to-r from-primary to-yellow-600 text-white rounded-lg shadow-lg"
         title="Open sidebar"
       >
         <Menu size={20} />

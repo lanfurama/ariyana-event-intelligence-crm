@@ -291,9 +291,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                             <button
                                 key={key}
                                 onClick={() => setTimeFilter(key as typeof timeFilter)}
-                                className={`px-3 py-1.5 rounded text-xs font-semibold transition-all shadow-sm ${timeFilter === key
+                                className={`px-3 py-1.5 rounded text-xs font-semibold shadow-sm ${timeFilter === key
                                     ? 'bg-slate-900 text-white shadow-md ring-1 ring-slate-700'
-                                    : 'glass-input text-slate-600 hover:bg-white/80'
+                                    : 'glass-input text-slate-600'
                                     }`}
                             >
                                 {label}

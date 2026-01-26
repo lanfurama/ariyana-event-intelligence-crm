@@ -13,7 +13,9 @@ import geminiRouter from './routes/gemini.js';
 import excelImportRouter from './routes/excelImport.js';
 import eventBriefRouter from './routes/eventBrief.js';
 import leadScoringRouter from './routes/leadScoring.js';
+import emailReportsRouter from './routes/emailReports.js';
 import { query } from './config/database.js';
+import { startScheduledReportsJob } from './services/scheduledReportsJob.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -88,6 +90,7 @@ app.use('/api/gemini', geminiRouter);
 app.use('/api/excel-import', excelImportRouter);
 app.use('/api/event-brief', eventBriefRouter);
 app.use('/api/lead-scoring', leadScoringRouter);
+app.use('/api/email-reports', emailReportsRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -105,6 +108,7 @@ app.get('/', (req, res) => {
       excelImport: '/api/excel-import',
       eventBrief: '/api/event-brief',
       leadScoring: '/api/lead-scoring',
+      emailReports: '/api/email-reports',
       health: '/health',
     },
   });
@@ -130,6 +134,13 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📚 API docs: http://localhost:${PORT}/`);
   console.log(`🌐 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Start scheduled reports job
+  try {
+    startScheduledReportsJob();
+  } catch (error) {
+    console.error('❌ Failed to start scheduled reports job:', error);
+  }
 });
 
 export default app;

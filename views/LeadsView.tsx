@@ -428,7 +428,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                 <div className="flex items-center gap-3 flex-wrap">
                     <button
                         onClick={handleExportExcel}
-                        className="glass-card hover:bg-white/80 text-emerald-700 border-emerald-200/50 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95 shrink-0 inline-flex items-center shadow-sm"
+                        className="glass-card text-emerald-700 border-emerald-200/50 px-4 py-2.5 rounded-xl text-sm font-bold shrink-0 inline-flex items-center shadow-sm"
                     >
                         <FileSpreadsheet size={18} className="mr-2" /> Export Excel
                     </button>
@@ -437,13 +437,13 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                         <>
                             <button
                                 onClick={() => setShowEmailModal(true)}
-                                className="glass-card hover:bg-white/80 text-indigo-700 border-indigo-200/50 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95 shrink-0 inline-flex items-center shadow-sm"
+                                className="glass-card text-indigo-700 border-indigo-200/50 px-4 py-2.5 rounded-xl text-sm font-bold shrink-0 inline-flex items-center shadow-sm"
                             >
                                 <Mail size={18} className="mr-2" /> Send Mail to All
                             </button>
                             <button
                                 onClick={onAddLead}
-                                className="bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg hover:shadow-slate-900/30 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:scale-105 active:scale-95 shrink-0 inline-flex items-center"
+                                className="bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 inline-flex items-center"
                             >
                                 <Plus size={18} className="mr-2" /> Add Lead
                             </button>
@@ -454,23 +454,23 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
 
             <div className="glass-card rounded-xl px-4 py-3 shrink-0">
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                    <div className="text-center py-1.5 px-2 rounded-lg hover:bg-white/40 transition-colors">
+                    <div className="text-center py-1.5 px-2 rounded-lg">
                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total</div>
                         <div className="text-xl font-black text-slate-900 leading-tight">{filteredLeads.length}</div>
                     </div>
-                    <div className="text-center py-1.5 px-2 rounded-lg hover:bg-white/40 transition-colors">
+                    <div className="text-center py-1.5 px-2 rounded-lg">
                         <div className="text-[10px] text-green-600/80 font-bold uppercase tracking-wider">Sent</div>
                         <div className="text-xl font-black text-green-700 leading-tight">{emailStats.sent}</div>
                     </div>
-                    <div className="text-center py-1.5 px-2 rounded-lg hover:bg-white/40 transition-colors">
+                    <div className="text-center py-1.5 px-2 rounded-lg">
                         <div className="text-[10px] text-orange-600/80 font-bold uppercase tracking-wider">Not Sent</div>
                         <div className="text-xl font-black text-orange-700 leading-tight">{emailStats.notSent}</div>
                     </div>
-                    <div className="text-center py-1.5 px-2 rounded-lg hover:bg-white/40 transition-colors">
+                    <div className="text-center py-1.5 px-2 rounded-lg">
                         <div className="text-[10px] text-indigo-600/80 font-bold uppercase tracking-wider">With Info</div>
                         <div className="text-xl font-black text-indigo-700 leading-tight">{keyPersonStats.withInfo}</div>
                     </div>
-                    <div className="text-center py-1.5 px-2 rounded-lg hover:bg-white/40 transition-colors">
+                    <div className="text-center py-1.5 px-2 rounded-lg">
                         <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Without Info</div>
                         <div className="text-xl font-black text-slate-500 leading-tight">{keyPersonStats.withoutInfo}</div>
                     </div>
@@ -498,7 +498,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 <select
                                     value={countryFilter}
                                     onChange={(e) => setCountryFilter(e.target.value)}
-                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer hover:bg-white/60 focus:ring-2 focus:ring-primary/50"
+                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer focus:ring-2 focus:ring-primary/50"
                                 >
                                     <option value="all">All Countries</option>
                                     {availableCountries.map(country => (
@@ -512,7 +512,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 <select
                                     value={industryFilter}
                                     onChange={(e) => setIndustryFilter(e.target.value)}
-                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer hover:bg-white/60 focus:ring-2 focus:ring-primary/50"
+                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer focus:ring-2 focus:ring-primary/50"
                                 >
                                     <option value="all">All Industries</option>
                                     {availableIndustries.map(industry => (
@@ -526,7 +526,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer hover:bg-white/60 focus:ring-2 focus:ring-primary/50"
+                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer focus:ring-2 focus:ring-primary/50"
                                 >
                                     <option value="all">All Statuses</option>
                                     <option value="New">New</option>
@@ -544,7 +544,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 <select
                                     value={emailFilter}
                                     onChange={(e) => setEmailFilter(e.target.value as typeof emailFilter)}
-                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer hover:bg-white/60 focus:ring-2 focus:ring-primary/50"
+                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer focus:ring-2 focus:ring-primary/50"
                                 >
                                     <option value="all">All Email</option>
                                     <option value="sent">Sent</option>
@@ -571,7 +571,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                         setEmailFilter('all');
                                     }}
                                     title="Clear filters"
-                                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-all hover:text-slate-900"
+                                    className="p-2 bg-slate-100 text-slate-600 rounded-lg"
                                 >
                                     <X size={16} />
                                 </button>
@@ -606,7 +606,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                         const isMarking = markingReplies.has(lead.id);
 
                         return (
-                            <div key={lead.id} className="group relative glass-card p-5 rounded-2xl hover:bg-white/50 transition-all duration-300 border border-white/20 shadow-sm">
+                            <div key={lead.id} className="group relative glass-card p-5 rounded-2xl border border-white/20 shadow-sm">
                                 <div className="flex flex-col md:flex-row items-center gap-6">
                                     {/* Company Section - 30% */}
                                     <div className="flex-1 w-full md:w-[30%] flex items-start gap-4">
@@ -614,7 +614,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                             <Building2 size={24} />
                                         </div>
                                         <div className="min-w-0">
-                                            <h3 className="text-lg font-bold text-slate-900 truncate leading-tight group-hover:text-primary transition-colors">
+                                            <h3 className="text-lg font-bold text-slate-900 truncate leading-tight">
                                                 {lead.companyName}
                                             </h3>
                                             <div className="flex items-center gap-3 mt-1.5 flex-wrap">
@@ -625,7 +625,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                                     </div>
                                                 )}
                                                 {lead.website && (
-                                                    <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs font-semibold text-blue-600 hover:underline bg-blue-50/50 px-2 py-1 rounded-md">
+                                                    <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs font-semibold text-blue-600 bg-blue-50/50 px-2 py-1 rounded-md">
                                                         <Globe size={12} className="mr-1" />
                                                         Website
                                                     </a>
@@ -702,9 +702,9 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                                     handleMarkReply(lead.id);
                                                 }}
                                                 disabled={replied || isMarking}
-                                                className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all ${replied ? 'bg-blue-50 text-blue-600 shadow-sm border border-blue-100' :
+                                                className={`flex items-center justify-center w-10 h-10 rounded-xl ${replied ? 'bg-blue-50 text-blue-600 shadow-sm border border-blue-100' :
                                                     isMarking ? 'bg-slate-100 text-slate-400 animate-pulse' :
-                                                        'bg-slate-50 text-slate-300 hover:bg-blue-50 hover:text-blue-500 cursor-pointer'
+                                                        'bg-slate-50 text-slate-300 cursor-pointer'
                                                     }`}
                                                 title={replied ? 'Replied' : 'Mark Reply'}
                                             >
@@ -714,7 +714,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
 
                                         <button
                                             onClick={() => onSelectLead(lead)}
-                                            className="ml-auto glass-input hover:bg-white text-slate-600 hover:text-primary p-2.5 rounded-xl transition-all shadow-sm hover:shadow active:scale-95"
+                                            className="ml-auto glass-input text-slate-600 p-2.5 rounded-xl shadow-sm"
                                         >
                                             <ChevronRight size={20} />
                                         </button>
@@ -740,7 +740,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 setStatusFilter('all');
                                 setEmailFilter('all');
                             }}
-                            className="mt-6 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2"
+                            className="mt-6 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl shadow-sm flex items-center gap-2"
                         >
                             <X size={16} />
                             Clear all filters
@@ -764,7 +764,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                     setShowEmailModal(false);
                                     setSelectedTemplateId('');
                                 }}
-                                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors"
+                                className="text-slate-400 p-2 rounded-lg"
                             >
                                 <X size={20} />
                             </button>
@@ -890,14 +890,14 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                     setShowEmailModal(false);
                                     setSelectedTemplateId('');
                                 }}
-                                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors"
+                                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold"
                             >
                                 Close
                             </button>
                             {preparedEmails.length > 0 && (
                                 <button
                                     onClick={handleSendEmails}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={sendingEmails}
                                 >
                                     {sendingEmails ? (

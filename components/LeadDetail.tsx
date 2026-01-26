@@ -728,7 +728,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                         <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{lead.companyName}</h2>
                         <p className="text-sm text-slate-600 font-medium mt-0.5">{lead.industry} • {lead.country}</p>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors">
+                    <button onClick={onClose} className="text-slate-400 p-2 rounded-lg">
                         <X size={20} />
                     </button>
                 </div>
@@ -736,9 +736,9 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                 <div className="flex border-b-2 border-slate-200 bg-white">
                     <button
                         onClick={() => setActiveTab('info')}
-                        className={`flex-1 py-3 font-semibold text-sm transition-all duration-200 flex justify-center items-center space-x-2 ${activeTab === 'info'
+                        className={`flex-1 py-3 font-semibold text-sm flex justify-center items-center space-x-2 ${activeTab === 'info'
                             ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50/50'
-                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                            : 'text-slate-500'
                             }`}
                     >
                         <span>Contact Info</span>
@@ -746,9 +746,9 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
 
                     <button
                         onClick={() => setActiveTab('enrich')}
-                        className={`flex-1 py-3 font-semibold text-sm transition-all duration-200 flex justify-center items-center space-x-2 ${activeTab === 'enrich'
+                        className={`flex-1 py-3 font-semibold text-sm flex justify-center items-center space-x-2 ${activeTab === 'enrich'
                             ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50/50'
-                            : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                            : 'text-slate-500'
                             }`}
                     >
                         <Search size={16} /> <span>Google Enrich</span>
@@ -757,9 +757,9 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                     {canEdit ? (
                         <button
                             onClick={() => setActiveTab('email')}
-                            className={`flex-1 py-3 font-semibold text-sm transition-all duration-200 flex justify-center items-center space-x-2 ${activeTab === 'email'
+                            className={`flex-1 py-3 font-semibold text-sm flex justify-center items-center space-x-2 ${activeTab === 'email'
                                 ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50/50'
-                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                : 'text-slate-500'
                                 }`}
                         >
                             <Mail size={16} /> <span>AI Email</span>
@@ -777,7 +777,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                             <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
                                 <h3 className="text-lg font-bold text-slate-900 tracking-tight">Lead Details</h3>
                                 {canEdit && !isEditing && (
-                                    <button onClick={() => setIsEditing(true)} className="text-sm text-blue-600 flex items-center hover:bg-blue-50 px-4 py-2 rounded-lg font-semibold transition-all border border-blue-200 hover:border-blue-300">
+                                    <button onClick={() => setIsEditing(true)} className="text-sm text-blue-600 flex items-center px-4 py-2 rounded-lg font-semibold border border-blue-200">
                                         <Edit2 size={16} className="mr-2" /> Edit Info
                                     </button>
                                 )}
@@ -788,10 +788,10 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                 )}
                                 {isEditing && (
                                     <div className="flex space-x-2">
-                                        <button onClick={() => setIsEditing(false)} className="text-sm text-red-600 flex items-center hover:bg-red-50 px-4 py-2 rounded-lg font-semibold transition-all border border-red-200 hover:border-red-300">
+                                        <button onClick={() => setIsEditing(false)} className="text-sm text-red-600 flex items-center px-4 py-2 rounded-lg font-semibold border border-red-200">
                                             <X size={16} className="mr-2" /> Cancel
                                         </button>
-                                        <button onClick={handleSaveChanges} className="text-sm bg-green-600 text-white flex items-center hover:bg-green-700 px-4 py-2 rounded-lg font-bold transition-all shadow-sm">
+                                        <button onClick={handleSaveChanges} className="text-sm bg-green-600 text-white flex items-center px-4 py-2 rounded-lg font-bold shadow-sm">
                                             <Check size={16} className="mr-2" /> Save Changes
                                         </button>
                                     </div>
@@ -936,7 +936,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                                 <button
                                                     onClick={handleCheckInbox}
                                                     disabled={checkingInbox}
-                                                    className="text-xs px-2 py-1 bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                                                    className="text-xs px-2 py-1 bg-slate-900 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
                                                 >
                                                     {checkingInbox ? (
                                                         <>
@@ -1011,7 +1011,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                             value={enrichCompanyName}
                                             onChange={(e) => setEnrichCompanyName(e.target.value)}
                                             placeholder="Enter company or organization name"
-                                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-slate-300 font-medium"
+                                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-medium"
                                             disabled={enrichLoading}
                                         />
                                     </div>
@@ -1025,7 +1025,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                             value={enrichKeyPerson}
                                             onChange={(e) => setEnrichKeyPerson(e.target.value)}
                                             placeholder="Enter key contact person name"
-                                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-slate-300 font-medium"
+                                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-medium"
                                             disabled={enrichLoading}
                                         />
                                     </div>
@@ -1039,7 +1039,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                             value={enrichCity}
                                             onChange={(e) => setEnrichCity(e.target.value)}
                                             placeholder="Enter city or location"
-                                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all hover:border-slate-300 font-medium"
+                                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-medium"
                                             disabled={enrichLoading}
                                         />
                                     </div>
@@ -1047,7 +1047,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                     <button
                                         onClick={handleEnrich}
                                         disabled={enrichLoading || !canEdit || (rateLimitCountdown !== null && rateLimitCountdown > 0) || !enrichCompanyName.trim()}
-                                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold flex justify-center items-center shadow-lg shadow-blue-500/30 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-400 transition-all duration-200"
+                                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold flex justify-center items-center shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-400"
                                     >
                                         {enrichLoading ? (
                                             <>
@@ -1130,7 +1130,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                                                 href={chunk.web.uri}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="text-xs text-blue-600 hover:text-blue-800 hover:underline break-all flex-1"
+                                                                className="text-xs text-blue-600 break-all flex-1"
                                                             >
                                                                 {chunk.web.title || chunk.web.uri}
                                                             </a>
@@ -1188,14 +1188,14 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                                                                     <div className="flex gap-2">
                                                                                         <button
                                                                                             onClick={handleApproveEmail}
-                                                                                            className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 flex items-center justify-center"
+                                                                                            className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs font-medium flex items-center justify-center"
                                                                                         >
                                                                                             <Check size={14} className="mr-1" />
                                                                                             Approve & Update
                                                                                         </button>
                                                                                         <button
                                                                                             onClick={handleRejectEmail}
-                                                                                            className="flex-1 px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 flex items-center justify-center"
+                                                                                            className="flex-1 px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium flex items-center justify-center"
                                                                                         >
                                                                                             <X size={14} className="mr-1" />
                                                                                             Reject
@@ -1229,7 +1229,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                     {canEdit && (
                                         <button
                                             onClick={handleSaveEnrichment}
-                                            className="w-full mt-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center justify-center text-sm font-medium"
+                                            className="w-full mt-4 py-2 bg-teal-600 text-white rounded-lg flex items-center justify-center text-sm font-medium"
                                         >
                                             <Save size={16} className="mr-2" /> Update Content to Research Notes
                                         </button>
@@ -1276,7 +1276,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                             </div>
                                         ) : (
                                             <select
-                                                className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none cursor-pointer hover:border-slate-400 transition-colors"
+                                                className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none cursor-pointer"
                                                 value={selectedTemplate}
                                                 onChange={handleTemplateChange}
                                             >
@@ -1293,7 +1293,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                     <button
                                         onClick={handleDraftEmail}
                                         disabled={emailLoading || (emailRateLimitCountdown !== null && emailRateLimitCountdown > 0)}
-                                        className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium flex justify-center items-center shadow-sm disabled:opacity-50"
+                                        className="w-full py-3 bg-purple-600 text-white rounded-lg font-medium flex justify-center items-center shadow-sm disabled:opacity-50"
                                     >
                                         {emailLoading ? <Loader2 className="animate-spin mr-2" /> : <Mail className="mr-2" size={16} />}
                                         {emailRateLimitCountdown !== null && emailRateLimitCountdown > 0
@@ -1322,9 +1322,9 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                                 <button
                                                     type="button"
                                                     onClick={() => setEmailBodyViewMode('code')}
-                                                    className={`px-2 py-1 text-xs font-medium rounded transition-colors ${emailBodyViewMode === 'code'
+                                                    className={`px-2 py-1 text-xs font-medium rounded ${emailBodyViewMode === 'code'
                                                         ? 'bg-purple-600 text-white'
-                                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                        : 'bg-slate-100 text-slate-600'
                                                         }`}
                                                 >
                                                     HTML Code
@@ -1332,9 +1332,9 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                                 <button
                                                     type="button"
                                                     onClick={() => setEmailBodyViewMode('preview')}
-                                                    className={`px-2 py-1 text-xs font-medium rounded transition-colors ${emailBodyViewMode === 'preview'
+                                                    className={`px-2 py-1 text-xs font-medium rounded ${emailBodyViewMode === 'preview'
                                                         ? 'bg-purple-600 text-white'
-                                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                        : 'bg-slate-100 text-slate-600'
                                                         }`}
                                                 >
                                                     Preview
@@ -1344,7 +1344,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
 
                                         {emailBodyViewMode === 'code' ? (
                                             <textarea
-                                                className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none mb-2 transition-colors font-mono"
+                                                className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none mb-2 font-mono"
                                                 value={draftedEmail.body}
                                                 onChange={(e) => setDraftedEmail({ ...draftedEmail, body: e.target.value })}
                                                 placeholder="<html>...\n\nUse HTML format with variables like {{keyPersonName}}, {{companyName}}, etc."
@@ -1379,7 +1379,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                         <div className="border-t border-slate-100 pt-2">
                                             <div className="flex items-center justify-between mb-2">
                                                 <label className="text-xs font-bold text-slate-500">Attachments</label>
-                                                <label className="cursor-pointer text-xs text-blue-600 hover:underline flex items-center">
+                                                <label className="cursor-pointer text-xs text-blue-600 flex items-center">
                                                     <Plus size={12} className="mr-1" /> Add File
                                                     <input type="file" className="hidden" onChange={handleFileUpload} />
                                                 </label>
@@ -1389,7 +1389,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                                     {attachments.map((file, idx) => (
                                                         <span key={idx} className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs flex items-center">
                                                             {file.name}
-                                                            <button onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))} className="ml-1 text-slate-400 hover:text-red-500"><X size={10} /></button>
+                                                            <button onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))} className="ml-1 text-slate-400"><X size={10} /></button>
                                                         </span>
                                                     ))}
                                                 </div>
@@ -1399,13 +1399,13 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                     <div className="bg-slate-50 p-3 border-t border-slate-200 flex justify-end space-x-3">
                                         <button
                                             onClick={() => setDraftedEmail(null)}
-                                            className="text-sm text-slate-500 font-medium hover:text-slate-700"
+                                            className="text-sm text-slate-500 font-medium"
                                         >
                                             Discard
                                         </button>
                                         <button
                                             onClick={handleSendEmail}
-                                            className="text-sm bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700 flex items-center"
+                                            className="text-sm bg-blue-600 text-white px-4 py-2 rounded font-medium flex items-center"
                                         >
                                             <ExternalLink size={14} className="mr-2" /> Open Mail App & Send
                                         </button>
@@ -1435,7 +1435,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                     <button
                                         onClick={handleCheckInbox}
                                         disabled={checkingInbox}
-                                        className="text-xs px-3 py-1.5 bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+                                        className="text-xs px-3 py-1.5 bg-slate-900 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
                                     >
                                         {checkingInbox ? (
                                             <>

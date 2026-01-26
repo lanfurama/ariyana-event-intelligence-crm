@@ -7,11 +7,15 @@ import usersRouter from '../src/routes/users.js';
 import emailTemplatesRouter from '../src/routes/emailTemplates.js';
 import leadsRouter from '../src/routes/leads.js';
 import emailLogsRouter from '../src/routes/emailLogs.js';
+import emailRepliesRouter from '../src/routes/emailReplies.js';
 import chatMessagesRouter from '../src/routes/chatMessages.js';
 import geminiRouter from '../src/routes/gemini.js';
 import gptRouter from '../src/routes/gpt.js';
 import excelImportRouter from '../src/routes/excelImport.js';
 import csvImportRouter from '../src/routes/csvImport.js';
+import eventBriefRouter from '../src/routes/eventBrief.js';
+import leadScoringRouter from '../src/routes/leadScoring.js';
+import emailReportsRouter from '../src/routes/emailReports.js';
 import { query } from '../src/config/database.js';
 
 // Load environment variables for Vercel
@@ -72,11 +76,15 @@ app.use('/users', usersRouter);
 app.use('/email-templates', emailTemplatesRouter);
 app.use('/leads', leadsRouter);
 app.use('/email-logs', emailLogsRouter);
+app.use('/email-replies', emailRepliesRouter);
 app.use('/chat-messages', chatMessagesRouter);
 app.use('/gemini', geminiRouter);
 app.use('/gpt', gptRouter);
 app.use('/excel-import', excelImportRouter);
 app.use('/csv-import', csvImportRouter);
+app.use('/event-brief', eventBriefRouter);
+app.use('/lead-scoring', leadScoringRouter);
+app.use('/email-reports', emailReportsRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -88,9 +96,13 @@ app.get('/', (req, res) => {
       emailTemplates: '/api/v1/email-templates',
       leads: '/api/v1/leads',
       emailLogs: '/api/v1/email-logs',
+      emailReplies: '/api/v1/email-replies',
       chatMessages: '/api/v1/chat-messages',
       gemini: '/api/v1/gemini',
       excelImport: '/api/v1/excel-import',
+      eventBrief: '/api/v1/event-brief',
+      leadScoring: '/api/v1/lead-scoring',
+      emailReports: '/api/v1/email-reports',
       health: '/api/v1/health',
     },
   });

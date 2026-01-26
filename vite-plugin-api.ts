@@ -43,6 +43,8 @@ let gptRouter: any;
 let excelImportRouter: any;
 let csvImportRouter: any;
 let eventBriefRouter: any;
+let leadScoringRouter: any;
+let emailReportsRouter: any;
 let query: any;
 
 async function loadRoutes() {
@@ -76,6 +78,8 @@ async function loadRoutes() {
         './api/src/routes/excelImport.js',
         './api/src/routes/csvImport.js',
         './api/src/routes/eventBrief.js',
+        './api/src/routes/leadScoring.js',
+        './api/src/routes/emailReports.js',
         './api/src/config/database.js',
       ];
 
@@ -108,7 +112,9 @@ async function loadRoutes() {
       excelImportRouter = routes[8].default;
       csvImportRouter = routes[9].default;
       eventBriefRouter = routes[10].default;
-      query = routes[11].query;
+      leadScoringRouter = routes[11].default;
+      emailReportsRouter = routes[12].default;
+      query = routes[13].query;
 
       console.log('✅ Routes loaded successfully');
     } catch (error: any) {
@@ -184,6 +190,8 @@ export function vitePluginApi(): Plugin {
       app.use('/excel-import', excelImportRouter);
       app.use('/csv-import', csvImportRouter);
       app.use('/event-brief', eventBriefRouter);
+      app.use('/lead-scoring', leadScoringRouter);
+      app.use('/email-reports', emailReportsRouter);
 
       // Root endpoint (relative to /api/v1)
       app.get('/', (req, res) => {
@@ -198,6 +206,8 @@ export function vitePluginApi(): Plugin {
             emailReplies: '/api/v1/email-replies',
             chatMessages: '/api/v1/chat-messages',
             gemini: '/api/v1/gemini',
+            leadScoring: '/api/v1/lead-scoring',
+            emailReports: '/api/v1/email-reports',
             health: '/api/v1/health',
           },
         });
