@@ -418,149 +418,154 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
     };
 
     return (
-        <div className="p-6 w-full max-w-full flex flex-col space-y-5 overflow-hidden min-h-0">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
+        <div className="p-4 w-full max-w-full flex flex-col space-y-3 overflow-hidden min-h-0">
+            {/* Header - Compact */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0">
                 <div>
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight drop-shadow-sm">Leads</h2>
-                    <p className="text-sm font-medium text-slate-600 mt-1">Manage and track your event leads</p>
+                    <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Leads</h2>
+                    <p className="text-xs text-slate-500 mt-0.5">Manage and track your event leads</p>
                 </div>
 
-                <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
                     <button
                         onClick={handleExportExcel}
-                        className="glass-card text-emerald-700 border-emerald-200/50 px-4 py-2.5 rounded-xl text-sm font-bold shrink-0 inline-flex items-center shadow-sm"
+                        className="bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center transition-colors shadow-sm"
                     >
-                        <FileSpreadsheet size={18} className="mr-2" /> Export Excel
+                        <FileSpreadsheet size={14} className="mr-1.5" /> Export
                     </button>
 
                     {(user.role === 'Director' || user.role === 'Sales') && (
                         <>
                             <button
                                 onClick={() => setShowEmailModal(true)}
-                                className="glass-card text-indigo-700 border-indigo-200/50 px-4 py-2.5 rounded-xl text-sm font-bold shrink-0 inline-flex items-center shadow-sm"
+                                className="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center transition-colors shadow-sm"
                             >
-                                <Mail size={18} className="mr-2" /> Send Mail to All
+                                <Mail size={14} className="mr-1.5" /> Send Mail
                             </button>
                             <button
                                 onClick={onAddLead}
-                                className="bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg px-5 py-2.5 rounded-xl text-sm font-bold shrink-0 inline-flex items-center"
+                                className="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center transition-colors shadow-sm"
                             >
-                                <Plus size={18} className="mr-2" /> Add Lead
+                                <Plus size={14} className="mr-1.5" /> Add Lead
                             </button>
                         </>
                     )}
                 </div>
             </div>
 
-            <div className="glass-card rounded-xl px-4 py-3 shrink-0">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                    <div className="text-center py-1.5 px-2 rounded-lg">
-                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total</div>
-                        <div className="text-xl font-black text-slate-900 leading-tight">{filteredLeads.length}</div>
+            {/* Stats - Compact inline */}
+            <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 shrink-0 shadow-sm">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-1">
+                        <span className="text-xs font-medium text-slate-500">Total:</span>
+                        <span className="text-sm font-bold text-slate-900">{filteredLeads.length}</span>
                     </div>
-                    <div className="text-center py-1.5 px-2 rounded-lg">
-                        <div className="text-[10px] text-green-600/80 font-bold uppercase tracking-wider">Sent</div>
-                        <div className="text-xl font-black text-green-700 leading-tight">{emailStats.sent}</div>
+                    <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span className="text-xs font-medium text-slate-500">Sent:</span>
+                        <span className="text-sm font-bold text-green-700">{emailStats.sent}</span>
                     </div>
-                    <div className="text-center py-1.5 px-2 rounded-lg">
-                        <div className="text-[10px] text-orange-600/80 font-bold uppercase tracking-wider">Not Sent</div>
-                        <div className="text-xl font-black text-orange-700 leading-tight">{emailStats.notSent}</div>
+                    <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                        <span className="text-xs font-medium text-slate-500">Not Sent:</span>
+                        <span className="text-sm font-bold text-orange-700">{emailStats.notSent}</span>
                     </div>
-                    <div className="text-center py-1.5 px-2 rounded-lg">
-                        <div className="text-[10px] text-indigo-600/80 font-bold uppercase tracking-wider">With Info</div>
-                        <div className="text-xl font-black text-indigo-700 leading-tight">{keyPersonStats.withInfo}</div>
+                    <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        <span className="text-xs font-medium text-slate-500">With Info:</span>
+                        <span className="text-sm font-bold text-indigo-700">{keyPersonStats.withInfo}</span>
                     </div>
-                    <div className="text-center py-1.5 px-2 rounded-lg">
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Without Info</div>
-                        <div className="text-xl font-black text-slate-500 leading-tight">{keyPersonStats.withoutInfo}</div>
+                    <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+                        <span className="text-xs font-medium text-slate-500">Without Info:</span>
+                        <span className="text-sm font-bold text-slate-600">{keyPersonStats.withoutInfo}</span>
                     </div>
                 </div>
             </div>
 
-            <div className="glass-card rounded-xl p-4 shrink-0">
-                <div className="flex flex-col xl:flex-row gap-4">
-                    {/* Search Input - Flex 1 */}
-                    <div className="relative flex-1 min-w-[280px]">
+            {/* Search & Filters - Compact */}
+            <div className="bg-white border border-slate-200 rounded-lg p-3 shrink-0 shadow-sm">
+                <div className="flex flex-col lg:flex-row gap-3">
+                    {/* Search Input */}
+                    <div className="relative flex-1 min-w-[200px]">
                         <input
                             type="text"
-                            placeholder="Search by company, city, person, or industry..."
+                            placeholder="Search company, city, person, industry..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="glass-input w-full pl-11 pr-4 py-2.5 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-primary/50"
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
                         />
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
                     </div>
 
-                    {/* Filters & Actions - Flex 2 */}
-                    <div className="flex flex-col md:flex-row gap-4 flex-[2] xl:items-center justify-between">
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 w-full">
-                            <div className="relative">
-                                <select
-                                    value={countryFilter}
-                                    onChange={(e) => setCountryFilter(e.target.value)}
-                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer focus:ring-2 focus:ring-primary/50"
-                                >
-                                    <option value="all">All Countries</option>
-                                    {availableCountries.map(country => (
-                                        <option key={country} value={country}>{country}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
-                            </div>
-
-                            <div className="relative">
-                                <select
-                                    value={industryFilter}
-                                    onChange={(e) => setIndustryFilter(e.target.value)}
-                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer focus:ring-2 focus:ring-primary/50"
-                                >
-                                    <option value="all">All Industries</option>
-                                    {availableIndustries.map(industry => (
-                                        <option key={industry} value={industry}>{industry}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
-                            </div>
-
-                            <div className="relative">
-                                <select
-                                    value={statusFilter}
-                                    onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer focus:ring-2 focus:ring-primary/50"
-                                >
-                                    <option value="all">All Statuses</option>
-                                    <option value="New">New</option>
-                                    <option value="Contacted">Contacted</option>
-                                    <option value="Qualified">Qualified</option>
-                                    <option value="Proposal">Proposal</option>
-                                    <option value="Negotiation">Negotiation</option>
-                                    <option value="Won">Won</option>
-                                    <option value="Lost">Lost</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
-                            </div>
-
-                            <div className="relative">
-                                <select
-                                    value={emailFilter}
-                                    onChange={(e) => setEmailFilter(e.target.value as typeof emailFilter)}
-                                    className="glass-input appearance-none w-full rounded-xl px-4 py-2.5 pr-10 text-sm font-semibold text-slate-700 cursor-pointer focus:ring-2 focus:ring-primary/50"
-                                >
-                                    <option value="all">All Email</option>
-                                    <option value="sent">Sent</option>
-                                    <option value="unsent">Not Sent</option>
-                                    <option value="no-key-person-email">No Contact</option>
-                                    <option value="has-key-person-email">Has Contact</option>
-                                    <option value="replied">Replied</option>
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16} />
-                            </div>
+                    {/* Filters */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="relative">
+                            <select
+                                value={countryFilter}
+                                onChange={(e) => setCountryFilter(e.target.value)}
+                                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
+                            >
+                                <option value="all">All Countries</option>
+                                {availableCountries.map(country => (
+                                    <option key={country} value={country}>{country}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
                         </div>
 
-                        <div className="flex items-center gap-3 shrink-0 whitespace-nowrap pl-2 border-l border-slate-200/50 md:border-l-0 xl:border-l">
-                            <div className="text-sm font-medium text-slate-500">
+                        <div className="relative">
+                            <select
+                                value={industryFilter}
+                                onChange={(e) => setIndustryFilter(e.target.value)}
+                                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
+                            >
+                                <option value="all">All Industries</option>
+                                {availableIndustries.map(industry => (
+                                    <option key={industry} value={industry}>{industry}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
+                        </div>
+
+                        <div className="relative">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
+                            >
+                                <option value="all">All Status</option>
+                                <option value="New">New</option>
+                                <option value="Contacted">Contacted</option>
+                                <option value="Qualified">Qualified</option>
+                                <option value="Proposal">Proposal</option>
+                                <option value="Negotiation">Negotiation</option>
+                                <option value="Won">Won</option>
+                                <option value="Lost">Lost</option>
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
+                        </div>
+
+                        <div className="relative">
+                            <select
+                                value={emailFilter}
+                                onChange={(e) => setEmailFilter(e.target.value as typeof emailFilter)}
+                                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
+                            >
+                                <option value="all">All Email</option>
+                                <option value="sent">Sent</option>
+                                <option value="unsent">Not Sent</option>
+                                <option value="no-key-person-email">No Contact</option>
+                                <option value="has-key-person-email">Has Contact</option>
+                                <option value="replied">Replied</option>
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
+                        </div>
+
+                        <div className="flex items-center gap-2 ml-auto">
+                            <span className="text-xs font-medium text-slate-500">
                                 <span className="font-bold text-slate-900">{filteredLeads.length}</span> results
-                            </div>
+                            </span>
                             {(searchTerm || countryFilter !== 'all' || industryFilter !== 'all' || statusFilter !== 'all' || emailFilter !== 'all') && (
                                 <button
                                     onClick={() => {
@@ -571,9 +576,9 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                         setEmailFilter('all');
                                     }}
                                     title="Clear filters"
-                                    className="p-2 bg-slate-100 text-slate-600 rounded-lg"
+                                    className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors"
                                 >
-                                    <X size={16} />
+                                    <X size={12} />
                                 </button>
                             )}
                         </div>
@@ -581,7 +586,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-3 pr-1 pb-2">
+            <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-2 pr-1 pb-2">
                 {loading ? (
                     <LeadsSkeleton />
                 ) : filteredLeads.length > 0 ? (
@@ -606,117 +611,146 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                         const isMarking = markingReplies.has(lead.id);
 
                         return (
-                            <div key={lead.id} className="group relative glass-card p-5 rounded-2xl border border-white/20 shadow-sm">
-                                <div className="flex flex-col md:flex-row items-center gap-6">
-                                    {/* Company Section - 30% */}
-                                    <div className="flex-1 w-full md:w-[30%] flex items-start gap-4">
-                                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white shadow-lg shrink-0`}>
-                                            <Building2 size={24} />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <h3 className="text-lg font-bold text-slate-900 truncate leading-tight">
+                            <div 
+                                key={lead.id} 
+                                className="group relative bg-white border border-slate-200 rounded-lg p-3 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer"
+                                onClick={() => onSelectLead(lead)}
+                            >
+                                <div className="flex items-center gap-3">
+                                    {/* Company Avatar */}
+                                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white shadow-sm shrink-0`}>
+                                        <Building2 size={18} />
+                                    </div>
+
+                                    {/* Company Info - 35% */}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="text-sm font-bold text-slate-900 truncate">
                                                 {lead.companyName}
                                             </h3>
-                                            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                                                {lead.city && (
-                                                    <div className="flex items-center text-xs font-semibold text-slate-500 bg-slate-100/50 px-2 py-1 rounded-md">
-                                                        <MapPin size={12} className="mr-1" />
-                                                        {lead.city}, {lead.country}
-                                                    </div>
-                                                )}
-                                                {lead.website && (
-                                                    <a href={lead.website} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs font-semibold text-blue-600 bg-blue-50/50 px-2 py-1 rounded-md">
-                                                        <Globe size={12} className="mr-1" />
-                                                        Website
-                                                    </a>
-                                                )}
-                                            </div>
                                             {lead.industry && (
-                                                <span className="inline-block mt-2 text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                                                <span className="text-[10px] uppercase font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
                                                     {lead.industry}
                                                 </span>
                                             )}
                                         </div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {lead.city && (
+                                                <div className="flex items-center text-xs text-slate-500">
+                                                    <MapPin size={10} className="mr-1" />
+                                                    {lead.city}{lead.country && `, ${lead.country}`}
+                                                </div>
+                                            )}
+                                            {lead.website && (
+                                                <a 
+                                                    href={lead.website} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer" 
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="flex items-center text-xs text-indigo-600 hover:text-indigo-700"
+                                                >
+                                                    <Globe size={10} className="mr-1" />
+                                                    Website
+                                                </a>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {/* Key Person Section - 25% */}
-                                    <div className="flex-1 w-full md:w-[25%] border-l border-slate-100 pl-6 border-dashed">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
-                                                <UserIcon size={20} />
+                                    {/* Key Person - 25% */}
+                                    <div className="flex-1 min-w-0 hidden md:block">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                                                <UserIcon size={14} />
                                             </div>
                                             <div className="min-w-0">
-                                                <div className="text-sm font-bold text-slate-900">{lead.keyPersonName || 'No Contact'}</div>
-                                                <div className="text-xs font-medium text-slate-500 truncate max-w-full">
+                                                <div className="text-xs font-semibold text-slate-900 truncate">
+                                                    {lead.keyPersonName || 'No Contact'}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 truncate">
                                                     {lead.keyPersonTitle || 'N/A'}
                                                 </div>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    {lead.keyPersonEmail && <div className="w-1.5 h-1.5 rounded-full bg-green-500" title="Email available"></div>}
-                                                    {lead.keyPersonPhone && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" title="Phone available"></div>}
-                                                    {lead.keyPersonLinkedIn && <div className="w-1.5 h-1.5 rounded-full bg-blue-700" title="LinkedIn available"></div>}
+                                                <div className="flex items-center gap-1 mt-0.5">
+                                                    {lead.keyPersonEmail && <div className="w-1 h-1 rounded-full bg-green-500" title="Email"></div>}
+                                                    {lead.keyPersonPhone && <div className="w-1 h-1 rounded-full bg-blue-500" title="Phone"></div>}
+                                                    {lead.keyPersonLinkedIn && <div className="w-1 h-1 rounded-full bg-blue-700" title="LinkedIn"></div>}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Score & Metrics - 20% */}
-                                    <div className="flex-1 w-full md:w-[20%] flex items-center justify-center border-l border-slate-100 px-4 border-dashed">
-                                        <div className="flex flex-col items-center gap-2 w-full">
-                                            <div className="flex items-center justify-between w-full">
-                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Score</span>
-                                                {lead.leadScore ? (
-                                                    <span className={`text-sm font-black ${lead.leadScore >= 70 ? 'text-green-600' :
-                                                        lead.leadScore >= 40 ? 'text-orange-500' : 'text-red-500'
-                                                        }`}>{lead.leadScore}</span>
-                                                ) : <span className="text-xs text-slate-300">--</span>}
-                                            </div>
-                                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full ${(lead.leadScore || 0) >= 70 ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                                                        (lead.leadScore || 0) >= 40 ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
-                                                            'bg-gradient-to-r from-red-400 to-red-600'
-                                                        }`}
-                                                    style={{ width: `${lead.leadScore || 0}%` }}
-                                                ></div>
-                                            </div>
-                                            <div className="text-[10px] font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">
+                                    {/* Score - 15% */}
+                                    <div className="flex items-center gap-3 min-w-[80px]">
+                                        <div className="flex flex-col items-center gap-1 w-full">
+                                            {lead.leadScore !== null && lead.leadScore !== undefined ? (
+                                                <>
+                                                    <div className="flex items-center justify-between w-full">
+                                                        <span className="text-[10px] font-medium text-slate-400">Score</span>
+                                                        <span className={`text-xs font-bold ${lead.leadScore >= 70 ? 'text-green-600' :
+                                                            lead.leadScore >= 40 ? 'text-orange-500' : 'text-red-500'
+                                                            }`}>{lead.leadScore}</span>
+                                                    </div>
+                                                    <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className={`h-full rounded-full ${(lead.leadScore || 0) >= 70 ? 'bg-green-500' :
+                                                                (lead.leadScore || 0) >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                                                                }`}
+                                                            style={{ width: `${lead.leadScore || 0}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <span className="text-[10px] text-slate-300">--</span>
+                                            )}
+                                            <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
                                                 {lead.status || 'New'}
-                                            </div>
+                                            </span>
                                         </div>
                                     </div>
 
-                                    {/* Actions & Status - 25% */}
-                                    <div className="flex-1 w-full md:w-[25%] flex items-center justify-end gap-3 border-l border-slate-100 pl-6 border-dashed">
-
-                                        {/* Status Icons */}
-                                        <div className="flex items-center gap-2 mr-2">
-                                            <div className={`flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all ${emailStatus.hasEmail ? 'bg-green-50 text-green-600 shadow-sm border border-green-100' : 'bg-slate-50 text-slate-300'
-                                                }`} title={emailStatus.hasEmail ? `Sent ${emailStatus.count} times` : 'Not sent'}>
-                                                <Mail size={18} />
-                                                {emailStatus.hasEmail && <span className="text-[9px] font-bold mt-0.5">{emailStatus.count}</span>}
-                                            </div>
-
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleMarkReply(lead.id);
-                                                }}
-                                                disabled={replied || isMarking}
-                                                className={`flex items-center justify-center w-10 h-10 rounded-xl ${replied ? 'bg-blue-50 text-blue-600 shadow-sm border border-blue-100' :
-                                                    isMarking ? 'bg-slate-100 text-slate-400 animate-pulse' :
-                                                        'bg-slate-50 text-slate-300 cursor-pointer'
-                                                    }`}
-                                                title={replied ? 'Replied' : 'Mark Reply'}
-                                            >
-                                                {isMarking ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
-                                            </button>
+                                    {/* Status Icons & Actions - 15% */}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <div className={`relative flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                                            emailStatus.hasEmail 
+                                                ? 'bg-green-50 text-green-600 border border-green-200' 
+                                                : 'bg-slate-50 text-slate-300'
+                                        }`} 
+                                        title={emailStatus.hasEmail ? `Sent ${emailStatus.count} times` : 'Not sent'}
+                                        onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Mail size={14} />
+                                            {emailStatus.hasEmail && emailStatus.count > 1 && (
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                                                    {emailStatus.count}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <button
-                                            onClick={() => onSelectLead(lead)}
-                                            className="ml-auto glass-input text-slate-600 p-2.5 rounded-xl shadow-sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleMarkReply(lead.id);
+                                            }}
+                                            disabled={replied || isMarking}
+                                            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                                                replied 
+                                                    ? 'bg-blue-50 text-blue-600 border border-blue-200' 
+                                                    : isMarking 
+                                                        ? 'bg-slate-100 text-slate-400' 
+                                                        : 'bg-slate-50 text-slate-300 hover:bg-slate-100'
+                                            }`}
+                                            title={replied ? 'Replied' : 'Mark Reply'}
                                         >
-                                            <ChevronRight size={20} />
+                                            {isMarking ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                                        </button>
+
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onSelectLead(lead);
+                                            }}
+                                            className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                                        >
+                                            <ChevronRight size={16} />
                                         </button>
                                     </div>
                                 </div>
@@ -724,13 +758,13 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                         );
                     })
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-20 bg-white/50 rounded-2xl border border-dashed border-slate-300/50">
-                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 shadow-inner">
-                            <Search className="text-slate-300" size={40} />
+                    <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg border border-dashed border-slate-200">
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                            <Search className="text-slate-300" size={32} />
                         </div>
-                        <h3 className="text-lg font-bold text-slate-700">No leads found</h3>
-                        <p className="text-sm text-slate-500 mt-1 max-w-xs text-center">
-                            We couldn't find any leads matching your current filters. Try adjusting your search criteria.
+                        <h3 className="text-sm font-bold text-slate-700">No leads found</h3>
+                        <p className="text-xs text-slate-500 mt-1 max-w-xs text-center">
+                            No leads match your current filters. Try adjusting your search criteria.
                         </p>
                         <button
                             onClick={() => {
@@ -740,10 +774,10 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 setStatusFilter('all');
                                 setEmailFilter('all');
                             }}
-                            className="mt-6 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl shadow-sm flex items-center gap-2"
+                            className="mt-4 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2"
                         >
-                            <X size={16} />
-                            Clear all filters
+                            <X size={12} />
+                            Clear filters
                         </button>
                     </div>
                 )}

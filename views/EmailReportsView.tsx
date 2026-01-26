@@ -11,8 +11,21 @@ import {
   Loader2,
   X,
   Save,
+  Power,
 } from 'lucide-react';
 import { emailReportsApi, EmailReportsConfig, EmailReportsLog } from '../services/apiService';
+
+// Common timezones
+const TIMEZONES = [
+  { value: 'Asia/Ho_Chi_Minh', label: 'Asia/Ho_Chi_Minh (GMT+7)' },
+  { value: 'Asia/Bangkok', label: 'Asia/Bangkok (GMT+7)' },
+  { value: 'Asia/Singapore', label: 'Asia/Singapore (GMT+8)' },
+  { value: 'Asia/Hong_Kong', label: 'Asia/Hong_Kong (GMT+8)' },
+  { value: 'Asia/Tokyo', label: 'Asia/Tokyo (GMT+9)' },
+  { value: 'UTC', label: 'UTC (GMT+0)' },
+  { value: 'America/New_York', label: 'America/New_York (GMT-5)' },
+  { value: 'Europe/London', label: 'Europe/London (GMT+0)' },
+];
 
 export const EmailReportsView = () => {
   const [configs, setConfigs] = useState<EmailReportsConfig[]>([]);
@@ -39,6 +52,8 @@ export const EmailReportsView = () => {
   });
   const [sending, setSending] = useState<string | null>(null);
   const [showLogs, setShowLogs] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [toggling, setToggling] = useState<string | null>(null);
 
   useEffect(() => {
     loadConfigs();
@@ -111,11 +126,49 @@ export const EmailReportsView = () => {
   };
 
   const handleSave = async () => {
+    // Validation
     if (!formData.recipient_email || !formData.recipient_email.trim()) {
-      alert('Please enter recipient email');
+      alert('Vui lòng nhập email người nhận');
       return;
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.recipient_email.trim())) {
+      alert('Email không hợp lệ');
+      return;
+    }
+
+    // Validate frequency-specific fields
+    if (formData.frequency === 'weekly' && (formData.day_of_week < 0 || formData.day_of_week > 6)) {
+      alert('Vui lòng chọn ngày trong tuần hợp lệ');
+      return;
+    }
+
+    if (formData.frequency === 'monthly' && (formData.day_of_month < 1 || formData.day_of_month > 28)) {
+      alert('Ngày trong tháng phải từ 1 đến 28');
+      return;
+    }
+
+    // Validate time
+    if (formData.time_hour < 0 || formData.time_hour > 23) {
+      alert('Giờ phải từ 0 đến 23');
+      return;
+    }
+
+    if (formData.time_minute < 0 || formData.time_minute > 59) {
+      alert('Phút phải từ 0 đến 59');
+      return;
+    }
+
+    // Validate at least one include option
+    if (!formData.include_stats && !formData.include_new_leads && 
+        !formData.include_email_activity && !formData.include_top_leads) {
+      alert('Vui lòng chọn ít nhất một phần để bao gồm trong báo cáo');
+      return;
+    }
+
+    setSaving(true);
     try {
       if (editingConfig) {
         await emailReportsApi.update(editingConfig.id, formData);
@@ -127,19 +180,34 @@ export const EmailReportsView = () => {
       setEditingConfig(null);
     } catch (error: any) {
       console.error('Error saving config:', error);
-      alert(`Failed to save: ${error.message || 'Unknown error'}`);
+      alert(`Lỗi khi lưu: ${error.message || 'Lỗi không xác định'}`);
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this configuration?')) return;
+    if (!confirm('Bạn có chắc chắn muốn xóa cấu hình này?')) return;
 
     try {
       await emailReportsApi.delete(id);
       await loadConfigs();
     } catch (error) {
       console.error('Error deleting config:', error);
-      alert('Failed to delete configuration');
+      alert('Lỗi khi xóa cấu hình');
+    }
+  };
+
+  const handleToggleEnabled = async (config: EmailReportsConfig) => {
+    setToggling(config.id);
+    try {
+      await emailReportsApi.update(config.id, { enabled: !config.enabled });
+      await loadConfigs();
+    } catch (error: any) {
+      console.error('Error toggling config:', error);
+      alert(`Lỗi khi cập nhật: ${error.message || 'Lỗi không xác định'}`);
+    } finally {
+      setToggling(null);
     }
   };
 
@@ -148,14 +216,18 @@ export const EmailReportsView = () => {
     try {
       const result = await emailReportsApi.send(id);
       if (result.success) {
-        alert('Report sent successfully!');
+        alert('Báo cáo đã được gửi thành công!');
         await loadConfigs();
+        // Reload logs if they're currently shown
+        if (showLogs === id) {
+          await loadLogs(id);
+        }
       } else {
-        alert('Failed to send report');
+        alert('Gửi báo cáo thất bại');
       }
     } catch (error: any) {
       console.error('Error sending report:', error);
-      alert(`Failed to send: ${error.message || 'Unknown error'}`);
+      alert(`Lỗi khi gửi: ${error.message || 'Lỗi không xác định'}`);
     } finally {
       setSending(null);
     }
@@ -214,27 +286,27 @@ export const EmailReportsView = () => {
     <div className="p-6 min-h-screen flex flex-col space-y-5">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Email Reports Configuration</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Cấu hình Email Reports</h2>
           <p className="text-sm text-slate-600 mt-1">Quản lý cấu hình tự động gửi báo cáo email cho manager</p>
         </div>
         <button
           onClick={handleCreate}
           className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shrink-0 inline-flex items-center"
         >
-          <Plus size={18} className="mr-2" /> New Configuration
+          <Plus size={18} className="mr-2" /> Tạo cấu hình mới
         </button>
       </div>
 
       {configs.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
           <Mail className="text-slate-300 mx-auto mb-3" size={48} />
-          <p className="text-slate-700 font-medium">No email report configurations found</p>
-          <p className="text-slate-500 text-sm mt-1">Create your first configuration to start receiving automated reports</p>
+          <p className="text-slate-700 font-medium">Chưa có cấu hình email reports</p>
+          <p className="text-slate-500 text-sm mt-1">Tạo cấu hình đầu tiên để bắt đầu nhận báo cáo tự động</p>
           <button
             onClick={handleCreate}
-            className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center"
+            className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center hover:bg-indigo-700"
           >
-            <Plus size={16} className="mr-2" /> Create Configuration
+            <Plus size={16} className="mr-2" /> Tạo cấu hình
           </button>
         </div>
       ) : (
@@ -308,12 +380,28 @@ export const EmailReportsView = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 ml-4">
+                  <div className="flex items-center gap-2 ml-4">
+                  <button
+                    onClick={() => handleToggleEnabled(config)}
+                    disabled={toggling === config.id}
+                    className={`p-2 rounded-lg disabled:opacity-50 ${
+                      config.enabled 
+                        ? 'bg-green-50 text-green-600 hover:bg-green-100' 
+                        : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                    }`}
+                    title={config.enabled ? 'Tắt cấu hình' : 'Bật cấu hình'}
+                  >
+                    {toggling === config.id ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Power size={18} />
+                    )}
+                  </button>
                   <button
                     onClick={() => handleSend(config.id)}
-                    disabled={sending === config.id}
-                    className="p-2 bg-indigo-50 text-indigo-600 rounded-lg disabled:opacity-50"
-                    title="Send report now"
+                    disabled={sending === config.id || !config.enabled}
+                    className="p-2 bg-indigo-50 text-indigo-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Gửi báo cáo ngay"
                   >
                     {sending === config.id ? (
                       <Loader2 size={18} className="animate-spin" />
@@ -323,22 +411,22 @@ export const EmailReportsView = () => {
                   </button>
                   <button
                     onClick={() => handleToggleLogs(config.id)}
-                    className="p-2 bg-slate-50 text-slate-600 rounded-lg"
-                    title="View logs"
+                    className="p-2 bg-slate-50 text-slate-600 rounded-lg hover:bg-slate-100"
+                    title="Xem logs"
                   >
                     <Clock size={18} />
                   </button>
                   <button
                     onClick={() => handleEdit(config)}
-                    className="p-2 bg-blue-50 text-blue-600 rounded-lg"
-                    title="Edit"
+                    className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"
+                    title="Chỉnh sửa"
                   >
                     <Edit2 size={18} />
                   </button>
                   <button
                     onClick={() => handleDelete(config.id)}
-                    className="p-2 bg-red-50 text-red-600 rounded-lg"
-                    title="Delete"
+                    className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
+                    title="Xóa"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -347,27 +435,60 @@ export const EmailReportsView = () => {
 
               {showLogs === config.id && (
                 <div className="mt-4 pt-4 border-t border-slate-200">
-                  <h4 className="font-semibold text-slate-900 mb-3">Report Logs</h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-slate-900">Lịch sử gửi báo cáo</h4>
+                    <button
+                      onClick={() => loadLogs(config.id)}
+                      className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                    >
+                      Làm mới
+                    </button>
+                  </div>
                   {!logs || logs.filter(log => log.config_id === config.id).length === 0 ? (
-                    <p className="text-sm text-slate-500">No logs yet</p>
+                    <div className="text-center py-6">
+                      <Clock className="text-slate-300 mx-auto mb-2" size={24} />
+                      <p className="text-sm text-slate-500">Chưa có logs</p>
+                    </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
                       {logs
                         .filter(log => log && log.config_id === config.id)
-                        .slice(0, 10)
+                        .slice(0, 20)
                         .map((log) => (
-                          <div key={log.id} className="flex items-center justify-between p-2 bg-slate-50 rounded text-sm">
-                            <div>
-                              <span className="font-medium">
-                                {log.sent_at ? new Date(log.sent_at).toLocaleString('vi-VN') : 'N/A'}
-                              </span>
-                              <span className="text-slate-500 ml-2">
-                                ({log.report_type || 'N/A'}) - {log.status === 'sent' ? '✅ Sent' : '❌ Failed'}
-                              </span>
+                          <div key={log.id} className="flex items-start justify-between p-3 bg-slate-50 rounded-lg text-sm border border-slate-200">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                {log.status === 'sent' ? (
+                                  <CheckCircle size={16} className="text-green-600" />
+                                ) : (
+                                  <XCircle size={16} className="text-red-600" />
+                                )}
+                                <span className="font-semibold text-slate-900">
+                                  {log.sent_at ? new Date(log.sent_at).toLocaleString('vi-VN', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  }) : 'N/A'}
+                                </span>
+                                <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
+                                  {log.report_type === 'daily' ? 'Hàng ngày' : 
+                                   log.report_type === 'weekly' ? 'Hàng tuần' : 
+                                   log.report_type === 'monthly' ? 'Hàng tháng' : 'N/A'}
+                                </span>
+                              </div>
+                              {log.period_start && log.period_end && (
+                                <p className="text-xs text-slate-500 ml-6 mb-1">
+                                  Kỳ: {new Date(log.period_start).toLocaleDateString('vi-VN')} - {new Date(log.period_end).toLocaleDateString('vi-VN')}
+                                </p>
+                              )}
+                              {log.error_message && (
+                                <p className="text-xs text-red-600 ml-6 mt-1 bg-red-50 p-2 rounded">
+                                  <strong>Lỗi:</strong> {log.error_message}
+                                </p>
+                              )}
                             </div>
-                            {log.error_message && (
-                              <span className="text-red-600 text-xs">{log.error_message}</span>
-                            )}
                           </div>
                         ))}
                     </div>
@@ -386,7 +507,7 @@ export const EmailReportsView = () => {
             <div className="p-4 border-b border-slate-200 flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
-                  {editingConfig ? 'Edit Configuration' : 'Create New Configuration'}
+                  {editingConfig ? 'Chỉnh sửa cấu hình' : 'Tạo cấu hình mới'}
                 </h2>
               </div>
               <button
@@ -403,38 +524,38 @@ export const EmailReportsView = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Recipient Email <span className="text-red-500">*</span>
+                  Email người nhận <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
                   value={formData.recipient_email}
                   onChange={(e) => setFormData({ ...formData, recipient_email: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="manager@example.com"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Recipient Name
+                  Tên người nhận
                 </label>
                 <input
                   type="text"
                   value={formData.recipient_name}
                   onChange={(e) => setFormData({ ...formData, recipient_name: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm"
-                  placeholder="Manager Name"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Tên Manager (tùy chọn)"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Frequency <span className="text-red-500">*</span>
+                  Tần suất <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.frequency}
                   onChange={(e) => setFormData({ ...formData, frequency: e.target.value as any })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="daily">Hàng Ngày</option>
                   <option value="weekly">Hàng Tuần</option>
@@ -445,12 +566,12 @@ export const EmailReportsView = () => {
               {formData.frequency === 'weekly' && (
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Day of Week <span className="text-red-500">*</span>
+                    Ngày trong tuần <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={formData.day_of_week}
                     onChange={(e) => setFormData({ ...formData, day_of_week: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="0">Chủ Nhật</option>
                     <option value="1">Thứ 2</option>
@@ -466,88 +587,106 @@ export const EmailReportsView = () => {
               {formData.frequency === 'monthly' && (
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Day of Month <span className="text-red-500">*</span>
+                    Ngày trong tháng <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
                     min="1"
                     max="28"
                     value={formData.day_of_month}
-                    onChange={(e) => setFormData({ ...formData, day_of_month: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm"
+                    onChange={(e) => setFormData({ ...formData, day_of_month: parseInt(e.target.value) || 1 })}
+                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
+                  <p className="text-xs text-slate-500 mt-1">Chọn ngày từ 1 đến 28</p>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Hour (0-23) <span className="text-red-500">*</span>
+                    Giờ (0-23) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
                     min="0"
                     max="23"
                     value={formData.time_hour}
-                    onChange={(e) => setFormData({ ...formData, time_hour: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm"
+                    onChange={(e) => setFormData({ ...formData, time_hour: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Minute (0-59) <span className="text-red-500">*</span>
+                    Phút (0-59) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
                     min="0"
                     max="59"
                     value={formData.time_minute}
-                    onChange={(e) => setFormData({ ...formData, time_minute: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm"
+                    onChange={(e) => setFormData({ ...formData, time_minute: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Include in Report
+                  Múi giờ <span className="text-red-500">*</span>
                 </label>
-                <div className="space-y-2">
-                  <label className="flex items-center">
+                <select
+                  value={formData.timezone}
+                  onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  {TIMEZONES.map((tz) => (
+                    <option key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Nội dung báo cáo <span className="text-red-500">*</span>
+                </label>
+                <div className="space-y-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <label className="flex items-center cursor-pointer hover:bg-white p-2 rounded">
                     <input
                       type="checkbox"
                       checked={formData.include_stats}
                       onChange={(e) => setFormData({ ...formData, include_stats: e.target.checked })}
-                      className="mr-2"
+                      className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span className="text-sm">General Statistics</span>
+                    <span className="text-sm text-slate-700">Thống kê tổng quan</span>
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center cursor-pointer hover:bg-white p-2 rounded">
                     <input
                       type="checkbox"
                       checked={formData.include_new_leads}
                       onChange={(e) => setFormData({ ...formData, include_new_leads: e.target.checked })}
-                      className="mr-2"
+                      className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span className="text-sm">New Leads Summary</span>
+                    <span className="text-sm text-slate-700">Tóm tắt Leads mới</span>
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center cursor-pointer hover:bg-white p-2 rounded">
                     <input
                       type="checkbox"
                       checked={formData.include_email_activity}
                       onChange={(e) => setFormData({ ...formData, include_email_activity: e.target.checked })}
-                      className="mr-2"
+                      className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span className="text-sm">Email Activity</span>
+                    <span className="text-sm text-slate-700">Hoạt động Email</span>
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center cursor-pointer hover:bg-white p-2 rounded">
                     <input
                       type="checkbox"
                       checked={formData.include_top_leads}
                       onChange={(e) => setFormData({ ...formData, include_top_leads: e.target.checked })}
-                      className="mr-2"
+                      className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span className="text-sm">Top Leads</span>
+                    <span className="text-sm text-slate-700">Top Leads</span>
                   </label>
                 </div>
               </div>
@@ -555,28 +694,29 @@ export const EmailReportsView = () => {
               {formData.include_top_leads && (
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Number of Top Leads
+                    Số lượng Top Leads
                   </label>
                   <input
                     type="number"
                     min="1"
                     max="50"
                     value={formData.top_leads_count}
-                    onChange={(e) => setFormData({ ...formData, top_leads_count: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm"
+                    onChange={(e) => setFormData({ ...formData, top_leads_count: parseInt(e.target.value) || 10 })}
+                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
+                  <p className="text-xs text-slate-500 mt-1">Từ 1 đến 50 leads</p>
                 </div>
               )}
 
               <div>
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.enabled}
                     onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-                    className="mr-2"
+                    className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <span className="text-sm font-semibold">Enabled</span>
+                  <span className="text-sm font-semibold text-slate-700">Kích hoạt cấu hình này</span>
                 </label>
               </div>
             </div>
@@ -587,16 +727,27 @@ export const EmailReportsView = () => {
                   setShowModal(false);
                   setEditingConfig(null);
                 }}
-                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold"
+                disabled={saving}
+                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
               >
-                Cancel
+                Hủy
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold inline-flex items-center"
+                disabled={saving}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-700"
               >
-                <Save size={16} className="mr-2" />
-                {editingConfig ? 'Update' : 'Create'}
+                {saving ? (
+                  <>
+                    <Loader2 size={16} className="mr-2 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Save size={16} className="mr-2" />
+                    {editingConfig ? 'Cập nhật' : 'Tạo mới'}
+                  </>
+                )}
               </button>
             </div>
           </div>

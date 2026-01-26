@@ -9,7 +9,9 @@
     "build": "tsc",
     "start:prod": "node dist/server.js",
     "test:email-report": "tsx src/scripts/testEmailReport.ts",
-    "send:test-report": "tsx src/scripts/sendTestReport.ts"
+    "send:test-report": "tsx src/scripts/sendTestReport.ts",
+    "migrate:email-reports": "tsx src/scripts/runMigration.ts",
+    "test:scheduled-job": "tsx src/scripts/testScheduledJob.ts"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",

@@ -401,13 +401,22 @@ export async function processScheduledReports(): Promise<void> {
   try {
     const configs = await EmailReportsConfigModel.getAll(true); // Only enabled
 
-    console.log(`📧 Processing ${configs.length} email report configuration(s)...`);
+    if (configs.length === 0) {
+      // Only log if there are configs to avoid spam
+      return;
+    }
+
+    // Log every 10 minutes to reduce console spam
+    const now = new Date();
+    if (now.getMinutes() % 10 === 0) {
+      console.log(`📧 Checking ${configs.length} email report configuration(s)...`);
+    }
 
     for (const config of configs) {
       try {
         const shouldSend = await shouldSendReport(config);
         if (shouldSend) {
-          console.log(`📤 Sending ${config.frequency} report to ${config.recipient_email}...`);
+          console.log(`📤 Sending ${config.frequency} report to ${config.recipient_email} at ${config.time_hour}:${String(config.time_minute).padStart(2, '0')} (${config.timezone})...`);
           const result = await sendManagerReport(config);
           if (result.success) {
             console.log(`✅ Report sent successfully to ${config.recipient_email}`);
@@ -428,38 +437,125 @@ export async function processScheduledReports(): Promise<void> {
  * Check if report should be sent based on schedule
  */
 async function shouldSendReport(config: EmailReportsConfig): Promise<boolean> {
+  // Get current time in the config's timezone
   const now = new Date();
-  const hour = now.getHours();
-  const minute = now.getMinutes();
+  const timezone = config.timezone || 'Asia/Ho_Chi_Minh';
+  
+  // Get current time in the specified timezone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour: 'numeric',
+    minute: 'numeric',
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+    hour12: false,
+  });
+  
+  const parts = formatter.formatToParts(now);
+  const timeParts: Record<string, string> = {};
+  parts.forEach(part => {
+    timeParts[part.type] = part.value;
+  });
+  
+  const hour = parseInt(timeParts.hour || '0', 10);
+  const minute = parseInt(timeParts.minute || '0', 10);
+  const day = parseInt(timeParts.day || '0', 10);
+  const month = parseInt(timeParts.month || '0', 10);
+  const year = parseInt(timeParts.year || '0', 10);
+  
+  // Get weekday in the config's timezone
+  // Use toLocaleDateString to get weekday number (0=Sunday, 6=Saturday)
+  const weekdayFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    weekday: 'long',
+  });
+  const weekdayName = weekdayFormatter.format(now);
+  
+  // Convert weekday name to number (0=Sunday, 6=Saturday)
+  const weekdayMap: Record<string, number> = {
+    'Sunday': 0,
+    'Monday': 1,
+    'Tuesday': 2,
+    'Wednesday': 3,
+    'Thursday': 4,
+    'Friday': 5,
+    'Saturday': 6,
+  };
+  const jsWeekday = weekdayMap[weekdayName] ?? now.getDay();
 
-  // Check time matches
+  // Check time matches (with 1 minute tolerance to handle cron timing)
   if (hour !== config.time_hour || minute !== config.time_minute) {
     return false;
   }
 
-  // Check if already sent today
+  // Check if already sent today (in config's timezone)
   if (config.last_sent_at) {
     const lastSent = new Date(config.last_sent_at);
-    const today = new Date();
+    
+    // Convert last_sent_at to config's timezone for comparison
+    const lastSentFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+    });
+    
+    const lastSentParts = lastSentFormatter.formatToParts(lastSent);
+    const lastSentPartsMap: Record<string, string> = {};
+    lastSentParts.forEach(part => {
+      lastSentPartsMap[part.type] = part.value;
+    });
+    
+    const lastSentDay = parseInt(lastSentPartsMap.day || '0', 10);
+    const lastSentMonth = parseInt(lastSentPartsMap.month || '0', 10);
+    const lastSentYear = parseInt(lastSentPartsMap.year || '0', 10);
+    
+    // Check if sent today in config's timezone
     if (
-      lastSent.getFullYear() === today.getFullYear() &&
-      lastSent.getMonth() === today.getMonth() &&
-      lastSent.getDate() === today.getDate()
+      lastSentYear === year &&
+      lastSentMonth === month &&
+      lastSentDay === day
     ) {
-      return false; // Already sent today
+      // For daily, already sent today
+      if (config.frequency === 'daily') {
+        return false;
+      }
+      
+      // For weekly/monthly, check if sent in the same period
+      if (config.frequency === 'weekly') {
+        // If sent this week, don't send again
+        const lastSentWeekday = new Date(lastSent).toLocaleDateString('en-US', {
+          timeZone: timezone,
+          weekday: 'numeric',
+        });
+        // Simple check: if same weekday, likely same week (approximation)
+        // More precise would require week number calculation
+        const daysDiff = Math.floor((now.getTime() - lastSent.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysDiff < 7) {
+          return false; // Sent within last 7 days
+        }
+      }
+      
+      if (config.frequency === 'monthly') {
+        // If sent this month, don't send again
+        if (lastSentMonth === month && lastSentYear === year) {
+          return false;
+        }
+      }
     }
   }
 
   // Check day of week for weekly
   if (config.frequency === 'weekly' && config.day_of_week !== undefined) {
-    if (now.getDay() !== config.day_of_week) {
+    if (jsWeekday !== config.day_of_week) {
       return false;
     }
   }
 
   // Check day of month for monthly
   if (config.frequency === 'monthly' && config.day_of_month !== undefined) {
-    if (now.getDate() !== config.day_of_month) {
+    if (day !== config.day_of_month) {
       return false;
     }
   }
