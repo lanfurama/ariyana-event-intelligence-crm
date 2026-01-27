@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Lead, User } from '../types';
 import { leadsApi } from '../services/apiService';
 import { mapLeadFromDB, mapLeadToDB } from '../utils/leadUtils';
@@ -9,16 +9,7 @@ export const useLeads = (user: User | null) => {
     const [loading, setLoading] = useState(false);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
-    // Fetch leads when user changes
-    useEffect(() => {
-        if (user) {
-            fetchLeads();
-        } else {
-            setLeads([]);
-        }
-    }, [user]);
-
-    const fetchLeads = async () => {
+    const fetchLeads = useCallback(async () => {
         try {
             setLoading(true);
             const fetchedLeads = await leadsApi.getAll();
@@ -30,7 +21,16 @@ export const useLeads = (user: User | null) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    // Fetch leads when user changes
+    useEffect(() => {
+        if (user) {
+            fetchLeads();
+        } else {
+            setLeads([]);
+        }
+    }, [user, fetchLeads]);
 
     const updateLead = async (updatedLead: Lead) => {
         try {

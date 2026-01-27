@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -33,6 +33,22 @@ import * as GeminiService from '../services/geminiService';
 import { leadsApi, leadScoringApi } from '../services/apiService';
 import { mapLeadToDB, mapLeadFromDB } from '../utils/leadUtils';
 import { INITIAL_LEADS } from '../constants';
+import {
+  ScoringCriteriaPanel,
+  FileUploadSection,
+  EventFilters,
+  EventList,
+  BatchAnalysisControls,
+  EmptyState,
+  EventModal,
+  calculateHistoryScore,
+  calculateRegionScore,
+  calculateContactScore,
+  calculateDelegatesScore,
+  formatEventHistory,
+  isValidEmail,
+  isValidPhone,
+} from './IntelligentDataView';
 
 interface ParsedReport {
   partA: {
@@ -863,250 +879,7 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
     }
   };
 
-  // Helper functions for scoring
-  const calculateHistoryScore = (editions: any[]): number => {
-    if (!editions || editions.length === 0) return 0;
-
-    let vietnamCount = 0;
-    let seaCount = 0;
-
-    const seaCountries = ['vietnam', 'thailand', 'singapore', 'malaysia', 'indonesia', 'philippines', 'myanmar', 'cambodia', 'laos', 'brunei'];
-
-    editions.forEach((edition: any) => {
-      // ICCA format: COUNTRY, CITY are uppercase
-      const country = String(edition.COUNTRY || edition.Country || edition.country || '').toLowerCase().trim();
-      const city = String(edition.CITY || edition.City || edition.city || '').toLowerCase().trim();
-
-      if (country === 'vietnam' || country === 'vn' ||
-        city.includes('hanoi') || city.includes('ho chi minh') || city.includes('danang') || city.includes('saigon')) {
-        vietnamCount++;
-      } else if (seaCountries.includes(country)) {
-        seaCount++;
-      }
-    });
-
-    if (vietnamCount >= 1) return 25;
-    if (seaCount >= 1) return 15;
-    return 0;
-  };
-
-  const calculateRegionScore = (eventName: string, editions: any[]): number => {
-    const nameLower = (eventName || '').toLowerCase();
-
-    if (nameLower.includes('asean') || nameLower.includes('asia') || nameLower.includes('pacific') || nameLower.includes('apac') || nameLower.includes('eastern')) {
-      return 25;
-    }
-
-    if (editions && editions.length > 0) {
-      const asianCountries = ['china', 'japan', 'korea', 'india', 'thailand', 'singapore', 'malaysia', 'indonesia', 'philippines', 'vietnam', 'taiwan', 'hong kong', 'south korea', 'north korea', 'sri lanka', 'bangladesh', 'pakistan', 'myanmar', 'cambodia', 'laos', 'brunei'];
-
-      for (const edition of editions) {
-        const country = String(edition.COUNTRY || edition.Country || edition.country || '').toLowerCase().trim();
-        // Use exact match or check if country string equals or starts with Asian country name
-        // This avoids false positives like "united kingdom" matching "kingdom"
-        if (asianCountries.some(ac => {
-          // Exact match
-          if (country === ac) return true;
-          // Country name contains full Asian country name (e.g., "south korea" contains "korea")
-          if (country.includes(ac) && ac.length >= 4) return true; // Only match if Asian country name is at least 4 chars to avoid short matches
-          // Asian country name contains country (e.g., "hong kong" contains "hong")
-          if (ac.includes(country) && country.length >= 4) return true;
-          return false;
-        })) {
-          return 15;
-        }
-      }
-    }
-
-    return 0;
-  };
-
-  // Helper functions for validation
-  const isValidEmail = (email: string): boolean => {
-    if (!email || typeof email !== 'string') return false;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
-  };
-
-  const isValidPhone = (phone: string): boolean => {
-    if (!phone || typeof phone !== 'string') return false;
-    const phoneStr = phone.trim();
-    // Remove common phone formatting characters
-    const cleaned = phoneStr.replace(/[\s\-\(\)\+]/g, '');
-    // Check if it contains at least 7 digits (minimum for a valid phone number)
-    return /^\d{7,}$/.test(cleaned);
-  };
-
-  const calculateContactScore = (eventData: any, relatedContacts: any[] = []): number => {
-    let hasEmail = false;
-    let hasPhone = false;
-    let hasName = false;
-
-    const emailFields = ['EMAIL', 'Email', 'email', 'keyPersonEmail', 'CONTACT_EMAIL'];
-    const phoneFields = ['PHONE', 'Phone', 'phone', 'keyPersonPhone', 'CONTACT_PHONE', 'TEL'];
-    const nameFields = ['keyPersonName', 'CONTACT_NAME', 'Name', 'Contact Name'];
-
-    for (const field of emailFields) {
-      const emailValue = eventData[field];
-      if (emailValue && isValidEmail(String(emailValue))) {
-        hasEmail = true;
-        break;
-      }
-    }
-
-    for (const field of phoneFields) {
-      const phoneValue = eventData[field];
-      if (phoneValue && isValidPhone(String(phoneValue))) {
-        hasPhone = true;
-        break;
-      }
-    }
-
-    for (const field of nameFields) {
-      const nameValue = eventData[field];
-      if (nameValue && String(nameValue).trim().length > 0) {
-        hasName = true;
-        break;
-      }
-    }
-
-    if (!hasEmail || !hasPhone || !hasName) {
-      relatedContacts.forEach((contact: any) => {
-        const contactEmail = contact.EMAIL || contact.Email || contact.email || contact.keyPersonEmail;
-        const contactPhone = contact.PHONE || contact.Phone || contact.phone || contact.keyPersonPhone;
-        const contactName = contact.NAME || contact.Name || contact.name || contact.keyPersonName;
-
-        if (contactEmail && isValidEmail(String(contactEmail))) hasEmail = true;
-        if (contactPhone && isValidPhone(String(contactPhone))) hasPhone = true;
-        if (contactName && String(contactName).trim().length > 0) hasName = true;
-      });
-    }
-
-    // Improved scoring: 25 = email+phone, 20 = email+name, 15 = email only, 10 = name only, 0 = nothing
-    if (hasEmail && hasPhone) return 25;
-    if (hasEmail && hasName) return 20;
-    if (hasEmail) return 15;
-    if (hasName) return 10;
-    return 0;
-  };
-
-  const calculateDelegatesScore = (editions: any[]): number => {
-    if (!editions || editions.length === 0) return 0;
-
-    const delegateFields = ['TOTATTEND', 'REGATTEND', 'Delegates', 'Attendees', 'Attendance', 'DELEGATES', 'ATTENDEES'];
-
-    const delegateValues: number[] = [];
-
-    editions.forEach((edition: any) => {
-      for (const field of delegateFields) {
-        const value = edition[field];
-        if (value !== null && value !== undefined) {
-          const numValue = Number(value);
-          if (!isNaN(numValue) && isFinite(numValue) && numValue > 0) {
-            delegateValues.push(numValue);
-            break; // Only count one value per edition
-          }
-        }
-      }
-    });
-
-    if (delegateValues.length === 0) return 0;
-
-    // Calculate average delegates (more representative than max)
-    const sum = delegateValues.reduce((acc, val) => acc + val, 0);
-    const averageDelegates = Math.round(sum / delegateValues.length);
-
-    // Ariyana Convention Centre sweet spot: 200-800 delegates
-    // Too small or too large events are penalized
-    if (averageDelegates >= 200 && averageDelegates <= 800) {
-      return 25; // Perfect fit for Ariyana capacity
-    } else if ((averageDelegates >= 150 && averageDelegates < 200) || (averageDelegates > 800 && averageDelegates <= 1000)) {
-      return 20; // Acceptable but not ideal
-    } else if ((averageDelegates >= 100 && averageDelegates < 150) || (averageDelegates > 1000 && averageDelegates <= 1500)) {
-      return 10; // Too small or too large
-    } else {
-      return 0; // Not suitable (<100 or >1500)
-    }
-  };
-
-  const formatEventHistory = (editions: any[]): string => {
-    if (!editions || editions.length === 0) {
-      return '';
-    }
-
-    const historyItems: string[] = [];
-    const countriesSet = new Set<string>();
-
-    editions.forEach((edition: any) => {
-      // Extract year - check multiple field names
-      const year = extractFieldValue(edition, [
-        'EDITYEARS', 'EditYears', 'edityears',
-        'STARTDATE', 'StartDate', 'startDate',
-        'Year', 'YEAR', 'year',
-        'Event Year', 'EVENT_YEAR',
-        'Date', 'DATE', 'EVENT_DATE'
-      ]);
-
-      // Extract city
-      const city = extractFieldValue(edition, [
-        'CITY', 'City', 'city',
-        'Location City', 'LOCATION_CITY',
-        'Venue City', 'VENUE_CITY'
-      ]);
-
-      // Extract country - critical for rotation rule
-      const country = extractFieldValue(edition, [
-        'COUNTRY', 'Country', 'country',
-        'Location Country', 'LOCATION_COUNTRY',
-        'Venue Country', 'VENUE_COUNTRY'
-      ]);
-
-      // Extract delegates count - critical for size rule
-      const delegates = extractFieldValue(edition, [
-        'TOTATTEND', 'TotAttend', 'totattend',
-        'REGATTEND', 'RegAttend', 'regattend',
-        'Delegates', 'DELEGATES', 'delegates',
-        'Attendees', 'ATTENDEES', 'attendees',
-        'Attendance', 'ATTENDANCE'
-      ]);
-
-      // Track unique countries for rotation analysis
-      if (country) {
-        countriesSet.add(country.toLowerCase().trim());
-      }
-
-      // Format: "2023: City, Country (500 delegates)" or "2023: City, Country"
-      let item = '';
-      if (year) {
-        item = year;
-        if (city || country) {
-          const location = [city, country].filter(Boolean).join(', ');
-          item += `: ${location}`;
-        }
-        if (delegates) {
-          item += ` (${delegates} onsite delegates)`;
-        }
-        historyItems.push(item);
-      } else if (city || country) {
-        const location = [city, country].filter(Boolean).join(', ');
-        if (location) {
-          historyItems.push(location);
-        }
-      }
-    });
-
-    // Add summary for AI: distinct countries count (critical for rotation rule)
-    const historyString = historyItems.join('; ');
-    const distinctCountries = Array.from(countriesSet);
-    const countriesCount = distinctCountries.length;
-
-    if (countriesCount > 0) {
-      return `${historyString} | DISTINCT COUNTRIES: ${countriesCount} (${distinctCountries.join(', ')})`;
-    }
-
-    return historyString;
-  };
-
+  // Helper function for extracting field values (used in scoreEventLocally)
   const extractFieldValue = (row: any, fieldNames: string[]): string | null => {
     for (const field of fieldNames) {
       if (row[field] && typeof row[field] === 'string' && row[field].trim().length > 0) {
@@ -2660,163 +2433,27 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
         </label>
       </div>
 
-      {/* Scoring Engine Info - Compact */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-indigo-600" />
-            <h3 className="text-sm font-bold text-slate-900">Scoring Criteria</h3>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setScoringCriteria({
-                history: true,
-                region: true,
-                contact: true,
-                delegates: true,
-                iccaQualification: true
-              })}
-              className="px-2.5 py-1 text-xs font-medium text-white bg-indigo-600 rounded"
-            >
-              All On
-            </button>
-            <button
-              onClick={() => setScoringCriteria({
-                history: false,
-                region: false,
-                contact: false,
-                delegates: false,
-                iccaQualification: false
-              })}
-              className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded"
-            >
-              All Off
-            </button>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded">
-            <input
-              type="checkbox"
-              checked={scoringCriteria.history}
-              onChange={(e) => setScoringCriteria(prev => ({ ...prev, history: e.target.checked }))}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-            />
-            <span className="text-xs font-medium text-slate-700">History (25đ)</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded">
-            <input
-              type="checkbox"
-              checked={scoringCriteria.region}
-              onChange={(e) => setScoringCriteria(prev => ({ ...prev, region: e.target.checked }))}
-              className="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-green-500"
-            />
-            <span className="text-xs font-medium text-slate-700">Region (25đ)</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded">
-            <input
-              type="checkbox"
-              checked={scoringCriteria.contact}
-              onChange={(e) => setScoringCriteria(prev => ({ ...prev, contact: e.target.checked }))}
-              className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
-            />
-            <span className="text-xs font-medium text-slate-700">Contact (25đ)</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded">
-            <input
-              type="checkbox"
-              checked={scoringCriteria.delegates}
-              onChange={(e) => setScoringCriteria(prev => ({ ...prev, delegates: e.target.checked }))}
-              className="w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500"
-            />
-            <span className="text-xs font-medium text-slate-700">Delegates (25đ)</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded">
-            <input
-              type="checkbox"
-              checked={scoringCriteria.iccaQualification}
-              onChange={(e) => setScoringCriteria(prev => ({ ...prev, iccaQualification: e.target.checked }))}
-              className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
-            />
-            <span className="text-xs font-medium text-slate-700">ICCA Qual</span>
-          </label>
-        </div>
-      </div>
+      {/* Scoring Criteria Panel */}
+      <ScoringCriteriaPanel
+        scoringCriteria={scoringCriteria}
+        onCriteriaChange={setScoringCriteria}
+      />
 
-      {/* File Upload Status - Compact */}
-      {uploadingExcel && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <div className="flex items-center gap-3">
-            <Loader2 className="animate-spin text-blue-600" size={18} />
-            <p className="text-sm font-medium text-blue-800">Processing file...</p>
-          </div>
-        </div>
-      )}
-
-      {excelFile && excelSummary && !uploadingExcel && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <FileSpreadsheet size={18} className="text-green-600" />
-              <div>
-                <p className="text-sm font-semibold text-green-800">{excelFile.name}</p>
-                <p className="text-xs text-green-700">
-                  {excelSummary.totalRows} rows • {excelSummary.totalSheets} sheets • {eventsList.length} events
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setExcelFile(null);
-                setExcelSummary(null);
-                setEventsList([]);
-                setImportData('');
-                setEmailSendSummary(null);
-              }}
-              className="text-green-600 green-800 p-1 rounded green-100 "
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-
-      {emailSendSummary && !uploadingExcel && (
-        <div
-          className={`rounded-lg p-4 border ${emailSendSummary.skipped ? 'bg-yellow-50 border-yellow-200' : emailSendSummary.failures.length > 0 ? 'bg-orange-50 border-orange-200' : 'bg-indigo-50 border-indigo-200'}`}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-800">Auto email campaign</p>
-              <p className="text-xs text-slate-600 mt-0.5">
-                {emailSendSummary.skipped
-                  ? (emailSendSummary.message || 'Email automation skipped because credentials are missing.')
-                  : `Sent ${emailSendSummary.sent} of ${emailSendSummary.attempted} emails automatically.`}
-              </p>
-              {!emailSendSummary.skipped && emailSendSummary.message && (
-                <p className="text-[11px] text-slate-500 mt-1">{emailSendSummary.message}</p>
-              )}
-            </div>
-          </div>
-          {emailSendSummary.failures.length > 0 && (
-            <div className="mt-3 bg-white border border-slate-200 rounded-lg p-3">
-              <p className="text-xs font-semibold text-slate-700 mb-1">Failed recipients</p>
-              <ul className="text-xs text-slate-600 space-y-1">
-                {emailSendSummary.failures.slice(0, 3).map((fail, idx) => (
-                  <li key={idx}>
-                    {fail.eventName}
-                    {fail.email ? ` (${fail.email})` : ''}: {fail.error}
-                  </li>
-                ))}
-              </ul>
-              {emailSendSummary.failures.length > 3 && (
-                <p className="text-[11px] text-slate-500 mt-1">+{emailSendSummary.failures.length - 3} more failures logged in console.</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      {/* File Upload Section */}
+      <FileUploadSection
+        uploadingExcel={uploadingExcel}
+        excelFile={excelFile}
+        excelSummary={excelSummary}
+        emailSendSummary={emailSendSummary}
+        onFileChange={handleFileImport}
+        onClearFile={() => {
+          setExcelFile(null);
+          setExcelSummary(null);
+          setEventsList([]);
+          setImportData('');
+          setEmailSendSummary(null);
+        }}
+      />
 
       {rateLimitCountdown !== null && rateLimitCountdown > 0 && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
@@ -2873,383 +2510,63 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
       )}
 
 
-      {/* Filters and Search Bar - Enhanced */}
+      {/* Event Filters */}
       {eventsList.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
-          <div className="flex flex-col gap-3">
-            {/* Row 1: Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input
-                  type="text"
-                  placeholder="Search events..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* Row 2: Advanced Filters */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {/* Country Filter */}
-              <select
-                value={countryFilter}
-                onChange={(e) => setCountryFilter(e.target.value)}
-                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="all">All Countries</option>
-                {availableCountries.map(country => (
-                  <option key={country} value={country}>{country}</option>
-                ))}
-              </select>
-
-              {/* Industry Filter */}
-              <select
-                value={industryFilter}
-                onChange={(e) => setIndustryFilter(e.target.value)}
-                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="all">All Industries</option>
-                {availableIndustries.map(industry => (
-                  <option key={industry} value={industry}>{industry}</option>
-                ))}
-              </select>
-
-              {/* Status Filter */}
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="all">All Statuses</option>
-                <option value="completed">Completed</option>
-                <option value="analyzing">Analyzing</option>
-                <option value="pending">Pending</option>
-                <option value="error">Error</option>
-              </select>
-
-              {/* Priority Filter */}
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value as any)}
-                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="all">All Priorities</option>
-                <option value="high">High (≥50)</option>
-                <option value="medium">Medium (30-49)</option>
-                <option value="low">Low (&lt;30)</option>
-              </select>
-            </div>
-
-            {/* Row 3: Sort Controls */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="score">Score</option>
-                  <option value="name">Name</option>
-                  <option value="status">Status</option>
-                </select>
-                <button
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="p-2 bg-slate-100  rounded-lg "
-                  title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
-                >
-                  {sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </button>
-              </div>
-
-              {/* Clear Filters */}
-              {(searchTerm || countryFilter !== 'all' || industryFilter !== 'all' || statusFilter !== 'all' || priorityFilter !== 'all') && (
-                <button
-                  onClick={() => {
-                    setSearchTerm('');
-                    setCountryFilter('all');
-                    setIndustryFilter('all');
-                    setStatusFilter('all');
-                    setPriorityFilter('all');
-                  }}
-                  className="px-3 py-2 bg-slate-100  text-slate-700 rounded-lg text-sm font-medium  flex items-center gap-1"
-                >
-                  <X size={14} />
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Results count - Compact */}
-          <div className="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2">
-            <p className="text-xs text-slate-600">
-              Showing <strong className="text-slate-900">{filteredAndSortedEvents.length}</strong> of <strong className="text-slate-900">{eventsList.length}</strong> events
-              {analyzedCount > 0 && (
-                <span className="ml-2">• Analyzed: <strong className="text-slate-700">{analyzedCount}</strong></span>
-              )}
-            </p>
-            {notAnalyzedCount > 0 && (
-              <p className="text-xs text-amber-600 font-medium">
-                ⚠️ {notAnalyzedCount} not analyzed
-              </p>
-            )}
-          </div>
-        </div>
+        <EventFilters
+          searchTerm={searchTerm}
+          countryFilter={countryFilter}
+          industryFilter={industryFilter}
+          statusFilter={statusFilter}
+          priorityFilter={priorityFilter}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          availableCountries={availableCountries}
+          availableIndustries={availableIndustries}
+          filteredCount={filteredAndSortedEvents.length}
+          totalCount={eventsList.length}
+          analyzedCount={analyzedCount}
+          notAnalyzedCount={notAnalyzedCount}
+          onSearchChange={setSearchTerm}
+          onCountryFilterChange={setCountryFilter}
+          onIndustryFilterChange={setIndustryFilter}
+          onStatusFilterChange={setStatusFilter}
+          onPriorityFilterChange={setPriorityFilter}
+          onSortByChange={setSortBy}
+          onSortOrderToggle={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          onClearFilters={() => {
+            setSearchTerm('');
+            setCountryFilter('all');
+            setIndustryFilter('all');
+            setStatusFilter('all');
+            setPriorityFilter('all');
+          }}
+        />
       )}
 
-      {/* Events Table */}
+      {/* Event List */}
       {eventsList.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-12">#</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider min-w-[300px]">Event Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-28">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-24">Score</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-700 uppercase tracking-wider w-32">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
-                {filteredAndSortedEvents.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
-                      <Search size={48} className="mx-auto mb-3 text-slate-300" />
-                      <p className="text-sm font-medium">No events match your filters</p>
-                      <p className="text-xs mt-1">Try adjusting your search or filter criteria</p>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredAndSortedEvents.map(({ event, idx, progress, wasSkipped, skipReason }) => (
-                    <tr
-                      key={event.id || idx}
-                      className={`${progress?.status === 'completed' ? 'bg-green-50/30' :
-                        progress?.status === 'analyzing' ? 'bg-blue-50/30' :
-                          progress?.status === 'error' ? 'bg-red-50/30' :
-                            wasSkipped ? 'bg-amber-50/30' : ''
-                        }`}
-                    >
-                      <td className="px-4 py-3 text-sm font-medium text-slate-600">{idx + 1}</td>
-
-                      {/* Event Name */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center space-x-2">
-                          {progress?.status === 'completed' && (
-                            <Check className="text-green-600 flex-shrink-0" size={16} />
-                          )}
-                          {progress?.status === 'analyzing' && (
-                            <Loader2 className="animate-spin text-blue-600 flex-shrink-0" size={16} />
-                          )}
-                          {progress?.status === 'error' && (
-                            <X className="text-red-600 flex-shrink-0" size={16} />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-slate-900 truncate">
-                              {progress?.result?.companyName || event.name}
-                            </div>
-                            {progress?.result?.industry && (
-                              <div className="text-xs text-slate-500 mt-0.5 truncate">
-                                {progress.result.industry}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col gap-1">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${progress?.status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : progress?.status === 'analyzing'
-                              ? 'bg-blue-100 text-blue-800'
-                              : progress?.status === 'error'
-                                ? 'bg-red-100 text-red-800'
-                                : wasSkipped
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : 'bg-slate-100 text-slate-600'
-                            }`}>
-                            {progress?.status === 'completed' ? 'Completed' :
-                              progress?.status === 'analyzing' ? 'Analyzing' :
-                                progress?.status === 'error' ? 'Error' :
-                                  wasSkipped ? 'Not Analyzed' : 'Pending'}
-                          </span>
-                          {wasSkipped && skipReason && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200" title={skipReason}>
-                              ⚠️ {skipReason}
-                            </span>
-                          )}
-                          {progress?.status === 'completed' && progress.result && (() => {
-                            const eventName = (progress.result.companyName || event.name || '').toLowerCase().trim();
-                            return savedToDatabase.has(eventName) ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
-                                ✓ Đã lưu vào database
-                              </span>
-                            ) : null;
-                          })()}
-                        </div>
-                      </td>
-
-                      {/* Score */}
-                      <td className="px-4 py-3">
-                        {progress?.status === 'completed' && progress.result ? (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-base font-bold text-indigo-600">
-                              {progress.result.totalScore || 0}
-                            </span>
-                            <span className="text-xs text-slate-500">/100</span>
-                          </div>
-                        ) : (event as any).dataQualityScore !== undefined ? (
-                          <span className={`text-sm font-semibold ${(event as any).dataQualityScore >= 80 ? 'text-green-600' :
-                            (event as any).dataQualityScore >= 60 ? 'text-yellow-600' :
-                              'text-red-600'
-                            }`}>
-                            {(event as any).dataQualityScore}%
-                          </span>
-                        ) : (
-                          <span className="text-sm text-slate-400">-</span>
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-2">
-                          {progress?.status === 'completed' && progress.result && (
-                            <>
-                              <button
-                                onClick={() => setSelectedEventForModal({
-                                  name: progress.result.companyName || event.name,
-                                  data: event.data,
-                                  id: event.id,
-                                  dataQualityScore: (event as any).dataQualityScore,
-                                  issues: (event as any).issues,
-                                  rawData: (event as any).rawData
-                                })}
-                                className="p-1.5 text-slate-600 slate-900  rounded "
-                                title="View Details"
-                              >
-                                <FileText size={16} />
-                              </button>
-                              {(() => {
-                                // Check for editions in result or event
-                                const editions = progress.result.editions || (event as any).editions || [];
-                                const hasEditions = Array.isArray(editions) && editions.length > 0;
-
-                                if (hasEditions) {
-                                  const eventName = progress.result.companyName || event.name;
-                                  const isResearching = Array.from(researchingEditions).some(key => key.includes(eventName));
-
-                                  return (
-                                    <button
-                                      onClick={() => {
-                                        if (!isResearching) {
-                                          researchEditionsLeadership(eventName, editions);
-                                        }
-                                      }}
-                                      disabled={isResearching}
-                                      className="p-1.5 text-purple-600 purple-900 purple-100 rounded  disabled:opacity-50 disabled:cursor-not-allowed"
-                                      title="Research Edition Leadership"
-                                    >
-                                      {isResearching ? (
-                                        <Loader2 className="animate-spin" size={16} />
-                                      ) : (
-                                        <Sparkles size={16} />
-                                      )}
-                                    </button>
-                                  );
-                                }
-                                return null;
-                              })()}
-                            </>
-                          )}
-                          {(event as any).rawData && !progress?.result && (
-                            <button
-                              onClick={() => setSelectedEventForModal({
-                                name: event.name,
-                                data: event.data,
-                                id: event.id,
-                                dataQualityScore: (event as any).dataQualityScore,
-                                issues: (event as any).issues,
-                                rawData: (event as any).rawData
-                              })}
-                              className="p-1.5 text-slate-600 slate-900  rounded "
-                              title="View Raw Data"
-                            >
-                              <Search size={16} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <EventList
+          filteredEvents={filteredAndSortedEvents}
+          savedToDatabase={savedToDatabase}
+          researchingEditions={researchingEditions}
+          onEventClick={(event) => setSelectedEventForModal(event)}
+          onResearchEditions={researchEditionsLeadership}
+        />
       )}
 
-      {/* Empty State - Optimized */}
+      {/* Empty State */}
       {eventsList.length === 0 && !uploadingExcel && (
-        <div className="bg-white rounded-lg shadow-sm border-2 border-dashed border-slate-300 p-10 text-center">
-          <FileSpreadsheet size={56} className="mx-auto mb-3 text-slate-300" />
-          <h3 className="text-lg font-semibold text-slate-900 mb-1">No Events Yet</h3>
-          <p className="text-sm text-slate-600 mb-5 max-w-sm mx-auto">
-            Upload an Excel or CSV file to start analyzing and scoring events automatically.
-          </p>
-          <label className="inline-flex items-center px-5 py-2.5 bg-slate-900  text-white rounded-lg font-semibold cursor-pointer  shadow-sm">
-            <FileSpreadsheet size={16} className="mr-2" /> Upload File
-            <input
-              type="file"
-              onChange={handleFileImport}
-              accept=".xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              className="hidden"
-            />
-          </label>
-        </div>
+        <EmptyState onFileChange={handleFileImport} />
       )}
 
-      {/* Run Analysis Button - Compact */}
-      {eventsList.length > 0 && (
-        <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-200 flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-slate-700">
-              {eventsList.length} event{eventsList.length > 1 ? 's' : ''} ready to analyze
-            </p>
-            {loading && (
-              <p className="text-xs text-blue-600 mt-0.5">Analyzing events... This may take a few minutes.</p>
-            )}
-          </div>
-          <button
-            onClick={handleAnalyze}
-            disabled={loading || researchingEditions.size > 0 || eventsList.length === 0 || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold  flex items-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed  shrink-0"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin" size={16} />
-                <span>Analyzing...</span>
-              </>
-            ) : researchingEditions.size > 0 ? (
-              <>
-                <Loader2 className="animate-spin" size={16} />
-                <span>Researching...</span>
-              </>
-            ) : (
-              <>
-                <BrainCircuit size={16} />
-                {rateLimitCountdown !== null && rateLimitCountdown > 0
-                  ? `Retry in ${rateLimitCountdown}s`
-                  : 'Analyze Events'}
-              </>
-            )}
-          </button>
-        </div>
-      )}
+      {/* Batch Analysis Controls */}
+      <BatchAnalysisControls
+        eventsCount={eventsList.length}
+        loading={loading}
+        researchingEditions={researchingEditions}
+        rateLimitCountdown={rateLimitCountdown}
+        onAnalyze={handleAnalyze}
+      />
 
       {/* Expanded Details */}
       {eventsList.map((event, idx) => {
@@ -4869,453 +4186,12 @@ export const IntelligentDataView = ({ onSaveToLeads }: { onSaveToLeads: (newLead
       )}
 
 
-      {/* Event Data Modal */}
-      {selectedEventForModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 animate-fade-in">
-            {/* Modal Header */}
-            <div className="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-white">
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold text-slate-900 mb-1">{selectedEventForModal.name}</h2>
-                {(selectedEventForModal as any).dataQualityScore !== undefined && (
-                  <div className="flex items-center space-x-2 mt-1">
-                    <span className="text-xs text-slate-500">Data Quality:</span>
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${(selectedEventForModal as any).dataQualityScore >= 80 ? 'bg-green-50 text-green-700 border border-green-200' :
-                      (selectedEventForModal as any).dataQualityScore >= 60 ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
-                        'bg-red-50 text-red-700 border border-red-200'
-                      }`}>
-                      {(selectedEventForModal as any).dataQualityScore}%
-                    </span>
-                  </div>
-                )}
-              </div>
-              <button
-                onClick={() => setSelectedEventForModal(null)}
-                className="text-slate-400 slate-600 p-1.5 rounded "
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              {/* Parse and display event data */}
-              {(() => {
-                // Get rawData object if available, otherwise parse from data string
-                const rawData = (selectedEventForModal as any).rawData || {};
-                const dataObj: { [key: string]: any } = {};
-
-                // If we have rawData object, use it directly
-                if (Object.keys(rawData).length > 0) {
-                  Object.entries(rawData).forEach(([key, value]) => {
-                    // Include all values except _sheet, but show null/undefined as empty string
-                    if (key !== '_sheet') {
-                      dataObj[key] = value !== null && value !== undefined ? value : '';
-                    }
-                  });
-                } else {
-                  // Otherwise parse from data string
-                  selectedEventForModal.data.split(', ').forEach((part: string) => {
-                    const [key, ...valueParts] = part.split(': ');
-                    const value = valueParts.join(': ').trim();
-                    if (key.trim()) {
-                      dataObj[key.trim()] = value || '';
-                    }
-                  });
-                }
-
-                // Find related data from other sheets using allExcelData
-                const relatedData: { [key: string]: any[] } = {
-                  organizations: [],
-                  contacts: [],
-                  otherEditions: [],
-                  suppliers: []
-                };
-
-                if (allExcelData) {
-                  const lines = allExcelData.split('\n');
-                  const seriesId = dataObj.SERIESID || dataObj.SeriesID || dataObj.seriesId;
-                  const ecode = dataObj.ECODE || dataObj.Ecode || dataObj.ecode;
-
-                  lines.forEach((line: string) => {
-                    if (!line.trim()) return;
-
-                    // Parse line format: "Row X (Sheet: Y): Field1: Value1, Field2: Value2, ..."
-                    const rowMatch = line.match(/Row \d+ \(Sheet: ([^)]+)\):\s*(.+)/);
-                    if (rowMatch) {
-                      const sheetName = rowMatch[1].toLowerCase();
-                      const dataPart = rowMatch[2];
-                      const fields: { [key: string]: string } = {};
-
-                      // Parse fields
-                      dataPart.split(', ').forEach((pair: string) => {
-                        const match = pair.match(/([^:]+):\s*(.+)/);
-                        if (match) {
-                          const key = match[1].trim();
-                          const value = match[2].trim();
-                          fields[key] = value;
-                        }
-                      });
-
-                      // Check if this row is related to current event
-                      const isRelated =
-                        (seriesId && (fields.SERIESID === seriesId || fields.SeriesID === seriesId || fields.seriesId === seriesId)) ||
-                        (ecode && (fields.ECODE === ecode || fields.Ecode === ecode || fields.ecode === ecode)) ||
-                        (dataObj.SERIESNAME && fields.SERIESNAME && fields.SERIESNAME.toLowerCase().includes(dataObj.SERIESNAME.toLowerCase().substring(0, 20)));
-
-                      if (isRelated) {
-                        if (sheetName.includes('org')) {
-                          relatedData.organizations.push(fields);
-                        } else if (sheetName.includes('contact')) {
-                          relatedData.contacts.push(fields);
-                        } else if (sheetName.includes('edition') && fields.ECODE !== ecode) {
-                          relatedData.otherEditions.push(fields);
-                        } else if (sheetName.includes('supplier')) {
-                          relatedData.suppliers.push(fields);
-                        }
-                      }
-                    }
-                  });
-                }
-
-                // Categorize fields
-                const categories: { [key: string]: { [key: string]: any } } = {
-                  'Event Information': {},
-                  'Organization': {},
-                  'Location': {},
-                  'Dates & Timing': {},
-                  'Event Details': {},
-                  'Contact & Website': {},
-                  'Statistics': {},
-                  'Other': {}
-                };
-
-                // Field mapping to categories
-                Object.entries(dataObj).forEach(([key, value]) => {
-                  const keyUpper = key.toUpperCase();
-                  if (keyUpper.includes('SERIES') || keyUpper.includes('ORGANIZATION') || keyUpper.includes('ORG')) {
-                    categories['Organization'][key] = value;
-                  } else if (keyUpper.includes('CITY') || keyUpper.includes('COUNTRY') || keyUpper.includes('LOCATION') || keyUpper.includes('VENUE')) {
-                    categories['Location'][key] = value;
-                  } else if (keyUpper.includes('DATE') || keyUpper.includes('YEAR') || keyUpper.includes('TIME') || keyUpper.includes('START') || keyUpper.includes('END')) {
-                    categories['Dates & Timing'][key] = value;
-                  } else if (keyUpper.includes('EMAIL') || keyUpper.includes('PHONE') || keyUpper.includes('CONTACT') || keyUpper.includes('URL') || keyUpper.includes('WEBSITE') || keyUpper.includes('WEB')) {
-                    categories['Contact & Website'][key] = value;
-                  } else if (keyUpper.includes('ATTEND') || keyUpper.includes('DELEGATE') || keyUpper.includes('PARTICIPANT') || keyUpper.includes('SEQUENCE') || keyUpper.includes('COUNT')) {
-                    categories['Statistics'][key] = value;
-                  } else if (keyUpper.includes('EVENT') || keyUpper.includes('NAME') || keyUpper.includes('TITLE') || keyUpper.includes('CODE') || keyUpper.includes('ID')) {
-                    categories['Event Information'][key] = value;
-                  } else if (keyUpper.includes('EXHIBITION') || keyUpper.includes('COMMERCIAL') || keyUpper.includes('POSTER') || keyUpper.includes('TYPE') || keyUpper.includes('CATEGORY')) {
-                    categories['Event Details'][key] = value;
-                  } else {
-                    categories['Other'][key] = value;
-                  }
-                });
-
-                // Calculate statistics
-                const totalEditions = relatedData.otherEditions.length + 1; // +1 for current event
-                const locations = new Set<string>();
-                const countries = new Set<string>();
-                const cities = new Set<string>();
-
-                // Extract location info from current event and related editions
-                [dataObj, ...relatedData.otherEditions].forEach((event: any) => {
-                  if (event.CITY || event.City || event.city) {
-                    cities.add(event.CITY || event.City || event.city);
-                  }
-                  if (event.COUNTRY || event.Country || event.country) {
-                    countries.add(event.COUNTRY || event.Country || event.country);
-                  }
-                  if (event.LOCATION || event.Location || event.location) {
-                    locations.add(event.LOCATION || event.Location || event.location);
-                  }
-                });
-
-                return (
-                  <div className="space-y-3">
-                    {/* Summary Statistics */}
-                    {(totalEditions > 1 || locations.size > 0 || countries.size > 0 || cities.size > 0) && (
-                      <div className="bg-slate-50 rounded border border-slate-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-slate-700 mb-2">Tóm tắt</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          {totalEditions > 1 && (
-                            <div>
-                              <div className="text-xs text-slate-500 mb-0.5">Tổng số editions</div>
-                              <div className="text-lg font-semibold text-slate-900">{totalEditions}</div>
-                            </div>
-                          )}
-                          {cities.size > 0 && (
-                            <div>
-                              <div className="text-xs text-slate-500 mb-0.5">Thành phố</div>
-                              <div className="text-lg font-semibold text-slate-900">{cities.size}</div>
-                              <div className="text-xs text-slate-600 mt-0.5">{Array.from(cities).slice(0, 2).join(', ')}{cities.size > 2 ? '...' : ''}</div>
-                            </div>
-                          )}
-                          {countries.size > 0 && (
-                            <div>
-                              <div className="text-xs text-slate-500 mb-0.5">Quốc gia</div>
-                              <div className="text-lg font-semibold text-slate-900">{countries.size}</div>
-                              <div className="text-xs text-slate-600 mt-0.5">{Array.from(countries).slice(0, 2).join(', ')}{countries.size > 2 ? '...' : ''}</div>
-                            </div>
-                          )}
-                          {dataObj.SEQUENCE && (
-                            <div>
-                              <div className="text-xs text-slate-500 mb-0.5">Sequence</div>
-                              <div className="text-lg font-semibold text-slate-900">{dataObj.SEQUENCE}</div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Related Organizations */}
-                    {relatedData.organizations.length > 0 && (
-                      <div className="bg-white rounded border border-slate-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-slate-700 mb-2">Thông tin tổ chức</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {relatedData.organizations[0] && Object.entries(relatedData.organizations[0]).map(([key, value]) => (
-                            value && value !== 'N/A' && (
-                              <div key={key} className="pb-2 border-b border-slate-100 last:border-0">
-                                <div className="text-xs text-slate-500 mb-0.5">
-                                  {key.replace(/([A-Z])/g, ' $1').trim()}
-                                </div>
-                                <div className="text-sm text-slate-800 break-words">
-                                  {typeof value === 'string' && (value.toLowerCase().includes('http') || value.toLowerCase().startsWith('www')) ? (
-                                    <a href={value.startsWith('http') ? value : `https://${value}`} target="_blank" rel="noopener noreferrer" className="text-blue-600  break-all">
-                                      {value}
-                                    </a>
-                                  ) : String(value)}
-                                </div>
-                              </div>
-                            )
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Related Contacts */}
-                    {relatedData.contacts.length > 0 && (
-                      <div className="bg-white rounded border border-slate-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-slate-700 mb-2">Thông tin liên hệ (từ sheet Contacts)</h3>
-                        <div className="space-y-3">
-                          {relatedData.contacts.map((contact: any, idx: number) => (
-                            <div key={idx} className="bg-slate-50 rounded border border-slate-200 px-3 py-2">
-                              <div className="text-xs font-medium text-slate-600 mb-2">Contact #{idx + 1}</div>
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                  <tbody className="divide-y divide-slate-200">
-                                    {Object.entries(contact)
-                                      .filter(([_, value]) => value && String(value).trim() && String(value).trim() !== 'N/A')
-                                      .map(([key, value]) => {
-                                        const formattedKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).trim();
-                                        const valueStr = String(value).trim();
-                                        let displayValue: any = valueStr;
-
-                                        if (valueStr.includes('@')) {
-                                          displayValue = (
-                                            <a href={`mailto:${valueStr}`} className="text-blue-600 ">
-                                              {valueStr}
-                                            </a>
-                                          );
-                                        } else if (valueStr.toLowerCase().includes('http') || valueStr.toLowerCase().startsWith('www')) {
-                                          displayValue = (
-                                            <a href={valueStr.startsWith('http') ? valueStr : `https://${valueStr}`}
-                                              target="_blank" rel="noopener noreferrer"
-                                              className="text-blue-600  break-all">
-                                              {valueStr}
-                                            </a>
-                                          );
-                                        }
-
-                                        return (
-                                          <tr key={key} className="white">
-                                            <td className="py-1 pr-4 align-top w-1/3">
-                                              <span className="font-medium text-slate-700 text-xs">{formattedKey}</span>
-                                            </td>
-                                            <td className="py-1 align-top">
-                                              <span className="text-slate-800 break-words">
-                                                {typeof displayValue === 'string' ? displayValue : displayValue}
-                                              </span>
-                                            </td>
-                                          </tr>
-                                        );
-                                      })}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Other Editions (Event History) */}
-                    {relatedData.otherEditions.length > 0 && (
-                      <div className="bg-white rounded border border-slate-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-slate-700 mb-2">Lịch sử event ({relatedData.otherEditions.length} editions khác)</h3>
-                        <div className="space-y-2 max-h-64 overflow-y-auto">
-                          {relatedData.otherEditions.map((edition: any, idx: number) => (
-                            <div key={idx} className="bg-slate-50 rounded border border-slate-200 px-3 py-2">
-                              <div className="font-medium text-sm text-slate-800 mb-1">
-                                {edition.EVENT || edition.Event || edition.eventName || `Edition ${edition.SEQUENCE || idx + 1}`}
-                              </div>
-                              <div className="text-xs text-slate-600 space-y-0.5">
-                                {edition.YEAR && <div>Năm: {edition.YEAR}</div>}
-                                {edition.CITY && edition.COUNTRY && (
-                                  <div>Địa điểm: {edition.CITY}, {edition.COUNTRY}</div>
-                                )}
-                                {edition.SEQUENCE && <div>Sequence: {edition.SEQUENCE}</div>}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Data Quality Issues */}
-                    {(selectedEventForModal as any).issues && Array.isArray((selectedEventForModal as any).issues) && (selectedEventForModal as any).issues.length > 0 && (
-                      <div className="bg-slate-50 rounded border border-slate-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-slate-700 mb-2">Vấn đề về chất lượng dữ liệu</h3>
-                        <div className="space-y-2">
-                          {(selectedEventForModal as any).issues.filter((i: any) => i.severity === 'critical').length > 0 && (
-                            <div>
-                              <div className="text-xs font-medium text-red-700 mb-1">Quan trọng:</div>
-                              {(selectedEventForModal as any).issues.filter((i: any) => i.severity === 'critical').map((issue: any, idx: number) => (
-                                <div key={idx} className="text-sm text-red-700 mb-1 pl-3">
-                                  • {issue.message}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {(selectedEventForModal as any).issues.filter((i: any) => i.severity === 'warning').length > 0 && (
-                            <div>
-                              <div className="text-xs font-medium text-amber-700 mb-1">Cảnh báo:</div>
-                              {(selectedEventForModal as any).issues.filter((i: any) => i.severity === 'warning').map((issue: any, idx: number) => (
-                                <div key={idx} className="text-sm text-amber-700 mb-1 pl-3">
-                                  • {issue.message}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {(selectedEventForModal as any).issues.filter((i: any) => i.severity === 'info').length > 0 && (
-                            <div>
-                              <div className="text-xs font-medium text-slate-600 mb-1">Thông tin:</div>
-                              {(selectedEventForModal as any).issues.filter((i: any) => i.severity === 'info').map((issue: any, idx: number) => (
-                                <div key={idx} className="text-sm text-slate-600 mb-1 pl-3">
-                                  • {issue.message}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* All Event Data in Table Format */}
-                    {Object.keys(dataObj).length > 0 && (
-                      <div className="bg-white rounded border border-slate-200 px-4 py-3">
-                        <h3 className="text-sm font-semibold text-slate-700 mb-3">Tất cả thông tin</h3>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <tbody className="divide-y divide-slate-200">
-                              {Object.entries(dataObj)
-                                .sort(([keyA], [keyB]) => {
-                                  // Sort by category priority
-                                  const priority: { [key: string]: number } = {
-                                    'EVENT': 1, 'SERIES': 2, 'NAME': 3, 'TITLE': 4,
-                                    'CITY': 5, 'COUNTRY': 6, 'LOCATION': 7,
-                                    'YEAR': 8, 'DATE': 9, 'START': 10, 'END': 11,
-                                    'EMAIL': 12, 'PHONE': 13, 'CONTACT': 14, 'WEBSITE': 15, 'URL': 16,
-                                    'ATTEND': 17, 'DELEGATE': 18, 'TOTATTEND': 19, 'REGATTEND': 20,
-                                    'SEQUENCE': 21, 'CODE': 22, 'ID': 23
-                                  };
-                                  const getPriority = (key: string) => {
-                                    const keyUpper = key.toUpperCase();
-                                    for (const [prefix, prio] of Object.entries(priority)) {
-                                      if (keyUpper.includes(prefix)) return prio;
-                                    }
-                                    return 999;
-                                  };
-                                  return getPriority(keyA) - getPriority(keyB);
-                                })
-                                .map(([key, value]) => {
-                                  // Format value
-                                  let displayValue: any = value;
-                                  const valueStr = String(value || '').trim();
-
-                                  if (!valueStr || valueStr === 'N/A' || valueStr === 'null' || valueStr === 'undefined') {
-                                    displayValue = <span className="text-slate-400 italic">Không có</span>;
-                                  } else if (typeof value === 'boolean') {
-                                    displayValue = value ? 'Có' : 'Không';
-                                  } else if (valueStr.toLowerCase().includes('http') || valueStr.toLowerCase().startsWith('www')) {
-                                    displayValue = (
-                                      <a href={valueStr.startsWith('http') ? valueStr : `https://${valueStr}`}
-                                        target="_blank" rel="noopener noreferrer"
-                                        className="text-blue-600  break-all">
-                                        {valueStr}
-                                      </a>
-                                    );
-                                  } else if (valueStr.includes('@')) {
-                                    displayValue = (
-                                      <a href={`mailto:${valueStr}`} className="text-blue-600 ">
-                                        {valueStr}
-                                      </a>
-                                    );
-                                  } else {
-                                    displayValue = valueStr;
-                                  }
-
-                                  // Format key name
-                                  const formattedKey = key
-                                    .replace(/([A-Z])/g, ' $1')
-                                    .replace(/^./, str => str.toUpperCase())
-                                    .trim();
-
-                                  return (
-                                    <tr key={key} className="slate-50">
-                                      <td className="py-2 pr-4 align-top w-1/3">
-                                        <span className="font-medium text-slate-700 text-xs">{formattedKey}</span>
-                                      </td>
-                                      <td className="py-2 align-top">
-                                        <span className="text-slate-800 break-words">
-                                          {typeof displayValue === 'string' ? displayValue : displayValue}
-                                        </span>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Raw Data (for debugging) */}
-                    <details className="bg-slate-50 rounded border border-slate-200 px-4 py-2">
-                      <summary className="cursor-pointer text-xs font-medium text-slate-600 slate-800">
-                        Raw Data (Click to expand)
-                      </summary>
-                      <pre className="mt-2 text-xs text-slate-600 bg-white p-2 rounded border border-slate-200 overflow-x-auto">
-                        {JSON.stringify(dataObj, null, 2)}
-                      </pre>
-                    </details>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-5 py-3 border-t border-slate-200 bg-white flex justify-end">
-              <button
-                onClick={() => setSelectedEventForModal(null)}
-                className="px-4 py-1.5 bg-slate-600  text-white text-sm rounded "
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Event Modal */}
+      <EventModal
+        event={selectedEventForModal}
+        allExcelData={allExcelData}
+        onClose={() => setSelectedEventForModal(null)}
+      />
     </div>
   );
 };

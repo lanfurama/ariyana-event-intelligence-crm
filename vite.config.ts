@@ -75,7 +75,28 @@ export default defineConfig(async ({ mode, command }) => {
       minify: "esbuild",
       rollupOptions: {
         output: {
-          manualChunks: undefined,
+          manualChunks: (id) => {
+            // Vendor chunks for better caching
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('lucide-react')) {
+                return 'vendor-lucide';
+              }
+              if (id.includes('xlsx')) {
+                return 'vendor-xlsx';
+              }
+              if (id.includes('@google/genai') || id.includes('@google/generative-ai')) {
+                return 'vendor-gemini';
+              }
+              if (id.includes('openai')) {
+                return 'vendor-openai';
+              }
+              // Other node_modules
+              return 'vendor';
+            }
+          },
         },
       },
     },

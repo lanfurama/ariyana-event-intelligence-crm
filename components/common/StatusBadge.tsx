@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const StatusBadge = ({ status }: { status: string }) => {
+export const StatusBadge = React.memo(({ status }: { status: string }) => {
   const dotColors: Record<string, string> = {
     New: 'bg-blue-500',
     Contacted: 'bg-amber-500',
@@ -15,7 +15,7 @@ export const StatusBadge = ({ status }: { status: string }) => {
       <span className="uppercase tracking-wide">{status}</span>
     </span>
   );
-};
+});
 
 
 
