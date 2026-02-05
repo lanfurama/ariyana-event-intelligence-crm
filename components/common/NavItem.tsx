@@ -11,13 +11,13 @@ interface NavItemProps {
 export const NavItem = ({ icon, label, id, active, onClick }: NavItemProps) => (
   <button
     onClick={() => onClick(id)}
-    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium ${active === id
-        ? 'bg-gradient-to-r from-primary to-yellow-600 text-white shadow-lg shadow-primary/20' // Gold gradient for premium look
+    className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-sm font-medium ${active === id
+        ? 'bg-gradient-to-r from-primary to-yellow-600 text-white shadow-sm'
         : 'text-slate-400'
       }`}
   >
     {icon}
-    <span>{label}</span>
+    <span className="truncate">{label}</span>
   </button>
 );
 

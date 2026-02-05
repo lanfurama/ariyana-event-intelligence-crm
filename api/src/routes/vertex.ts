@@ -61,8 +61,8 @@ router.post('/enrich', async (req: Request, res: Response) => {
       ],
       tools: [{ googleSearch: {} }],
       generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 2048,
+        temperature: 0.45,
+        maxOutputTokens: 3072,
       },
     };
 

@@ -11,8 +11,7 @@ const LeadsView = React.lazy(() => import('./views/LeadsView').then(module => ({
 const LeadDetail = React.lazy(() => import('./components/LeadDetail').then(module => ({ default: module.LeadDetail })));
 const IntelligentDataView = React.lazy(() => import('./views/IntelligentDataView').then(module => ({ default: module.IntelligentDataView })));
 const ChatAssistant = React.lazy(() => import('./components/ChatAssistant').then(module => ({ default: module.ChatAssistant })));
-const EmailTemplatesView = React.lazy(() => import('./views/EmailTemplatesView').then(module => ({ default: module.EmailTemplatesView })));
-const EmailReportsView = React.lazy(() => import('./views/EmailReportsView').then(module => ({ default: module.EmailReportsView })));
+const EmailView = React.lazy(() => import('./views/EmailView').then(module => ({ default: module.EmailView })));
 const UserProfileView = React.lazy(() => import('./views/UserProfileView').then(module => ({ default: module.UserProfileView })));
 const VideoAnalysisView = React.lazy(() => import('./views/VideoAnalysisView').then(module => ({ default: module.VideoAnalysisView })));
 
@@ -28,7 +27,8 @@ const App = () => {
     setSelectedLead,
     updateLead,
     addLeads,
-    addNewLead
+    addNewLead,
+    fetchLeads,
   } = useLeads(user);
 
   // Tab State Management
@@ -39,6 +39,13 @@ const App = () => {
       return 'dashboard';
     }
   });
+
+  // Migrate legacy email tabs to single "email" tab
+  useEffect(() => {
+    if ((activeTab === 'email-templates' || activeTab === 'email-reports') && user) {
+      setActiveTab('email');
+    }
+  }, [activeTab, user]);
 
   // Persist activeTab
   useEffect(() => {
@@ -78,7 +85,10 @@ const App = () => {
         return (
           <IntelligentDataView
             leads={leads}
-            onUpdateLead={updateLead}
+            onUpdateLead={async (updated) => {
+              await updateLead(updated);
+              await fetchLeads();
+            }}
             loading={leadsLoading}
           />
         );
@@ -86,12 +96,9 @@ const App = () => {
         return <VideoAnalysisView />;
       case 'chat':
         return <ChatAssistant user={user} />;
-      case 'email-templates':
+      case 'email':
         if (user.role !== 'Director' && user.role !== 'Sales') return <Dashboard leads={leads} />;
-        return <EmailTemplatesView />;
-      case 'email-reports':
-        if (user.role !== 'Director') return <Dashboard leads={leads} />;
-        return <EmailReportsView />;
+        return <EmailView user={user} />;
       case 'profile':
         return <UserProfileView user={user} onUpdateUser={updateUser} />;
       default:

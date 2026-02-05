@@ -14,8 +14,7 @@ import {
     Lock
 } from 'lucide-react';
 import { Lead, User, EmailTemplate, EmailReply } from '../types';
-import * as GeminiService from '../services/geminiService';
-import { extractRetryDelay as extractGeminiRetryDelay, isRateLimitError as isGeminiRateLimitError } from '../services/geminiService';
+import * as VertexAiService from '../services/vertexAiService';
 import { emailTemplatesApi, emailLogsApi, emailRepliesApi } from '../services/apiService';
 import { StatusBadge, InfoItem, EditField, EditTextArea } from './common';
 
@@ -462,12 +461,12 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
         setRateLimitCountdown(null);
         setResearchResults(null);
         try {
-            const result = await GeminiService.enrichLeadData(
+            const result = await VertexAiService.enrichLeadData(
                 enrichCompanyName.trim(),
                 enrichKeyPerson.trim() || '',
                 enrichCity.trim() || ''
             );
-            setEnrichResult(result);
+            setEnrichResult({ text: result.text, grounding: null });
 
             // Parse result to extract key person info
             const parsedInfo = parseResearchResult(result.text);
@@ -514,15 +513,15 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
             });
         } catch (e: any) {
             console.error(e);
-            if (isGeminiRateLimitError(e)) {
-                const retryDelay = extractGeminiRetryDelay(e);
-                if (retryDelay) {
+            if (e?.isRateLimit) {
+                const retryDelay = e?.retryDelay;
+                if (typeof retryDelay === 'number' && retryDelay > 0) {
                     setRateLimitCountdown(retryDelay);
                 } else {
-                    alert(`Rate limit exceeded. Please try again later.`);
+                    alert('Rate limit exceeded. Please try again later.');
                 }
             } else {
-                alert(`Enrichment failed: ${e.message || "Please check API Key/Connection"}`);
+                alert(`Enrichment failed: ${e?.message || 'Please check API Key/Connection'}`);
             }
         } finally {
             setEnrichLoading(false);
@@ -723,21 +722,21 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-end">
             <div className="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col overflow-hidden animate-slide-in-right border-l border-slate-200">
-                <div className="p-4 border-b-2 border-slate-200 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
+                <div className="px-3 py-2 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{lead.companyName}</h2>
-                        <p className="text-sm text-slate-600 font-medium mt-0.5">{lead.industry} • {lead.country}</p>
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">{lead.companyName}</h2>
+                        <p className="text-xs text-slate-600 font-medium mt-0.5">{lead.industry} • {lead.country}</p>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 p-2 rounded-lg">
-                        <X size={20} />
+                    <button onClick={onClose} className="text-slate-400 p-1.5 rounded-lg hover:bg-slate-100">
+                        <X size={18} />
                     </button>
                 </div>
 
-                <div className="flex border-b-2 border-slate-200 bg-white">
+                <div className="flex border-b border-slate-200 bg-white">
                     <button
                         onClick={() => setActiveTab('info')}
-                        className={`flex-1 py-3 font-semibold text-sm flex justify-center items-center space-x-2 ${activeTab === 'info'
-                            ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50/50'
+                        className={`flex-1 py-2 font-semibold text-xs flex justify-center items-center gap-1.5 ${activeTab === 'info'
+                            ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
                             : 'text-slate-500'
                             }`}
                     >
@@ -746,32 +745,32 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
 
                     <button
                         onClick={() => setActiveTab('enrich')}
-                        className={`flex-1 py-3 font-semibold text-sm flex justify-center items-center space-x-2 ${activeTab === 'enrich'
-                            ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50/50'
+                        className={`flex-1 py-2 font-semibold text-xs flex justify-center items-center gap-1.5 ${activeTab === 'enrich'
+                            ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
                             : 'text-slate-500'
                             }`}
                     >
-                        <Search size={16} /> <span>Google Enrich</span>
+                        <Search size={14} /> <span>Google Enrich</span>
                     </button>
 
                     {canEdit ? (
                         <button
                             onClick={() => setActiveTab('email')}
-                            className={`flex-1 py-3 font-semibold text-sm flex justify-center items-center space-x-2 ${activeTab === 'email'
-                                ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50/50'
+                            className={`flex-1 py-2 font-semibold text-xs flex justify-center items-center gap-1.5 ${activeTab === 'email'
+                                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
                                 : 'text-slate-500'
                                 }`}
                         >
-                            <Mail size={16} /> <span>AI Email</span>
+                            <Mail size={14} /> <span>AI Email</span>
                         </button>
                     ) : (
-                        <div className="flex-1 py-3 font-semibold text-sm flex justify-center items-center space-x-2 text-slate-300 cursor-not-allowed bg-slate-50" title="Viewer Only">
-                            <Lock size={16} /> <span>AI Email</span>
+                        <div className="flex-1 py-2 font-semibold text-xs flex justify-center items-center gap-1.5 text-slate-300 cursor-not-allowed bg-slate-50" title="Viewer Only">
+                            <Lock size={14} /> <span>AI Email</span>
                         </div>
                     )}
                 </div>
 
-                <div className="p-5 flex-1 overflow-y-auto">
+                <div className="p-3 flex-1 overflow-y-auto">
                     {activeTab === 'info' && (
                         <div className="space-y-4">
                             <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
@@ -980,20 +979,20 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                     )}
 
                     {activeTab === 'enrich' && (
-                        <div className="space-y-4">
-                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                                <p className="text-sm text-blue-800">
+                        <div className="space-y-3">
+                            <div className="bg-blue-50 px-2.5 py-2 rounded border border-blue-100">
+                                <p className="text-xs text-blue-800">
                                     Use AI to find the latest contact details and past events for this lead. Enter or edit the information below before searching.
                                 </p>
                             </div>
                             {rateLimitCountdown !== null && rateLimitCountdown > 0 && (
-                                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <div className="bg-yellow-50 border border-yellow-200 rounded px-2.5 py-2">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-semibold text-yellow-800">⚠️ Rate Limit Exceeded</p>
-                                            <p className="text-xs text-yellow-700 mt-1">You've exceeded your API quota. Please wait before trying again.</p>
+                                            <p className="text-xs font-semibold text-yellow-800">⚠️ Rate Limit Exceeded</p>
+                                            <p className="text-xs text-yellow-700 mt-0.5">Please wait before trying again.</p>
                                         </div>
-                                        <div className="text-2xl font-bold text-yellow-600">
+                                        <div className="text-lg font-bold text-yellow-600">
                                             {Math.floor(rateLimitCountdown / 60)}:{(rateLimitCountdown % 60).toString().padStart(2, '0')}
                                         </div>
                                     </div>
@@ -1001,9 +1000,9 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                             )}
 
                             {!enrichResult && (
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     <div>
-                                        <label className="text-sm font-medium text-slate-700 block mb-2">
+                                        <label className="text-xs font-medium text-slate-700 block mb-1">
                                             Company Name <span className="text-red-500">*</span>
                                         </label>
                                         <input
@@ -1011,13 +1010,13 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                             value={enrichCompanyName}
                                             onChange={(e) => setEnrichCompanyName(e.target.value)}
                                             placeholder="Enter company or organization name"
-                                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-medium"
+                                            className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                             disabled={enrichLoading}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="text-sm font-medium text-slate-700 block mb-2">
+                                        <label className="text-xs font-medium text-slate-700 block mb-1">
                                             Key Person Name (Optional)
                                         </label>
                                         <input
@@ -1025,13 +1024,13 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                             value={enrichKeyPerson}
                                             onChange={(e) => setEnrichKeyPerson(e.target.value)}
                                             placeholder="Enter key contact person name"
-                                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-medium"
+                                            className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                             disabled={enrichLoading}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="text-sm font-medium text-slate-700 block mb-2">
+                                        <label className="text-xs font-medium text-slate-700 block mb-1">
                                             City/Location (Optional)
                                         </label>
                                         <input
@@ -1039,7 +1038,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                             value={enrichCity}
                                             onChange={(e) => setEnrichCity(e.target.value)}
                                             placeholder="Enter city or location"
-                                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-medium"
+                                            className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                             disabled={enrichLoading}
                                         />
                                     </div>
@@ -1047,21 +1046,21 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                     <button
                                         onClick={handleEnrich}
                                         disabled={enrichLoading || !canEdit || (rateLimitCountdown !== null && rateLimitCountdown > 0) || !enrichCompanyName.trim()}
-                                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold flex justify-center items-center shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-400"
+                                        className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold text-sm flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {enrichLoading ? (
                                             <>
-                                                <Loader2 className="animate-spin mr-2" size={18} />
+                                                <Loader2 className="animate-spin" size={16} />
                                                 Searching...
                                             </>
                                         ) : rateLimitCountdown !== null && rateLimitCountdown > 0 ? (
                                             <>
-                                                <Loader2 className="mr-2" size={18} />
+                                                <Loader2 size={16} />
                                                 Retry in {rateLimitCountdown}s
                                             </>
                                         ) : (
                                             <>
-                                                <Search className="mr-2" size={18} />
+                                                <Search size={16} />
                                                 Search Live Data
                                             </>
                                         )}
@@ -1070,9 +1069,9 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                             )}
 
                             {enrichResult && (
-                                <div className="space-y-4">
-                                    <div className="bg-white border border-slate-200 rounded-lg p-5">
-                                        <h4 className="font-bold text-slate-900 mb-3 text-lg">AI Summary</h4>
+                                <div className="space-y-3">
+                                    <div className="bg-white border border-slate-200 rounded p-3">
+                                        <h4 className="font-bold text-slate-900 mb-2 text-base">AI Summary</h4>
                                         <div
                                             className="text-slate-700 prose prose-sm max-w-none"
                                             dangerouslySetInnerHTML={{
@@ -1089,9 +1088,9 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                         />
                                     </div>
                                     {enrichResult.grounding && (
-                                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                            <h5 className="text-xs font-bold text-slate-500 uppercase mb-3 tracking-wider">Sources</h5>
-                                            <ul className="space-y-2">
+                                        <div className="bg-slate-50 px-3 py-2 rounded border border-slate-200">
+                                            <h5 className="text-xs font-bold text-slate-500 uppercase mb-2 tracking-wider">Sources</h5>
+                                            <ul className="space-y-1.5">
                                                 {(() => {
                                                     // Extract domain from URI for duplicate detection
                                                     const getDomain = (uri: string): string => {
@@ -1143,9 +1142,9 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
 
                                     {/* Key Person Research Results */}
                                     {researchResults && (researchResults.name || researchResults.title || researchResults.email) && (
-                                        <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-lg p-5 space-y-4">
-                                            <h4 className="font-bold text-indigo-900 flex items-center">
-                                                <UserIcon size={18} className="mr-2" />
+                                        <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded p-3 space-y-3">
+                                            <h4 className="font-bold text-indigo-900 text-sm flex items-center">
+                                                <UserIcon size={16} className="mr-1.5" />
                                                 Key Person Research Results
                                             </h4>
 
@@ -1229,9 +1228,9 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                     {canEdit && (
                                         <button
                                             onClick={handleSaveEnrichment}
-                                            className="w-full mt-4 py-2 bg-teal-600 text-white rounded-lg flex items-center justify-center text-sm font-medium"
+                                            className="w-full mt-2 py-2 bg-teal-600 text-white rounded flex items-center justify-center text-sm font-medium"
                                         >
-                                            <Save size={16} className="mr-2" /> Update Content to Research Notes
+                                            <Save size={14} className="mr-1.5" /> Update Content to Research Notes
                                         </button>
                                     )}
                                 </div>

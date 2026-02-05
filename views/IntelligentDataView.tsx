@@ -154,7 +154,11 @@ export const IntelligentDataView: React.FC<IntelligentDataViewProps> = ({
         status={researchStatus}
         responseText={researchResponseText}
         errorMessage={researchError}
-        canSync={researchStatus === 'success' || researchStatus === 'no_result'}
+        parsedContact={researchParsed}
+        canSync={
+          (researchStatus === 'success' || researchStatus === 'no_result') &&
+          !!(researchParsed?.keyPersonEmail || researchParsed?.keyPersonPhone)
+        }
         onConfirmSync={handleConfirmSync}
         syncing={syncing}
       />

@@ -429,7 +429,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                 <div className="flex items-center gap-2 flex-wrap">
                     <button
                         onClick={handleExportExcel}
-                        className="bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center transition-colors shadow-sm"
+                        className="bg-white border border-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center shadow-sm"
                     >
                         <FileSpreadsheet size={14} className="mr-1.5" /> Export
                     </button>
@@ -438,13 +438,13 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                         <>
                             <button
                                 onClick={() => setShowEmailModal(true)}
-                                className="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center transition-colors shadow-sm"
+                                className="bg-white border border-indigo-200 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center shadow-sm"
                             >
                                 <Mail size={14} className="mr-1.5" /> Send Mail
                             </button>
                             <button
                                 onClick={onAddLead}
-                                className="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center transition-colors shadow-sm"
+                                className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center shadow-sm"
                             >
                                 <Plus size={14} className="mr-1.5" /> Add Lead
                             </button>
@@ -576,7 +576,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                         setEmailFilter('all');
                                     }}
                                     title="Clear filters"
-                                    className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors"
+                                    className="p-1.5 bg-slate-100 text-slate-600 rounded-lg"
                                 >
                                     <X size={12} />
                                 </button>
@@ -613,7 +613,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                         return (
                             <div 
                                 key={lead.id} 
-                                className="group relative bg-white border border-slate-200 rounded-lg p-3 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer"
+                                className="group relative bg-white border border-slate-200 rounded-lg p-3 cursor-pointer"
                                 onClick={() => onSelectLead(lead)}
                             >
                                 <div className="flex items-center gap-3">
@@ -647,7 +647,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                                     target="_blank" 
                                                     rel="noopener noreferrer" 
                                                     onClick={(e) => e.stopPropagation()}
-                                                    className="flex items-center text-xs text-indigo-600 hover:text-indigo-700"
+                                                    className="flex items-center text-xs text-indigo-600"
                                                 >
                                                     <Globe size={10} className="mr-1" />
                                                     Website
@@ -736,7 +736,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                                     ? 'bg-blue-50 text-blue-600 border border-blue-200' 
                                                     : isMarking 
                                                         ? 'bg-slate-100 text-slate-400' 
-                                                        : 'bg-slate-50 text-slate-300 hover:bg-slate-100'
+                                                        : 'bg-slate-50 text-slate-300'
                                             }`}
                                             title={replied ? 'Replied' : 'Mark Reply'}
                                         >
@@ -748,7 +748,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                                 e.stopPropagation();
                                                 onSelectLead(lead);
                                             }}
-                                            className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                                            className="w-8 h-8 flex items-center justify-center text-slate-400 rounded-lg"
                                         >
                                             <ChevronRight size={16} />
                                         </button>
@@ -774,7 +774,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 setStatusFilter('all');
                                 setEmailFilter('all');
                             }}
-                            className="mt-4 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2"
+                            className="mt-4 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-sm flex items-center gap-2"
                         >
                             <X size={12} />
                             Clear filters
