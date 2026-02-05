@@ -75,7 +75,13 @@ const App = () => {
         );
       case 'intelligent':
         if (user.role !== 'Director') return <Dashboard leads={leads} />;
-        return <IntelligentDataView onSaveToLeads={addLeads} />;
+        return (
+          <IntelligentDataView
+            leads={leads}
+            onUpdateLead={updateLead}
+            loading={leadsLoading}
+          />
+        );
       case 'analysis':
         return <VideoAnalysisView />;
       case 'chat':

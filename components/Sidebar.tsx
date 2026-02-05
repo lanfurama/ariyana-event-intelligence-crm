@@ -25,9 +25,8 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onToggle }: SidebarProps) => <>
-  {/* Sidebar */}
-  < div className={`w-52 glass-dark flex flex-col h-screen fixed left-0 top-0 z-20 transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
-    }`}>
+  {/* Sidebar - solid background, no transparency */}
+  <div className={`w-52 flex flex-col h-screen fixed left-0 top-0 z-20 transition-transform duration-300 ease-in-out bg-slate-900 border-r border-white/10 shadow-[4px_0_24px_rgba(0,0,0,0.4)] ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
     <div className="p-4 border-b border-white/10 flex items-center justify-between">
       <div className="flex-1">
         <h1 className="text-2xl font-bold text-primary tracking-tight">Ariyana CRM</h1>
@@ -89,7 +88,7 @@ export const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isOpen, onTog
         Powered by OpenAI & Gemini
       </div>
     </div>
-  </div >
+  </div>
 
   {/* Toggle Button - Show when sidebar is closed */}
   {

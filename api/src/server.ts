@@ -14,6 +14,7 @@ import excelImportRouter from './routes/excelImport.js';
 import eventBriefRouter from './routes/eventBrief.js';
 import leadScoringRouter from './routes/leadScoring.js';
 import emailReportsRouter from './routes/emailReports.js';
+import vertexRouter from './routes/vertex.js';
 import { query } from './config/database.js';
 import { startScheduledReportsJob } from './services/scheduledReportsJob.js';
 
@@ -91,6 +92,7 @@ app.use('/api/excel-import', excelImportRouter);
 app.use('/api/event-brief', eventBriefRouter);
 app.use('/api/lead-scoring', leadScoringRouter);
 app.use('/api/email-reports', emailReportsRouter);
+app.use('/api/vertex', vertexRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -109,6 +111,7 @@ app.get('/', (req, res) => {
       eventBrief: '/api/event-brief',
       leadScoring: '/api/lead-scoring',
       emailReports: '/api/email-reports',
+      vertex: '/api/vertex',
       health: '/health',
     },
   });

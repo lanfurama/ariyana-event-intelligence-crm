@@ -45,6 +45,7 @@ let csvImportRouter: any;
 let eventBriefRouter: any;
 let leadScoringRouter: any;
 let emailReportsRouter: any;
+let vertexRouter: any;
 let query: any;
 
 async function loadRoutes() {
@@ -80,6 +81,7 @@ async function loadRoutes() {
         './api/src/routes/eventBrief.js',
         './api/src/routes/leadScoring.js',
         './api/src/routes/emailReports.js',
+        './api/src/routes/vertex.js',
         './api/src/config/database.js',
       ];
 
@@ -114,7 +116,8 @@ async function loadRoutes() {
       eventBriefRouter = routes[10].default;
       leadScoringRouter = routes[11].default;
       emailReportsRouter = routes[12].default;
-      query = routes[13].query;
+      vertexRouter = routes[13].default;
+      query = routes[14].query;
 
       console.log('✅ Routes loaded successfully');
     } catch (error: any) {
@@ -192,6 +195,7 @@ export function vitePluginApi(): Plugin {
       app.use('/event-brief', eventBriefRouter);
       app.use('/lead-scoring', leadScoringRouter);
       app.use('/email-reports', emailReportsRouter);
+      app.use('/vertex', vertexRouter);
 
       // Root endpoint (relative to /api/v1)
       app.get('/', (req, res) => {

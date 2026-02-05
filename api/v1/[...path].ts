@@ -16,6 +16,7 @@ import csvImportRouter from '../src/routes/csvImport.js';
 import eventBriefRouter from '../src/routes/eventBrief.js';
 import leadScoringRouter from '../src/routes/leadScoring.js';
 import emailReportsRouter from '../src/routes/emailReports.js';
+import vertexRouter from '../src/routes/vertex.js';
 import { query } from '../src/config/database.js';
 
 // Load environment variables for Vercel
@@ -85,6 +86,7 @@ app.use('/csv-import', csvImportRouter);
 app.use('/event-brief', eventBriefRouter);
 app.use('/lead-scoring', leadScoringRouter);
 app.use('/email-reports', emailReportsRouter);
+app.use('/vertex', vertexRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -103,6 +105,7 @@ app.get('/', (req, res) => {
       eventBrief: '/api/v1/event-brief',
       leadScoring: '/api/v1/lead-scoring',
       emailReports: '/api/v1/email-reports',
+      vertex: '/api/v1/vertex',
       health: '/api/v1/health',
     },
   });

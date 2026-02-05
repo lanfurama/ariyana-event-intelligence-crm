@@ -6,6 +6,10 @@ export { EventList } from './EventList';
 export { BatchAnalysisControls } from './BatchAnalysisControls';
 export { EmptyState } from './EmptyState';
 export { EventModal } from './EventModal';
+export { EnrichRow } from './EnrichRow';
+export { LeadsNeedingEnrichList } from './LeadsNeedingEnrichList';
+export { ResearchModal } from './ResearchModal';
+export type { ResearchModalProps, ResearchModalStatus } from './ResearchModal';
 
 // Export scoring utilities
 export * from './scoringUtils';
