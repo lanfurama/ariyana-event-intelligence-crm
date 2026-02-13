@@ -1,8 +1,19 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { Lead } from '../types';
-import { isLeadMissingPersonInfo, parseEnrichResponse } from '../utils/leadEnrichUtils';
+import { parseEnrichResponse } from '../utils/leadEnrichUtils';
 import type { ParsedEnrichContact } from '../utils/leadEnrichUtils';
 import { enrichLeadData } from '../services/vertexAiService';
+
+const GENERIC_EMAIL_PREFIXES = ['info@', 'contact@', 'admin@', 'support@'];
+
+function isGenericEmail(email: string): boolean {
+  const lower = email.trim().toLowerCase();
+  return GENERIC_EMAIL_PREFIXES.some((prefix) => lower.startsWith(prefix));
+}
+
+function isEmpty(value: string | undefined): boolean {
+  return value === undefined || value === null || String(value).trim() === '';
+}
 
 export interface EnrichResult {
   text: string;
@@ -23,7 +34,13 @@ export function useLeadsNeedingEnrich(
   const [enrichError, setEnrichError] = useState<string | null>(null);
 
   const leadsNeedingEnrich = useMemo(
-    () => leads.filter(isLeadMissingPersonInfo),
+    () => {
+      return leads.filter((lead) => {
+        const emailOk =
+          !isEmpty(lead.keyPersonEmail) && !isGenericEmail(lead.keyPersonEmail || '');
+        return !emailOk; // Only show leads without email
+      });
+    },
     [leads]
   );
 

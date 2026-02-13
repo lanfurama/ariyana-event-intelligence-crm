@@ -31,7 +31,7 @@ export const LeadsNeedingEnrichList: React.FC<LeadsNeedingEnrichListProps> = ({
         </h3>
         <p className="text-sm text-slate-600 max-w-sm mx-auto">
           {leads.length === 0
-            ? 'All leads have key person name, email, and phone filled. Add new leads in ICCA Leads to see them here.'
+            ? 'All leads have email filled. Add new leads without email in ICCA Leads to see them here.'
             : 'Try a different search term.'}
         </p>
       </div>
@@ -41,7 +41,7 @@ export const LeadsNeedingEnrichList: React.FC<LeadsNeedingEnrichListProps> = ({
   return (
     <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px]">
+        <table className="w-full min-w-[560px]">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
@@ -52,9 +52,6 @@ export const LeadsNeedingEnrichList: React.FC<LeadsNeedingEnrichListProps> = ({
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                 Country
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                City
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                 Missing

@@ -101,7 +101,7 @@ export const IntelligentDataView: React.FC<IntelligentDataViewProps> = ({
             Event Intelligence Dashboard
           </h2>
           <p className="text-sm text-slate-600 mt-1">
-            Leads missing key person info — use AI to research and fill contact details.
+            Leads missing email — use AI to research and fill contact details.
           </p>
         </div>
       </div>

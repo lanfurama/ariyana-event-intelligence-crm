@@ -111,6 +111,9 @@ export interface Lead {
   // Lead Scoring
   leadScore?: number; // 0-100 AI-powered lead quality score
   lastScoreUpdate?: string; // ISO timestamp of last scoring
+  
+  // Lead Type
+  type?: string; // 'CORP' for Corporate partner leads, 'DMC' for Destination Management Company partner leads
 }
 
 export interface ChatMessage {
@@ -131,6 +134,7 @@ export interface EmailTemplate {
   name: string;
   subject: string;
   body: string;
+  leadType?: string; // 'CORP', 'DMC', or undefined for default templates
 }
 
 export interface Attachment {

@@ -25,7 +25,6 @@ export const EnrichRow: React.FC<EnrichRowProps> = ({ lead, onResearch, isEnrich
       <td className="px-4 py-3 text-sm font-medium text-slate-900">{lead.companyName}</td>
       <td className="px-4 py-3 text-sm text-slate-600">{lead.industry || '—'}</td>
       <td className="px-4 py-3 text-sm text-slate-600">{lead.country || '—'}</td>
-      <td className="px-4 py-3 text-sm text-slate-600">{lead.city || '—'}</td>
       <td className="px-4 py-3">
         <div className="flex flex-wrap gap-1">
           {missing.name && (
@@ -36,11 +35,6 @@ export const EnrichRow: React.FC<EnrichRowProps> = ({ lead, onResearch, isEnrich
           {missing.email && (
             <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-medium">
               No email
-            </span>
-          )}
-          {missing.phone && (
-            <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-medium">
-              No phone
             </span>
           )}
         </div>

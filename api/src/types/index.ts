@@ -16,6 +16,7 @@ export interface EmailTemplate {
   name: string;
   subject: string;
   body: string;
+  lead_type?: string;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -45,6 +46,7 @@ export interface Lead {
   number_of_delegates?: number;
   lead_score?: number;
   last_score_update?: Date | string;
+  type?: string;
   created_at?: Date;
   updated_at?: Date;
 }

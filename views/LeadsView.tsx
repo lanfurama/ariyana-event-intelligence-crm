@@ -224,8 +224,8 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
             return [];
         }
 
-        const template = emailTemplates.find(t => t.id === selectedTemplateId);
-        if (!template) return [];
+        const defaultTemplate = emailTemplates.find(t => t.id === selectedTemplateId);
+        if (!defaultTemplate) return [];
 
         return filteredLeads
             .filter(lead => {
@@ -234,6 +234,16 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                 return !emailStatus.hasEmail;
             })
             .map(lead => {
+                // Auto-select template based on lead type
+                let template = defaultTemplate;
+                if (lead.type) {
+                    // Find template with matching leadType
+                    const matchingTemplate = emailTemplates.find(t => t.leadType === lead.type);
+                    if (matchingTemplate) {
+                        template = matchingTemplate;
+                    }
+                }
+
                 let subject = template.subject;
                 let body = template.body;
 
@@ -628,9 +638,20 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                             <h3 className="text-sm font-bold text-slate-900 truncate">
                                                 {lead.companyName}
                                             </h3>
-                                            {lead.industry && (
+                                            {lead.industry && lead.industry !== 'Unknown' && lead.industry.toUpperCase() !== 'UNKNOWN' && (
                                                 <span className="text-[10px] uppercase font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
                                                     {lead.industry}
+                                                </span>
+                                            )}
+                                            {lead.type && (
+                                                <span className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${
+                                                    lead.type === 'CORP' 
+                                                        ? 'bg-blue-100 text-blue-700' 
+                                                        : lead.type === 'DMC' 
+                                                        ? 'bg-purple-100 text-purple-700' 
+                                                        : 'bg-slate-100 text-slate-600'
+                                                }`}>
+                                                    {lead.type}
                                                 </span>
                                             )}
                                         </div>

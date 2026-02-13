@@ -144,16 +144,45 @@ export const leadsApi = {
 
 // Email Templates API
 export const emailTemplatesApi = {
-  getAll: () => apiCall<EmailTemplate[]>('/email-templates'),
-  getById: (id: string) => apiCall<EmailTemplate>(`/email-templates/${id}`),
-  create: (template: EmailTemplate) => apiCall<EmailTemplate>('/email-templates', {
-    method: 'POST',
-    body: JSON.stringify(template),
-  }),
-  update: (id: string, template: Partial<EmailTemplate>) => apiCall<EmailTemplate>(`/email-templates/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(template),
-  }),
+  getAll: async () => {
+    const templates = await apiCall<any[]>('/email-templates');
+    // Map lead_type to leadType for frontend
+    return templates.map(t => ({
+      ...t,
+      leadType: t.lead_type,
+    }));
+  },
+  getById: async (id: string) => {
+    const template = await apiCall<any>(`/email-templates/${id}`);
+    return {
+      ...template,
+      leadType: template.lead_type,
+    };
+  },
+  create: (template: EmailTemplate) => {
+    // Map leadType to lead_type for backend
+    const backendTemplate = {
+      ...template,
+      lead_type: template.leadType,
+    };
+    delete backendTemplate.leadType;
+    return apiCall<EmailTemplate>('/email-templates', {
+      method: 'POST',
+      body: JSON.stringify(backendTemplate),
+    });
+  },
+  update: (id: string, template: Partial<EmailTemplate>) => {
+    // Map leadType to lead_type for backend
+    const backendTemplate: any = { ...template };
+    if (template.leadType !== undefined) {
+      backendTemplate.lead_type = template.leadType;
+      delete backendTemplate.leadType;
+    }
+    return apiCall<EmailTemplate>(`/email-templates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(backendTemplate),
+    });
+  },
   delete: (id: string) => apiCall<void>(`/email-templates/${id}`, {
     method: 'DELETE',
   }),

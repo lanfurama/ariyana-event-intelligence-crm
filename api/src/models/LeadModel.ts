@@ -89,9 +89,9 @@ export class LeadModel {
         key_person_name, key_person_title, key_person_email, key_person_phone, key_person_linkedin,
         total_events, vietnam_events, notes, status, last_contacted,
         past_events_history, research_notes, secondary_person_name, secondary_person_title, 
-        secondary_person_email, number_of_delegates, lead_score, last_score_update
+        secondary_person_email, number_of_delegates, lead_score, last_score_update, type
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25
       ) RETURNING *`,
       [
         lead.id,
@@ -118,6 +118,7 @@ export class LeadModel {
         lead.number_of_delegates || null,
         lead.lead_score || null,
         lead.last_score_update ? new Date(lead.last_score_update) : null,
+        lead.type || null,
       ]
     );
     return result.rows[0];
@@ -152,6 +153,7 @@ export class LeadModel {
       number_of_delegates: lead.number_of_delegates,
       lead_score: lead.lead_score,
       last_score_update: lead.last_score_update ? new Date(lead.last_score_update) : lead.last_score_update,
+      type: lead.type,
     };
 
     for (const [key, value] of Object.entries(fieldMap)) {

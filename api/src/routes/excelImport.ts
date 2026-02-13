@@ -723,7 +723,8 @@ Use this EXACT structure for each object:
   "notes": "String (The Score Reason, key insights, and note if data was enriched)",
   "pastEventsHistory": "String (Event history summary from Editions sheet - format: '2023: City, Country; 2022: City, Country')",
   "nextStepStrategy": "String (Action plan from PART A table)",
-  "status": "New"
+  "status": "New",
+  "type": "String (Optional: 'CORP' for Corporate partner leads, 'DMC' for Destination Management Company partner leads, or null/omitted for regular leads)"
 }
 
 CRITICAL: Include "problems" array listing ALL missing/incomplete data. Be specific (e.g., "Missing keyPersonEmail", "No numberOfDelegates data", "Industry unclear from name").

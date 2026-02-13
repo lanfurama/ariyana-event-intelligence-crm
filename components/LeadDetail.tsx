@@ -78,13 +78,22 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
             const templates = await emailTemplatesApi.getAll();
             setEmailTemplates(templates);
 
-            // Auto-select first template if available and no template is selected
+            // Auto-select template based on lead type if available and no template is selected
             if (templates.length > 0 && !selectedTemplate && !draftedEmail) {
-                const firstTemplateId = templates[0].id;
-                setSelectedTemplate(firstTemplateId);
+                let selectedTemplateId = templates[0].id;
+                
+                // If lead has a type, try to find matching template
+                if (lead.type) {
+                    const matchingTemplate = templates.find(t => t.leadType === lead.type);
+                    if (matchingTemplate) {
+                        selectedTemplateId = matchingTemplate.id;
+                    }
+                }
+                
+                setSelectedTemplate(selectedTemplateId);
 
-                // Auto-fill email with first template
-                const template = templates[0];
+                // Auto-fill email with selected template
+                const template = templates.find(t => t.id === selectedTemplateId) || templates[0];
                 if (template) {
                     let subject = template.subject;
                     let body = template.body;
@@ -820,6 +829,18 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                         <EditField label="City" value={editedLead.city} onChange={(v) => handleInputChange('city', v)} />
                                         <EditField label="Website" value={editedLead.website} onChange={(v) => handleInputChange('website', v)} />
                                         <div>
+                                            <label className="text-xs font-medium text-slate-500 block mb-1">Lead Type</label>
+                                            <select
+                                                value={editedLead.type || ''}
+                                                onChange={(e) => handleInputChange('type', e.target.value || undefined)}
+                                                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            >
+                                                <option value="">Regular Lead</option>
+                                                <option value="CORP">CORP (Corporate Partner)</option>
+                                                <option value="DMC">DMC (Destination Management Company)</option>
+                                            </select>
+                                        </div>
+                                        <div>
                                             <label className="text-xs font-medium text-slate-500 block mb-1">Number of Delegates</label>
                                             <input
                                                 type="number"
@@ -876,6 +897,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                         <InfoItem label="Phone" value={lead.keyPersonPhone || 'N/A'} />
                                         <InfoItem label="Website" value={lead.website || 'N/A'} isLink />
                                         <InfoItem label="City" value={lead.city} />
+                                        <InfoItem label="Lead Type" value={lead.type ? (lead.type === 'CORP' ? 'CORP (Corporate Partner)' : 'DMC (Destination Management Company)') : 'Regular Lead'} />
                                     </div>
 
                                     {(lead.secondaryPersonName || lead.secondaryPersonEmail) && (

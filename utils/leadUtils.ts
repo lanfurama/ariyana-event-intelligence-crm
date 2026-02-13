@@ -24,6 +24,7 @@ export const mapLeadFromDB = (dbLead: any): Lead => {
     secondaryPersonEmail: dbLead.secondary_person_email || dbLead.secondaryPersonEmail,
     researchNotes: dbLead.research_notes || dbLead.researchNotes,
     numberOfDelegates: dbLead.number_of_delegates || dbLead.numberOfDelegates,
+    type: dbLead.type,
   };
 };
 
@@ -51,6 +52,7 @@ export const mapLeadToDB = (lead: Lead): any => {
     secondary_person_title: lead.secondaryPersonTitle || null,
     secondary_person_email: lead.secondaryPersonEmail || null,
     number_of_delegates: lead.numberOfDelegates || null,
+    type: lead.type || null,
   };
 };
 

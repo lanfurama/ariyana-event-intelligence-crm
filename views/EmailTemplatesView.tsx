@@ -22,7 +22,7 @@ export const EmailTemplatesView = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', subject: '', body: '' });
+  const [formData, setFormData] = useState({ name: '', subject: '', body: '', leadType: '' });
   const [formErrors, setFormErrors] = useState<{ name?: string; subject?: string; body?: string }>({});
   const [bodyViewMode, setBodyViewMode] = useState<'code' | 'preview'>('preview');
   const contentEditableRef = useRef<HTMLDivElement>(null);
@@ -79,7 +79,7 @@ export const EmailTemplatesView = () => {
 
   const handleCreate = () => {
     setEditingTemplate(null);
-    setFormData({ name: '', subject: '', body: '' });
+    setFormData({ name: '', subject: '', body: '', leadType: '' });
     setFormErrors({});
     setBodyViewMode('preview');
     setShowModal(true);
@@ -93,6 +93,7 @@ export const EmailTemplatesView = () => {
       name: template.name,
       subject: template.subject,
       body: template.body,
+      leadType: template.leadType || '',
     });
     setFormErrors({});
     setBodyViewMode('preview');
@@ -137,7 +138,12 @@ export const EmailTemplatesView = () => {
     try {
       if (editingTemplate) {
         // Update existing
-        await emailTemplatesApi.update(editingTemplate.id, formData);
+        await emailTemplatesApi.update(editingTemplate.id, {
+          name: formData.name.trim(),
+          subject: formData.subject.trim(),
+          body: formData.body.trim(),
+          leadType: formData.leadType ? formData.leadType : undefined,
+        });
       } else {
         // Create new
         const newTemplate: EmailTemplate = {
@@ -145,13 +151,14 @@ export const EmailTemplatesView = () => {
           name: formData.name.trim(),
           subject: formData.subject.trim(),
           body: formData.body.trim(),
+          leadType: formData.leadType ? formData.leadType : undefined,
         };
         await emailTemplatesApi.create(newTemplate);
       }
 
       await loadTemplates();
       setShowModal(false);
-      setFormData({ name: '', subject: '', body: '' });
+      setFormData({ name: '', subject: '', body: '', leadType: '' });
       setEditingTemplate(null);
     } catch (error) {
       console.error('Error saving template:', error);
@@ -161,7 +168,7 @@ export const EmailTemplatesView = () => {
 
   const handleCancel = () => {
     setShowModal(false);
-    setFormData({ name: '', subject: '', body: '' });
+    setFormData({ name: '', subject: '', body: '', leadType: '' });
     setEditingTemplate(null);
     setFormErrors({});
     setBodyViewMode('preview');
@@ -330,6 +337,25 @@ export const EmailTemplatesView = () => {
                 {formErrors.subject && (
                   <p className="text-xs text-red-600 mt-1">{formErrors.subject}</p>
                 )}
+              </div>
+
+              {/* Lead Type */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Lead Type (Optional)
+                </label>
+                <select
+                  value={formData.leadType}
+                  onChange={(e) => setFormData({ ...formData, leadType: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                >
+                  <option value="">Default (for all leads)</option>
+                  <option value="CORP">CORP (Corporate Partner)</option>
+                  <option value="DMC">DMC (Destination Management Company)</option>
+                </select>
+                <p className="text-xs text-slate-500 mt-1">
+                  Select a lead type to assign this template specifically to CORP or DMC leads. Leave empty for default templates.
+                </p>
               </div>
 
               {/* Body */}
