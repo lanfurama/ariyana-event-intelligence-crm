@@ -1,0 +1,80 @@
+LEAD DATE , EVENT DATE ,Venue,MONTH , SALES ,OPs handler,STATUS , AGENT , CLIENT ,COD,PAX , EVENT TYPE ,RES/NON-RES,Room night,Segment,Office in charge , SOURCE,POC ,Contact
+10-thg 6-25,"Sunday, January 25, 2026",AGB,26-thg 1,SANG ,LAN,ACT,ACB,ACB,18-thg 6,560,Meeting + Dinner,RES,220,Domestic Corp,Da Nang,Da Nang,Ms. Nga,ngantt@acb.com.vn
+8-thg 10-25,"Wednesday, January 21, 2026",ACC 1 & 2,26-thg 1,THAI,THAI,ACT,BUZZ Communication,Heineken,25-thg 11,550,Dinner + Meeting,RES,,Domestic Corp,Da Nang,Da Nang,Ms Uyên,PhamThiMinh.Uyen@heineken.com
+13-thg 1-26,"Saturday, February 7, 2026",AGB,26-thg 2,THAI,THAI,DEF,DACINCO,TBC,22-thg 1,1200,Dinner,NON-RES,,Domestic Corp,Da Nang,Da Nang,Mr Tuấn,tuanth@dacinco.vn
+2-thg 10-24,"Saturday, January 4, 2025",AB1,25-thg 1,LINH,,ACT,,VACS,9-thg 10,260,Dinner,NON RES,-,Domestic Association,Da Nang,Da Nang,Ms Linh Nhi,vacs.truyenthong@gmail.com
+21-thg 10,"Tuesday, January 7, 2025",AB2B&3,25-thg 1,LINH,,ACT,,Premier Village Da Nang ,31-thg 10,350,Dinner,NON RES,,Domestic Corp,Da Nang,Da Nang,Ms Mỹ Hạnh,Myhanh.TRAN@accor.com
+20-thg 11,"Wednesday, January 8, 2025",AB1A,25-thg 1,TAP ,,ACT,Vietravel DongNai,Unilever Vietnam,20-thg 12,80,Meeting + Dinner,RES,86,Domestic TA,HCM,HCM,Mr. Bảo,baotq.dna@vietravel.com
+4-thg 12-24,"Wednesday, February 5, 2025",AB12,25-thg 2,LINH ,,ACT,,Tan Minh Nhan Corp,10-thg 12,260,Meeting + Dinner,NON-RES,60,Domestic Corp,Da Nang,Da Nang,Ms Hương,huongpt@tanminhnhan.com.vn
+16-thg 12-24,"Friday, February 28, 2025",AB2,25-thg 2,LINH,,ACT,Choo Communication,TOYOTA VIETNAM,30-thg 12,260,Meeting + Dinner,NON-RES,,Domestic TA,Da Nang,HCM,Ms Thanh,thanhnt308@gmail.com
+13-thg 12-24,"Friday, March 7, 2025",AB1,25-thg 3,LINH,,ACT,,NAL Solution,30-thg 12,270,Meeting + Dinner,NON - RES,,Domestic Corp,Da Nang,Da Nang,Mr Đạt,Datlq@nal.vn
+  ,"Friday, March 14, 2025",AGB,25-thg 3,TAP ,,ACT,VTV Dong Nai,Unilever,,440,Meeting + Gala Dinner,RES,307,Domestic TA,HCM,HCM,Mr. Bảo,baotq.dna@vietravel.com
+7-thg 1,"Tuesday, March 25, 2025",AB1,25-thg 3,LINH ,,ACT,,Hyundai Thanh Cong,10-thg 3,260,Meeting + Gala Dinner,NON-RES,,Domestic Corp,Da Nang,Hanoi,Mr Tuan Anh,pur07@hyundai.thanhcong.vn
+17-thg 9-24,"Tuesday, April 8, 2025",,25-thg 4,TAP ,,ACT,Long Kan,Manulife,1-thg 4,350,Meeting,NON RES,,Domestic Corp,HCM,HCM,Ms.Thuy Tien,tien_pham_tt@manulife.com
+27-thg 11-24,"Sunday, April 13, 2025",AGB,25-thg 4,LINH,,ACT,Emotion Event,Vietcombank Da Nang,28-thg 3,800,Dinner,NON RES,,Domestic TA,Da Nang,Da Nang,Ms Loan,le.loan@sukiencamxuc.com
+1-thg 4-25,"Tuesday, May 6, 2025",ACC1+2A,25-thg 5,SANG ,,ACT,Asian Classic,Axplore  - Asian Paints Group,22-thg 4,400,Dinner,NON - RES,,,,Da Nang,Rimpesh Thakur,groups@asianclassictravels.com
+31-thg 3-25,"Sunday, May 11, 2025",AB12A,25-thg 5,TAP ,,ACT,VTV HCM,J&T Express,25-thg 4,500,Gala Dinner,NON,,Domestic TA,HCM,HCM,Ms. Trân,tranvt1.pp@vietravel.com
+28-thg 8-24,"Saturday, May 31, 2025",,25-thg 5,TAP ,,ACT,INO Network,TBA,,600,Meeting + Dinner,RES ,489,International TA,HCM,HCM/International,Ms. Selda Kirikkanat,selda.kirikkanat@inonetworksgroup.com
+30-thg 3-25,"Sunday, June 22, 2025",AGB,25-thg 6,TAP ,,ACT,S Travel_Mr. Thuận,Thien Long,18-thg 5,870,Meeting + Dinner,NON,500,Domestic TA,HCM,HCM,Mr. Thuận,thuan.nguyen@stravel.vn
+25-thg 6-25,"Wednesday, July 16, 2025",ACC 1,16-thg 7,UYEN,,ACT,TCL Company,TCL Company,3-thg 7,200,Meeting + Dinner,NON-RES,,Domestic Corp,Da Nang,HCM,Ms. Huong,huong.tt@tcl.com
+9-thg 6-25,"Saturday, August 2, 2025",AGB,25-thg 8,LINH ,Lan,ACT,Mì Creative Hubs,Masterise,16-thg 6,1000,Meeting ,NON-RES,,Domestic TA,Da Nang,HCM,Chau Nguyen,chau.lhm2705@gmail.com
+24-thg 6-25,"Monday, September 15, 2025",AGB,25-thg 9,TAP ,Uyen,ACT,VTV HCM,HERBALIFE,20-thg 7,1300,Meeting + Dinner,RES,6,Domestic TA,HCM,HCM,Mr. Hung,hung.hoang@digix.vn
+22-thg 7-25,"Friday, September 26, 2025",ACC 3,26-thg 9,LINH ,Lan,ACT,Sai Gon Tourist,Pfizer,29-thg 7,180,Meeting ,NON-RES,,Domestic TA,Da Nang,HCM,Ms. Hien,nguyenhien.std@saigontourist.net
+22-thg 7-25,"Friday, September 26, 2025",ACC 1A,26-thg 9,LINH ,Lan,ACT,CÔNG TY TNHH THANH PHƯƠNG,CÔNG TY TNHH THANH PHƯƠNG,26-thg 7,50,Meeting ,NON-RES,,Domestic TA,Da Nang,Da Nang,Ms. Dương,duongnguyen291189@gmail.com
+31-thg 7-25,"Saturday, October 25, 2025",AGB,25-thg 10,TAP ,LAN,ACT,VTV HCMC_Mr. Khoa,Thang Long ,30-thg 8,832,Meeting + Gala dinner,NON,,Domestic TA,HCMC,HCMC,Mr. Khoa,khoatha.pp@vietravel.com
+13-thg 10-25,"Saturday, November 29, 2025",AGB,25-thg 11,SANG/THAI,,ACT,Department of Industry and Trade,Vietnam Logistics Forum 2025,20-thg 11,600,Full day meeting,RES,21,Domestic TA,Da Nang,Da Nang,Ms Trang,trangneu95@gmail.com'
+3-thg 1-25,"Friday, December 5, 2025",AB12,25-thg 12,SANG ,LAN/SANG,ACT,TBA,LINNC SEMINAR 2025 – ASIA EDITION,25-thg 4,250,Conference,RES,197,International Corp,Da Nang,Danang/French,Ms. Olivia,il: overroust@europa-group.
+4-thg 8-25,"Saturday, November 8, 2025",ACC 1 & 2,25-thg 11,Uyen,,LOST,LEPARK,SHINHANBANK,11-thg 8,500,Gala Dinner,NON - RES,,Domestic TA,Da Nang,Da Nang,Ms. Hiếu,hieu@thelepark.com
+23-thg 7-25,"TBA, April, 2027",ACC 1 &2,27-thg 4,SANG ,,LOST,APEX VIETNAM,APEX VIETNAM,31-thg 7,560,Gala Dinner,NON-RES,,Domestic TA,Da Nang,Da Nang,Ms. Thảo,vietnaminbound@apexvietnam.com
+17-thg 7,"Saturday, 22 November 2025",ACC 1,25-thg 11,TAP ,,LOST,Vietnam Event Group,,15-thg 8,450,Dinner,RES,,Domestic TA,HCMC,HCMC,Mr. Lộc,locnguyen@veg.vn
+15-thg 7,19-20 Jan 2026,AGB,26-thg 1,TAP ,,LOST,2M Solutions,APAC Sales Meeting 2026,30-thg 8,450,Meeting + Dinner,NON_RES,,Domestic TA,HCMC,HCMC,Ms. Mãn,man@2m.com.vn
+9-thg 7-25,TBA. Nov 2025,AC1&2A,25-thg 11,TAP ,,LOST,Vietnam Asia Event,Asian Guests from Multi-Countries,15-thg 8,450,Dinner + After party,RES,370,Domestic TA,HCMC,HCMC,Ms. An,an.nguyen@vietnamgroup.asia
+24-thg 6-25,"Wednesday, August 20, 2025",ACC 1&2A,20-thg 8,TAP ,,LOST,Keyteam,Insurrance,,550,Meeting + Dinner,RES,200,Domestic TA,HCMC,HCMC,Ms.Nguyệt,nguyetnguyen@keyteam.com.vn
+18-thg 6-25,"Thursday, September 18, 2025",ACC 1 & 2,25-thg 9,TAP ,,LOST,VIETTOURS,MEAD JOHNSON,6/25/2025,600,Dinner,RES,300,Domestic TA,HCMC,HCMC,Mr. Khoa,khoa.dodang@viettours.com.vn
+18-thg 6-25,"TBA, November, 2025",ACC 1 & 3,25-thg 11,SANG ,,LOST,,Netscout Connects Asia Vietnam 2025,25-thg 6,205,Meeting + Dinner,RES,670,International TA,Da Nang,DN/International,Ms. Katherine,Katherine@venufindr.co
+13-thg 6-25,"Monday, March 25, 1901",AGB,26-thg 2,TAP ,,LOST,Vietravel,NANOCO,20-thg 7,1000,Meeting + Dinner,RES,250,Domestic TA,HCMC,HCMC,Mr. Khoa,khoatha.pp@vietravel.com
+29-thg 5-25,"Thursday, June 19, 2025",AB1/3,25-thg 6,LINH ,,LOST,Hava Travel,TBA,5-thg 6,150,Dinner,NON - RES,,Domestic TA,DN,DN,Ms Hoàng,nguyenhoang@havatravel.vn
+29-thg 5-25,"Saturday, August 23, 2025",AGB,25-thg 8,LINH ,,LOST,Du Lich Viet/VITRACO,Droppii,5-thg 6,1000,Dinner,NON - RES,,Domestic TA,DN,HCM,Ms Thụy,op1.git@dulichviet.com.vn
+26-thg 5-25,"Thursday, June 26, 2025",AB1,25-thg 6,LINH ,,LOST,Raize Event,TBA (Dairy brand),2-thg 6,300,Meeting + Lunch,NON - RES,,,DN,HCM,Ms Hằng,hang.lam@raizevent.com
+24-thg 5-25,"Monday, December 29, 2025",AGB,25-thg 12,LINH ,,LOST,Wedding Ms. Hà,Wedding Ms. Hà,31-thg 5,500,Wedding,NON-RES,,Domestic Wedding,Da Nang,Da Nang,Ms. Hà,phankhanhha1997@gmail.com
+7-thg 5-25,"Thursday, June 12, 2025",AB1,25-thg 6,TAP ,,LOST,VTV HCM,VINAMILK,14-thg 5,300,Dinner,RES,100,Domestic TA,HCMC,HCMC,Ms. Ngọc Trân,tranltn.pp@vietravel.com
+23-thg 4-25,"Thursday, October 2, 2025",AB12A,25-thg 10,TAP ,,LOST,EXO Travel,The IT company Lanit Integration,20-thg 6,500,Meeting + Dinner,RES,900,International TA,HCMC,HCMC,Ms. Nhật Anh,nhatanh@exotravel.com  | +84 (0) 907411276
+22-thg 4-25,"Sunday, June 15, 2025",AB23,25-thg 6,TAP ,,LOST,VTV HCMC,Kim Cuong Mattress,30-thg 4,400,Exhibition + Gala Dinner,NON-RES,,Domestic TA,HCMC,HCMC,Mr. Khoa,khoatha.pp@vietravel.com
+24-thg 3-25,"Thursday, July 17, 2025",AB12A,25-thg 7,TAP ,,LOST,Ben Thanh,Vietnam Respiratory Society,15-thg 4,500,Gala Dinner,RES,500,Domestic TA,HCMC,HCMC,Ms. Thuy,xuanthuy.nguyen@benthanhtourist.com
+24-thg 3-25,"Friday, May 16, 2025",AB12A,25-thg 5,TAP ,,LOST,Asian Trails,Indian Guests,22-thg 4,450,Gala Dinner,RES,342,Domestic TA,HCMC,HCMC,Phuong Nguyen ,phuong.nguyen@asiantrails.com.vn
+20-thg 3,"Sunday, May 11, 2025",AB12A,25-thg 5,LINH ,,LOST,Golden Smile Travel / XuanSon Travel/ Golden Saigon Travel,indonesian group,28-thg 3,520,Dinner,NON - RES,,Domestic TA,DN,Indonesia,Mr. Nam,nam.nguyen@goldensmile.com.vn
+20-thg 3,"TBA, June 2025",ABG,25-thg 6,LINH ,,LOST,Kim Nhuan Travel,Chinese group,25-thg 4,2500,Meeting   ,Non,,Domestic TA,DN,Da Nang,Ms Helen,helen.nguyen@kimnhuantravel.vn
+28-thg 2,"Saturday, May 10, 2025",AB1A 2,10-thg 5,SANG ,,LOST,Global Prestige Travel,Global Prestige Travel,10-thg 3,500,Dinner,NON - RES,,Domestic TA,Da Nag,Da Nang,Ms. Thuy Vu,op1@globalprestigetravel.com
+25-thg 2,"Tuesday, June 9, 2026",AB1,26-thg 6,SANG ,,LOST,Viet Pilgrim,,25-thg 4,300,Gala dinner,NON - RES,,Domestic TA,Da Nag,Da Nang,Ms. Khanh Le,sales.vietpilgrim@gmail.com
+24-thg 2,"Wednesday, October 8, 2025",AB2,25-thg 10,Sang,,LOST,MIA Travel,,25-thg 4,500,Meeting + Gala Dinner,RES,,Domestic TA,Da Nang,Da Nang,Ms. Ngọc Anh,anhnguyen.miatravel@gmail.com
+18-thg 2,"Monday, February 9, 2026",AB2,26-thg 2,TAP,,LOST,Indochina Vacations,Pharma Company,20-thg 3,350,Meeting,RES,825,Domestic TA,HCM,HCM,Mr. Hoang,mice@indochina-vacations.com
+14-thg 2-25,"Friday, November 7, 2025",AGB,25-thg 11,SANG ,,LOST,,C Hospital,25-thg 4,1000,Meeting   ,NON_RES,,Domestic Corp,Da Nang,Da Nang,Ms. Thư,khth.bvcdn@gmail.com
+7-thg 2,"Saturday, May 17, 2025",AB12,25-thg 5,Nga,,LOST,My Thanh/HA Trang/HCC/Worldsun travel/TSL,MB Securities,14-thg 3,700,Gala dinner,NON-RES,,Domestic TA,HN,HN,Ms. Huyền,huyennt@mythanh.com.vn
+24-thg 12-24,"Thursday, March 6, 2025",,25-thg 3,TAP ,,LOST,Star Travel,Construction company,3-thg 1,300,Dinner,RES,300,Domestic TA,HCMC,HCM,Ms. Uyên,uyen.pham@startravelvn.com
+19-thg 12-24,1-2 Apr 2025,A1-3,25-thg 4,Nga,,LOST,Ahotua,,24-thg 1,300,Meeting + Dinner,Non-RES,,Domestic TA,Hanoi,HN,Ms. Hương ,huongdt.ahotua@gmail.com
+12-thg 12-24,"Friday, February 21, 2025",AB1&2A,25-thg 2,SANG ,,LOST,BEEJOY,TBA,30-thg 12,500,Gala dinner,NON-RES,-,Domestic TA,Da Nang,HCM,Ms Phuong,thaophuong@beejoy.vn
+4-thg 11-24,"Sunday, May 25, 2025",,25-thg 5,LINH,,LOST,Viet Vision/ VietTravel & Event,TBA,20-thg 1,650,Gala dinner,NON RES,-,Domestic TA,Da Nang,Da Nang,Ms. Nhàn,liam.kittner@ecovis.com
+4-thg 11-24,"Thursday, June 12, 2025",,25-thg 6,SANG ,,LOST,RSVP VIETNAM,,30-thg 11,250,Meeting,NON-RES,-,Domestic TA,Da Nang,Da Nang,Ms. Linh Ly ,linhly@rsvp.com.vn
+25-thg 10,"Friday, May 2, 2025",,25-thg 5,SANG ,,LOST,Tour Family,,30-thg 1,300-600,Gala dinner,NON RES,-,Domestic Corp,DN ,DN,Ms. Nian,nian.tourfamily@gmail.com
+10-thg 3-24,"Tuesday, September 9, 2025",AGB,25-thg 9,SANG ,,LOST,World Surprise Travel​,AIA​,25-thg 4,1400,Gala Dinner,NON-RES,,International TA,Da Nang,DN/Thai Lan,Khun Tor,chayaphat@worldsurprise.com
+25-thg 6-25,"Wednesday, March 4, 2026",AGB,26-thg 3,TAP ,,LOST,Bpro,Spectacular Herbalife 2026,30-thg 8,1.800,Meeting,NON_RES,,Domestic TA,HCMC,HCMC,Ms. Lan Anh,anh.nguyenngoclan@bpro.com.vn
+29-thg 7,"Saturday, November 1, 2025",ACC1&2A,25-thg 11,Tap,,LOST,Square Event_Ms. Huyền,Web Trading,30-thg 8,400,Gala dinner,RES,,Domestic TA,HCMC,HCMC,Ms. Huyền,huyen.tran@square-vn.com
+7-thg 8-25,"Monday, December 8, 2025",ACC2B&3,25-thg 12,TAP ,,LOST,VTV HCMC_Ms. Trân,Cargrill (Customer Conference),30-thg 8,500,Meeting + Gala dinner,RES,,Domestic TA,HCMC,HCMC,Ms. Tran,tranltn.pp@vietravel.com
+7-thg 8-25,"Tuesday, February 24, 2026",AGB,26-thg 2,Sang,,LOST,AMEX GBT,Stoke APAC meeting,21-thg 8,355,Meeting + Gala dinner,RES,,International TA,Danang,Danang,Mr. Priti Shah Batra,jjmeetingservices@amexgbt.com
+7-thg 8-25,"Wednesday, February 25, 2026",ACC1&2A,26-thg 2,TAP ,,LOST,Lac Hong Voyages_Andrew,TBA,30-thg 8,400,Gala Dinner,RES,,International Corp,HCMC,HCMC,Mr. Andrew,sm2@lachonggo.com
+5-thg 3-25,26-thg 5,AGB,26-thg 5,SANG ,,LOST,212F,212F,25-thg 4,400,Meeting + Dinner,RES ,254,International Association,DN,Da Nang,Ms. Rachel Morrow,rachel@212f.com.au
+24-thg 6-25,"Wednesday, May 20, 2026",ACC 1 & 2A,26-thg 5,SANG,,LOST,WFIS,WFIS,1-thg 7,250,Meeting + Dinner,NON-RES,,International TA,Da nang,Da Nang,Mr. Mubin,mubinb@tradepassglobal.com
+,,,,,,,,,,,,,,,,,Ms Ngọc,ngoc.le@ahtcorp.vn   
+27-thg 10,"Monday, December 22, 2025",ACC 1 & 2A,25-thg 12,THAI,,LOST,Dai Thien Phu Travel,Vietnamese,31-thg 10,500,Dinner,NON-RES,,Domestic TA,Da Nang,Da Nang,Ms Phương,sales3@7luckevent.vn
+20-thg 10-25,"Monday, December 8, 2025",ACC 1 & 2A,25-thg 12,UYEN,,LOST,Rie Events,PVN,27-thg 10,400,Dinner,NON-RES,,Domestic TA,Da Nang,Da Nang,Ms. Trang,trangnk@rievents.vn
+25-thg 2-25,"Thursday, November 19, 2026",AB1&3,26-thg 11,SANG ,,LOST,ECOVIS,ECOVIS,25-thg 4,250,Meeting + Dinner,RES,280,International Association,Da Nag,Da Nang,Mr. Liam Kittner,liam.kittner@ecovis.com
+18-thg 11-25,"Saturday, January 10, 2026",AB 2 & 3,26-thg 1,UYEN,,LOST,TBA,PWCT Co,25-thg 11,800,Dinner,NON - RES,,International Corp,Da Nang,Da Nang International,Mr. KK,double.kills.7799@gmail.com
+24-thg 11-25,"Monday, January 19, 2026",ACC1&2,26-thg 1,SANG ,,LOST,ASIA CLASSIC TRAVEL,,3-thg 12,300,Dinner,NON-RES,,International TA,Da Nang,Da Nang,Mr. Rimpesh Thakur,groups@asianclassictravels.com
+24-thg 11-25,"Tuesday, February 10, 2026",ACC1&2,26-thg 2,SANG ,,LOST,ASIA CLASSIC TRAVEL,,3-thg 12,300,Dinner,NON-RES,,International TA,Da Nang,Da Nang,Mr. Rimpesh Thakur,groups@asianclassictravels.com
+5-thg 12-25,"Thursday, February 12, 2026",ACC 1&2A,26-thg 2,SANG ,,LOST,Asian Trails Vietnam,TBA,12-thg 12,200,Venue Rental,NON - RES,,Domestic Corp,Da Nang,HCMC,Ms. Phuong,phuong.nguyen@asiantrails.com.vn
+28-thg 11-25,"Sunday, March 8, 2026",ACC 2B&3,26-thg 3,UYEN,,LOST,VIKO TRAVEL,Izenimplant,5-thg 12,500,Gala Dinner,NON-RES,,Domestic TA,Da Nang,HCMC,Ms. Hằng,grandtour@vikosmile.com
+1-thg 12-25,"Thursday, March 19, 2026",Ariyana Garden,26-thg 3,HONG ANH,,LOST,ADAVIGO,,12-thg 8,700,Gala dinner,RES,255,Domestic TA,Hanoi,Hanoi,Ms. Quế,dieuhanh03@adavigo.com
+30-thg 9-24,"Tuesday, November 26, 2024",,24-thg 11,LINH,,ACT,DANAGO,"DETECH E-SCOOTERS AND MOTORCYCLE CO., LTD",7-thg 10,500,Meeting + Dinner,NON - RES,-,Domestic TA,Da Nang,Hanoi,Ms Thục Linh ,danago@dng.vn
+29-thg 10,"Tuesday, December 10, 2024",AB23,24-thg 12,TAP ,,ACT,Vietravel HCMC,Hải Ðại Company,15-thg 12,400,Meeting + Dinner,NON,,Domestic TA,HCM,HCM,Ms. Ngọc Trân,tranltn.pp@vietravel.com
+13-thg 12-24,"Sunday, December 22, 2024",AB12A,24-thg 12,LINH,,ACT,SPRSTEP,Nam Ô Discovery,16-thg 12,400,Venue Rental,NON - RES,,Domestic TA,Da Nang,Da Nang,Mr Viet,vnt.sprstep@gmail.com
+29-thg 10-24,"Tuesday, December 31, 2024",AGB,24-thg 12,LINH ,,ACT,,Family Hospital,5-thg 11,800,Gala dinner,NON-RES,-,Domestic Corp,Da Nang,Da Nang,Ms. Nhạn,nhanvt@familyhospital.vn

@@ -352,9 +352,10 @@ export const EmailTemplatesView = () => {
                   <option value="">Default (for all leads)</option>
                   <option value="CORP">CORP (Corporate Partner)</option>
                   <option value="DMC">DMC (Destination Management Company)</option>
+                  <option value="HPNY2026">HPNY2026</option>
                 </select>
                 <p className="text-xs text-slate-500 mt-1">
-                  Select a lead type to assign this template specifically to CORP or DMC leads. Leave empty for default templates.
+                  Select a lead type to assign this template to CORP, DMC, or HPNY2026 leads. Leave empty for default templates.
                 </p>
               </div>
 

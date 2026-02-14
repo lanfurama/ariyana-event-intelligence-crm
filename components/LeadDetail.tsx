@@ -852,6 +852,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                                 <option value="">Regular Lead</option>
                                                 <option value="CORP">CORP (Corporate Partner)</option>
                                                 <option value="DMC">DMC (Destination Management Company)</option>
+                                                <option value="HPNY2026">HPNY2026</option>
                                             </select>
                                         </div>
                                         <div>
@@ -911,7 +912,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                         <InfoItem label="Phone" value={lead.keyPersonPhone || 'N/A'} />
                                         <InfoItem label="Website" value={lead.website || 'N/A'} isLink />
                                         <InfoItem label="City" value={lead.city} />
-                                        <InfoItem label="Lead Type" value={lead.type ? (lead.type === 'CORP' ? 'CORP (Corporate Partner)' : 'DMC (Destination Management Company)') : 'Regular Lead'} />
+                                        <InfoItem label="Lead Type" value={lead.type ? (lead.type === 'CORP' ? 'CORP (Corporate Partner)' : lead.type === 'DMC' ? 'DMC (Destination Management Company)' : lead.type === 'HPNY2026' ? 'HPNY2026' : lead.type) : 'Regular Lead'} />
                                     </div>
 
                                     {(lead.secondaryPersonName || lead.secondaryPersonEmail) && (
