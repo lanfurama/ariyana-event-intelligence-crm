@@ -2,7 +2,8 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import type { Lead as LeadRow } from '../types/index.js';
+import type { Lead as LeadRow, EmailTemplate } from '../types/index.js';
+import { EmailTemplateModel } from '../models/EmailTemplateModel.js';
 
 // Load .env from project root (3 levels up from api/src/utils)
 const __filename = fileURLToPath(import.meta.url);
@@ -172,18 +173,54 @@ function buildEmailBody(event: EventForEmail, contact: ContactInfo): { subject: 
 }
 
 function buildLeadContactInfo(lead: LeadRow): ContactInfo {
-  const primaryEmail = (lead.key_person_email || '').trim();
-  const secondaryEmail = (lead.secondary_person_email || '').trim();
-  const email = primaryEmail || secondaryEmail || '';
+  const email = (lead.key_person_email || '').trim() || null;
 
   const contactName = (lead.key_person_name || lead.secondary_person_name || '').trim();
   const organization = lead.company_name;
 
   return {
-    email: email || null,
+    email,
     name: contactName || null,
     organization,
   };
+}
+
+function selectTemplateForLead(lead: LeadRow, templates: EmailTemplate[]): EmailTemplate | null {
+  if (templates.length === 0) return null;
+
+  const leadHasNoType = lead.type == null || String(lead.type || '').trim() === '';
+  const templateHasNoType = (t: EmailTemplate) =>
+    t.lead_type == null || String(t.lead_type || '').trim() === '';
+
+  if (leadHasNoType) {
+    return templates.find(templateHasNoType) ?? null;
+  }
+
+  return templates.find((t) => t.lead_type === lead.type) ?? null;
+}
+
+function renderTemplateWithLead(
+  template: EmailTemplate,
+  lead: LeadRow
+): { subject: string; body: string } {
+  let subject = template.subject;
+  let body = template.body;
+
+  const replacements: [RegExp, string][] = [
+    [/\{\{companyName\}\}/g, lead.company_name || ''],
+    [/\{\{keyPersonName\}\}/g, (lead.key_person_name || lead.secondary_person_name || '')],
+    [/\{\{keyPersonTitle\}\}/g, (lead.key_person_title || lead.secondary_person_title || '')],
+    [/\{\{city\}\}/g, lead.city || ''],
+    [/\{\{country\}\}/g, lead.country || ''],
+    [/\{\{industry\}\}/g, lead.industry || ''],
+  ];
+
+  for (const [re, value] of replacements) {
+    subject = subject.replace(re, value);
+    body = body.replace(re, value);
+  }
+
+  return { subject, body };
 }
 
 function buildLeadEmailBody(lead: LeadRow, contact: ContactInfo): { subject: string; text: string; html: string } {
@@ -335,6 +372,8 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
     };
   }
 
+  const templates = await EmailTemplateModel.getAll();
+
   for (const lead of leads) {
     const contact = buildLeadContactInfo(lead);
 
@@ -348,10 +387,32 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
       continue;
     }
 
+    const selectedTemplate = selectTemplateForLead(lead, templates);
+    if (!selectedTemplate) {
+      summary.failures.push({
+        eventName: lead.company_name,
+        error: 'No matching email template for this lead type.',
+        leadId: lead.id,
+      });
+      continue;
+    }
+
     summary.attempted += 1;
 
+    const { subject: subj, body: bodyHtml } = renderTemplateWithLead(selectedTemplate, lead);
+    const subject = subj;
+    const html = bodyHtml;
+    const text = bodyHtml
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .trim();
+
     try {
-      const { subject, text, html } = buildLeadEmailBody(lead, contact);
       const info = await transporter.sendMail({
         from: defaultFromEmail
           ? `"Ariyana Convention Centre" <${defaultFromEmail}>`
@@ -364,19 +425,18 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
       });
       summary.sent += 1;
       summary.successIds?.push(lead.id);
-      summary.sentEmails?.push({ 
-        leadId: lead.id, 
+      summary.sentEmails?.push({
+        leadId: lead.id,
         subject,
-        messageId: info.messageId || undefined
+        messageId: info.messageId || undefined,
       });
     } catch (error: any) {
-      const { subject } = buildLeadEmailBody(lead, contact);
       summary.failures.push({
         eventName: lead.company_name,
         email: contact.email,
         error: error?.message || 'Unknown SMTP error',
         leadId: lead.id,
-        subject: subject,
+        subject,
       });
     }
   }

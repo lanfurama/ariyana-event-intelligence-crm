@@ -31,21 +31,47 @@ async function vertexApiCall<T>(endpoint: string, body: object): Promise<T> {
   return data as T;
 }
 
+export interface EnrichLeadInput {
+  companyName: string;
+  keyPerson?: string;
+  city?: string;
+  country?: string;
+  website?: string;
+  industry?: string;
+  keyPersonTitle?: string;
+  keyPersonEmail?: string;
+  keyPersonPhone?: string;
+  notes?: string;
+  researchNotes?: string;
+  pastEventsHistory?: string;
+  secondaryPersonName?: string;
+  secondaryPersonTitle?: string;
+  secondaryPersonEmail?: string;
+}
+
 /**
- * Request AI research for a lead's key person contact (name, title, email, phone).
+ * Request AI research for a lead's key person contact. Uses full lead context for accurate search.
  * Returns raw response text; use parseEnrichResponse() to extract structured fields.
  */
-export async function enrichLeadData(
-  companyName: string,
-  keyPerson: string,
-  city: string
-): Promise<EnrichResponse> {
-  if (!companyName?.trim()) {
+export async function enrichLeadData(input: EnrichLeadInput): Promise<EnrichResponse> {
+  if (!input.companyName?.trim()) {
     throw new Error('Company name is required for data enrichment');
   }
   return vertexApiCall<EnrichResponse>('/enrich', {
-    companyName: companyName.trim(),
-    keyPerson: (keyPerson ?? '').trim(),
-    city: (city ?? '').trim(),
+    companyName: input.companyName.trim(),
+    keyPerson: (input.keyPerson ?? '').trim() || undefined,
+    city: (input.city ?? '').trim() || undefined,
+    country: (input.country ?? '').trim() || undefined,
+    website: (input.website ?? '').trim() || undefined,
+    industry: (input.industry ?? '').trim() || undefined,
+    keyPersonTitle: (input.keyPersonTitle ?? '').trim() || undefined,
+    keyPersonEmail: (input.keyPersonEmail ?? '').trim() || undefined,
+    keyPersonPhone: (input.keyPersonPhone ?? '').trim() || undefined,
+    notes: (input.notes ?? '').trim() || undefined,
+    researchNotes: (input.researchNotes ?? '').trim() || undefined,
+    pastEventsHistory: (input.pastEventsHistory ?? '').trim() || undefined,
+    secondaryPersonName: (input.secondaryPersonName ?? '').trim() || undefined,
+    secondaryPersonTitle: (input.secondaryPersonTitle ?? '').trim() || undefined,
+    secondaryPersonEmail: (input.secondaryPersonEmail ?? '').trim() || undefined,
   });
 }

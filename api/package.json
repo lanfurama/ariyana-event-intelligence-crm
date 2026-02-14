@@ -11,6 +11,10 @@
     "test:email-report": "tsx src/scripts/testEmailReport.ts",
     "send:test-report": "tsx src/scripts/sendTestReport.ts",
     "migrate:email-reports": "tsx src/scripts/runMigration.ts",
+    "migrate:fix-leads": "tsx src/scripts/runMigrationGeneric.ts 005_fix_leads_status_from_email_logs.sql",
+    "migrate:email-logs-failed": "tsx src/scripts/runMigrationGeneric.ts 006_email_logs_allow_failed_status.sql",
+    "verify:send-mail": "tsx src/scripts/verifySendMailFlow.ts",
+    "send:dmc-test": "tsx src/scripts/sendDmcTestEmail.ts",
     "test:scheduled-job": "tsx src/scripts/testScheduledJob.ts"
   },
   "dependencies": {

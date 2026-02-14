@@ -75,6 +75,7 @@ const App = () => {
             leads={leads}
             onSelectLead={setSelectedLead}
             onUpdateLead={updateLead}
+            onRefreshLeads={fetchLeads}
             user={user}
             onAddLead={addNewLead}
             loading={leadsLoading}

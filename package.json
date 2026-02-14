@@ -7,7 +7,9 @@
     "dev": "vite",
     "dev:api": "tsx watch api/src/server.ts",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:send-mail": "npm run verify:send-mail --prefix api",
+    "send:dmc-test": "npm run send:dmc-test --prefix api"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",

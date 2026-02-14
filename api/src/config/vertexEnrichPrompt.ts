@@ -1,8 +1,26 @@
 /**
  * Prompt template for lead/key-person enrichment.
  * Kept separate for easy tuning without touching route logic.
- * Focus: find ONE key person with email; explicit search strategy.
+ * Uses full lead context for more accurate research.
  */
+
+export interface EnrichContext {
+  companyName: string;
+  keyPerson?: string;
+  city?: string;
+  country?: string;
+  website?: string;
+  industry?: string;
+  keyPersonTitle?: string;
+  keyPersonEmail?: string;
+  keyPersonPhone?: string;
+  notes?: string;
+  researchNotes?: string;
+  pastEventsHistory?: string;
+  secondaryPersonName?: string;
+  secondaryPersonTitle?: string;
+  secondaryPersonEmail?: string;
+}
 
 const SEARCH_STEPS = `SEARCH STRATEGY (follow in order; use Google Search):
 1. Find the organization's official website (search: "__ORG__" official website).
@@ -24,23 +42,42 @@ If no key person with email is found after all search steps:
 - Email: Not found
 Then add one short line describing what you searched (e.g. "Searched official site, contact page; no direct email found").`;
 
-export function buildEnrichPrompt(companyName: string, keyPerson: string, city: string): string {
-  const org = companyName.trim();
-  const keyPersonInfo =
-    keyPerson && keyPerson.trim()
-      ? `Key contact person (if known): ${keyPerson.trim()}`
-      : 'Key contact person: Not specified';
-  const cityInfo = city && city.trim() ? `Located in: ${city.trim()}` : 'Location: Not specified';
+export function buildEnrichPrompt(ctx: EnrichContext): string {
+  const org = String(ctx.companyName || '').trim();
+  const keyPerson = ctx.keyPerson?.trim() || '';
+  const city = ctx.city?.trim() || '';
+  const country = ctx.country?.trim() || '';
+  const website = ctx.website?.trim() || '';
+  const industry = ctx.industry?.trim() || '';
+  const keyPersonTitle = ctx.keyPersonTitle?.trim() || '';
+  const keyPersonEmail = ctx.keyPersonEmail?.trim() || '';
+  const notes = ctx.notes?.trim() || '';
+  const researchNotes = ctx.researchNotes?.trim() || '';
+  const pastEventsHistory = ctx.pastEventsHistory?.trim() || '';
+  const secondaryPerson = ctx.secondaryPersonName?.trim()
+    ? `${ctx.secondaryPersonName}${ctx.secondaryPersonTitle ? ` (${ctx.secondaryPersonTitle})` : ''}${ctx.secondaryPersonEmail ? ` - ${ctx.secondaryPersonEmail}` : ''}`
+    : '';
 
   const searchSteps = SEARCH_STEPS.replace(/__ORG__/g, org);
+
+  const contextLines: string[] = [`- Name: ${org}`];
+  if (keyPerson) contextLines.push(`- Key person to find: ${keyPerson}`);
+  if (keyPersonTitle) contextLines.push(`- Known title (verify): ${keyPersonTitle}`);
+  if (keyPersonEmail) contextLines.push(`- Known email (verify/update): ${keyPersonEmail}`);
+  if (city) contextLines.push(`- City: ${city}`);
+  if (country) contextLines.push(`- Country: ${country}`);
+  if (website) contextLines.push(`- Website: ${website} (use to verify domain, find contact pages)`);
+  if (industry) contextLines.push(`- Industry: ${industry}`);
+  if (pastEventsHistory) contextLines.push(`- Past events: ${pastEventsHistory.slice(0, 300)}${pastEventsHistory.length > 300 ? '...' : ''}`);
+  if (secondaryPerson) contextLines.push(`- Secondary contact (alternative): ${secondaryPerson}`);
+  if (notes) contextLines.push(`- Notes: ${notes.slice(0, 200)}${notes.length > 200 ? '...' : ''}`);
+  if (researchNotes) contextLines.push(`- Previous research: ${researchNotes.slice(0, 200)}${researchNotes.length > 200 ? '...' : ''}`);
 
   return `GOAL: Find ONE key person for this organization who has: (1) full name, (2) job title, and (3) EMAIL.
 Do NOT return a key person with Email as "Not found" unless you have completed all search steps below and still found nothing.
 
-ORGANIZATION TO RESEARCH:
-- Name: ${org}
-${keyPersonInfo}
-${cityInfo}
+ORGANIZATION TO RESEARCH (use all context for accurate search):
+${contextLines.join('\n')}
 
 KEY PERSON ROLE PRIORITY (choose someone with one of these roles, and with email):
 - Sales/Marketing: Sales Director, Marketing Manager, Business Development, CMO, Communications Director

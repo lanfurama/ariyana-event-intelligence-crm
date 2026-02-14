@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS email_logs (
     lead_id VARCHAR(255) NOT NULL,
     date TIMESTAMP NOT NULL,
     subject TEXT NOT NULL,
-    status VARCHAR(50) NOT NULL CHECK (status IN ('sent', 'draft')),
+    status VARCHAR(50) NOT NULL CHECK (status IN ('sent', 'draft', 'failed')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE CASCADE
 );

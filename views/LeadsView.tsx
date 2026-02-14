@@ -8,6 +8,8 @@ import {
     Send,
     X,
     CheckCircle,
+    XCircle,
+    Circle,
     FileSpreadsheet,
     ChevronDown,
     Building2,
@@ -21,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Lead, EmailTemplate, User, EmailLog } from '../types';
 import { emailLogsApi, emailRepliesApi, emailTemplatesApi, leadsApi } from '../services/apiService';
+import { mapLeadFromDB } from '../utils/leadUtils';
 import * as XLSX from 'xlsx';
 import { LeadsSkeleton } from '../components/common/LeadsSkeleton';
 
@@ -28,17 +31,19 @@ interface LeadsViewProps {
     leads: Lead[];
     onSelectLead: (lead: Lead) => void;
     onUpdateLead: (lead: Lead) => void;
+    onRefreshLeads?: () => Promise<void>;
     user: User;
     onAddLead?: () => void;
     loading?: boolean;
 }
 
-export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpdateLead, user, onAddLead, loading }) => {
+export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpdateLead, onRefreshLeads, user, onAddLead, loading }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [emailFilter, setEmailFilter] = useState<'all' | 'sent' | 'unsent' | 'no-key-person-email' | 'has-key-person-email' | 'replied'>('all');
+    const [emailFilter, setEmailFilter] = useState<'all' | 'has-key-person' | 'no-key-person'>('all');
     const [countryFilter, setCountryFilter] = useState<string>('all');
     const [industryFilter, setIndustryFilter] = useState<string>('all');
     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [typeFilter, setTypeFilter] = useState<string>('all');
     const [showEmailModal, setShowEmailModal] = useState(false);
     const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
     const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -49,6 +54,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
     const [emailReplies, setEmailReplies] = useState<Array<{ leadId: string }>>([]);
     const [markingReplies, setMarkingReplies] = useState<Set<string>>(new Set());
     const [sendingEmails, setSendingEmails] = useState(false);
+    const [sendingProgress, setSendingProgress] = useState<Record<string, 'pending' | 'sending' | 'sent' | 'failed'>>({});
 
     const getEmailStatus = (leadId: string) => {
         const log = emailLogs.find(l => l.leadId === leadId);
@@ -98,30 +104,29 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                 return false;
             }
 
+            if (typeFilter !== 'all') {
+                if (typeFilter === 'normal') {
+                    if (lead.type != null && String(lead.type || '').trim() !== '') return false;
+                } else if (lead.type !== typeFilter) {
+                    return false;
+                }
+            }
+
             if (emailFilter === 'all') return true;
 
-            if (emailFilter === 'no-key-person-email') {
-                return !lead.keyPersonEmail || lead.keyPersonEmail.trim() === '';
-            }
+            const hasEmail = !!(lead.keyPersonEmail && lead.keyPersonEmail.trim() !== '');
+            const hasName = !!(lead.keyPersonName && lead.keyPersonName.trim() !== '');
 
-            if (emailFilter === 'has-key-person-email') {
-                return !!(lead.keyPersonEmail && lead.keyPersonEmail.trim() !== '');
+            if (emailFilter === 'has-key-person') {
+                return hasEmail && hasName;
             }
-
-            const emailStatus = getEmailStatus(lead.id);
-            if (emailFilter === 'sent') {
-                return emailStatus.hasEmail;
-            } else if (emailFilter === 'unsent') {
-                return !emailStatus.hasEmail;
-            }
-
-            if (emailFilter === 'replied') {
-                return emailStatus.hasEmail && hasReplied(lead.id);
+            if (emailFilter === 'no-key-person') {
+                return !hasEmail || !hasName;
             }
 
             return true;
         });
-    }, [leads, searchTerm, emailFilter, countryFilter, industryFilter, statusFilter, emailLogs, emailReplies]);
+    }, [leads, searchTerm, emailFilter, countryFilter, industryFilter, statusFilter, typeFilter, emailLogs, emailReplies]);
 
     useEffect(() => {
         loadEmailLogs();
@@ -224,25 +229,25 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
             return [];
         }
 
-        const defaultTemplate = emailTemplates.find(t => t.id === selectedTemplateId);
-        if (!defaultTemplate) return [];
+        const selectedTemplate = emailTemplates.find(t => t.id === selectedTemplateId);
+        if (!selectedTemplate) return [];
+
+        const templateHasNoType = (t: EmailTemplate) =>
+            t.leadType == null || String(t.leadType || '').trim() === '';
 
         return filteredLeads
             .filter(lead => {
                 if (!lead.keyPersonEmail) return false;
                 const emailStatus = getEmailStatus(lead.id);
-                return !emailStatus.hasEmail;
+                if (emailStatus.hasEmail) return false;
+                const leadHasNoType = lead.type == null || String(lead.type || '').trim() === '';
+                const leadMatchingTemplate = leadHasNoType
+                    ? emailTemplates.find(templateHasNoType)
+                    : emailTemplates.find(t => t.leadType === lead.type);
+                return leadMatchingTemplate?.id === selectedTemplateId;
             })
             .map(lead => {
-                // Auto-select template based on lead type
-                let template = defaultTemplate;
-                if (lead.type) {
-                    // Find template with matching leadType
-                    const matchingTemplate = emailTemplates.find(t => t.leadType === lead.type);
-                    if (matchingTemplate) {
-                        template = matchingTemplate;
-                    }
-                }
+                const template = selectedTemplate;
 
                 let subject = template.subject;
                 let body = template.body;
@@ -325,40 +330,54 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
         }
 
         setSendingEmails(true);
+        const initialProgress: Record<string, 'pending' | 'sending' | 'sent' | 'failed'> = {};
+        preparedEmails.forEach(p => { initialProgress[p.lead.id] = 'pending'; });
+        setSendingProgress(initialProgress);
+
+        let sentCount = 0;
+        let failedCount = 0;
+        const updatedLeads: Lead[] = [];
+
         try {
-            const leadIds = preparedEmails.map(p => p.lead.id);
-            const emails = preparedEmails.map(p => ({
-                leadId: p.lead.id,
-                subject: p.subject,
-                body: p.body,
-            }));
+            for (const prepared of preparedEmails) {
+                setSendingProgress(prev => ({ ...prev, [prepared.lead.id]: 'sending' }));
 
-            const result = await leadsApi.sendEmails(leadIds, emails);
-
-            if (result.success) {
-                const summary = result.summary;
-                let message = `Email campaign completed!\n\n`;
-                message += `✅ Sent: ${summary.sent} of ${summary.attempted}\n`;
-                if (summary.failures && summary.failures.length > 0) {
-                    message += `❌ Failed: ${summary.failures.length}\n`;
+                try {
+                    const result = await leadsApi.sendEmail(prepared.lead.id, prepared.subject, prepared.body);
+                    if (result.success && result.updatedLead) {
+                        setSendingProgress(prev => ({ ...prev, [prepared.lead.id]: 'sent' }));
+                        updatedLeads.push(mapLeadFromDB(result.updatedLead));
+                        sentCount += 1;
+                    } else {
+                        setSendingProgress(prev => ({ ...prev, [prepared.lead.id]: 'failed' }));
+                        failedCount += 1;
+                        const errMsg = (result as any)?.summary?.failures?.[0]?.error ?? 'Unknown error';
+                        alert(`Failed to send to ${prepared.lead.companyName}: ${errMsg}`);
+                    }
+                } catch (err: any) {
+                    setSendingProgress(prev => ({ ...prev, [prepared.lead.id]: 'failed' }));
+                    failedCount += 1;
+                    alert(`Failed to send to ${prepared.lead.companyName}: ${err?.message ?? 'Unknown error'}`);
                 }
-                if (summary.message) {
-                    message += `\n${summary.message}`;
-                }
-                alert(message);
+            }
 
-                if (result.updatedLeads && result.updatedLeads.length > 0) {
-                    result.updatedLeads.forEach(updatedLead => {
-                        onUpdateLead(updatedLead);
-                    });
-                }
+            let message = `Email campaign completed!\n\n`;
+            message += `✅ Sent: ${sentCount}\n`;
+            if (failedCount > 0) message += `❌ Failed: ${failedCount}\n`;
+            alert(message);
 
-                await loadEmailLogs();
+            for (const lead of updatedLeads) {
+                await onUpdateLead(lead);
+            }
+            if (onRefreshLeads) {
+                await onRefreshLeads();
+            }
+            await loadEmailLogs();
 
+            if (failedCount === 0) {
                 setShowEmailModal(false);
                 setSelectedTemplateId('');
-            } else {
-                alert('Failed to send emails. Please try again.');
+                setSendingProgress({});
             }
         } catch (error: any) {
             console.error('Error sending emails:', error);
@@ -544,14 +563,23 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 onChange={(e) => setStatusFilter(e.target.value)}
                                 className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
                             >
-                                <option value="all">All Status</option>
+                                <option value="all">All</option>
                                 <option value="New">New</option>
                                 <option value="Contacted">Contacted</option>
-                                <option value="Qualified">Qualified</option>
-                                <option value="Proposal">Proposal</option>
-                                <option value="Negotiation">Negotiation</option>
-                                <option value="Won">Won</option>
-                                <option value="Lost">Lost</option>
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
+                        </div>
+
+                        <div className="relative">
+                            <select
+                                value={typeFilter}
+                                onChange={(e) => setTypeFilter(e.target.value)}
+                                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
+                            >
+                                <option value="all">All Types</option>
+                                <option value="normal">Normal</option>
+                                <option value="DMC">DMC</option>
+                                <option value="CORP">CORP</option>
                             </select>
                             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
                         </div>
@@ -562,12 +590,9 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 onChange={(e) => setEmailFilter(e.target.value as typeof emailFilter)}
                                 className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
                             >
-                                <option value="all">All Email</option>
-                                <option value="sent">Sent</option>
-                                <option value="unsent">Not Sent</option>
-                                <option value="no-key-person-email">No Contact</option>
-                                <option value="has-key-person-email">Has Contact</option>
-                                <option value="replied">Replied</option>
+                                <option value="all">All</option>
+                                <option value="has-key-person">Has key_person_email & key_person_name</option>
+                                <option value="no-key-person">No key_person_email & key_person_name</option>
                             </select>
                             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
                         </div>
@@ -576,13 +601,14 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                             <span className="text-xs font-medium text-slate-500">
                                 <span className="font-bold text-slate-900">{filteredLeads.length}</span> results
                             </span>
-                            {(searchTerm || countryFilter !== 'all' || industryFilter !== 'all' || statusFilter !== 'all' || emailFilter !== 'all') && (
+                            {(searchTerm || countryFilter !== 'all' || industryFilter !== 'all' || statusFilter !== 'all' || typeFilter !== 'all' || emailFilter !== 'all') && (
                                 <button
                                     onClick={() => {
                                         setSearchTerm('');
                                         setCountryFilter('all');
                                         setIndustryFilter('all');
                                         setStatusFilter('all');
+                                        setTypeFilter('all');
                                         setEmailFilter('all');
                                     }}
                                     title="Clear filters"
@@ -793,6 +819,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 setCountryFilter('all');
                                 setIndustryFilter('all');
                                 setStatusFilter('all');
+                                setTypeFilter('all');
                                 setEmailFilter('all');
                             }}
                             className="mt-4 px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-sm flex items-center gap-2"
@@ -882,15 +909,17 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                         <div>
                                             <div className="flex items-center justify-between mb-3">
                                                 <h3 className="text-sm font-semibold text-slate-700">
-                                                    Prepared Emails ({preparedEmails.length} of {filteredLeads.length} leads with email)
+                                                    Prepared Emails ({preparedEmails.length} leads matching this template)
                                                 </h3>
                                                 <span className="text-xs text-slate-500">
-                                                    {filteredLeads.length - preparedEmails.length} leads without email will be skipped
+                                                    {filteredLeads.length - preparedEmails.length} leads in list do not match this template
                                                 </span>
                                             </div>
                                             <div className="space-y-3 max-h-96 overflow-y-auto">
-                                                {preparedEmails.map((prepared, idx) => (
-                                                    <div key={prepared.lead.id} className="bg-white border border-slate-200 rounded-lg p-4">
+                                                {preparedEmails.map((prepared, idx) => {
+                                                    const status = sendingProgress[prepared.lead.id];
+                                                    return (
+                                                    <div key={prepared.lead.id} className={`bg-white border rounded-lg p-4 ${status === 'sending' ? 'border-indigo-300 ring-1 ring-indigo-200' : status === 'sent' ? 'border-green-200' : status === 'failed' ? 'border-red-200' : 'border-slate-200'}`}>
                                                         <div className="flex items-start justify-between mb-2">
                                                             <div className="flex-1">
                                                                 <div className="flex items-center gap-2">
@@ -898,6 +927,14 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                                                         {idx + 1}
                                                                     </span>
                                                                     <span className="font-semibold text-slate-900">{prepared.lead.companyName}</span>
+                                                                    {status && (
+                                                                        <span className="inline-flex items-center gap-1 text-xs font-medium">
+                                                                            {status === 'pending' && <><Circle size={14} className="text-slate-400" /> Pending</>}
+                                                                            {status === 'sending' && <><Loader2 size={14} className="text-indigo-600 animate-spin" /> Sending...</>}
+                                                                            {status === 'sent' && <><CheckCircle size={14} className="text-green-600" /> Sent</>}
+                                                                            {status === 'failed' && <><XCircle size={14} className="text-red-600" /> Failed</>}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 <p className="text-xs text-slate-500 mt-1 ml-8">
                                                                     To: {prepared.lead.keyPersonEmail} ({prepared.lead.keyPersonName})
@@ -917,15 +954,21 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                                             </div>
                                                         </div>
                                                     </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     )}
 
                                     {selectedTemplateId && preparedEmails.length === 0 && filteredLeads.some(l => l.keyPersonEmail) && (
                                         <div className="text-center py-8 text-slate-500">
-                                            <Loader2 className="animate-spin text-indigo-600 mx-auto mb-2" size={24} />
-                                            <p>Preparing emails...</p>
+                                            <Mail className="text-slate-300 mx-auto mb-2" size={32} />
+                                            <p>No leads match this template or all matching leads have already been emailed.</p>
+                                            {(() => {
+                                                const t = emailTemplates.find(x => x.id === selectedTemplateId);
+                                                const typeLabel = t?.leadType ? `${t.leadType} leads` : 'Regular leads';
+                                                return <p className="text-xs mt-1">This template targets {typeLabel}.</p>;
+                                            })()}
                                         </div>
                                     )}
 
@@ -958,7 +1001,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                     {sendingEmails ? (
                                         <>
                                             <Loader2 size={16} className="mr-2 animate-spin" />
-                                            Sending...
+                                            Sending ({Object.values(sendingProgress).filter(s => s === 'sent' || s === 'failed').length}/{preparedEmails.length})
                                         </>
                                     ) : (
                                         <>

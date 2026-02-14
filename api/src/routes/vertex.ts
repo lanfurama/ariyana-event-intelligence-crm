@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import dotenv from 'dotenv';
-import { buildEnrichPrompt } from '../config/vertexEnrichPrompt.js';
+import { buildEnrichPrompt, type EnrichContext } from '../config/vertexEnrichPrompt.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,29 +26,41 @@ function getVertexConfig() {
   return { apiKey, projectId, location };
 }
 
+function toEnrichContext(body: Record<string, unknown>): EnrichContext {
+  return {
+    companyName: String(body.companyName ?? '').trim(),
+    keyPerson: body.keyPerson != null ? String(body.keyPerson).trim() : undefined,
+    city: body.city != null ? String(body.city).trim() : undefined,
+    country: body.country != null ? String(body.country).trim() : undefined,
+    website: body.website != null ? String(body.website).trim() : undefined,
+    industry: body.industry != null ? String(body.industry).trim() : undefined,
+    keyPersonTitle: body.keyPersonTitle != null ? String(body.keyPersonTitle).trim() : undefined,
+    keyPersonEmail: body.keyPersonEmail != null ? String(body.keyPersonEmail).trim() : undefined,
+    keyPersonPhone: body.keyPersonPhone != null ? String(body.keyPersonPhone).trim() : undefined,
+    notes: body.notes != null ? String(body.notes).trim() : undefined,
+    researchNotes: body.researchNotes != null ? String(body.researchNotes).trim() : undefined,
+    pastEventsHistory: body.pastEventsHistory != null ? String(body.pastEventsHistory).trim() : undefined,
+    secondaryPersonName: body.secondaryPersonName != null ? String(body.secondaryPersonName).trim() : undefined,
+    secondaryPersonTitle: body.secondaryPersonTitle != null ? String(body.secondaryPersonTitle).trim() : undefined,
+    secondaryPersonEmail: body.secondaryPersonEmail != null ? String(body.secondaryPersonEmail).trim() : undefined,
+  };
+}
+
 /**
  * POST /enrich
- * Body: { companyName: string, keyPerson?: string, city?: string }
+ * Body: EnrichContext (companyName required; all other lead fields optional for richer context)
  * Returns: { text: string } - raw model response containing KEY PERSON CONTACT block.
  */
 router.post('/enrich', async (req: Request, res: Response) => {
   try {
-    const { companyName, keyPerson, city } = req.body as {
-      companyName?: string;
-      keyPerson?: string;
-      city?: string;
-    };
+    const ctx = toEnrichContext(req.body as Record<string, unknown>);
 
-    if (!companyName || String(companyName).trim() === '') {
+    if (!ctx.companyName) {
       return res.status(400).json({ error: 'Company name is required' });
     }
 
     const { apiKey, projectId, location } = getVertexConfig();
-    const prompt = buildEnrichPrompt(
-      String(companyName).trim(),
-      keyPerson ? String(keyPerson).trim() : '',
-      city ? String(city).trim() : ''
-    );
+    const prompt = buildEnrichPrompt(ctx);
 
     const url = `https://${location}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/publishers/google/models/${VERTEX_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
 

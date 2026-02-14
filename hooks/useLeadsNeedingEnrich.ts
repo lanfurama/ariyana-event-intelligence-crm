@@ -49,11 +49,23 @@ export function useLeadsNeedingEnrich(
     setEnrichError(null);
     setEnrichingIds((prev) => new Set(prev).add(lead.id));
     try {
-      const { text } = await enrichLeadData(
-        lead.companyName,
-        lead.keyPersonName ?? '',
-        lead.city ?? ''
-      );
+      const { text } = await enrichLeadData({
+        companyName: lead.companyName,
+        keyPerson: lead.keyPersonName ?? undefined,
+        city: lead.city ?? undefined,
+        country: lead.country,
+        website: lead.website,
+        industry: lead.industry,
+        keyPersonTitle: lead.keyPersonTitle,
+        keyPersonEmail: lead.keyPersonEmail,
+        keyPersonPhone: lead.keyPersonPhone,
+        notes: lead.notes,
+        researchNotes: lead.researchNotes,
+        pastEventsHistory: lead.pastEventsHistory,
+        secondaryPersonName: lead.secondaryPersonName,
+        secondaryPersonTitle: lead.secondaryPersonTitle,
+        secondaryPersonEmail: lead.secondaryPersonEmail,
+      });
       const parsed = parseEnrichResponse(text);
       const hasResult = !!(
         parsed.keyPersonName ||

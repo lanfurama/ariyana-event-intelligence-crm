@@ -3,6 +3,7 @@ import { LeadModel } from '../models/LeadModel.js';
 import { EmailLogModel } from '../models/EmailLogModel.js';
 import { sendLeadEmails, sendLeadEmailsWithCustomContent, type CustomEmailContent } from '../utils/emailSender.js';
 import type { Lead } from '../types/index.js';
+import { query } from '../config/database.js';
 
 const router = Router();
 
@@ -99,17 +100,84 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 });
 
-export default router;
+// POST /api/leads/send-email - Send single email (for progress UX)
+router.post('/send-email', async (req: Request, res: Response) => {
+  try {
+    const { leadId, subject, body } = req.body as { leadId?: string; subject?: string; body?: string };
+    if (!leadId || !subject || !body) {
+      return res.status(400).json({ error: 'leadId, subject, and body are required.' });
+    }
+
+    const lead = await LeadModel.getById(leadId);
+    if (!lead) {
+      return res.status(404).json({ error: 'Lead not found.' });
+    }
+    if ((lead.status || 'New') !== 'New') {
+      return res.status(400).json({ error: 'Only leads with status New can receive emails.' });
+    }
+
+    const summary = await sendLeadEmailsWithCustomContent(
+      [lead],
+      [{ leadId, subject, body }]
+    );
+
+    if (summary.sent === 0 && summary.failures?.length) {
+      return res.status(400).json({
+        error: summary.failures[0]?.error ?? 'Failed to send email.',
+        summary,
+      });
+    }
+
+    if (summary.successIds?.length) {
+      const timestamp = new Date().toISOString();
+      const updateResult = await query(
+        'UPDATE leads SET status = $1, last_contacted = $2 WHERE id = $3 RETURNING id, status',
+        ['Contacted', new Date(timestamp), leadId]
+      );
+      if ((updateResult.rowCount ?? 0) === 0) {
+        console.error(`[send-email] Failed to update lead ${leadId} status - 0 rows affected`);
+        return res.status(500).json({ error: 'Email sent but failed to update lead status in database.' });
+      }
+      const sent = summary.sentEmails?.[0];
+      if (sent?.subject) {
+        await EmailLogModel.create({
+          id: `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          lead_id: leadId,
+          date: new Date(timestamp),
+          subject: sent.subject,
+          status: 'sent',
+          message_id: sent.messageId ?? null,
+        });
+      }
+    }
+
+    const updatedLead = await LeadModel.getById(leadId);
+    res.json({
+      success: true,
+      summary,
+      updatedLead: updatedLead ?? undefined,
+    });
+  } catch (error: any) {
+    console.error('Error sending single email:', error);
+    res.status(500).json({ error: error.message || 'Failed to send email.' });
+  }
+});
+
 // POST /api/leads/send-emails - Send email campaign to leads
 router.post('/send-emails', async (req: Request, res: Response) => {
   try {
     const leadIds = Array.isArray(req.body?.leadIds) ? (req.body.leadIds as string[]).filter(Boolean) : [];
     const customEmails = Array.isArray(req.body?.emails) ? (req.body.emails as CustomEmailContent[]) : undefined;
     
-    const leads = leadIds.length > 0 ? await LeadModel.getByIds(leadIds) : await LeadModel.getAll();
+    let leads = leadIds.length > 0 ? await LeadModel.getByIds(leadIds) : await LeadModel.getAll();
 
     if (leads.length === 0) {
       return res.status(404).json({ error: 'No leads available for email dispatch.' });
+    }
+
+    leads = leads.filter((l) => (l.status || 'New') === 'New');
+    if (leads.length === 0) {
+      return res.status(400).json({ error: 'No leads with status New available for email dispatch. Only New leads can receive emails.' });
     }
 
     // Use custom emails if provided, otherwise use default template
@@ -212,3 +280,5 @@ router.post('/send-emails', async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message || 'Failed to send lead emails' });
   }
 });
+
+export default router;

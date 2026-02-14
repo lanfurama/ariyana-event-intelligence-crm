@@ -80,14 +80,16 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
 
             // Auto-select template based on lead type if available and no template is selected
             if (templates.length > 0 && !selectedTemplate && !draftedEmail) {
-                let selectedTemplateId = templates[0].id;
-                
-                // If lead has a type, try to find matching template
-                if (lead.type) {
+                const leadHasNoType = lead.type == null || String(lead.type || '').trim() === '';
+                const templateHasNoType = (t: EmailTemplate) =>
+                    t.leadType == null || String(t.leadType || '').trim() === '';
+
+                let selectedTemplateId: string;
+                if (leadHasNoType) {
+                    selectedTemplateId = templates.find(templateHasNoType)?.id ?? templates[0].id;
+                } else {
                     const matchingTemplate = templates.find(t => t.leadType === lead.type);
-                    if (matchingTemplate) {
-                        selectedTemplateId = matchingTemplate.id;
-                    }
+                    selectedTemplateId = matchingTemplate?.id ?? templates.find(templateHasNoType)?.id ?? templates[0].id;
                 }
                 
                 setSelectedTemplate(selectedTemplateId);
@@ -462,7 +464,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
 
     const handleEnrich = async () => {
         if (!enrichCompanyName || enrichCompanyName.trim() === '') {
-            alert('Please enter a company name to search');
+            alert('Please enter a company name');
             return;
         }
 
@@ -470,11 +472,23 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
         setRateLimitCountdown(null);
         setResearchResults(null);
         try {
-            const result = await VertexAiService.enrichLeadData(
-                enrichCompanyName.trim(),
-                enrichKeyPerson.trim() || '',
-                enrichCity.trim() || ''
-            );
+            const result = await VertexAiService.enrichLeadData({
+                companyName: enrichCompanyName.trim(),
+                keyPerson: enrichKeyPerson.trim() || undefined,
+                city: enrichCity.trim() || undefined,
+                country: editedLead.country,
+                website: editedLead.website,
+                industry: editedLead.industry,
+                keyPersonTitle: editedLead.keyPersonTitle,
+                keyPersonEmail: editedLead.keyPersonEmail,
+                keyPersonPhone: editedLead.keyPersonPhone,
+                notes: editedLead.notes,
+                researchNotes: editedLead.researchNotes,
+                pastEventsHistory: editedLead.pastEventsHistory,
+                secondaryPersonName: editedLead.secondaryPersonName,
+                secondaryPersonTitle: editedLead.secondaryPersonTitle,
+                secondaryPersonEmail: editedLead.secondaryPersonEmail,
+            });
             setEnrichResult({ text: result.text, grounding: null });
 
             // Parse result to extract key person info
@@ -1004,7 +1018,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                         <div className="space-y-3">
                             <div className="bg-blue-50 px-2.5 py-2 rounded border border-blue-100">
                                 <p className="text-xs text-blue-800">
-                                    Use AI to find the latest contact details and past events for this lead. Enter or edit the information below before searching.
+                                    Use AI to research key person name and email for this lead.
                                 </p>
                             </div>
                             {rateLimitCountdown !== null && rateLimitCountdown > 0 && (
@@ -1025,41 +1039,27 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                 <div className="space-y-3">
                                     <div>
                                         <label className="text-xs font-medium text-slate-700 block mb-1">
+                                            Key Person Name (optional - AI will find if blank)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={enrichKeyPerson}
+                                            onChange={(e) => setEnrichKeyPerson(e.target.value)}
+                                            placeholder="Enter key contact person name to search"
+                                            className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                            disabled={enrichLoading}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-700 block mb-1">
                                             Company Name <span className="text-red-500">*</span>
                                         </label>
                                         <input
                                             type="text"
                                             value={enrichCompanyName}
                                             onChange={(e) => setEnrichCompanyName(e.target.value)}
-                                            placeholder="Enter company or organization name"
-                                            className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                            disabled={enrichLoading}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-700 block mb-1">
-                                            Key Person Name (Optional)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={enrichKeyPerson}
-                                            onChange={(e) => setEnrichKeyPerson(e.target.value)}
-                                            placeholder="Enter key contact person name"
-                                            className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                            disabled={enrichLoading}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-700 block mb-1">
-                                            City/Location (Optional)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={enrichCity}
-                                            onChange={(e) => setEnrichCity(e.target.value)}
-                                            placeholder="Enter city or location"
+                                            placeholder="Enter company or organization (context for search)"
                                             className="w-full px-2.5 py-2 bg-white border border-slate-200 rounded text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                             disabled={enrichLoading}
                                         />
@@ -1073,7 +1073,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                         {enrichLoading ? (
                                             <>
                                                 <Loader2 className="animate-spin" size={16} />
-                                                Searching...
+                                                Researching...
                                             </>
                                         ) : rateLimitCountdown !== null && rateLimitCountdown > 0 ? (
                                             <>
@@ -1083,7 +1083,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                         ) : (
                                             <>
                                                 <Search size={16} />
-                                                Search Live Data
+                                                Research Key Person & Email
                                             </>
                                         )}
                                     </button>
