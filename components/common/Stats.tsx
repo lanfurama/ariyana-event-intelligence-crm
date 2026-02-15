@@ -58,7 +58,7 @@ export const EmailActivityChart = ({ emailLogs }: { emailLogs: EmailLog[] }) => 
     );
 };
 
-export const PipelineBars = ({ data }: { data: { name: string, count: number }[] }) => {
+export const PipelineBars = ({ data, compact }: { data: { name: string, count: number }[]; compact?: boolean }) => {
     const max = Math.max(...data.map(d => d.count)) || 1;
 
     const colors = [
@@ -71,22 +71,28 @@ export const PipelineBars = ({ data }: { data: { name: string, count: number }[]
         { bg: 'bg-emerald-500', dot: 'bg-emerald-500' },
     ];
 
+    const space = compact ? 'space-y-1.5' : 'space-y-3';
+    const barHeight = compact ? 'h-2' : 'h-3';
+    const dotSize = compact ? 'h-1.5 w-1.5' : 'h-2.5 w-2.5';
+    const textSize = compact ? 'text-xs' : 'text-sm';
+    const marginBar = compact ? 'mb-1' : 'mb-1.5';
+
     return (
-        <div className="space-y-3">
+        <div className={space}>
             {data.map((d, index) => {
                 const pct = Math.round((d.count / max) * 100);
                 const color = colors[index % colors.length];
 
                 return (
                     <div key={d.name}>
-                        <div className="flex items-center justify-between mb-1.5">
-                            <div className="flex items-center gap-2">
-                                <div className={`h-2.5 w-2.5 rounded-full ${color.dot}`}></div>
-                                <div className="text-sm font-medium text-slate-700">{d.name}</div>
+                        <div className={`flex items-center justify-between ${marginBar}`}>
+                            <div className="flex items-center gap-1.5">
+                                <div className={`${dotSize} rounded-full ${color.dot}`}></div>
+                                <div className={`${textSize} font-medium text-slate-700`}>{d.name}</div>
                             </div>
-                            <div className="text-sm font-semibold text-slate-900 tabular-nums">{d.count}</div>
+                            <div className={`${textSize} font-semibold text-slate-900 tabular-nums`}>{d.count}</div>
                         </div>
-                        <div className="h-3 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+                        <div className={`${barHeight} rounded-full bg-slate-100 border border-slate-200 overflow-hidden`}>
                             <div
                                 className={`h-full ${color.bg} rounded-full transition-all duration-500 ease-out`}
                                 style={{ width: `${pct}%` }}

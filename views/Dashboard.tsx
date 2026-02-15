@@ -1,18 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-    Users,
-    MessageSquare,
-    Search,
-    Send,
-    Plus,
-    CheckCircle,
-    TrendingUp,
-    MapPin,
-    Loader2
-} from 'lucide-react';
-import { Lead, EmailLog, EmailReply } from '../types';
+import { Loader2 } from 'lucide-react';
+import { Lead, EmailLog } from '../types';
 import { emailLogsApi, emailRepliesApi } from '../services/apiService';
-import { StatCard, PipelineBars, EmailActivityChart } from '../components/common/Stats';
+import { PipelineBars } from '../components/common/Stats';
 
 interface DashboardProps {
     leads: Lead[];
@@ -221,45 +211,109 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
         };
     }, [allEmailReplies, timeFilter, totalEmailsSent]);
 
-    const countryStats = useMemo(() => {
-        const countryMap = new Map<string, number>();
+    const normalizeType = (t: string | undefined) => (t != null && String(t).trim() !== '' ? String(t).trim() : 'Regular');
 
-        const capitalizeWords = (str: string): string => {
-            return str
-                .toLowerCase()
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-        };
+    const leadIdsByType = useMemo(() => {
+        const map = new Map<string, Set<string>>();
+        leads.forEach(lead => {
+            const type = normalizeType(lead.type);
+            if (!map.has(type)) map.set(type, new Set());
+            map.get(type)!.add(lead.id);
+        });
+        return map;
+    }, [leads]);
 
+    const sentLogsByLead = useMemo(() => {
+        const map = new Map<string, { count: number; lastSent?: Date; dates: Date[] }>();
+        allEmailLogs.forEach(log => {
+            if (log.status === 'sent' && log.lead_id) {
+                const existing = map.get(log.lead_id) || { count: 0, dates: [] };
+                existing.count += 1;
+                const d = log.date ? new Date(log.date) : null;
+                if (d) {
+                    existing.dates.push(d);
+                    if (!existing.lastSent || d > existing.lastSent) existing.lastSent = d;
+                }
+                map.set(log.lead_id, existing);
+            }
+        });
+        return map;
+    }, [allEmailLogs]);
+
+    const now = useMemo(() => new Date(), []);
+    const todayStart = useMemo(() => new Date(now.getFullYear(), now.getMonth(), now.getDate()), [now]);
+    const yesterdayStart = useMemo(() => { const d = new Date(todayStart); d.setDate(d.getDate() - 1); return d; }, [todayStart]);
+    const weekStart = useMemo(() => { const d = new Date(todayStart); d.setDate(d.getDate() - 7); return d; }, [todayStart]);
+    const monthStart = useMemo(() => new Date(now.getFullYear(), now.getMonth(), 1), [now]);
+
+    const leadByTypeStats = useMemo(() => {
         const filteredLeadIds = new Set(filteredEmailLogs.map(log => log.leadId));
+        const types = Array.from(leadIdsByType.keys()).sort();
 
+        return types.map(type => {
+            const leadIds = leadIdsByType.get(type)!;
+            const totalLeads = leadIds.size;
+            const sentInPeriod = leadIds.size > 0 ? [...leadIds].filter(id => filteredLeadIds.has(id)).length : 0;
+            let lastSentAt: Date | undefined;
+            leadIds.forEach(leadId => {
+                const data = sentLogsByLead.get(leadId);
+                if (data?.lastSent && (!lastSentAt || data.lastSent > lastSentAt)) lastSentAt = data.lastSent;
+            });
+            const lastSentLabel = lastSentAt ? lastSentAt.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+
+            return {
+                type,
+                totalLeads,
+                leadIds,
+                sentCount: sentInPeriod,
+                lastSentAt,
+                lastSentLabel,
+            };
+        });
+    }, [leadIdsByType, filteredEmailLogs, sentLogsByLead]);
+
+    const countryByType = useMemo(() => {
+        const capitalize = (s: string) => s.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const map = new Map<string, { name: string; count: number }[]>();
+        leadIdsByType.forEach((leadIds, type) => {
+            const countryMap = new Map<string, number>();
+            leads.forEach(lead => {
+                if (leadIds.has(lead.id)) {
+                    const raw = (lead.country || 'Unknown').trim();
+                    const key = raw.toLowerCase();
+                    countryMap.set(key, (countryMap.get(key) || 0) + 1);
+                }
+            });
+            const arr = Array.from(countryMap.entries())
+                .map(([k, count]) => ({ name: capitalize(k), count }))
+                .sort((a, b) => b.count - a.count);
+            map.set(type, arr);
+        });
+        return map;
+    }, [leads, leadIdsByType]);
+
+    const countryStats = useMemo(() => {
+        const filteredLeadIds = new Set(filteredEmailLogs.map(log => log.leadId));
+        const capitalizeWords = (str: string): string => {
+            return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        };
+        const countryMap = new Map<string, number>();
         leads.forEach(lead => {
             if (filteredLeadIds.has(lead.id)) {
                 const countryRaw = (lead.country || 'Unknown').trim();
                 const countryKey = countryRaw.toLowerCase();
-                const countryDisplay = capitalizeWords(countryRaw);
                 countryMap.set(countryKey, (countryMap.get(countryKey) || 0) + 1);
             }
         });
-
         return Array.from(countryMap.entries())
-            .map(([countryKey, count]) => ({
-                name: capitalizeWords(countryKey),
-                count
-            }))
+            .map(([countryKey, count]) => ({ name: capitalizeWords(countryKey), count }))
             .sort((a, b) => b.count - a.count);
     }, [leads, filteredEmailLogs]);
 
     if (loading) {
         return (
-            <div className="p-4 space-y-4 animate-fade-in max-w-7xl mx-auto">
-                <div className="flex items-start justify-between gap-4 mb-1">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
-                    </div>
-                </div>
-                <div className="flex items-center justify-center h-48 bg-white rounded-lg border border-slate-200">
+            <div className="p-3 space-y-3 animate-fade-in max-w-7xl mx-auto">
+                <div className="flex items-center justify-center h-48 rounded-lg border border-slate-200 bg-white">
                     <div className="flex flex-col items-center gap-2">
                         <Loader2 className="animate-spin text-slate-600" size={24} />
                         <span className="text-slate-600 text-sm">Loading…</span>
@@ -269,153 +323,101 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
         );
     }
 
+    const filterButtons = [
+        { key: 'all', label: 'All Time' },
+        { key: 'today', label: 'Today' },
+        { key: 'yesterday', label: 'Yesterday' },
+        { key: 'this-week', label: 'This Week' },
+        { key: 'this-month', label: 'This Month' },
+    ] as const;
+
     return (
-        <div className="p-4 space-y-4 animate-fade-in max-w-7xl mx-auto">
-            <div className="flex items-start justify-between gap-4 mb-1">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
+        <div className="p-3 space-y-3 animate-fade-in max-w-7xl mx-auto">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <h1 className="text-xl font-semibold text-slate-900">Dashboard</h1>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    {filterButtons.map(({ key, label }) => (
+                        <button
+                            key={key}
+                            onClick={() => setTimeFilter(key)}
+                            className={`px-2.5 py-1 rounded text-xs font-medium ${timeFilter === key
+                                ? 'bg-slate-800 text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            <div className="glass-card rounded-lg p-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-slate-700">Filter:</span>
-                    <div className="flex items-center gap-2 flex-wrap">
-                        {[
-                            { key: 'all', label: 'All Time' },
-                            { key: 'today', label: 'Today' },
-                            { key: 'yesterday', label: 'Yesterday' },
-                            { key: 'this-week', label: 'This Week' },
-                            { key: 'this-month', label: 'This Month' }
-                        ].map(({ key, label }) => (
-                            <button
-                                key={key}
-                                onClick={() => setTimeFilter(key as typeof timeFilter)}
-                                className={`px-3 py-1.5 rounded text-xs font-semibold shadow-sm ${timeFilter === key
-                                    ? 'bg-slate-900 text-white shadow-md ring-1 ring-slate-700'
-                                    : 'glass-input text-slate-600'
-                                    }`}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600 border border-slate-200 rounded-lg bg-slate-50/50 px-3 py-2">
+                <span><strong className="text-slate-900">{stats.total}</strong> leads</span>
+                <span><strong className="text-slate-900">{totalEmailsSent}</strong> emails sent</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <StatCard
-                    title="Total Leads"
-                    value={stats.total}
-                    icon={<Users size={18} />}
-                    color="blue"
-                />
-                <StatCard
-                    title="Vietnam Events"
-                    value={stats.vietnam}
-                    icon={<Search size={18} />}
-                    color="green"
-                />
-                <StatCard
-                    title="New Opportunities"
-                    value={stats.new}
-                    icon={<Plus size={18} />}
-                    color="orange"
-                />
-                <StatCard
-                    title="Qualified"
-                    value={stats.qualified}
-                    icon={<CheckCircle size={18} />}
-                    color="purple"
-                />
+            <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                <div className="px-3 py-2 border-b border-slate-200">
+                    <h2 className="text-sm font-semibold text-slate-900">By lead type</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-slate-200 bg-slate-50/80">
+                                <th className="text-left py-2 px-3 font-medium text-slate-700">Type</th>
+                                <th className="text-right py-2 px-3 font-medium text-slate-700">Total leads</th>
+                                <th className="text-right py-2 px-3 font-medium text-slate-700">Leads sent mail</th>
+                                <th className="text-left py-2 px-3 font-medium text-slate-700">Last sent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {leadByTypeStats.map((row) => (
+                                <tr key={row.type} className="border-b border-slate-100 hover:bg-slate-50/50">
+                                    <td className="py-2 px-3 font-medium text-slate-900">{row.type}</td>
+                                    <td className="py-2 px-3 text-right tabular-nums text-slate-700">{row.totalLeads}</td>
+                                    <td className="py-2 px-3 text-right tabular-nums text-slate-700">{row.sentCount}</td>
+                                    <td className="py-2 px-3 text-slate-600">{row.lastSentLabel}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                {leadByTypeStats.length === 0 && (
+                    <div className="px-3 py-6 text-center text-sm text-slate-500">No leads</div>
+                )}
             </div>
 
-            <div className="glass-card rounded-lg overflow-hidden">
-                <div className="bg-blue-600/5 px-4 py-3 border-b border-white/20">
-                    <div className="flex items-center gap-2">
-                        <Send size={18} className="text-blue-600" />
-                        <h3 className="text-base font-bold text-slate-900">Email Sent</h3>
+            {leadByTypeStats.length > 0 && (
+                <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                    <div className="px-3 py-2 border-b border-slate-200">
+                        <h2 className="text-sm font-semibold text-slate-900">Country by type</h2>
+                    </div>
+                    <div className="p-3 space-y-3">
+                        {leadByTypeStats.map((row) => {
+                            const countries = (countryByType.get(row.type) || []).slice(0, 6);
+                            if (countries.length === 0) return null;
+                            return (
+                                <div key={row.type}>
+                                    <p className="text-xs font-medium text-slate-500 mb-1.5">{row.type}</p>
+                                    <PipelineBars data={countries} compact />
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
+            )}
 
-                <div className="p-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                        <StatCard
-                            title="Total Emails Sent"
-                            value={totalEmailsSent}
-                            icon={<Send size={18} />}
-                            color="blue"
-                        />
-                        <StatCard
-                            title="Leads Contacted"
-                            value={sentEmailsCount}
-                            icon={<Users size={18} />}
-                            subtitle={`${unsentEmailsCount} not contacted`}
-                            color="indigo"
-                        />
-                    </div>
+            <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                <div className="px-3 py-2 border-b border-slate-200">
+                    <h2 className="text-sm font-semibold text-slate-900">Email replies</h2>
                 </div>
-            </div>
-
-            <div className="glass-card rounded-lg overflow-hidden">
-                <div className="bg-green-600/5 px-4 py-3 border-b border-white/20">
-                    <div className="flex items-center gap-2">
-                        <MessageSquare size={18} className="text-green-600" />
-                        <h3 className="text-base font-bold text-slate-900">Email Replies</h3>
-                    </div>
+                <div className="px-3 py-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
+                    <span><strong className="text-slate-900">{emailRepliesStats.total}</strong> replies</span>
+                    <span><strong className="text-slate-900">{emailRepliesStats.uniqueLeads}</strong> leads replied</span>
+                    <span><strong className="text-slate-900">{emailRepliesStats.replyRate}%</strong> rate</span>
                 </div>
-
-                <div className="p-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <StatCard
-                            title="Total Replies"
-                            value={emailRepliesStats.total}
-                            icon={<MessageSquare size={18} />}
-                            color="green"
-                        />
-                        <StatCard
-                            title="Leads Replied"
-                            value={emailRepliesStats.uniqueLeads}
-                            icon={<CheckCircle size={18} />}
-                            color="emerald"
-                        />
-                        <StatCard
-                            title="Reply Rate"
-                            value={`${emailRepliesStats.replyRate}%`}
-                            icon={<TrendingUp size={18} />}
-                            color="teal"
-                        />
-                    </div>
-
-                    {emailRepliesStats.allTime === 0 && (
-                        <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 p-4 text-center">
-                            <p className="text-sm text-slate-600">No email replies yet</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="glass-card rounded-lg overflow-hidden">
-                <div className="bg-purple-600/5 px-4 py-3 border-b border-white/20">
-                    <div className="flex items-center gap-2">
-                        <MapPin size={18} className="text-purple-600" />
-                        <h3 className="text-base font-bold text-slate-900">Country Distribution</h3>
-                    </div>
-                </div>
-
-                <div className="p-4">
-                    {stats.total === 0 ? (
-                        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
-                            <p className="text-sm text-slate-600">No leads yet</p>
-                        </div>
-                    ) : countryStats.length === 0 ? (
-                        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
-                            <p className="text-sm text-slate-600">No country data available</p>
-                        </div>
-                    ) : (
-                        <PipelineBars data={countryStats} />
-                    )}
-                </div>
+                {emailRepliesStats.allTime === 0 && (
+                    <div className="px-3 pb-3 text-sm text-slate-500">No email replies yet</div>
+                )}
             </div>
         </div>
     );
