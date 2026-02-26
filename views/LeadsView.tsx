@@ -581,6 +581,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 <option value="DMC">DMC</option>
                                 <option value="CORP">CORP</option>
                                 <option value="HPNY2026">HPNY2026</option>
+                                <option value="LEAD2026FEB_THAIACC">LEAD2026FEB_THAIACC</option>
                             </select>
                             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
                         </div>
@@ -678,6 +679,8 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                                         ? 'bg-purple-100 text-purple-700' 
                                                         : lead.type === 'HPNY2026'
                                                         ? 'bg-amber-100 text-amber-700'
+                                                        : lead.type === 'LEAD2026FEB_THAIACC'
+                                                        ? 'bg-emerald-100 text-emerald-700'
                                                         : 'bg-slate-100 text-slate-600'
                                                 }`}>
                                                     {lead.type}
