@@ -192,6 +192,11 @@ export const emailTemplatesApi = {
   delete: (id: string) => apiCall<void>(`/email-templates/${id}`, {
     method: 'DELETE',
   }),
+  sendTest: (to: string, subject: string, body: string) =>
+    apiCall<{ success: boolean }>('/email-templates/send-test', {
+      method: 'POST',
+      body: JSON.stringify({ to, subject, body }),
+    }),
 };
 
 // Email Logs API

@@ -1,7 +1,27 @@
 import { Router, Request, Response } from 'express';
 import { EmailTemplateModel } from '../models/EmailTemplateModel.js';
+import { sendTestEmail } from '../utils/emailSender.js';
 
 const router = Router();
+
+// POST /api/email-templates/send-test - Send test email to any address (must be before /:id)
+router.post('/send-test', async (req: Request, res: Response) => {
+  try {
+    const { to, subject, body } = req.body || {};
+    if (!to || typeof to !== 'string' || !subject || typeof subject !== 'string' || !body || typeof body !== 'string') {
+      console.error('[send-test] Invalid body:', { hasTo: !!to, hasSubject: !!subject, hasBody: !!body });
+      return res.status(400).json({ error: 'to, subject, and body are required' });
+    }
+    const result = await sendTestEmail(to.trim(), subject, body);
+    if (!result.success) {
+      return res.status(500).json({ error: result.error || 'Failed to send test email' });
+    }
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Error sending test email:', error);
+    res.status(500).json({ error: error.message || 'Failed to send test email' });
+  }
+});
 
 // GET /api/email-templates - Get all email templates
 router.get('/', async (req: Request, res: Response) => {

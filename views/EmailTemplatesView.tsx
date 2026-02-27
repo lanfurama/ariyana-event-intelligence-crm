@@ -24,6 +24,8 @@ export const EmailTemplatesView = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', subject: '', body: '', leadType: '' });
   const [formErrors, setFormErrors] = useState<{ name?: string; subject?: string; body?: string }>({});
+  const [testEmail, setTestEmail] = useState('');
+  const [sendingTest, setSendingTest] = useState(false);
   const [bodyViewMode, setBodyViewMode] = useState<'code' | 'preview'>('preview');
   const contentEditableRef = useRef<HTMLDivElement>(null);
   const isInternalEditRef = useRef(false);
@@ -82,6 +84,7 @@ export const EmailTemplatesView = () => {
     setFormData({ name: '', subject: '', body: '', leadType: '' });
     setFormErrors({});
     setBodyViewMode('preview');
+    setTestEmail('');
     setShowModal(true);
     // Reset internal edit flag when opening modal
     isInternalEditRef.current = false;
@@ -97,6 +100,7 @@ export const EmailTemplatesView = () => {
     });
     setFormErrors({});
     setBodyViewMode('preview');
+    setTestEmail('');
     setShowModal(true);
     // Reset internal edit flag when opening modal
     isInternalEditRef.current = false;
@@ -172,6 +176,38 @@ export const EmailTemplatesView = () => {
     setEditingTemplate(null);
     setFormErrors({});
     setBodyViewMode('preview');
+    setTestEmail('');
+  };
+
+  const handleSendTest = async () => {
+    // Sync body from contentEditable when in preview mode
+    const body = bodyViewMode === 'preview' && contentEditableRef.current
+      ? contentEditableRef.current.innerHTML
+      : formData.body;
+    if (!formData.subject.trim() || !body.trim()) {
+      alert('Subject and body are required to send a test email');
+      return;
+    }
+    const email = testEmail.trim();
+    if (!email) {
+      alert('Please enter an email address');
+      return;
+    }
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    if (!emailRegex.test(email)) {
+      alert('Invalid email address');
+      return;
+    }
+    setSendingTest(true);
+    try {
+      await emailTemplatesApi.sendTest(email, formData.subject, body);
+      alert('Test email sent successfully');
+    } catch (error: any) {
+      console.error('Send test email error:', error);
+      alert(error?.message || 'Failed to send test email');
+    } finally {
+      setSendingTest(false);
+    }
   };
 
   return (
@@ -468,20 +504,41 @@ export const EmailTemplatesView = () => {
               )}
             </div>
 
-            <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold inline-flex items-center"
-              >
-                <Save size={16} className="mr-2" />
-                {editingTemplate ? 'Update Template' : 'Create Template'}
-              </button>
+            <div className="p-4 border-t border-slate-200 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-slate-600">Send this template to:</span>
+                <input
+                  type="email"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm w-48 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); handleSendTest(); }}
+                  disabled={sendingTest}
+                  className="px-3 py-2 text-indigo-600 border border-indigo-300 rounded-lg text-sm font-medium inline-flex items-center hover:bg-indigo-50 disabled:opacity-50"
+                >
+                  {sendingTest ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Mail size={16} className="mr-1" />}
+                  Send Test
+                </button>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={handleCancel}
+                  className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold inline-flex items-center"
+                >
+                  <Save size={16} className="mr-2" />
+                  {editingTemplate ? 'Update Template' : 'Create Template'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -568,3 +568,45 @@ export async function sendLeadEmailsWithCustomContent(
 
   return summary;
 }
+
+export async function sendTestEmail(
+  to: string,
+  subject: string,
+  body: string
+): Promise<{ success: boolean; error?: string }> {
+  const transporter = getTransporter();
+  if (!transporter) {
+    return { success: false, error: transporterInitError ?? 'Email transport could not be initialized.' };
+  }
+
+  const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+  if (!emailRegex.test(to.trim())) {
+    return { success: false, error: 'Invalid email address.' };
+  }
+
+  try {
+    const textBody = body
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .trim();
+
+    await transporter.sendMail({
+      from: defaultFromEmail
+        ? `"Ariyana Convention Centre" <${defaultFromEmail}>`
+        : '"Ariyana Convention Centre" <marketing@furamavietnam.com>',
+      to: to.trim(),
+      replyTo: defaultFromEmail || undefined,
+      subject,
+      text: textBody,
+      html: body,
+    });
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error?.message || 'Unknown SMTP error' };
+  }
+}
