@@ -954,9 +954,10 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                                             </div>
                                                             <div>
                                                                 <span className="text-xs font-medium text-slate-500">Body Preview:</span>
-                                                                <p className="text-sm text-slate-700 mt-0.5 line-clamp-2">
-                                                                    {prepared.body.substring(0, 150)}...
-                                                                </p>
+                                                                <div
+                                                                    className="text-sm text-slate-900 mt-0.5 bg-white p-3 rounded border border-slate-200 max-h-40 overflow-y-auto"
+                                                                    dangerouslySetInnerHTML={{ __html: prepared.body }}
+                                                                />
                                                             </div>
                                                         </div>
                                                     </div>
