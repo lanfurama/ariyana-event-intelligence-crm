@@ -15,7 +15,9 @@ import {
 } from 'lucide-react';
 import { Lead, User, EmailTemplate, EmailReply } from '../types';
 import * as VertexAiService from '../services/vertexAiService';
-import { emailTemplatesApi, emailLogsApi, emailRepliesApi } from '../services/apiService';
+import * as GeminiService from '../services/geminiService';
+import { emailTemplatesApi, emailLogsApi, emailRepliesApi, leadsApi } from '../services/apiService';
+import { mapLeadFromDB } from '../utils/leadUtils';
 import { StatusBadge, InfoItem, EditField, EditTextArea } from './common';
 
 export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClose: () => void, onSave: (l: Lead) => void, user: User }) => {
@@ -45,6 +47,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
     const [draftedEmail, setDraftedEmail] = useState<{ subject: string, body: string } | null>(null);
     const [emailSent, setEmailSent] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState('');
+    const [emailCC, setEmailCC] = useState('');
     const [attachments, setAttachments] = useState<any[]>([]);
     const [emailRateLimitCountdown, setEmailRateLimitCountdown] = useState<number | null>(null);
     const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
@@ -76,6 +79,7 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
         setLoadingTemplates(true);
         try {
             const templates = await emailTemplatesApi.getAll();
+            console.log('Loaded templates with attachments:', templates.map(t => ({ id: t.id, name: t.name, attachmentsCount: t.attachments?.length || 0 })));
             setEmailTemplates(templates);
 
             // Auto-select template based on lead type if available and no template is selected
@@ -118,6 +122,23 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                     body = body.replace(/\[Key Person Name\]/g, lead.keyPersonName || '');
 
                     setDraftedEmail({ subject, body });
+                    
+                    // Load attachments from template (both files and links)
+                    const templateAttachments = (template.attachments || [])
+                        .map(att => {
+                            console.log('Template attachment:', { name: att.name, type: att.type, hasFileData: !!att.file_data, fileDataLength: att.file_data?.length || 0 });
+                            return {
+                                name: att.name,
+                                size: att.size || 0,
+                                type: att.type || (att.file_data ? 'application/octet-stream' : 'link'),
+                                file_data: att.file_data,
+                                is_link: att.type === 'link',
+                                fromTemplate: true
+                            };
+                        });
+                    console.log('Template attachments loaded:', templateAttachments.length, 'from template:', template.name);
+                    setAttachments(templateAttachments);
+                    
                     setEmailSent(false);
                 }
             }
@@ -596,7 +617,10 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
     const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const tmplId = e.target.value;
         setSelectedTemplate(tmplId);
-        if (!tmplId) return;
+        if (!tmplId) {
+            setAttachments([]);
+            return;
+        }
 
         const template = emailTemplates.find(t => t.id === tmplId);
         if (template) {
@@ -621,7 +645,20 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
             body = body.replace(/\[Company Name\]/g, lead.companyName || '');
             body = body.replace(/\[Key Person Name\]/g, lead.keyPersonName || '');
 
+            // Load attachments from template (both files and links)
+            const templateAttachments = (template.attachments || [])
+                .map(att => ({
+                    name: att.name,
+                    size: att.size || 0,
+                    type: att.type || (att.file_data ? 'application/octet-stream' : 'link'),
+                    file_data: att.file_data,
+                    is_link: att.type === 'link',
+                    fromTemplate: true
+                }));
+            console.log('Template attachments loaded from dropdown:', templateAttachments, 'from template:', template.name);
+
             setDraftedEmail({ subject, body });
+            setAttachments(templateAttachments);
             setEmailSent(false);
         }
     };
@@ -641,8 +678,8 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
             setEmailSent(false);
         } catch (e: any) {
             console.error(e);
-            if (isGeminiRateLimitError(e)) {
-                const retryDelay = extractGeminiRetryDelay(e);
+            if (GeminiService.isRateLimitError(e)) {
+                const retryDelay = GeminiService.extractRetryDelay(e);
                 if (retryDelay) {
                     setEmailRateLimitCountdown(retryDelay);
                 } else {
@@ -656,10 +693,22 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
         }
     };
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setAttachments([...attachments, { name: file.name, size: file.size, type: file.type }]);
+            // Convert file to base64
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64Data = reader.result as string;
+                setAttachments([...attachments, { 
+                    name: file.name, 
+                    size: file.size, 
+                    type: file.type,
+                    file_data: base64Data,
+                    fromTemplate: false
+                }]);
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -669,75 +718,83 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
             return;
         }
 
-        if (draftedEmail) {
-            let body = draftedEmail.body;
-            if (attachments.length > 0) {
-                body += "\n\n[Attached Files]:\n" + attachments.map(a => `- ${a.name} (Link)`).join('\n');
+        if (!draftedEmail) {
+            alert("No email content to send.");
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to send this email to ${lead.keyPersonEmail}?`)) {
+            return;
+        }
+
+        setEmailLoading(true);
+        try {
+            console.log('All attachments before filtering:', attachments.map(a => ({ 
+                name: a.name, 
+                type: a.type, 
+                is_link: (a as any).is_link,
+                hasFileData: !!a.file_data,
+                fileDataLength: a.file_data?.length || 0 
+            })));
+
+            // Separate links and file attachments (like test mail does)
+            const links = attachments.filter(att => (att as any).is_link || att.type === 'link');
+            const fileAttachments = attachments
+                .filter(att => {
+                    const isLink = (att as any).is_link || att.type === 'link';
+                    const hasFileData = att.file_data && att.file_data.trim().length > 0;
+                    return !isLink && hasFileData;
+                })
+                .map(att => ({
+                    name: att.name,
+                    file_data: att.file_data!,
+                    type: att.type || 'application/octet-stream'
+                }));
+
+            // Add links to email body if any (like test mail does)
+            let emailBody = draftedEmail.body;
+            if (links.length > 0) {
+                const linksHtml = links.map(link => {
+                    const linkName = link.file_data || link.name;
+                    const linkUrl = link.name;
+                    return `
+                        <div style="margin: 8px 0; padding: 12px 16px; background-color: #f0f0f0; border: 1px solid #d1d5db; border-radius: 6px; display: inline-block; max-width: 100%;">
+                            <span style="font-size: 18px; margin-right: 8px; vertical-align: middle;">📁</span>
+                            <a href="${linkUrl}" target="_blank" style="color: #374151; text-decoration: underline; font-size: 14px; vertical-align: middle;">${linkName}</a>
+                        </div>
+                    `;
+                }).join('');
+                emailBody = draftedEmail.body + '<div style="margin-top: 5px;">' + linksHtml + '</div>';
             }
 
-            const subject = encodeURIComponent(draftedEmail.subject);
-            const encodedBody = encodeURIComponent(body);
-            const mailtoLink = `mailto:${lead.keyPersonEmail}?subject=${subject}&body=${encodedBody}`;
+            console.log('Sending email with file attachments:', fileAttachments.length, 'and links:', links.length);
+            console.log('File attachments:', fileAttachments.map(a => ({ name: a.name, type: a.type, dataLength: a.file_data.length })));
 
-            // Open email client
-            window.open(mailtoLink, '_blank');
+            const result = await leadsApi.sendEmail(
+                lead.id,
+                draftedEmail.subject,
+                emailBody,
+                emailCC && emailCC.trim() ? emailCC.trim() : undefined,
+                fileAttachments.length > 0 ? fileAttachments : undefined
+            );
 
-            // Create email log in database with lead_id
-            try {
-                const emailLogId = `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                const emailLog = {
-                    id: emailLogId,
-                    lead_id: lead.id,
-                    date: new Date().toISOString(),
-                    subject: draftedEmail.subject,
-                    status: 'sent' as const,
-                };
-
-                await emailLogsApi.create(emailLog);
-                console.log('✅ Email log created in database:', emailLogId);
-
-                // Also create attachments if any
-                if (attachments.length > 0) {
-                    for (const attachment of attachments) {
-                        try {
-                            await emailLogsApi.createAttachment(emailLogId, {
-                                email_log_id: emailLogId,
-                                name: attachment.name,
-                                size: attachment.size,
-                                type: attachment.type,
-                            });
-                        } catch (attachError) {
-                            console.error('Error creating attachment log:', attachError);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Error creating email log in database:', error);
-                // Continue even if log creation fails - don't block user
+            if (result.success && result.updatedLead) {
+                const mappedLead = mapLeadFromDB(result.updatedLead);
+                setEditedLead(mappedLead);
+                onSave(mappedLead);
+                setEmailSent(true);
+                setAttachments([]);
+                setEmailCC('');
+                alert('Email sent successfully!');
+            } else {
+                const errMsg = (result as any)?.summary?.failures?.[0]?.error ?? 'Unknown error';
+                alert(`Failed to send email: ${errMsg}`);
             }
-
-            // Update local state
-            const newHistory = [
-                ...(editedLead.emailHistory || []),
-                {
-                    id: Date.now().toString(),
-                    date: new Date().toISOString(),
-                    subject: draftedEmail.subject,
-                    status: 'sent' as const,
-                    attachments: attachments
-                }
-            ];
-
-            const newLead = {
-                ...editedLead,
-                status: 'Contacted' as const,
-                lastContacted: new Date().toISOString().split('T')[0],
-                emailHistory: newHistory
-            };
-            setEditedLead(newLead);
-            onSave(newLead);
-            setEmailSent(true);
-            setAttachments([]);
+        } catch (error: any) {
+            console.error('Error sending email:', error);
+            alert(`Error sending email: ${error.message || 'Unknown error'}`);
+        } finally {
+            setEmailLoading(false);
         }
     };
 
@@ -784,11 +841,11 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                 : 'text-slate-500'
                                 }`}
                         >
-                            <Mail size={14} /> <span>AI Email</span>
+                            <Mail size={14} /> <span>Send Mail</span>
                         </button>
                     ) : (
                         <div className="flex-1 py-2 font-semibold text-xs flex justify-center items-center gap-1.5 text-slate-300 cursor-not-allowed bg-slate-50" title="Viewer Only">
-                            <Lock size={14} /> <span>AI Email</span>
+                            <Lock size={14} /> <span>Send Mail</span>
                         </div>
                     )}
                 </div>
@@ -1284,35 +1341,33 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                 </div>
                             )}
 
-                            {!draftedEmail && (
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 block mb-2">Choose a Template</label>
-                                        {loadingTemplates ? (
-                                            <div className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-500 flex items-center">
-                                                <Loader2 className="animate-spin mr-2" size={16} />
-                                                Loading templates...
-                                            </div>
-                                        ) : emailTemplates.length === 0 ? (
-                                            <div className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 text-center">
-                                                No email templates found in database
-                                            </div>
-                                        ) : (
-                                            <select
-                                                className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none cursor-pointer"
-                                                value={selectedTemplate}
-                                                onChange={handleTemplateChange}
-                                            >
-                                                <option value="">-- Select Template --</option>
-                                                {emailTemplates.map(t => (
-                                                    <option key={t.id} value={t.id}>{t.name}</option>
-                                                ))}
-                                            </select>
-                                        )}
+                            <div>
+                                <label className="text-sm font-medium text-slate-700 block mb-2">Choose a Template</label>
+                                {loadingTemplates ? (
+                                    <div className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-500 flex items-center">
+                                        <Loader2 className="animate-spin mr-2" size={16} />
+                                        Loading templates...
                                     </div>
+                                ) : emailTemplates.length === 0 ? (
+                                    <div className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-500 text-center">
+                                        No email templates found in database
+                                    </div>
+                                ) : (
+                                    <select
+                                        className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none cursor-pointer"
+                                        value={selectedTemplate}
+                                        onChange={handleTemplateChange}
+                                    >
+                                        <option value="">-- Select Template --</option>
+                                        {emailTemplates.map(t => (
+                                            <option key={t.id} value={t.id}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
 
-                                    <div className="text-center text-xs text-slate-400">OR</div>
-
+                            {!draftedEmail && (
+                                <div className="text-center">
                                     <button
                                         onClick={handleDraftEmail}
                                         disabled={emailLoading || (emailRateLimitCountdown !== null && emailRateLimitCountdown > 0)}
@@ -1332,14 +1387,24 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                         <div className="flex items-center text-xs text-slate-500 mb-1">
                                             <span className="font-bold mr-1">To:</span> {lead.keyPersonEmail || <span className="text-red-500">Missing Email</span>}
                                         </div>
+                                        <div className="flex items-center text-xs text-slate-500 mb-1">
+                                            <span className="font-bold mr-1">CC:</span>
+                                            <input
+                                                type="text"
+                                                value={emailCC}
+                                                onChange={(e) => setEmailCC(e.target.value)}
+                                                placeholder="Nhập địa chỉ email CC, cách bởi dấu ,"
+                                                className="flex-1 text-xs text-slate-900 bg-white border border-slate-300 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                            />
+                                        </div>
                                         <input
                                             value={draftedEmail.subject}
                                             onChange={(e) => setDraftedEmail({ ...draftedEmail, subject: e.target.value })}
                                             className="text-sm font-bold text-slate-900 bg-transparent outline-none border-b border-transparent focus:border-purple-300"
                                         />
                                     </div>
-                                    <div className="p-4 flex-1 flex flex-col">
-                                        <div className="flex items-center justify-between mb-2">
+                                    <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                                        <div className="flex items-center justify-between mb-2 shrink-0">
                                             <label className="text-xs font-semibold text-slate-700">Email Body</label>
                                             <div className="flex gap-2">
                                                 <button
@@ -1367,15 +1432,14 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
 
                                         {emailBodyViewMode === 'code' ? (
                                             <textarea
-                                                className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none mb-2 font-mono"
+                                                className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none mb-2 font-mono min-h-0 overflow-auto"
                                                 value={draftedEmail.body}
                                                 onChange={(e) => setDraftedEmail({ ...draftedEmail, body: e.target.value })}
                                                 placeholder="<html>...\n\nUse HTML format with variables like {{keyPersonName}}, {{companyName}}, etc."
                                             ></textarea>
                                         ) : (
                                             <div
-                                                className="w-full flex-1 border border-slate-200 rounded-lg bg-white overflow-auto mb-2"
-                                                style={{ minHeight: '300px' }}
+                                                className="w-full flex-1 border border-slate-200 rounded-lg bg-white overflow-y-auto mb-2 min-h-0"
                                             >
                                                 <div
                                                     contentEditable
@@ -1389,11 +1453,12 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                                         setDraftedEmail({ ...draftedEmail, body: html });
                                                     }}
                                                     dangerouslySetInnerHTML={{ __html: draftedEmail.body || '<div style="padding: 20px; color: #666; text-align: center;">Click here to start editing your email. Use variables like {{keyPersonName}}, {{companyName}}, etc.</div>' }}
-                                                    className="p-3 min-h-[300px] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset"
+                                                    className="p-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset"
                                                     style={{
                                                         fontFamily: 'Arial, sans-serif',
                                                         lineHeight: '1.6',
-                                                        color: '#333'
+                                                        color: '#333',
+                                                        minHeight: '100%'
                                                     }}
                                                 />
                                             </div>
@@ -1409,12 +1474,43 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                             </div>
                                             {attachments.length > 0 ? (
                                                 <div className="flex flex-wrap gap-2">
-                                                    {attachments.map((file, idx) => (
-                                                        <span key={idx} className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs flex items-center">
-                                                            {file.name}
-                                                            <button onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))} className="ml-1 text-slate-400"><X size={10} /></button>
-                                                        </span>
-                                                    ))}
+                                                    {attachments.map((file, idx) => {
+                                                        const isLink = (file as any).is_link || file.type === 'link';
+                                                        const fromTemplate = (file as any).fromTemplate;
+                                                        return (
+                                                            <span key={idx} className={`px-2 py-1 rounded text-xs flex items-center ${
+                                                                fromTemplate 
+                                                                    ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                                                                    : 'bg-slate-100 text-slate-600'
+                                                            }`}>
+                                                                {isLink ? (
+                                                                    <a 
+                                                                        href={file.name} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        className="text-blue-600 hover:underline flex items-center"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    >
+                                                                        <ExternalLink size={10} className="mr-1" />
+                                                                        {file.name}
+                                                                    </a>
+                                                                ) : (
+                                                                    <>
+                                                                        {file.name}
+                                                                        {fromTemplate && (
+                                                                            <span className="ml-1 text-[10px] text-purple-500">(Template)</span>
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                                <button 
+                                                                    onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))} 
+                                                                    className="ml-1 text-slate-400 hover:text-slate-600"
+                                                                >
+                                                                    <X size={10} />
+                                                                </button>
+                                                            </span>
+                                                        );
+                                                    })}
                                                 </div>
                                             ) : <p className="text-xs text-slate-400 italic">No files attached.</p>}
                                         </div>
@@ -1428,9 +1524,20 @@ export const LeadDetail = ({ lead, onClose, onSave, user }: { lead: Lead, onClos
                                         </button>
                                         <button
                                             onClick={handleSendEmail}
-                                            className="text-sm bg-blue-600 text-white px-4 py-2 rounded font-medium flex items-center"
+                                            disabled={emailLoading}
+                                            className="text-sm bg-blue-600 text-white px-4 py-2 rounded font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            <ExternalLink size={14} className="mr-2" /> Open Mail App & Send
+                                            {emailLoading ? (
+                                                <>
+                                                    <Loader2 size={14} className="mr-2 animate-spin" />
+                                                    Sending...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Mail size={14} className="mr-2" />
+                                                    Send Email
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </div>

@@ -83,6 +83,52 @@ export function getTransporter(): nodemailer.Transporter | null {
   return cachedTransporter;
 }
 
+// Helper function to convert attachments to nodemailer format (shared by all email sending functions)
+function convertAttachmentsToNodemailerFormat(
+  attachments: Array<{ name: string; file_data: string; type?: string }>
+): Array<{ filename: string; content: Buffer | string; contentType?: string; encoding?: 'base64' }> {
+  return attachments
+    .filter(att => {
+      if (!att.file_data || att.file_data.trim() === '') {
+        console.warn(`[convertAttachments] Skipping attachment "${att.name}" - no file data`);
+        return false;
+      }
+      return true;
+    })
+    .map(att => {
+      // Remove data URL prefix if present (data:image/png;base64,)
+      let base64Data = att.file_data.trim();
+      if (base64Data.includes(',')) {
+        base64Data = base64Data.split(',')[1];
+      }
+      
+      // Validate base64 data
+      if (!base64Data || base64Data.trim() === '') {
+        throw new Error(`Attachment "${att.name}" has invalid base64 data`);
+      }
+      
+      // Use Buffer for better performance with large files
+      try {
+        const buffer = Buffer.from(base64Data, 'base64');
+        console.log(`[convertAttachments] Attachment "${att.name}": ${(buffer.length / 1024 / 1024).toFixed(2)} MB`);
+        return {
+          filename: att.name,
+          content: buffer,
+          contentType: att.type || 'application/octet-stream',
+        };
+      } catch (bufferError: any) {
+        // Fallback to base64 string if Buffer conversion fails
+        console.warn(`[convertAttachments] Buffer conversion failed for ${att.name}, using base64 string:`, bufferError.message);
+        return {
+          filename: att.name,
+          content: base64Data,
+          encoding: 'base64' as const,
+          contentType: att.type || 'application/octet-stream',
+        };
+      }
+    });
+}
+
 function extractFirstMatchingValue(rawData: Record<string, any> | undefined, keywords: string[]): string | null {
   if (!rawData) return null;
 
@@ -417,7 +463,7 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
     const { subject: subj, body: bodyHtml } = renderTemplateWithLead(selectedTemplate, lead);
     const subject = subj;
     
-    // Add links to email body if any
+    // Add links to email body if any - simple style like the image
     let html = bodyHtml;
     const links = selectedTemplate.attachments?.filter(att => att.type === 'link') || [];
     if (links.length > 0) {
@@ -425,13 +471,13 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
         const linkName = link.file_data || link.name;
         const linkUrl = link.name;
         return `
-          <div style="margin: 12px 0; padding: 12px; background-color: #f3f4f6; border-radius: 6px; display: inline-block; max-width: 100%;">
-            <span style="display: inline-block; vertical-align: middle; margin-right: 8px; font-size: 18px;">📁</span>
-            <a href="${linkUrl}" target="_blank" style="color: #2563eb; text-decoration: underline; font-size: 14px; vertical-align: middle;">${linkName}</a>
+          <div style="margin: 8px 0; padding: 12px 16px; background-color: #f0f0f0; border: 1px solid #d1d5db; border-radius: 6px; display: inline-block; max-width: 100%;">
+            <span style="font-size: 18px; margin-right: 8px; vertical-align: middle;">📁</span>
+            <a href="${linkUrl}" target="_blank" style="color: #374151; text-decoration: underline; font-size: 14px; vertical-align: middle;">${linkName}</a>
           </div>
         `;
       }).join('');
-      html = bodyHtml + '<div style="margin-top: 20px;">' + linksHtml + '</div>';
+      html = bodyHtml + '<div style="margin-top: 5px;">' + linksHtml + '</div>';
     }
     
     const text = html
@@ -515,6 +561,7 @@ export interface CustomEmailContent {
   leadId: string;
   subject: string;
   body: string; // HTML body
+  cc?: string; // CC email addresses (comma-separated)
   attachments?: Array<{ name: string; file_data: string; type?: string }>;
 }
 
@@ -590,32 +637,40 @@ export async function sendLeadEmailsWithCustomContent(
         .replace(/&#39;/g, "'")
         .trim();
 
-      // Convert attachments to nodemailer format
-      const emailAttachments = customEmail.attachments?.map(att => {
-        // Remove data URL prefix if present (data:image/png;base64,)
-        const base64Data = att.file_data.includes(',') 
-          ? att.file_data.split(',')[1] 
-          : att.file_data;
-        
-        return {
-          filename: att.name,
-          content: base64Data,
-          encoding: 'base64' as const,
-          contentType: att.type || 'application/octet-stream',
-        };
-      }) || [];
+      // Convert attachments to nodemailer format using shared helper function
+      const emailAttachments = customEmail.attachments && customEmail.attachments.length > 0
+        ? convertAttachmentsToNodemailerFormat(customEmail.attachments)
+        : [];
 
-      const info = await transporter.sendMail({
+      const ccAddresses = customEmail.cc?.split(',').map(addr => addr.trim()).filter(Boolean) || [];
+      
+      const totalSize = emailAttachments.length > 0 ? emailAttachments.reduce((sum, att) => {
+        const size = Buffer.isBuffer(att.content) ? att.content.length : (att.content as string).length;
+        return sum + size;
+      }, 0) : 0;
+      
+      console.log(`[sendLeadEmailsWithCustomContent] Sending email to ${contact.email} with ${emailAttachments.length} attachment(s), total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+      console.log(`[sendLeadEmailsWithCustomContent] CustomEmail attachments input:`, customEmail.attachments?.map(a => ({ name: a.name, hasFileData: !!a.file_data, fileDataLength: a.file_data?.length || 0 })) || []);
+      if (emailAttachments.length > 0) {
+        console.log(`[sendLeadEmailsWithCustomContent] Attachment files:`, emailAttachments.map(a => a.filename));
+      } else {
+        console.log(`[sendLeadEmailsWithCustomContent] No attachments converted - input attachments:`, customEmail.attachments?.length || 0);
+      }
+      
+      const mailOptions = {
         from: defaultFromEmail
           ? `"Ariyana Convention Centre" <${defaultFromEmail}>`
           : '"Ariyana Convention Centre" <marketing@furamavietnam.com>',
         to: contact.email,
+        cc: ccAddresses.length > 0 ? ccAddresses : undefined,
         replyTo: defaultFromEmail || undefined,
         subject: customEmail.subject,
         text: textBody,
         html: customEmail.body,
         attachments: emailAttachments.length > 0 ? emailAttachments : undefined,
-      });
+      };
+      
+      const info = await transporter.sendMail(mailOptions);
       summary.sent += 1;
       summary.successIds?.push(lead.id);
       summary.sentEmails?.push({ 
@@ -673,43 +728,8 @@ export async function sendTestEmail(
       .replace(/&#39;/g, "'")
       .trim();
 
-    // Convert attachments to nodemailer format
-    const emailAttachments = attachments.map(att => {
-      if (!att.file_data || att.file_data.trim() === '') {
-        throw new Error(`Attachment "${att.name}" has no file data`);
-      }
-      
-      // Remove data URL prefix if present (data:image/png;base64,)
-      let base64Data = att.file_data.trim();
-      if (base64Data.includes(',')) {
-        base64Data = base64Data.split(',')[1];
-      }
-      
-      // Validate base64 data
-      if (!base64Data || base64Data.trim() === '') {
-        throw new Error(`Attachment "${att.name}" has invalid base64 data`);
-      }
-      
-      // Use Buffer for better performance with large files
-      try {
-        const buffer = Buffer.from(base64Data, 'base64');
-        console.log(`[sendTestEmail] Attachment "${att.name}": ${(buffer.length / 1024 / 1024).toFixed(2)} MB`);
-        return {
-          filename: att.name,
-          content: buffer,
-          contentType: att.type || 'application/octet-stream',
-        };
-      } catch (bufferError: any) {
-        // Fallback to base64 string if Buffer conversion fails
-        console.warn(`[sendTestEmail] Buffer conversion failed for ${att.name}, using base64 string:`, bufferError.message);
-        return {
-          filename: att.name,
-          content: base64Data,
-          encoding: 'base64' as const,
-          contentType: att.type || 'application/octet-stream',
-        };
-      }
-    });
+    // Convert attachments to nodemailer format using shared helper function
+    const emailAttachments = convertAttachmentsToNodemailerFormat(attachments);
 
     const totalSize = emailAttachments.reduce((sum, att) => {
       const size = Buffer.isBuffer(att.content) ? att.content.length : (att.content as string).length;

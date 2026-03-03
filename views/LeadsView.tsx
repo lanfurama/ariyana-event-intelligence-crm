@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { Lead, EmailTemplate, User, EmailLog } from '../types';
 import { emailLogsApi, emailRepliesApi, emailTemplatesApi, leadsApi } from '../services/apiService';
-import { mapLeadFromDB } from '../utils/leadUtils';
+import { mapLeadFromDB, mapLeadToDB } from '../utils/leadUtils';
 import * as XLSX from 'xlsx';
 import { LeadsSkeleton } from '../components/common/LeadsSkeleton';
 
@@ -55,6 +55,26 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
     const [markingReplies, setMarkingReplies] = useState<Set<string>>(new Set());
     const [sendingEmails, setSendingEmails] = useState(false);
     const [sendingProgress, setSendingProgress] = useState<Record<string, 'pending' | 'sending' | 'sent' | 'failed'>>({});
+    const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+    const [newLeadData, setNewLeadData] = useState<Partial<Lead>>({
+        companyName: '',
+        industry: '',
+        country: '',
+        city: '',
+        website: '',
+        keyPersonName: '',
+        keyPersonTitle: '',
+        keyPersonEmail: '',
+        keyPersonPhone: '',
+        keyPersonLinkedIn: '',
+        status: 'New',
+        notes: '',
+        totalEvents: 0,
+        vietnamEvents: 0,
+    });
+    const [savingLead, setSavingLead] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 20;
 
     const getEmailStatus = (leadId: string) => {
         const log = emailLogs.find(l => l.leadId === leadId);
@@ -127,6 +147,25 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
             return true;
         });
     }, [leads, searchTerm, emailFilter, countryFilter, industryFilter, statusFilter, typeFilter, emailLogs, emailReplies]);
+
+    const paginatedLeads = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredLeads.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredLeads, currentPage]);
+
+    const totalPages = useMemo(() => {
+        return Math.ceil(filteredLeads.length / itemsPerPage);
+    }, [filteredLeads.length]);
+
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(1);
+        }
+    }, [totalPages, currentPage]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, countryFilter, industryFilter, statusFilter, typeFilter, emailFilter]);
 
     useEffect(() => {
         loadEmailLogs();
@@ -206,6 +245,67 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                 newSet.delete(leadId);
                 return newSet;
             });
+        }
+    };
+
+    const handleAddLeadSubmit = async () => {
+        if (!newLeadData.companyName?.trim()) {
+            alert('Vui lòng nhập tên công ty');
+            return;
+        }
+
+        setSavingLead(true);
+        try {
+            const leadToCreate: Lead = {
+                id: `new-${Date.now()}`,
+                companyName: newLeadData.companyName || '',
+                industry: newLeadData.industry || '',
+                country: newLeadData.country || '',
+                city: newLeadData.city || '',
+                website: newLeadData.website || '',
+                keyPersonName: newLeadData.keyPersonName || '',
+                keyPersonTitle: newLeadData.keyPersonTitle || '',
+                keyPersonEmail: newLeadData.keyPersonEmail || '',
+                keyPersonPhone: newLeadData.keyPersonPhone || '',
+                keyPersonLinkedIn: newLeadData.keyPersonLinkedIn || '',
+                status: newLeadData.status || 'New',
+                notes: newLeadData.notes || '',
+                totalEvents: newLeadData.totalEvents || 0,
+                vietnamEvents: newLeadData.vietnamEvents || 0,
+            };
+
+            const mappedLead = mapLeadToDB(leadToCreate);
+            const createdLead = await leadsApi.create(mappedLead);
+            const mappedBack = mapLeadFromDB(createdLead);
+
+            onUpdateLead(mappedBack);
+            if (onRefreshLeads) {
+                await onRefreshLeads();
+            }
+
+            setShowAddLeadModal(false);
+            setNewLeadData({
+                companyName: '',
+                industry: '',
+                country: '',
+                city: '',
+                website: '',
+                keyPersonName: '',
+                keyPersonTitle: '',
+                keyPersonEmail: '',
+                keyPersonPhone: '',
+                keyPersonLinkedIn: '',
+                status: 'New',
+                notes: '',
+                totalEvents: 0,
+                vietnamEvents: 0,
+            });
+            alert('Đã thêm lead thành công!');
+        } catch (error: any) {
+            console.error('Error creating lead:', error);
+            alert(`Lỗi khi thêm lead: ${error.message || 'Unknown error'}`);
+        } finally {
+            setSavingLead(false);
         }
     };
 
@@ -472,7 +572,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 <Mail size={14} className="mr-1.5" /> Send Mail
                             </button>
                             <button
-                                onClick={onAddLead}
+                                onClick={() => setShowAddLeadModal(true)}
                                 className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center shadow-sm"
                             >
                                 <Plus size={14} className="mr-1.5" /> Add Lead
@@ -627,8 +727,8 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
             <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 space-y-2 pr-1 pb-2">
                 {loading ? (
                     <LeadsSkeleton />
-                ) : filteredLeads.length > 0 ? (
-                    filteredLeads.map((lead) => {
+                ) : paginatedLeads.length > 0 ? (
+                    paginatedLeads.map((lead) => {
                         // Generate a consistent color for the company avatar based on the name
                         const getAvatarColor = (name: string) => {
                             const colors = [
@@ -837,6 +937,59 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                 )}
             </div>
 
+            {filteredLeads.length > itemsPerPage && (
+                <div className="bg-white border border-slate-200 rounded-lg px-4 py-3 shrink-0 shadow-sm flex items-center justify-between">
+                    <div className="text-xs text-slate-600">
+                        Showing <span className="font-semibold text-slate-900">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
+                        <span className="font-semibold text-slate-900">{Math.min(currentPage * itemsPerPage, filteredLeads.length)}</span> of{' '}
+                        <span className="font-semibold text-slate-900">{filteredLeads.length}</span> leads
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-300 rounded-lg text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                        >
+                            Previous
+                        </button>
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum;
+                                if (totalPages <= 5) {
+                                    pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                    pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                    pageNum = totalPages - 4 + i;
+                                } else {
+                                    pageNum = currentPage - 2 + i;
+                                }
+                                return (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                                            currentPage === pageNum
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-3 py-1.5 text-xs font-semibold bg-white border border-slate-300 rounded-lg text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {showEmailModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
@@ -1018,6 +1171,229 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                     )}
                                 </button>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Lead Modal */}
+            {showAddLeadModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+                            <div>
+                                <h2 className="text-2xl font-bold text-slate-900">Thêm Lead Mới</h2>
+                                <p className="text-sm text-slate-600 mt-1">Nhập thông tin lead mới</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowAddLeadModal(false);
+                                    setNewLeadData({
+                                        companyName: '',
+                                        industry: '',
+                                        country: '',
+                                        city: '',
+                                        website: '',
+                                        keyPersonName: '',
+                                        keyPersonTitle: '',
+                                        keyPersonEmail: '',
+                                        keyPersonPhone: '',
+                                        keyPersonLinkedIn: '',
+                                        status: 'New',
+                                        notes: '',
+                                        totalEvents: 0,
+                                        vietnamEvents: 0,
+                                    });
+                                }}
+                                className="text-slate-400 p-2 rounded-lg hover:bg-slate-100"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2">
+                                        <label className="text-xs font-medium text-slate-500 block mb-1">
+                                            Tên Công Ty <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={newLeadData.companyName || ''}
+                                            onChange={(e) => setNewLeadData({ ...newLeadData, companyName: e.target.value })}
+                                            className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="Nhập tên công ty"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500 block mb-1">Ngành</label>
+                                        <input
+                                            type="text"
+                                            value={newLeadData.industry || ''}
+                                            onChange={(e) => setNewLeadData({ ...newLeadData, industry: e.target.value })}
+                                            className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="Nhập ngành"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500 block mb-1">Quốc Gia</label>
+                                        <input
+                                            type="text"
+                                            value={newLeadData.country || ''}
+                                            onChange={(e) => setNewLeadData({ ...newLeadData, country: e.target.value })}
+                                            className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="Nhập quốc gia"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500 block mb-1">Thành Phố</label>
+                                        <input
+                                            type="text"
+                                            value={newLeadData.city || ''}
+                                            onChange={(e) => setNewLeadData({ ...newLeadData, city: e.target.value })}
+                                            className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="Nhập thành phố"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500 block mb-1">Website</label>
+                                        <input
+                                            type="text"
+                                            value={newLeadData.website || ''}
+                                            onChange={(e) => setNewLeadData({ ...newLeadData, website: e.target.value })}
+                                            className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="https://example.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500 block mb-1">Trạng Thái</label>
+                                        <select
+                                            value={newLeadData.status || 'New'}
+                                            onChange={(e) => setNewLeadData({ ...newLeadData, status: e.target.value as Lead['status'] })}
+                                            className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        >
+                                            <option value="New">New</option>
+                                            <option value="Contacted">Contacted</option>
+                                            <option value="Qualified">Qualified</option>
+                                            <option value="Won">Won</option>
+                                            <option value="Lost">Lost</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="border-t pt-4 mt-4">
+                                    <h4 className="text-sm font-bold text-slate-900 mb-3">Thông Tin Liên Hệ</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-medium text-slate-500 block mb-1">Tên Người Liên Hệ</label>
+                                            <input
+                                                type="text"
+                                                value={newLeadData.keyPersonName || ''}
+                                                onChange={(e) => setNewLeadData({ ...newLeadData, keyPersonName: e.target.value })}
+                                                className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="Nhập tên"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-medium text-slate-500 block mb-1">Chức Danh</label>
+                                            <input
+                                                type="text"
+                                                value={newLeadData.keyPersonTitle || ''}
+                                                onChange={(e) => setNewLeadData({ ...newLeadData, keyPersonTitle: e.target.value })}
+                                                className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="Nhập chức danh"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-medium text-slate-500 block mb-1">Email</label>
+                                            <input
+                                                type="email"
+                                                value={newLeadData.keyPersonEmail || ''}
+                                                onChange={(e) => setNewLeadData({ ...newLeadData, keyPersonEmail: e.target.value })}
+                                                className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="email@example.com"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-medium text-slate-500 block mb-1">Số Điện Thoại</label>
+                                            <input
+                                                type="text"
+                                                value={newLeadData.keyPersonPhone || ''}
+                                                onChange={(e) => setNewLeadData({ ...newLeadData, keyPersonPhone: e.target.value })}
+                                                className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="+84..."
+                                            />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className="text-xs font-medium text-slate-500 block mb-1">LinkedIn</label>
+                                            <input
+                                                type="text"
+                                                value={newLeadData.keyPersonLinkedIn || ''}
+                                                onChange={(e) => setNewLeadData({ ...newLeadData, keyPersonLinkedIn: e.target.value })}
+                                                className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="LinkedIn URL"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="border-t pt-4 mt-4">
+                                    <label className="text-xs font-medium text-slate-500 block mb-1">Ghi Chú</label>
+                                    <textarea
+                                        rows={3}
+                                        value={newLeadData.notes || ''}
+                                        onChange={(e) => setNewLeadData({ ...newLeadData, notes: e.target.value })}
+                                        className="w-full p-2 text-sm bg-white text-slate-900 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="Nhập ghi chú..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+                            <button
+                                onClick={() => {
+                                    setShowAddLeadModal(false);
+                                    setNewLeadData({
+                                        companyName: '',
+                                        industry: '',
+                                        country: '',
+                                        city: '',
+                                        website: '',
+                                        keyPersonName: '',
+                                        keyPersonTitle: '',
+                                        keyPersonEmail: '',
+                                        keyPersonPhone: '',
+                                        keyPersonLinkedIn: '',
+                                        status: 'New',
+                                        notes: '',
+                                        totalEvents: 0,
+                                        vietnamEvents: 0,
+                                    });
+                                }}
+                                className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold"
+                                disabled={savingLead}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleAddLeadSubmit}
+                                disabled={savingLead || !newLeadData.companyName?.trim()}
+                                className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {savingLead ? (
+                                    <>
+                                        <Loader2 size={16} className="mr-2 animate-spin" />
+                                        Đang lưu...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Plus size={16} className="mr-2" />
+                                        Thêm Lead
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -64,9 +64,13 @@ export class EmailTemplateModel {
   // Email Template Attachments
   static async getAttachments(templateId: string): Promise<EmailTemplateAttachment[]> {
     const result = await query(
-      'SELECT * FROM email_template_attachments WHERE template_id = $1 ORDER BY created_at',
+      'SELECT id, template_id, name, size, type, file_data, created_at FROM email_template_attachments WHERE template_id = $1 ORDER BY created_at',
       [templateId]
     );
+    console.log(`[getAttachments] Found ${result.rows.length} attachments for template ${templateId}`);
+    result.rows.forEach((att, idx) => {
+      console.log(`[getAttachments] Attachment ${idx + 1}: name=${att.name}, type=${att.type}, hasFileData=${!!att.file_data}, fileDataLength=${att.file_data?.length || 0}`);
+    });
     return result.rows;
   }
 

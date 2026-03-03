@@ -103,7 +103,13 @@ router.delete('/:id', async (req: Request, res: Response) => {
 // POST /api/leads/send-email - Send single email (for progress UX)
 router.post('/send-email', async (req: Request, res: Response) => {
   try {
-    const { leadId, subject, body } = req.body as { leadId?: string; subject?: string; body?: string };
+    const { leadId, subject, body, cc, attachments } = req.body as { 
+      leadId?: string; 
+      subject?: string; 
+      body?: string; 
+      cc?: string;
+      attachments?: Array<{ name: string; file_data: string; type?: string }>;
+    };
     if (!leadId || !subject || !body) {
       return res.status(400).json({ error: 'leadId, subject, and body are required.' });
     }
@@ -118,7 +124,7 @@ router.post('/send-email', async (req: Request, res: Response) => {
 
     const summary = await sendLeadEmailsWithCustomContent(
       [lead],
-      [{ leadId, subject, body }]
+      [{ leadId, subject, body, cc, attachments }]
     );
 
     if (summary.sent === 0 && summary.failures?.length) {

@@ -140,10 +140,10 @@ export const leadsApi = {
       body: JSON.stringify({ leadIds, emails }),
     });
   },
-  sendEmail: (leadId: string, subject: string, body: string) => {
+  sendEmail: (leadId: string, subject: string, body: string, cc?: string, attachments?: Array<{ name: string; file_data: string; type: string }>) => {
     return apiCall<{ success: boolean; summary: any; updatedLead?: Lead }>('/leads/send-email', {
       method: 'POST',
-      body: JSON.stringify({ leadId, subject, body }),
+      body: JSON.stringify({ leadId, subject, body, cc, attachments }),
     });
   },
 };

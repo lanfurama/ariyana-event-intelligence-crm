@@ -293,20 +293,20 @@ export const EmailTemplatesView = () => {
       
       const links = attachments.filter(att => att.is_link);
       
-      // Add links to email body if any - simple link boxes like the image
+      // Add links to email body if any - simple style like the image
       let emailBody = body;
       if (links.length > 0) {
         const linksHtml = links.map(link => {
           const linkName = link.file_data || link.name;
           const linkUrl = link.name;
           return `
-            <div style="margin: 12px 0; padding: 12px; background-color: #f3f4f6; border-radius: 6px; display: inline-block; max-width: 100%;">
-              <span style="display: inline-block; vertical-align: middle; margin-right: 8px; font-size: 18px;">📁</span>
-              <a href="${linkUrl}" target="_blank" style="color: #2563eb; text-decoration: underline; font-size: 14px; vertical-align: middle;">${linkName}</a>
+            <div style="margin: 8px 0; padding: 12px 16px; background-color: #f0f0f0; border: 1px solid #d1d5db; border-radius: 6px; display: inline-block; max-width: 100%;">
+              <span style="font-size: 18px; margin-right: 8px; vertical-align: middle;">📁</span>
+              <a href="${linkUrl}" target="_blank" style="color: #374151; text-decoration: underline; font-size: 14px; vertical-align: middle;">${linkName}</a>
             </div>
           `;
         }).join('');
-        emailBody = body + '<div style="margin-top: 20px;">' + linksHtml + '</div>';
+        emailBody = body + '<div style="margin-top: 5px;">' + linksHtml + '</div>';
       }
       
       console.log(`Sending test email with ${fileAttachments.length} file attachment(s) and ${links.length} link(s)...`);
@@ -395,17 +395,56 @@ export const EmailTemplatesView = () => {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-blue-900 mb-2 flex items-center">
           <Sparkles size={16} className="mr-2" />
-          Available Variables
+          Biến có sẵn (Variables)
         </h3>
         <p className="text-xs text-blue-700 mb-2">
-          Use these placeholders in your templates (they will be replaced with actual lead data):
+          Sử dụng các biến này trong template email. Khi gửi email, hệ thống sẽ tự động thay thế bằng thông tin thực tế của lead:
         </p>
-        <div className="flex flex-wrap gap-2">
-          {['{{companyName}}', '{{keyPersonName}}', '{{keyPersonTitle}}', '{{city}}', '{{country}}', '{{industry}}'].map((varName) => (
-            <code key={varName} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono">
-              {varName}
-            </code>
-          ))}
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { var: '{{companyName}}', desc: 'Tên công ty' },
+              { var: '{{keyPersonName}}', desc: 'Tên người liên hệ' },
+              { var: '{{keyPersonTitle}}', desc: 'Chức danh' },
+              { var: '{{city}}', desc: 'Thành phố' },
+              { var: '{{country}}', desc: 'Quốc gia' },
+              { var: '{{industry}}', desc: 'Ngành nghề' }
+            ].map((item) => (
+              <div key={item.var} className="flex items-center gap-1.5 px-2 py-1 bg-blue-100 rounded">
+                <code className="text-blue-800 text-xs font-mono">{item.var}</code>
+                <span className="text-blue-600 text-[10px]">({item.desc})</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 pt-3 border-t border-blue-200">
+            <p className="text-xs font-semibold text-blue-800 mb-2">Ví dụ sử dụng:</p>
+            <div className="text-xs text-blue-700 space-y-2">
+              <div>
+                <p className="font-semibold mb-1">Template:</p>
+                <div className="bg-white border border-blue-200 rounded p-2 space-y-1">
+                  <p><strong>Subject:</strong> <code className="bg-blue-50 px-1 rounded">{'Xin chào {{keyPersonName}} từ {{companyName}}'}</code></p>
+                  <p><strong>Body:</strong> <code className="bg-blue-50 px-1 rounded">{'Kính gửi Anh/Chị {{keyPersonName}}, {{keyPersonTitle}} tại {{companyName}}, {{city}}, {{country}}...'}</code></p>
+                </div>
+              </div>
+              <div>
+                <p className="font-semibold mb-1">Với lead mẫu:</p>
+                <div className="bg-white border border-blue-200 rounded p-2 text-[11px] space-y-0.5">
+                  <p>• Tên công ty: <span className="font-semibold">ABC Corporation</span></p>
+                  <p>• Người liên hệ: <span className="font-semibold">Nguyễn Văn A</span></p>
+                  <p>• Chức danh: <span className="font-semibold">Giám đốc Marketing</span></p>
+                  <p>• Thành phố: <span className="font-semibold">Hà Nội</span></p>
+                  <p>• Quốc gia: <span className="font-semibold">Việt Nam</span></p>
+                </div>
+              </div>
+              <div>
+                <p className="font-semibold mb-1">Kết quả sau khi thay thế:</p>
+                <div className="bg-green-50 border border-green-200 rounded p-2 space-y-1">
+                  <p><strong>Subject:</strong> <span className="text-green-800">Xin chào Nguyễn Văn A từ ABC Corporation</span></p>
+                  <p><strong>Body:</strong> <span className="text-green-800">Kính gửi Anh/Chị Nguyễn Văn A, Giám đốc Marketing tại ABC Corporation, Hà Nội, Việt Nam...</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
