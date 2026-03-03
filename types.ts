@@ -135,12 +135,25 @@ export interface EmailTemplate {
   subject: string;
   body: string;
   leadType?: string; // 'CORP', 'DMC', or undefined for default templates
+  attachments?: EmailTemplateAttachment[];
+}
+
+export interface EmailTemplateAttachment {
+  id?: number;
+  template_id: string;
+  name: string;
+  size: number;
+  type: string;
+  file_data?: string; // Base64 encoded file content
+  created_at?: Date;
 }
 
 export interface Attachment {
   name: string;
   size: number;
   type: string;
+  file_data?: string; // Base64 encoded file content for uploads
+  is_link?: boolean; // If true, name contains the link URL
 }
 
 export type UserRole = 'Director' | 'Sales' | 'Viewer';

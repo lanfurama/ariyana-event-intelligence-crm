@@ -50,10 +50,9 @@ export const EmailView: React.FC<EmailViewProps> = ({ user }) => {
         </div>
       </div>
 
-      <div className="flex-1">
-        {subTab === 'templates' && <EmailTemplatesView />}
-        {subTab === 'reports' && isDirector && <EmailReportsView />}
-      </div>
+      <div className="flex-1"></div>
+      {subTab === 'templates' && <EmailTemplatesView />}
+      {subTab === 'reports' && isDirector && <EmailReportsView />}
     </div>
   );
 };

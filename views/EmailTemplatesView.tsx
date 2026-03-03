@@ -13,7 +13,7 @@ import {
   Mail,
   Loader2
 } from 'lucide-react';
-import { EmailTemplate } from '../types';
+import { EmailTemplate, EmailTemplateAttachment, Attachment } from '../types';
 import { emailTemplatesApi } from '../services/apiService';
 
 export const EmailTemplatesView = () => {
@@ -25,8 +25,12 @@ export const EmailTemplatesView = () => {
   const [formData, setFormData] = useState({ name: '', subject: '', body: '', leadType: '' });
   const [formErrors, setFormErrors] = useState<{ name?: string; subject?: string; body?: string }>({});
   const [testEmail, setTestEmail] = useState('');
+  const [testCc, setTestCc] = useState('');
   const [sendingTest, setSendingTest] = useState(false);
   const [bodyViewMode, setBodyViewMode] = useState<'code' | 'preview'>('preview');
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachmentLink, setAttachmentLink] = useState('');
+  const [attachmentLinkName, setAttachmentLinkName] = useState('');
   const contentEditableRef = useRef<HTMLDivElement>(null);
   const isInternalEditRef = useRef(false);
 
@@ -70,6 +74,8 @@ export const EmailTemplatesView = () => {
     setLoading(true);
     try {
       const data = await emailTemplatesApi.getAll();
+      console.log('Loaded templates:', data);
+      console.log('Templates with attachments:', data.map(t => ({ id: t.id, name: t.name, attachmentsCount: t.attachments?.length || 0 })));
       setTemplates(data);
     } catch (error) {
       console.error('Error loading templates:', error);
@@ -85,6 +91,9 @@ export const EmailTemplatesView = () => {
     setFormErrors({});
     setBodyViewMode('preview');
     setTestEmail('');
+    setAttachments([]);
+    setAttachmentLink('');
+    setAttachmentLinkName('');
     setShowModal(true);
     // Reset internal edit flag when opening modal
     isInternalEditRef.current = false;
@@ -101,7 +110,37 @@ export const EmailTemplatesView = () => {
     setFormErrors({});
     setBodyViewMode('preview');
     setTestEmail('');
+    setTestCc('');
     setShowModal(true);
+    
+    // Load attachments (both files and links)
+    if (template.attachments && template.attachments.length > 0) {
+      setAttachments(template.attachments.map(att => {
+        // Check if it's a link (type === 'link')
+        if (att.type === 'link') {
+          return {
+            name: att.name, // URL
+            size: 0,
+            type: 'link',
+            file_data: att.file_data || att.name, // Display name
+            is_link: true,
+          };
+        } else {
+          return {
+            name: att.name,
+            size: att.size,
+            type: att.type,
+            file_data: att.file_data,
+            is_link: false,
+          };
+        }
+      }));
+    } else {
+      setAttachments([]);
+    }
+    setAttachmentLink('');
+    setAttachmentLinkName('');
+    
     // Reset internal edit flag when opening modal
     isInternalEditRef.current = false;
   };
@@ -140,6 +179,30 @@ export const EmailTemplatesView = () => {
     if (!validateForm()) return;
 
     try {
+      // Save both file attachments and links
+      const attachmentsData = attachments.map(att => {
+        if (att.is_link) {
+          // For links: name = URL, file_data = display name
+          const displayName = att.file_data && att.file_data.trim() ? att.file_data.trim() : att.name;
+          return {
+            name: att.name, // URL
+            size: 0,
+            type: 'link',
+            file_data: displayName, // Display name
+          };
+        } else {
+          // For files: normal attachment
+          return {
+            name: att.name,
+            size: att.size,
+            type: att.type,
+            file_data: att.file_data || '',
+          };
+        }
+      });
+      
+      console.log('Saving attachments:', attachmentsData);
+
       if (editingTemplate) {
         // Update existing
         await emailTemplatesApi.update(editingTemplate.id, {
@@ -147,6 +210,7 @@ export const EmailTemplatesView = () => {
           subject: formData.subject.trim(),
           body: formData.body.trim(),
           leadType: formData.leadType ? formData.leadType : undefined,
+          attachments: attachmentsData,
         });
       } else {
         // Create new
@@ -156,6 +220,7 @@ export const EmailTemplatesView = () => {
           subject: formData.subject.trim(),
           body: formData.body.trim(),
           leadType: formData.leadType ? formData.leadType : undefined,
+          attachments: attachmentsData,
         };
         await emailTemplatesApi.create(newTemplate);
       }
@@ -164,6 +229,7 @@ export const EmailTemplatesView = () => {
       setShowModal(false);
       setFormData({ name: '', subject: '', body: '', leadType: '' });
       setEditingTemplate(null);
+      setAttachments([]);
     } catch (error) {
       console.error('Error saving template:', error);
       alert('Failed to save template');
@@ -177,6 +243,10 @@ export const EmailTemplatesView = () => {
     setFormErrors({});
     setBodyViewMode('preview');
     setTestEmail('');
+    setTestCc('');
+    setAttachments([]);
+    setAttachmentLink('');
+    setAttachmentLinkName('');
   };
 
   const handleSendTest = async () => {
@@ -198,16 +268,106 @@ export const EmailTemplatesView = () => {
       alert('Invalid email address');
       return;
     }
+    
+    // Validate CC emails if provided
+    let ccEmails: string[] = [];
+    if (testCc.trim()) {
+      const ccList = testCc.split(',').map(e => e.trim()).filter(e => e);
+      for (const ccEmail of ccList) {
+        if (!emailRegex.test(ccEmail)) {
+          alert(`Invalid CC email address: ${ccEmail}`);
+          return;
+        }
+      }
+      ccEmails = ccList;
+    }
+    
     setSendingTest(true);
     try {
-      await emailTemplatesApi.sendTest(email, formData.subject, body);
+      // Separate file attachments and links
+      const fileAttachments = attachments.filter(att => !att.is_link).map(att => ({
+        name: att.name,
+        file_data: att.file_data || '',
+        type: att.type,
+      }));
+      
+      const links = attachments.filter(att => att.is_link);
+      
+      // Add links to email body if any - simple link boxes like the image
+      let emailBody = body;
+      if (links.length > 0) {
+        const linksHtml = links.map(link => {
+          const linkName = link.file_data || link.name;
+          const linkUrl = link.name;
+          return `
+            <div style="margin: 12px 0; padding: 12px; background-color: #f3f4f6; border-radius: 6px; display: inline-block; max-width: 100%;">
+              <span style="display: inline-block; vertical-align: middle; margin-right: 8px; font-size: 18px;">📁</span>
+              <a href="${linkUrl}" target="_blank" style="color: #2563eb; text-decoration: underline; font-size: 14px; vertical-align: middle;">${linkName}</a>
+            </div>
+          `;
+        }).join('');
+        emailBody = body + '<div style="margin-top: 20px;">' + linksHtml + '</div>';
+      }
+      
+      console.log(`Sending test email with ${fileAttachments.length} file attachment(s) and ${links.length} link(s)...`);
+      await emailTemplatesApi.sendTest(email, formData.subject, emailBody, fileAttachments, ccEmails);
       alert('Test email sent successfully');
     } catch (error: any) {
       console.error('Send test email error:', error);
-      alert(error?.message || 'Failed to send test email');
+      const errorMessage = error?.message || 'Failed to send test email';
+      if (errorMessage.includes('timeout')) {
+        alert('Email sending timed out. The attachments may be too large. Please try with smaller files or use links instead.');
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setSendingTest(false);
     }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setAttachments([...attachments, {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          file_data: base64,
+          is_link: false,
+        }]);
+      };
+      reader.onerror = () => {
+        alert(`Error reading file "${file.name}". Please try again.`);
+        e.target.value = '';
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = ''; // Reset input
+  };
+
+  const handleAddLink = () => {
+    if (!attachmentLink.trim()) {
+      alert('Please enter a link URL');
+      return;
+    }
+    if (!attachmentLinkName.trim()) {
+      alert('Please enter a name for the link');
+      return;
+    }
+    
+    setAttachments([...attachments, {
+      name: attachmentLink.trim(),
+      size: 0,
+      type: 'link',
+      is_link: true,
+      file_data: attachmentLinkName.trim(),
+    }]);
+    setAttachmentLink('');
+    setAttachmentLinkName('');
   };
 
   return (
@@ -275,7 +435,6 @@ export const EmailTemplatesView = () => {
                 <tr>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">Name</th>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">Subject</th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">Body Preview</th>
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600 text-right">Actions</th>
                 </tr>
               </thead>
@@ -287,11 +446,6 @@ export const EmailTemplatesView = () => {
                     </td>
                     <td className="px-4 py-4">
                       <div className="text-sm text-slate-700 max-w-md truncate">{template.subject}</div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="text-sm text-slate-600 max-w-md line-clamp-2">
-                        {template.body.substring(0, 100)}...
-                      </div>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-end gap-2">
@@ -394,6 +548,102 @@ export const EmailTemplatesView = () => {
                 <p className="text-xs text-slate-500 mt-1">
                   Select a lead type to assign this template to CORP, DMC, HPNY2026, or LEAD2026FEB_THAIACC leads. Leave empty for default templates.
                 </p>
+              </div>
+
+              {/* Attachments */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-slate-700">
+                    File Attachments / Links (Optional)
+                  </label>
+                  <div className="flex gap-2">
+                    <label className="cursor-pointer text-xs text-indigo-600 flex items-center hover:text-indigo-700">
+                      <Plus size={14} className="mr-1" /> Add File
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                        multiple
+                      />
+                    </label>
+                  </div>
+                </div>
+                
+                {/* Add Link Section */}
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={attachmentLinkName}
+                      onChange={(e) => setAttachmentLinkName(e.target.value)}
+                      placeholder="Link name (e.g., Download Brochure)"
+                      className="flex-1 px-3 py-2 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    />
+                    <input
+                      type="url"
+                      value={attachmentLink}
+                      onChange={(e) => setAttachmentLink(e.target.value)}
+                      placeholder="Google Drive link or URL"
+                      className="flex-1 px-3 py-2 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddLink}
+                      className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                    >
+                      Add Link
+                    </button>
+                  </div>
+                </div>
+
+                {attachments.length > 0 ? (
+                  <div className="space-y-2">
+                    {attachments.map((file, idx) => {
+                      if (file.is_link) {
+                        return (
+                          <div key={idx} className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-blue-900 truncate">{file.file_data}</div>
+                              <a href={file.name} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline truncate block">
+                                {file.name}
+                              </a>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                              className="ml-2 text-slate-400 hover:text-red-600 p-1"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        );
+                      }
+                      const sizeInMB = file.size / (1024 * 1024);
+                      const sizeDisplay = sizeInMB >= 1 
+                        ? `${sizeInMB.toFixed(2)} MB` 
+                        : `${(file.size / 1024).toFixed(2)} KB`;
+                      return (
+                        <div key={idx} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-slate-900 truncate">{file.name}</div>
+                            <div className="text-xs text-slate-500">
+                              {sizeDisplay} • {file.type || 'Unknown type'}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                            className="ml-2 text-slate-400 hover:text-red-600 p-1"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 italic py-2">No files or links attached. Add files or links above.</p>
+                )}
               </div>
 
               {/* Body */}
@@ -505,24 +755,38 @@ export const EmailTemplatesView = () => {
             </div>
 
             <div className="p-4 border-t border-slate-200 space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-slate-600">Send this template to:</span>
-                <input
-                  type="email"
-                  value={testEmail}
-                  onChange={(e) => setTestEmail(e.target.value)}
-                  placeholder="email@example.com"
-                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm w-48 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={(e) => { e.preventDefault(); handleSendTest(); }}
-                  disabled={sendingTest}
-                  className="px-3 py-2 text-indigo-600 border border-indigo-300 rounded-lg text-sm font-medium inline-flex items-center hover:bg-indigo-50 disabled:opacity-50"
-                >
-                  {sendingTest ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Mail size={16} className="mr-1" />}
-                  Send Test
-                </button>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-slate-600">Send this template to:</span>
+                  <input
+                    type="email"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    placeholder="email@example.com"
+                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm w-48 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-slate-600">CC (optional):</span>
+                  <input
+                    type="text"
+                    value={testCc}
+                    onChange={(e) => setTestCc(e.target.value)}
+                    placeholder="email1@example.com, email2@example.com"
+                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm flex-1 min-w-48 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); handleSendTest(); }}
+                    disabled={sendingTest}
+                    className="px-3 py-2 text-indigo-600 border border-indigo-300 rounded-lg text-sm font-medium inline-flex items-center hover:bg-indigo-50 disabled:opacity-50"
+                  >
+                    {sendingTest ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Mail size={16} className="mr-1" />}
+                    Send Test
+                  </button>
+                </div>
               </div>
               <div className="flex justify-end gap-3">
                 <button

@@ -152,10 +152,11 @@ export const leadsApi = {
 export const emailTemplatesApi = {
   getAll: async () => {
     const templates = await apiCall<any[]>('/email-templates');
-    // Map lead_type to leadType for frontend
+    // Map lead_type to leadType for frontend, keep attachments
     return templates.map(t => ({
       ...t,
       leadType: t.lead_type,
+      attachments: t.attachments || [],
     }));
   },
   getById: async (id: string) => {
@@ -165,37 +166,49 @@ export const emailTemplatesApi = {
       leadType: template.lead_type,
     };
   },
-  create: (template: EmailTemplate) => {
+  create: async (template: EmailTemplate) => {
     // Map leadType to lead_type for backend
     const backendTemplate = {
       ...template,
       lead_type: template.leadType,
     };
     delete backendTemplate.leadType;
-    return apiCall<EmailTemplate>('/email-templates', {
+    const result = await apiCall<any>('/email-templates', {
       method: 'POST',
       body: JSON.stringify(backendTemplate),
     });
+    // Map lead_type to leadType for frontend, keep attachments
+    return {
+      ...result,
+      leadType: result.lead_type,
+      attachments: result.attachments || [],
+    };
   },
-  update: (id: string, template: Partial<EmailTemplate>) => {
+  update: async (id: string, template: Partial<EmailTemplate>) => {
     // Map leadType to lead_type for backend
     const backendTemplate: any = { ...template };
     if (template.leadType !== undefined) {
       backendTemplate.lead_type = template.leadType;
       delete backendTemplate.leadType;
     }
-    return apiCall<EmailTemplate>(`/email-templates/${id}`, {
+    const result = await apiCall<any>(`/email-templates/${id}`, {
       method: 'PUT',
       body: JSON.stringify(backendTemplate),
     });
+    // Map lead_type to leadType for frontend, keep attachments
+    return {
+      ...result,
+      leadType: result.lead_type,
+      attachments: result.attachments || [],
+    };
   },
   delete: (id: string) => apiCall<void>(`/email-templates/${id}`, {
     method: 'DELETE',
   }),
-  sendTest: (to: string, subject: string, body: string) =>
+  sendTest: (to: string, subject: string, body: string, attachments?: Array<{ name: string; file_data: string; type?: string }>, cc?: string[]) =>
     apiCall<{ success: boolean }>('/email-templates/send-test', {
       method: 'POST',
-      body: JSON.stringify({ to, subject, body }),
+      body: JSON.stringify({ to, subject, body, attachments: attachments || [], cc: cc || [] }),
     }),
 };
 

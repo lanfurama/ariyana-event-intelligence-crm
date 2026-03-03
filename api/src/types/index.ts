@@ -21,6 +21,16 @@ export interface EmailTemplate {
   updated_at?: Date;
 }
 
+export interface EmailTemplateAttachment {
+  id?: number;
+  template_id: string;
+  name: string;
+  size: number;
+  type: string;
+  file_data: string; // Base64 encoded file content
+  created_at?: Date;
+}
+
 export interface Lead {
   id: string;
   company_name: string;

@@ -70,6 +70,14 @@ export function getTransporter(): nodemailer.Transporter | null {
       user: emailUser,
       pass: emailPassword,
     },
+    // No timeout - let it take as long as needed for large attachments
+    connectionTimeout: 0,
+    greetingTimeout: 0,
+    socketTimeout: 0,
+    // Increase max messages per connection for better performance
+    pool: true,
+    maxConnections: 1,
+    maxMessages: 3,
   });
 
   return cachedTransporter;
@@ -373,6 +381,13 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
   }
 
   const templates = await EmailTemplateModel.getAll();
+  // Load attachments for all templates
+  const templatesWithAttachments = await Promise.all(
+    templates.map(async (template) => {
+      const attachments = await EmailTemplateModel.getAttachments(template.id);
+      return { ...template, attachments };
+    })
+  );
 
   for (const lead of leads) {
     const contact = buildLeadContactInfo(lead);
@@ -387,7 +402,7 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
       continue;
     }
 
-    const selectedTemplate = selectTemplateForLead(lead, templates);
+    const selectedTemplate = selectTemplateForLead(lead, templatesWithAttachments);
     if (!selectedTemplate) {
       summary.failures.push({
         eventName: lead.company_name,
@@ -401,8 +416,25 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
 
     const { subject: subj, body: bodyHtml } = renderTemplateWithLead(selectedTemplate, lead);
     const subject = subj;
-    const html = bodyHtml;
-    const text = bodyHtml
+    
+    // Add links to email body if any
+    let html = bodyHtml;
+    const links = selectedTemplate.attachments?.filter(att => att.type === 'link') || [];
+    if (links.length > 0) {
+      const linksHtml = links.map(link => {
+        const linkName = link.file_data || link.name;
+        const linkUrl = link.name;
+        return `
+          <div style="margin: 12px 0; padding: 12px; background-color: #f3f4f6; border-radius: 6px; display: inline-block; max-width: 100%;">
+            <span style="display: inline-block; vertical-align: middle; margin-right: 8px; font-size: 18px;">📁</span>
+            <a href="${linkUrl}" target="_blank" style="color: #2563eb; text-decoration: underline; font-size: 14px; vertical-align: middle;">${linkName}</a>
+          </div>
+        `;
+      }).join('');
+      html = bodyHtml + '<div style="margin-top: 20px;">' + linksHtml + '</div>';
+    }
+    
+    const text = html
       .replace(/<[^>]*>/g, '')
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
@@ -411,6 +443,32 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'")
       .trim();
+
+    // Convert file attachments to nodemailer format (exclude links)
+    const emailAttachments = selectedTemplate.attachments?.filter(att => att.type !== 'link').map(att => {
+      // Remove data URL prefix if present (data:image/png;base64,)
+      const base64Data = att.file_data?.includes(',') 
+        ? att.file_data.split(',')[1] 
+        : att.file_data;
+      
+      if (!base64Data) return null;
+      
+      try {
+        const buffer = Buffer.from(base64Data, 'base64');
+        return {
+          filename: att.name,
+          content: buffer,
+          contentType: att.type || 'application/octet-stream',
+        };
+      } catch {
+        return {
+          filename: att.name,
+          content: base64Data,
+          encoding: 'base64' as const,
+          contentType: att.type || 'application/octet-stream',
+        };
+      }
+    }).filter(Boolean) || [];
 
     try {
       const info = await transporter.sendMail({
@@ -422,6 +480,7 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
         subject,
         text,
         html,
+        attachments: emailAttachments.length > 0 ? emailAttachments as any[] : undefined,
       });
       summary.sent += 1;
       summary.successIds?.push(lead.id);
@@ -456,6 +515,7 @@ export interface CustomEmailContent {
   leadId: string;
   subject: string;
   body: string; // HTML body
+  attachments?: Array<{ name: string; file_data: string; type?: string }>;
 }
 
 export async function sendLeadEmailsWithCustomContent(
@@ -530,6 +590,21 @@ export async function sendLeadEmailsWithCustomContent(
         .replace(/&#39;/g, "'")
         .trim();
 
+      // Convert attachments to nodemailer format
+      const emailAttachments = customEmail.attachments?.map(att => {
+        // Remove data URL prefix if present (data:image/png;base64,)
+        const base64Data = att.file_data.includes(',') 
+          ? att.file_data.split(',')[1] 
+          : att.file_data;
+        
+        return {
+          filename: att.name,
+          content: base64Data,
+          encoding: 'base64' as const,
+          contentType: att.type || 'application/octet-stream',
+        };
+      }) || [];
+
       const info = await transporter.sendMail({
         from: defaultFromEmail
           ? `"Ariyana Convention Centre" <${defaultFromEmail}>`
@@ -539,6 +614,7 @@ export async function sendLeadEmailsWithCustomContent(
         subject: customEmail.subject,
         text: textBody,
         html: customEmail.body,
+        attachments: emailAttachments.length > 0 ? emailAttachments : undefined,
       });
       summary.sent += 1;
       summary.successIds?.push(lead.id);
@@ -572,7 +648,9 @@ export async function sendLeadEmailsWithCustomContent(
 export async function sendTestEmail(
   to: string,
   subject: string,
-  body: string
+  body: string,
+  attachments: Array<{ name: string; file_data: string; type?: string }> = [],
+  cc: string[] = []
 ): Promise<{ success: boolean; error?: string }> {
   const transporter = getTransporter();
   if (!transporter) {
@@ -595,18 +673,73 @@ export async function sendTestEmail(
       .replace(/&#39;/g, "'")
       .trim();
 
-    await transporter.sendMail({
+    // Convert attachments to nodemailer format
+    const emailAttachments = attachments.map(att => {
+      if (!att.file_data || att.file_data.trim() === '') {
+        throw new Error(`Attachment "${att.name}" has no file data`);
+      }
+      
+      // Remove data URL prefix if present (data:image/png;base64,)
+      let base64Data = att.file_data.trim();
+      if (base64Data.includes(',')) {
+        base64Data = base64Data.split(',')[1];
+      }
+      
+      // Validate base64 data
+      if (!base64Data || base64Data.trim() === '') {
+        throw new Error(`Attachment "${att.name}" has invalid base64 data`);
+      }
+      
+      // Use Buffer for better performance with large files
+      try {
+        const buffer = Buffer.from(base64Data, 'base64');
+        console.log(`[sendTestEmail] Attachment "${att.name}": ${(buffer.length / 1024 / 1024).toFixed(2)} MB`);
+        return {
+          filename: att.name,
+          content: buffer,
+          contentType: att.type || 'application/octet-stream',
+        };
+      } catch (bufferError: any) {
+        // Fallback to base64 string if Buffer conversion fails
+        console.warn(`[sendTestEmail] Buffer conversion failed for ${att.name}, using base64 string:`, bufferError.message);
+        return {
+          filename: att.name,
+          content: base64Data,
+          encoding: 'base64' as const,
+          contentType: att.type || 'application/octet-stream',
+        };
+      }
+    });
+
+    const totalSize = emailAttachments.reduce((sum, att) => {
+      const size = Buffer.isBuffer(att.content) ? att.content.length : (att.content as string).length;
+      return sum + size;
+    }, 0);
+    console.log(`[sendTestEmail] Sending test email to ${to} with ${emailAttachments.length} attachment(s), total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+
+    const mailOptions = {
       from: defaultFromEmail
         ? `"Ariyana Convention Centre" <${defaultFromEmail}>`
         : '"Ariyana Convention Centre" <marketing@furamavietnam.com>',
       to: to.trim(),
+      cc: cc.length > 0 ? cc.join(', ') : undefined,
       replyTo: defaultFromEmail || undefined,
       subject,
       text: textBody,
       html: body,
-    });
+      attachments: emailAttachments.length > 0 ? emailAttachments : undefined,
+    };
+
+    console.log(`[sendTestEmail] Starting email send...${cc.length > 0 ? ` CC: ${cc.join(', ')}` : ''}`);
+    const startTime = Date.now();
+    
+    await transporter.sendMail(mailOptions);
+    
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`[sendTestEmail] Test email sent successfully to ${to} in ${duration} seconds`);
     return { success: true };
   } catch (error: any) {
+    console.error('[sendTestEmail] Error:', error);
     return { success: false, error: error?.message || 'Unknown SMTP error' };
   }
 }
