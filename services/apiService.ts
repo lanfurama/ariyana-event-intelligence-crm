@@ -152,10 +152,11 @@ export const leadsApi = {
 export const emailTemplatesApi = {
   getAll: async () => {
     const templates = await apiCall<any[]>('/email-templates');
-    // Map lead_type to leadType for frontend, keep attachments
+    // Map lead_type to leadType for frontend, keep language & attachments
     return templates.map(t => ({
       ...t,
       leadType: t.lead_type,
+      language: t.language || '',
       attachments: t.attachments || [],
     }));
   },
@@ -164,10 +165,11 @@ export const emailTemplatesApi = {
     return {
       ...template,
       leadType: template.lead_type,
+      language: template.language || '',
     };
   },
   create: async (template: EmailTemplate) => {
-    // Map leadType to lead_type for backend
+    // Map leadType to lead_type for backend, keep language
     const backendTemplate = {
       ...template,
       lead_type: template.leadType,
@@ -181,11 +183,12 @@ export const emailTemplatesApi = {
     return {
       ...result,
       leadType: result.lead_type,
+      language: result.language || '',
       attachments: result.attachments || [],
     };
   },
   update: async (id: string, template: Partial<EmailTemplate>) => {
-    // Map leadType to lead_type for backend
+    // Map leadType to lead_type for backend, keep language
     const backendTemplate: any = { ...template };
     if (template.leadType !== undefined) {
       backendTemplate.lead_type = template.leadType;
@@ -199,6 +202,7 @@ export const emailTemplatesApi = {
     return {
       ...result,
       leadType: result.lead_type,
+      language: result.language || '',
       attachments: result.attachments || [],
     };
   },

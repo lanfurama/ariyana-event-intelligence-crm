@@ -17,6 +17,7 @@ export interface EmailTemplate {
   subject: string;
   body: string;
   lead_type?: string;
+  language?: string;
   created_at?: Date;
   updated_at?: Date;
 }

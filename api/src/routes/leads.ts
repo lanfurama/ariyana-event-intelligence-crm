@@ -118,9 +118,7 @@ router.post('/send-email', async (req: Request, res: Response) => {
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found.' });
     }
-    if ((lead.status || 'New') !== 'New') {
-      return res.status(400).json({ error: 'Only leads with status New can receive emails.' });
-    }
+    // Không check status của lead - chỉ check đã gửi template này chưa
 
     const summary = await sendLeadEmailsWithCustomContent(
       [lead],

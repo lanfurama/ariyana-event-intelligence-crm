@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
     Search,
     Mail,
@@ -26,6 +26,22 @@ import { emailLogsApi, emailRepliesApi, emailTemplatesApi, leadsApi } from '../s
 import { mapLeadFromDB, mapLeadToDB } from '../utils/leadUtils';
 import * as XLSX from 'xlsx';
 import { LeadsSkeleton } from '../components/common/LeadsSkeleton';
+
+const TestEmailInput = React.memo<{
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    disabled: boolean;
+}>(({ value, onChange, disabled }) => (
+    <input
+        type="email"
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+        placeholder="Nhập email để test (ví dụ: test@example.com)"
+        className="flex-1 px-3 py-2 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+    />
+));
+TestEmailInput.displayName = 'TestEmailInput';
 
 interface LeadsViewProps {
     leads: Lead[];
@@ -72,8 +88,13 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
         totalEvents: 0,
         vietnamEvents: 0,
     });
+    const [templateTargetLeadType, setTemplateTargetLeadType] = useState<
+        'auto' | 'all' | 'normal' | 'DMC' | 'CORP' | 'HPNY2026' | 'LEAD2026FEB_THAIACC'
+    >('auto');
     const [savingLead, setSavingLead] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [testEmail, setTestEmail] = useState('');
+    const [sendingTestEmail, setSendingTestEmail] = useState(false);
     const itemsPerPage = 20;
 
     const getEmailStatus = (leadId: string) => {
@@ -177,6 +198,11 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
             loadEmailTemplates();
         }
     }, [showEmailModal]);
+
+    useEffect(() => {
+        setTemplateTargetLeadType('auto');
+        setTestEmail('');
+    }, [selectedTemplateId]);
 
     const loadEmailLogs = async () => {
         if (leads.length === 0) return;
@@ -324,6 +350,38 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
         }
     };
 
+    // Helper: Map country to language
+    const getLanguageFromCountry = (country: string | null | undefined): string | null => {
+        if (!country) return null;
+        const normalized = country.trim().toLowerCase();
+        const countryToLanguage: Record<string, string> = {
+            'vietnam': 'vi',
+            'việt nam': 'vi',
+            'thailand': 'th',
+            'thái lan': 'th',
+            'singapore': 'en',
+            'malaysia': 'en',
+            'indonesia': 'en',
+            'philippines': 'en',
+            'philippine': 'en',
+            'united states': 'en',
+            'usa': 'en',
+            'us': 'en',
+            'united kingdom': 'en',
+            'uk': 'en',
+            'australia': 'en',
+            'new zealand': 'en',
+            'canada': 'en',
+            'china': 'zh',
+            'chinese': 'zh',
+            'taiwan': 'zh',
+            'japan': 'ja',
+            'korea': 'ko',
+            'south korea': 'ko',
+        };
+        return countryToLanguage[normalized] || null;
+    };
+
     const preparedEmails = useMemo(() => {
         if (!selectedTemplateId || filteredLeads.length === 0 || emailTemplates.length === 0) {
             return [];
@@ -337,14 +395,59 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
 
         return filteredLeads
             .filter(lead => {
+                // Chỉ check có email, không quan tâm status của lead
                 if (!lead.keyPersonEmail) return false;
-                const emailStatus = getEmailStatus(lead.id);
-                if (emailStatus.hasEmail) return false;
+
+                // Chỉ quan tâm đã gửi với template này chưa (so sánh subject)
+                // Không quan tâm status của lead (New, Contacted, etc.)
+                const hasSentThisTemplate = allEmailLogs.some(
+                    log =>
+                        log.status === 'sent' &&
+                        log.lead_id === lead.id &&
+                        log.subject === selectedTemplate.subject
+                );
+                if (hasSentThisTemplate) return false;
+
+                // Filter theo language của template nếu template có language
+                if (selectedTemplate.language && selectedTemplate.language.trim() !== '') {
+                    const templateLang = selectedTemplate.language.toLowerCase();
+                    const leadLanguage = getLanguageFromCountry(lead.country);
+                    const leadCountryNormalized = lead.country ? lead.country.trim().toLowerCase() : '';
+                    
+                    if (templateLang === 'en') {
+                        // Template EN: gửi cho tất cả các quốc gia TRỪ Vietnam
+                        if (leadCountryNormalized === 'vietnam' || leadCountryNormalized === 'việt nam') {
+                            return false; // Exclude Vietnam
+                        }
+                        // Các quốc gia khác đều OK (bao gồm cả các quốc gia không có trong map)
+                    } else {
+                        // Template có language khác (vi, th, zh, ja, ko): chỉ match đúng language
+                        if (leadLanguage !== templateLang) {
+                            return false; // Lead country không match với template language
+                        }
+                    }
+                }
+
+                if (templateTargetLeadType === 'all') {
+                    return true;
+                }
+
+                if (templateTargetLeadType !== 'auto') {
+                    if (templateTargetLeadType === 'normal') {
+                        return lead.type == null || String(lead.type || '').trim() === '';
+                    }
+                    return lead.type === templateTargetLeadType;
+                }
+
+                // AUTO: dùng leadType của template đang chọn
                 const leadHasNoType = lead.type == null || String(lead.type || '').trim() === '';
-                const leadMatchingTemplate = leadHasNoType
-                    ? emailTemplates.find(templateHasNoType)
-                    : emailTemplates.find(t => t.leadType === lead.type);
-                return leadMatchingTemplate?.id === selectedTemplateId;
+                if (selectedTemplate.leadType == null || String(selectedTemplate.leadType || '').trim() === '') {
+                    // template cho regular leads (lead.type null/empty)
+                    return leadHasNoType;
+                }
+
+                // template có leadType cụ thể => chỉ match đúng type đó
+                return lead.type === selectedTemplate.leadType;
             })
             .map(lead => {
                 const template = selectedTemplate;
@@ -364,9 +467,35 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                 body = body.replace(/\{\{country\}\}/g, lead.country || '');
                 body = body.replace(/\{\{industry\}\}/g, lead.industry || '');
 
-                return { lead, subject, body };
+                // Tách links và file attachments
+                const links = (template.attachments || []).filter(att => att.type === 'link');
+                const fileAttachments = (template.attachments || [])
+                    .filter(att => att.type !== 'link')
+                    .map(att => ({
+                        name: att.name,
+                        file_data: att.file_data || '',
+                        type: att.type || 'application/octet-stream',
+                    }));
+
+                // Thêm links vào body HTML (giống như backend)
+                let finalBody = body;
+                if (links.length > 0) {
+                    const linksHtml = links.map(link => {
+                        const linkName = link.file_data || link.name;
+                        const linkUrl = link.name;
+                        return `
+                            <div style="margin: 4px 0; padding: 12px 16px; background-color: #f0f0f0; border: 1px solid #d1d5db; border-radius: 6px; display: inline-block; max-width: 100%;">
+                                <span style="font-size: 18px; margin-right: 8px; vertical-align: middle;">📁</span>
+                                <a href="${linkUrl}" target="_blank" style="color: #374151; text-decoration: underline; font-size: 14px; vertical-align: middle;">${linkName}</a>
+                            </div>
+                        `;
+                    }).join('');
+                    finalBody = body + '<div style="margin-top: 2px;">' + linksHtml + '</div>';
+                }
+
+                return { lead, subject, body: finalBody, attachments: fileAttachments };
             });
-    }, [selectedTemplateId, filteredLeads, emailTemplates]);
+    }, [selectedTemplateId, filteredLeads, emailTemplates, templateTargetLeadType, allEmailLogs]);
 
     const emailStats = useMemo(() => {
         const sentCount = filteredLeads.filter(lead => {
@@ -419,6 +548,83 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
         return { today, yesterday, thisWeek, thisMonth };
     }, [allEmailLogs]);
 
+    const handleTestEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setTestEmail(e.target.value);
+    }, []);
+
+    const handleSendTestEmail = async () => {
+        if (!selectedTemplateId || !testEmail.trim()) {
+            alert('Vui lòng chọn template và nhập email test');
+            return;
+        }
+
+        const selectedTemplate = emailTemplates.find(t => t.id === selectedTemplateId);
+        if (!selectedTemplate) {
+            alert('Template không tồn tại');
+            return;
+        }
+
+        const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+        if (!emailRegex.test(testEmail.trim())) {
+            alert('Email không hợp lệ');
+            return;
+        }
+
+        setSendingTestEmail(true);
+        try {
+            // Prepare subject và body với sample data
+            let subject = selectedTemplate.subject;
+            let body = selectedTemplate.body;
+
+            // Replace với sample data
+            subject = subject.replace(/\{\{companyName\}\}/g, 'Sample Company');
+            subject = subject.replace(/\{\{keyPersonName\}\}/g, 'John Doe');
+            subject = subject.replace(/\{\{city\}\}/g, 'Danang');
+            subject = subject.replace(/\{\{country\}\}/g, 'Vietnam');
+
+            body = body.replace(/\{\{companyName\}\}/g, 'Sample Company');
+            body = body.replace(/\{\{keyPersonName\}\}/g, 'John Doe');
+            body = body.replace(/\{\{keyPersonTitle\}\}/g, 'CEO');
+            body = body.replace(/\{\{city\}\}/g, 'Danang');
+            body = body.replace(/\{\{country\}\}/g, 'Vietnam');
+            body = body.replace(/\{\{industry\}\}/g, 'Technology');
+
+            // Thêm links vào body nếu có
+            const links = (selectedTemplate.attachments || []).filter(att => att.type === 'link');
+            if (links.length > 0) {
+                    const linksHtml = links.map(link => {
+                        const linkName = link.file_data || link.name;
+                        const linkUrl = link.name;
+                        return `
+                            <div style="margin: 4px 0; padding: 12px 16px; background-color: #f0f0f0; border: 1px solid #d1d5db; border-radius: 6px; display: inline-block; max-width: 100%;">
+                                <span style="font-size: 18px; margin-right: 8px; vertical-align: middle; display: inline-block;">📁</span>
+                                <a href="${linkUrl}" target="_blank" style="color: #374151; text-decoration: underline; font-size: 14px; vertical-align: middle;">${linkName}</a>
+                            </div>
+                        `;
+                    }).join('');
+                body = body + '<div style="margin-top: 2px;">' + linksHtml + '</div>';
+            }
+
+            // Lấy file attachments
+            const fileAttachments = (selectedTemplate.attachments || [])
+                .filter(att => att.type !== 'link')
+                .map(att => ({
+                    name: att.name,
+                    file_data: att.file_data || '',
+                    type: att.type || 'application/octet-stream',
+                }));
+
+            await emailTemplatesApi.sendTest(testEmail.trim(), subject, body, fileAttachments);
+            alert('Test email đã được gửi thành công!');
+            setTestEmail('');
+        } catch (error: any) {
+            console.error('Error sending test email:', error);
+            alert(`Lỗi khi gửi test email: ${error?.message || 'Unknown error'}`);
+        } finally {
+            setSendingTestEmail(false);
+        }
+    };
+
     const handleSendEmails = async () => {
         if (preparedEmails.length === 0) {
             alert('No emails prepared. Please select a template and ensure leads have email addresses.');
@@ -443,7 +649,13 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                 setSendingProgress(prev => ({ ...prev, [prepared.lead.id]: 'sending' }));
 
                 try {
-                    const result = await leadsApi.sendEmail(prepared.lead.id, prepared.subject, prepared.body);
+                    const result = await leadsApi.sendEmail(
+                        prepared.lead.id, 
+                        prepared.subject, 
+                        prepared.body,
+                        undefined, // cc
+                        prepared.attachments // attachments từ template
+                    );
                     if (result.success && result.updatedLead) {
                         setSendingProgress(prev => ({ ...prev, [prepared.lead.id]: 'sent' }));
                         updatedLeads.push(mapLeadFromDB(result.updatedLead));
@@ -1004,6 +1216,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 onClick={() => {
                                     setShowEmailModal(false);
                                     setSelectedTemplateId('');
+                                    setTestEmail('');
                                 }}
                                 className="text-slate-400 p-2 rounded-lg"
                             >
@@ -1042,6 +1255,59 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                         </select>
                                     </div>
 
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                            Lead type để gửi template
+                                        </label>
+                                        <select
+                                            value={templateTargetLeadType}
+                                            onChange={(e) => setTemplateTargetLeadType(e.target.value as typeof templateTargetLeadType)}
+                                            className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                        >
+                                            <option value="auto">Auto (dùng leadType của template)</option>
+                                            <option value="all">All lead types (có email, chưa gửi)</option>
+                                            <option value="normal">Normal (lead không có type)</option>
+                                            <option value="DMC">DMC</option>
+                                            <option value="CORP">CORP</option>
+                                            <option value="HPNY2026">HPNY2026</option>
+                                            <option value="LEAD2026FEB_THAIACC">LEAD2026FEB_THAIACC</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Test Email Section */}
+                                    {selectedTemplateId && (
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                            <h3 className="text-sm font-semibold text-blue-900 mb-3">Send Test Email</h3>
+                                            <div className="flex gap-2">
+                                                <TestEmailInput
+                                                    value={testEmail}
+                                                    onChange={handleTestEmailChange}
+                                                    disabled={sendingTestEmail}
+                                                />
+                                                <button
+                                                    onClick={handleSendTestEmail}
+                                                    disabled={sendingTestEmail || !testEmail.trim()}
+                                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {sendingTestEmail ? (
+                                                        <>
+                                                            <Loader2 size={16} className="mr-2 animate-spin" />
+                                                            Sending...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Mail size={16} className="mr-2" />
+                                                            Send Test
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-blue-700 mt-2">
+                                                Gửi email test với template đã chọn để kiểm tra trước khi gửi hàng loạt
+                                            </p>
+                                        </div>
+                                    )}
+
                                     {selectedTemplateId && (
                                         <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                                             <h3 className="text-sm font-semibold text-slate-700 mb-3">Template Preview</h3>
@@ -1050,6 +1316,26 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                                 if (!template) return null;
                                                 return (
                                                     <div className="space-y-3">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            {template.leadType && (
+                                                                <span className="text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                                                                    Lead Type: {template.leadType}
+                                                                </span>
+                                                            )}
+                                                            {template.language && (
+                                                                <span className="text-xs font-semibold px-2 py-1 bg-green-100 text-green-700 rounded">
+                                                                    Language: {template.language.toUpperCase()}
+                                                                </span>
+                                                            )}
+                                                            {template.language && (
+                                                                <span className="text-xs text-slate-600">
+                                                                    {template.language.toLowerCase() === 'en' 
+                                                                        ? '(Gửi cho tất cả các quốc gia trừ Vietnam)'
+                                                                        : `(Chỉ gửi cho leads từ country có language ${template.language.toUpperCase()})`
+                                                                    }
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div>
                                                             <span className="text-xs font-medium text-slate-500 uppercase">Subject:</span>
                                                             <p className="text-sm text-slate-900 mt-1">{template.subject}</p>
@@ -1126,8 +1412,30 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                             <p>No leads match this template or all matching leads have already been emailed.</p>
                                             {(() => {
                                                 const t = emailTemplates.find(x => x.id === selectedTemplateId);
-                                                const typeLabel = t?.leadType ? `${t.leadType} leads` : 'Regular leads';
-                                                return <p className="text-xs mt-1">This template targets {typeLabel}.</p>;
+                                                const baseTypeLabel = t?.leadType ? `${t.leadType} leads` : 'Regular leads';
+                                                const languageLabel = t?.language ? ` (${t.language.toUpperCase()})` : '';
+
+                                                let languageDesc = '';
+                                                if (t?.language) {
+                                                    if (t.language.toLowerCase() === 'en') {
+                                                        languageDesc = ' từ tất cả các quốc gia (trừ Vietnam)';
+                                                    } else {
+                                                        languageDesc = ` từ country có language ${t.language.toUpperCase()}`;
+                                                    }
+                                                }
+
+                                                let effectiveLabel: string;
+                                                if (templateTargetLeadType === 'all') {
+                                                    effectiveLabel = `all leads with email (chưa gửi)${languageDesc}`;
+                                                } else if (templateTargetLeadType === 'normal') {
+                                                    effectiveLabel = `normal leads (không có type)${languageDesc}`;
+                                                } else if (templateTargetLeadType === 'auto') {
+                                                    effectiveLabel = `${baseTypeLabel}${languageLabel}`;
+                                                } else {
+                                                    effectiveLabel = `${templateTargetLeadType} leads${languageLabel}`;
+                                                }
+
+                                                return <p className="text-xs mt-1">This template currently targets {effectiveLabel}.</p>;
                                             })()}
                                         </div>
                                     )}
@@ -1147,6 +1455,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 onClick={() => {
                                     setShowEmailModal(false);
                                     setSelectedTemplateId('');
+                                    setTestEmail('');
                                 }}
                                 className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg text-sm font-semibold"
                             >

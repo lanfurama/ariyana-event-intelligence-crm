@@ -14,10 +14,10 @@ export class EmailTemplateModel {
 
   static async create(template: EmailTemplate): Promise<EmailTemplate> {
     const result = await query(
-      `INSERT INTO email_templates (id, name, subject, body, lead_type) 
-       VALUES ($1, $2, $3, $4, $5) 
+      `INSERT INTO email_templates (id, name, subject, body, lead_type, language) 
+       VALUES ($1, $2, $3, $4, $5, $6) 
        RETURNING *`,
-      [template.id, template.name, template.subject, template.body, template.lead_type || null]
+      [template.id, template.name, template.subject, template.body, template.lead_type || null, template.language || null]
     );
     return result.rows[0];
   }
@@ -42,6 +42,10 @@ export class EmailTemplateModel {
     if (template.lead_type !== undefined) {
       fields.push(`lead_type = $${paramCount++}`);
       values.push(template.lead_type || null);
+    }
+    if (template.language !== undefined) {
+      fields.push(`language = $${paramCount++}`);
+      values.push(template.language || null);
     }
 
     if (fields.length === 0) {

@@ -22,7 +22,7 @@ export const EmailTemplatesView = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', subject: '', body: '', leadType: '' });
+  const [formData, setFormData] = useState({ name: '', subject: '', body: '', leadType: '', language: '' });
   const [formErrors, setFormErrors] = useState<{ name?: string; subject?: string; body?: string }>({});
   const [testEmail, setTestEmail] = useState('');
   const [testCc, setTestCc] = useState('');
@@ -87,7 +87,7 @@ export const EmailTemplatesView = () => {
 
   const handleCreate = () => {
     setEditingTemplate(null);
-    setFormData({ name: '', subject: '', body: '', leadType: '' });
+    setFormData({ name: '', subject: '', body: '', leadType: '', language: '' });
     setFormErrors({});
     setBodyViewMode('preview');
     setTestEmail('');
@@ -106,6 +106,7 @@ export const EmailTemplatesView = () => {
       subject: template.subject,
       body: template.body,
       leadType: template.leadType || '',
+      language: template.language || '',
     });
     setFormErrors({});
     setBodyViewMode('preview');
@@ -210,6 +211,7 @@ export const EmailTemplatesView = () => {
           subject: formData.subject.trim(),
           body: formData.body.trim(),
           leadType: formData.leadType ? formData.leadType : undefined,
+          language: formData.language ? formData.language.trim() : undefined,
           attachments: attachmentsData,
         });
       } else {
@@ -220,6 +222,7 @@ export const EmailTemplatesView = () => {
           subject: formData.subject.trim(),
           body: formData.body.trim(),
           leadType: formData.leadType ? formData.leadType : undefined,
+          language: formData.language ? formData.language.trim() : undefined,
           attachments: attachmentsData,
         };
         await emailTemplatesApi.create(newTemplate);
@@ -227,7 +230,7 @@ export const EmailTemplatesView = () => {
 
       await loadTemplates();
       setShowModal(false);
-      setFormData({ name: '', subject: '', body: '', leadType: '' });
+      setFormData({ name: '', subject: '', body: '', leadType: '', language: '' });
       setEditingTemplate(null);
       setAttachments([]);
     } catch (error) {
@@ -238,7 +241,7 @@ export const EmailTemplatesView = () => {
 
   const handleCancel = () => {
     setShowModal(false);
-    setFormData({ name: '', subject: '', body: '', leadType: '' });
+    setFormData({ name: '', subject: '', body: '', leadType: '', language: '' });
     setEditingTemplate(null);
     setFormErrors({});
     setBodyViewMode('preview');
@@ -566,6 +569,26 @@ export const EmailTemplatesView = () => {
                 {formErrors.subject && (
                   <p className="text-xs text-red-600 mt-1">{formErrors.subject}</p>
                 )}
+              </div>
+
+              {/* Language */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Language (Optional)
+                </label>
+                <select
+                  value={formData.language}
+                  onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                >
+                  <option value="">Default</option>
+                  <option value="en">English</option>
+                  <option value="vi">Vietnamese</option>
+                  <option value="th">Thai</option>
+                </select>
+                <p className="text-xs text-slate-500 mt-1">
+                  Chọn ngôn ngữ của email template này để sau này gửi đúng theo ngôn ngữ của lead.
+                </p>
               </div>
 
               {/* Lead Type */}

@@ -135,6 +135,7 @@ export interface EmailTemplate {
   subject: string;
   body: string;
   leadType?: string; // 'CORP', 'DMC', or undefined for default templates
+  language?: string; // e.g. 'en', 'vi', 'th'
   attachments?: EmailTemplateAttachment[];
 }
 

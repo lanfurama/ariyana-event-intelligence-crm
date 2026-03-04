@@ -272,6 +272,59 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
         });
     }, [leadIdsByType, filteredEmailLogs, sentLogsByLead]);
 
+    const templateStats = useMemo(() => {
+        // Lấy tất cả email log đã gửi trong khoảng thời gian đang filter
+        let filteredLogs = allEmailLogs.filter(log => log.status === 'sent' && log.date);
+
+        if (timeFilter !== 'all') {
+            filteredLogs = filteredLogs.filter(log => {
+                const logDate = log.date ? new Date(log.date) : null;
+                if (!logDate) return false;
+                switch (timeFilter) {
+                    case 'today':
+                        return logDate >= todayStart;
+                    case 'yesterday':
+                        return logDate >= yesterdayStart && logDate < todayStart;
+                    case 'this-week':
+                        return logDate >= weekStart;
+                    case 'this-month':
+                        return logDate >= monthStart;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        const perTemplate = new Map<string, { leadIds: Set<string>; lastSentAt?: Date }>();
+
+        filteredLogs.forEach(log => {
+            const subject = (log.subject || '(No subject)').trim() || '(No subject)';
+            const entry = perTemplate.get(subject) || { leadIds: new Set<string>(), lastSentAt: undefined };
+            if (log.lead_id) {
+                entry.leadIds.add(log.lead_id);
+            }
+            const d = log.date ? new Date(log.date) : null;
+            if (d && (!entry.lastSentAt || d > entry.lastSentAt)) {
+                entry.lastSentAt = d;
+            }
+            perTemplate.set(subject, entry);
+        });
+
+        return Array.from(perTemplate.entries())
+            .map(([subject, { leadIds, lastSentAt }]) => {
+                const lastSentLabel = lastSentAt
+                    ? lastSentAt.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    : '—';
+                return {
+                    template: subject,
+                    // Số lượng lead unique đã được gửi email với template (subject) này trong khoảng filter
+                    sentCount: leadIds.size,
+                    lastSentLabel,
+                };
+            })
+            .sort((a, b) => b.sentCount - a.sentCount);
+    }, [allEmailLogs, timeFilter, todayStart, yesterdayStart, weekStart, monthStart]);
+
     const countryByType = useMemo(() => {
         const capitalize = (s: string) => s.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         const map = new Map<string, { name: string; count: number }[]>();
@@ -357,23 +410,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
 
             <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
                 <div className="px-3 py-2 border-b border-slate-200">
-                    <h2 className="text-sm font-semibold text-slate-900">By lead type</h2>
+                    <h2 className="text-sm font-semibold text-slate-900">By email template</h2>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-slate-200 bg-slate-50/80">
-                                <th className="text-left py-2 px-3 font-medium text-slate-700">Type</th>
-                                <th className="text-right py-2 px-3 font-medium text-slate-700">Total leads</th>
+                                <th className="text-left py-2 px-3 font-medium text-slate-700">Template</th>
                                 <th className="text-right py-2 px-3 font-medium text-slate-700">Leads sent mail</th>
                                 <th className="text-left py-2 px-3 font-medium text-slate-700">Last sent</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {leadByTypeStats.map((row) => (
-                                <tr key={row.type} className="border-b border-slate-100 hover:bg-slate-50/50">
-                                    <td className="py-2 px-3 font-medium text-slate-900">{row.type}</td>
-                                    <td className="py-2 px-3 text-right tabular-nums text-slate-700">{row.totalLeads}</td>
+                            {templateStats.map((row) => (
+                                <tr key={row.template} className="border-b border-slate-100 hover:bg-slate-50/50">
+                                    <td className="py-2 px-3 font-medium text-slate-900">{row.template}</td>
                                     <td className="py-2 px-3 text-right tabular-nums text-slate-700">{row.sentCount}</td>
                                     <td className="py-2 px-3 text-slate-600">{row.lastSentLabel}</td>
                                 </tr>
@@ -381,8 +432,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                         </tbody>
                     </table>
                 </div>
-                {leadByTypeStats.length === 0 && (
-                    <div className="px-3 py-6 text-center text-sm text-slate-500">No leads</div>
+                {templateStats.length === 0 && (
+                    <div className="px-3 py-6 text-center text-sm text-slate-500">No templates</div>
                 )}
             </div>
 
