@@ -7,32 +7,22 @@ export interface LeadsNeedingEnrichListProps {
   leads: Lead[];
   enrichingIds: Set<string>;
   onResearch: (lead: Lead) => void;
-  searchTerm?: string;
 }
 
 export const LeadsNeedingEnrichList: React.FC<LeadsNeedingEnrichListProps> = ({
   leads,
   enrichingIds,
   onResearch,
-  searchTerm = '',
 }) => {
-  const filtered = searchTerm.trim()
-    ? leads.filter((l) =>
-        l.companyName?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : leads;
-
-  if (filtered.length === 0) {
+  if (leads.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-10 text-center">
         <Users size={48} className="mx-auto mb-3 text-slate-300" />
         <h3 className="text-lg font-semibold text-slate-800 mb-1">
-          {leads.length === 0 ? 'No leads need enrichment' : 'No matches'}
+          No leads need enrichment
         </h3>
         <p className="text-sm text-slate-600 max-w-sm mx-auto">
-          {leads.length === 0
-            ? 'All leads have email filled. Add new leads without email in ICCA Leads to see them here.'
-            : 'Try a different search term.'}
+          All leads have email filled. Add new leads without email in ICCA Leads to see them here.
         </p>
       </div>
     );
@@ -62,7 +52,7 @@ export const LeadsNeedingEnrichList: React.FC<LeadsNeedingEnrichListProps> = ({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((lead) => (
+            {leads.map((lead) => (
               <EnrichRow
                 key={lead.id}
                 lead={lead}

@@ -89,7 +89,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
         vietnamEvents: 0,
     });
     const [templateTargetLeadType, setTemplateTargetLeadType] = useState<
-        'auto' | 'all' | 'normal' | 'DMC' | 'CORP' | 'HPNY2026' | 'LEAD2026FEB_THAIACC'
+        'auto' | 'all' | 'normal' | 'DMC' | 'CORP' | 'HPNY2026' | 'LEAD2026FEB_THAIACC' | 'SUMMER_BEACH_2026'
     >('auto');
     const [savingLead, setSavingLead] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -894,6 +894,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                 <option value="CORP">CORP</option>
                                 <option value="HPNY2026">HPNY2026</option>
                                 <option value="LEAD2026FEB_THAIACC">LEAD2026FEB_THAIACC</option>
+                                <option value="SUMMER_BEACH_2026">SUMMER_BEACH_2026</option>
                             </select>
                             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
                         </div>
@@ -1271,6 +1272,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ leads, onSelectLead, onUpd
                                             <option value="CORP">CORP</option>
                                             <option value="HPNY2026">HPNY2026</option>
                                             <option value="LEAD2026FEB_THAIACC">LEAD2026FEB_THAIACC</option>
+                                            <option value="SUMMER_BEACH_2026">SUMMER_BEACH_2026</option>
                                         </select>
                                     </div>
 

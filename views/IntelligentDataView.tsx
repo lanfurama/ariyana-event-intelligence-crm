@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { BrainCircuit, Search, X } from 'lucide-react';
 import type { Lead } from '../types';
 import type { ParsedEnrichContact } from '../utils/leadEnrichUtils';
@@ -22,6 +22,7 @@ export const IntelligentDataView: React.FC<IntelligentDataViewProps> = ({
   loading = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('');
   const [researchLead, setResearchLead] = useState<Lead | null>(null);
   const [researchParsed, setResearchParsed] = useState<ParsedEnrichContact | null>(null);
   const [researchStatus, setResearchStatus] = useState<ResearchModalStatus>('loading');
@@ -36,6 +37,69 @@ export const IntelligentDataView: React.FC<IntelligentDataViewProps> = ({
     enrichError,
     clearError,
   } = useLeadsNeedingEnrich(leads);
+
+  const visibleLeads = useMemo(() => {
+    let filtered = leadsNeedingEnrich;
+
+    const trimmedSearch = searchTerm.trim();
+    if (trimmedSearch) {
+      const lowered = trimmedSearch.toLowerCase();
+      filtered = filtered.filter((l) =>
+        l.companyName?.toLowerCase().includes(lowered)
+      );
+    }
+
+    if (typeFilter) {
+      filtered = filtered.filter((l) => l.type === typeFilter);
+    }
+
+    return filtered;
+  }, [leadsNeedingEnrich, searchTerm, typeFilter]);
+
+  const filteredLeadsCount = visibleLeads.length;
+
+  const [bulkResearching, setBulkResearching] = useState(false);
+
+  const handleResearchAll = useCallback(async () => {
+    if (bulkResearching || visibleLeads.length === 0) return;
+    setBulkResearching(true);
+    try {
+      for (const lead of visibleLeads) {
+        try {
+          const result = await enrichLead(lead);
+          const parsed = result.parsed;
+          if (
+            !parsed ||
+            !(
+              parsed.keyPersonName ||
+              parsed.keyPersonTitle ||
+              parsed.keyPersonEmail ||
+              parsed.keyPersonPhone
+            )
+          ) {
+            continue;
+          }
+          const updated: Lead = {
+            ...lead,
+            keyPersonName: parsed.keyPersonName ?? lead.keyPersonName,
+            keyPersonTitle: parsed.keyPersonTitle ?? lead.keyPersonTitle,
+            keyPersonEmail: parsed.keyPersonEmail ?? lead.keyPersonEmail,
+            keyPersonPhone: parsed.keyPersonPhone ?? lead.keyPersonPhone,
+            researchNotes: lead.researchNotes
+              ? `${lead.researchNotes}\n[AI Enriched (bulk): ${new Date()
+                  .toISOString()
+                  .slice(0, 10)}]`
+              : `[AI Enriched (bulk): ${new Date().toISOString().slice(0, 10)}]`,
+          };
+          await onUpdateLead(updated);
+        } catch {
+          // ignore individual lead failures and continue
+        }
+      }
+    } finally {
+      setBulkResearching(false);
+    }
+  }, [bulkResearching, visibleLeads, enrichLead, onUpdateLead]);
 
   const handleCloseResearchModal = useCallback(() => {
     setResearchLead(null);
@@ -134,17 +198,37 @@ export const IntelligentDataView: React.FC<IntelligentDataViewProps> = ({
             className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
         </div>
-        <p className="text-sm text-slate-600 self-center">
-          {leadsNeedingEnrich.length} lead{leadsNeedingEnrich.length !== 1 ? 's' : ''} need
-          enrichment
-        </p>
+        <div className="flex items-center gap-3">
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="text-sm rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+          >
+            <option value="">All types</option>
+            <option value="CORP">CORP</option>
+            <option value="DMC">DMC</option>
+            <option value="HPNY2026">HPNY2026</option>
+            <option value="LEAD2026FEB_THAIACC">LEAD2026FEB_THAIACC</option>
+            <option value="SUMMER_BEACH_2026">SUMMER_BEACH_2026</option>
+          </select>
+          <p className="text-sm text-slate-600">
+            {filteredLeadsCount} lead{filteredLeadsCount !== 1 ? 's' : ''} need enrichment
+          </p>
+          <button
+            type="button"
+            onClick={handleResearchAll}
+            disabled={bulkResearching || filteredLeadsCount === 0}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {bulkResearching ? 'Researching all…' : 'Research all'}
+          </button>
+        </div>
       </div>
 
       <LeadsNeedingEnrichList
-        leads={leadsNeedingEnrich}
+        leads={visibleLeads}
         enrichingIds={enrichingIds}
         onResearch={handleResearch}
-        searchTerm={searchTerm}
       />
 
       <ResearchModal
