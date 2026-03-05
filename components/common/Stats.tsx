@@ -106,6 +106,120 @@ export const PipelineBars = ({ data, compact }: { data: { name: string, count: n
     );
 };
 
+export const CountryPieChart = ({ data }: { data: { name: string, count: number }[] }) => {
+    const total = data.reduce((sum, item) => sum + item.count, 0);
+    const colors = [
+        '#8b5cf6', // purple
+        '#ec4899', // pink
+        '#6366f1', // indigo
+        '#3b82f6', // blue
+        '#06b6d4', // cyan
+        '#14b8a6', // teal
+        '#10b981', // emerald
+        '#f59e0b', // amber
+        '#ef4444', // red
+        '#84cc16', // lime
+        '#06b6d4', // sky
+        '#a855f7', // violet
+    ];
+
+    let currentAngle = -90; // Start from top
+    const radius = 80;
+    const centerX = 100;
+    const centerY = 100;
+    const strokeWidth = 2;
+
+    const segments = data.map((item, index) => {
+        const percentage = (item.count / total) * 100;
+        const angle = (item.count / total) * 360;
+        const startAngle = currentAngle;
+        const endAngle = currentAngle + angle;
+        currentAngle = endAngle;
+
+        // Calculate path for pie slice
+        const startAngleRad = (startAngle * Math.PI) / 180;
+        const endAngleRad = (endAngle * Math.PI) / 180;
+        
+        const x1 = centerX + radius * Math.cos(startAngleRad);
+        const y1 = centerY + radius * Math.sin(startAngleRad);
+        const x2 = centerX + radius * Math.cos(endAngleRad);
+        const y2 = centerY + radius * Math.sin(endAngleRad);
+        
+        const largeArcFlag = angle > 180 ? 1 : 0;
+        
+        const pathData = [
+            `M ${centerX} ${centerY}`,
+            `L ${x1} ${y1}`,
+            `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+            'Z'
+        ].join(' ');
+
+        return {
+            ...item,
+            pathData,
+            color: colors[index % colors.length],
+            percentage: percentage.toFixed(1),
+            startAngle,
+            endAngle,
+            midAngle: (startAngle + endAngle) / 2,
+        };
+    });
+
+    return (
+        <div className="flex flex-col md:flex-row items-center gap-6">
+            {/* SVG Pie Chart */}
+            <div className="flex-shrink-0">
+                <svg width="200" height="200" viewBox="0 0 200 200" className="drop-shadow-sm">
+                    {segments.map((segment, index) => (
+                        <g key={segment.name}>
+                            <path
+                                d={segment.pathData}
+                                fill={segment.color}
+                                stroke="white"
+                                strokeWidth={strokeWidth}
+                                className="hover:opacity-80 transition-opacity cursor-pointer"
+                            />
+                            {segment.percentage > 3 && (
+                                <text
+                                    x={centerX + (radius * 0.6) * Math.cos((segment.midAngle * Math.PI) / 180)}
+                                    y={centerY + (radius * 0.6) * Math.sin((segment.midAngle * Math.PI) / 180)}
+                                    textAnchor="middle"
+                                    dominantBaseline="middle"
+                                    className="text-xs font-semibold fill-white pointer-events-none"
+                                    style={{ fontSize: '10px' }}
+                                >
+                                    {segment.percentage}%
+                                </text>
+                            )}
+                        </g>
+                    ))}
+                </svg>
+            </div>
+
+            {/* Legend */}
+            <div className="flex-1 space-y-2 max-h-[300px] overflow-y-auto">
+                {segments.map((segment, index) => (
+                    <div key={segment.name} className="flex items-center justify-between gap-3 text-sm">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <div
+                                className="w-3 h-3 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: segment.color }}
+                            />
+                            <span className="font-medium text-slate-700 truncate" title={segment.name}>
+                                {segment.name}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-slate-600 tabular-nums">{segment.count}</span>
+                            <span className="text-xs text-slate-400 w-12 text-right">({segment.percentage}%)</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 export const StatCard = ({
     title,
     value,

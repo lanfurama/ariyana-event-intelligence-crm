@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, Send, Users, TrendingUp, MessageSquare, BarChart3, PieChart, X, Calendar, Clock, CheckCircle2 } from 'lucide-react';
 import { Lead, EmailLog } from '../types';
 import { emailLogsApi, emailRepliesApi } from '../services/apiService';
-import { PipelineBars } from '../components/common/Stats';
+import { PipelineBars, StatCard, EmailActivityChart, CountryPieChart } from '../components/common/Stats';
 
 interface DashboardProps {
     leads: Lead[];
@@ -16,6 +16,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
     const [allEmailReplies, setAllEmailReplies] = useState<any[]>([]);
     const [loadingEmailReplies, setLoadingEmailReplies] = useState(false);
     const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'yesterday' | 'this-week' | 'this-month'>('all');
+    const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
     useEffect(() => {
         loadEmailLogs();
@@ -363,6 +364,181 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
             .sort((a, b) => b.count - a.count);
     }, [leads, filteredEmailLogs]);
 
+    const emailActivityData = useMemo(() => {
+        return allEmailLogs.filter(log => log.status === 'sent');
+    }, [allEmailLogs]);
+
+    const templateChartData = useMemo(() => {
+        return templateStats.slice(0, 5).map((t) => ({
+            name: t.template.length > 40 ? t.template.substring(0, 40) + '...' : t.template,
+            count: t.sentCount
+        }));
+    }, [templateStats]);
+
+    // Template insights for selected template
+    const templateInsights = useMemo(() => {
+        if (!selectedTemplate) return null;
+
+        // Filter logs matching the selected template subject
+        // Match logic should be same as templateStats
+        const templateLogs = allEmailLogs.filter(log => {
+            if (log.status !== 'sent' || !log.date) return false;
+            const logSubject = (log.subject || '(No subject)').trim() || '(No subject)';
+            return logSubject === selectedTemplate;
+        });
+
+        // Get unique lead IDs that received this template
+        const leadIds = new Set<string>();
+        templateLogs.forEach(log => {
+            if (log.lead_id) {
+                leadIds.add(log.lead_id);
+            }
+        });
+
+        // Get leads that received this template
+        const leadsSent = leads.filter(lead => leadIds.has(lead.id));
+
+        // Get replies for these leads (all time, not filtered by template)
+        const repliesForTemplate = allEmailReplies.filter(reply => 
+            leadIds.has(reply.lead_id)
+        );
+
+        // Country distribution - count by number of emails sent per country
+        // Each email log counts, not unique leads
+        const countryMap = new Map<string, number>();
+        
+        // Build lead country cache from ALL leads (not just leadsSent)
+        const leadCountryMap = new Map<string, string>();
+        leads.forEach(lead => {
+            leadCountryMap.set(lead.id, (lead.country || 'Unknown').trim());
+        });
+        
+        // Count emails per country
+        templateLogs.forEach(log => {
+            if (log.lead_id) {
+                const country = leadCountryMap.get(log.lead_id) || 'Unknown';
+                countryMap.set(country, (countryMap.get(country) || 0) + 1);
+            } else {
+                // If no lead_id, count as Unknown
+                countryMap.set('Unknown', (countryMap.get('Unknown') || 0) + 1);
+            }
+        });
+        
+        const countryDistribution = Array.from(countryMap.entries())
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count);
+        
+        // Verify: sum should equal totalSent
+        const distributionSum = countryDistribution.reduce((sum, item) => sum + item.count, 0);
+        if (distributionSum !== templateLogs.length) {
+            console.warn('Country distribution sum mismatch:', {
+                distributionSum,
+                totalSent: templateLogs.length,
+                difference: templateLogs.length - distributionSum
+            });
+        }
+
+        // Reply rate
+        const uniqueRepliedLeads = new Set(repliesForTemplate.map(r => r.lead_id)).size;
+        const replyRate = leadIds.size > 0 
+            ? ((uniqueRepliedLeads / leadIds.size) * 100).toFixed(1)
+            : '0.0';
+
+        // Time insights - analyze when emails were sent
+        const timeOfDayMap = new Map<string, number>();
+        const dayOfWeekMap = new Map<string, number>();
+        const hourlyMap = new Map<number, number>();
+
+        templateLogs.forEach(log => {
+            if (log.date) {
+                const logDate = new Date(log.date);
+                const hour = logDate.getHours();
+                const dayOfWeek = logDate.toLocaleDateString('en-US', { weekday: 'short' });
+                
+                // Time of day categories
+                let timeCategory = '';
+                if (hour >= 6 && hour < 12) timeCategory = 'Morning (6AM-12PM)';
+                else if (hour >= 12 && hour < 18) timeCategory = 'Afternoon (12PM-6PM)';
+                else if (hour >= 18 && hour < 22) timeCategory = 'Evening (6PM-10PM)';
+                else timeCategory = 'Night (10PM-6AM)';
+
+                timeOfDayMap.set(timeCategory, (timeOfDayMap.get(timeCategory) || 0) + 1);
+                dayOfWeekMap.set(dayOfWeek, (dayOfWeekMap.get(dayOfWeek) || 0) + 1);
+                hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
+            }
+        });
+
+        const timeOfDayDistribution = Array.from(timeOfDayMap.entries())
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count);
+
+        const dayOfWeekDistribution = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+            .map(day => ({
+                name: day,
+                count: dayOfWeekMap.get(day) || 0
+            }));
+
+        const hourlyDistribution = Array.from({ length: 24 }, (_, i) => ({
+            hour: i,
+            count: hourlyMap.get(i) || 0
+        }));
+
+        return {
+            template: selectedTemplate,
+            totalSent: templateLogs.length,
+            uniqueLeads: leadIds.size,
+            leadsSent,
+            replies: repliesForTemplate,
+            uniqueRepliedLeads,
+            replyRate: parseFloat(replyRate),
+            timelineData: [],
+            countryDistribution,
+            timeOfDayDistribution,
+            dayOfWeekDistribution,
+            hourlyDistribution,
+            firstSent: templateLogs.length > 0 
+                ? (() => {
+                    const validDates: Date[] = [];
+                    templateLogs.forEach(log => {
+                        if (log.date) {
+                            try {
+                                const date = typeof log.date === 'string' ? new Date(log.date) : log.date;
+                                if (date instanceof Date && !isNaN(date.getTime())) {
+                                    validDates.push(date);
+                                }
+                            } catch (e) {
+                                console.warn('Invalid date in email log:', log.date, e);
+                            }
+                        }
+                    });
+                    if (validDates.length === 0) return null;
+                    validDates.sort((a, b) => a.getTime() - b.getTime());
+                    return validDates[0];
+                })()
+                : null,
+            lastSent: templateLogs.length > 0
+                ? (() => {
+                    const validDates: Date[] = [];
+                    templateLogs.forEach(log => {
+                        if (log.date) {
+                            try {
+                                const date = typeof log.date === 'string' ? new Date(log.date) : log.date;
+                                if (date instanceof Date && !isNaN(date.getTime())) {
+                                    validDates.push(date);
+                                }
+                            } catch (e) {
+                                console.warn('Invalid date in email log:', log.date, e);
+                            }
+                        }
+                    });
+                    if (validDates.length === 0) return null;
+                    validDates.sort((a, b) => b.getTime() - a.getTime());
+                    return validDates[0];
+                })()
+                : null
+        };
+    }, [selectedTemplate, allEmailLogs, allEmailReplies, leads]);
+
     if (loading) {
         return (
             <div className="p-3 space-y-3 animate-fade-in max-w-7xl mx-auto">
@@ -385,17 +561,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
     ] as const;
 
     return (
-        <div className="p-3 space-y-3 animate-fade-in max-w-7xl mx-auto">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <h1 className="text-xl font-semibold text-slate-900">Dashboard</h1>
+        <div className="p-4 space-y-4 animate-fade-in max-w-7xl mx-auto">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Email Marketing Dashboard</h1>
+                    <p className="text-sm text-slate-500 mt-1">Campaign performance & analytics</p>
+                </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                     {filterButtons.map(({ key, label }) => (
                         <button
                             key={key}
                             onClick={() => setTimeFilter(key)}
-                            className={`px-2.5 py-1 rounded text-xs font-medium ${timeFilter === key
-                                ? 'bg-slate-800 text-white'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                timeFilter === key
+                                    ? 'bg-indigo-600 text-white shadow-md'
+                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                            }`}
                         >
                             {label}
                         </button>
@@ -403,52 +584,152 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                 </div>
             </div>
 
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600 border border-slate-200 rounded-lg bg-slate-50/50 px-3 py-2">
-                <span><strong className="text-slate-900">{stats.total}</strong> leads</span>
-                <span><strong className="text-slate-900">{totalEmailsSent}</strong> emails sent</span>
+            {/* Key Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                    title="Total Leads"
+                    value={stats.total}
+                    icon={<Users size={20} />}
+                    color="indigo"
+                />
+                <StatCard
+                    title="Emails Sent"
+                    value={totalEmailsSent}
+                    icon={<Send size={20} />}
+                    subtitle={`${sentEmailsCount} leads contacted`}
+                    color="blue"
+                />
+                <StatCard
+                    title="Email Replies"
+                    value={emailRepliesStats.total}
+                    icon={<MessageSquare size={20} />}
+                    subtitle={`${emailRepliesStats.replyRate}% reply rate`}
+                    color="green"
+                />
+                <StatCard
+                    title="Unique Replies"
+                    value={emailRepliesStats.uniqueLeads}
+                    icon={<TrendingUp size={20} />}
+                    subtitle={`${leads.length > 0 ? ((emailRepliesStats.uniqueLeads / leads.length) * 100).toFixed(1) : 0}% of leads`}
+                    color="purple"
+                />
             </div>
 
-            <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
-                <div className="px-3 py-2 border-b border-slate-200">
-                    <h2 className="text-sm font-semibold text-slate-900">By email template</h2>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-slate-200 bg-slate-50/80">
-                                <th className="text-left py-2 px-3 font-medium text-slate-700">Template</th>
-                                <th className="text-right py-2 px-3 font-medium text-slate-700">Leads sent mail</th>
-                                <th className="text-left py-2 px-3 font-medium text-slate-700">Last sent</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {templateStats.map((row) => (
-                                <tr key={row.template} className="border-b border-slate-100 hover:bg-slate-50/50">
-                                    <td className="py-2 px-3 font-medium text-slate-900">{row.template}</td>
-                                    <td className="py-2 px-3 text-right tabular-nums text-slate-700">{row.sentCount}</td>
-                                    <td className="py-2 px-3 text-slate-600">{row.lastSentLabel}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                {templateStats.length === 0 && (
-                    <div className="px-3 py-6 text-center text-sm text-slate-500">No templates</div>
-                )}
-            </div>
-
-            {leadByTypeStats.length > 0 && (
-                <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
-                    <div className="px-3 py-2 border-b border-slate-200">
-                        <h2 className="text-sm font-semibold text-slate-900">Country by type</h2>
+            {/* Email Activity Chart */}
+            <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+                    <div className="flex items-center gap-2">
+                        <BarChart3 size={18} className="text-indigo-600" />
+                        <h2 className="text-base font-semibold text-slate-900">Email Activity (Last 7 Days)</h2>
                     </div>
-                    <div className="p-3 space-y-3">
+                </div>
+                <div className="p-4">
+                    <EmailActivityChart emailLogs={emailActivityData} />
+                </div>
+            </div>
+
+            {/* Template Performance - Split Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Template Chart */}
+                <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+                        <div className="flex items-center gap-2">
+                            <PieChart size={18} className="text-indigo-600" />
+                            <h2 className="text-base font-semibold text-slate-900">Top Email Templates</h2>
+                        </div>
+                    </div>
+                    <div className="p-4">
+                        {templateChartData.length > 0 ? (
+                            <div className="space-y-3">
+                                {templateChartData.map((item, idx) => {
+                                    const fullTemplate = templateStats.find(t => {
+                                        const shortName = t.template.length > 40 
+                                            ? t.template.substring(0, 40) + '...'
+                                            : t.template;
+                                        return shortName === item.name;
+                                    });
+                                    if (!fullTemplate) return null;
+                                    return (
+                                        <div
+                                            key={idx}
+                                            onClick={() => setSelectedTemplate(fullTemplate.template)}
+                                            className="cursor-pointer hover:bg-indigo-50/50 rounded-lg p-2 -m-2 transition-colors"
+                                        >
+                                            <PipelineBars data={[item]} />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="py-8 text-center text-sm text-slate-500">No template data</div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Template Table */}
+                <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+                        <div className="flex items-center gap-2">
+                            <Mail size={18} className="text-indigo-600" />
+                            <h2 className="text-base font-semibold text-slate-900">Template Details</h2>
+                        </div>
+                    </div>
+                    <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                        <table className="w-full text-sm">
+                            <thead className="sticky top-0 bg-slate-50 z-10">
+                                <tr className="border-b border-slate-200">
+                                    <th className="text-left py-3 px-4 font-semibold text-slate-700">Template</th>
+                                    <th className="text-right py-3 px-4 font-semibold text-slate-700">Leads</th>
+                                    <th className="text-left py-3 px-4 font-semibold text-slate-700">Last Sent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {templateStats.map((row, idx) => (
+                                    <tr 
+                                        key={row.template} 
+                                        onClick={() => setSelectedTemplate(row.template)}
+                                        className={`border-b border-slate-100 hover:bg-indigo-50/50 cursor-pointer transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
+                                    >
+                                        <td className="py-3 px-4">
+                                            <div className="font-medium text-slate-900 max-w-xs truncate" title={row.template}>
+                                                {row.template}
+                                            </div>
+                                        </td>
+                                        <td className="py-3 px-4 text-right">
+                                            <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2 py-1 rounded-md bg-indigo-100 text-indigo-700 font-semibold text-xs tabular-nums">
+                                                {row.sentCount}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-4 text-slate-600 text-xs">{row.lastSentLabel}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    {templateStats.length === 0 && (
+                        <div className="px-4 py-8 text-center text-sm text-slate-500">No templates</div>
+                    )}
+                </div>
+            </div>
+
+            {/* Country Distribution by Type */}
+            {leadByTypeStats.length > 0 && (
+                <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+                        <h2 className="text-base font-semibold text-slate-900">Geographic Distribution by Lead Type</h2>
+                    </div>
+                    <div className="p-4 space-y-4">
                         {leadByTypeStats.map((row) => {
                             const countries = (countryByType.get(row.type) || []).slice(0, 6);
                             if (countries.length === 0) return null;
                             return (
-                                <div key={row.type}>
-                                    <p className="text-xs font-medium text-slate-500 mb-1.5">{row.type}</p>
+                                <div key={row.type} className="border-l-4 border-indigo-500 pl-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-sm font-semibold text-slate-900">{row.type}</p>
+                                        <span className="text-xs text-slate-500">
+                                            {row.sentCount} sent • Last: {row.lastSentLabel}
+                                        </span>
+                                    </div>
                                     <PipelineBars data={countries} compact />
                                 </div>
                             );
@@ -457,19 +738,183 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                 </div>
             )}
 
-            <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
-                <div className="px-3 py-2 border-b border-slate-200">
-                    <h2 className="text-sm font-semibold text-slate-900">Email replies</h2>
+            {/* Email Replies Summary */}
+            <div className="border border-slate-200 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-green-200">
+                    <div className="flex items-center gap-2">
+                        <MessageSquare size={18} className="text-green-600" />
+                        <h2 className="text-base font-semibold text-slate-900">Email Replies Performance</h2>
+                    </div>
                 </div>
-                <div className="px-3 py-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
-                    <span><strong className="text-slate-900">{emailRepliesStats.total}</strong> replies</span>
-                    <span><strong className="text-slate-900">{emailRepliesStats.uniqueLeads}</strong> leads replied</span>
-                    <span><strong className="text-slate-900">{emailRepliesStats.replyRate}%</strong> rate</span>
+                <div className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-white rounded-lg p-4 border border-green-200">
+                            <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Total Replies</div>
+                            <div className="text-3xl font-bold text-green-600 tabular-nums">{emailRepliesStats.total}</div>
+                            <div className="text-xs text-slate-500 mt-1">All time: {emailRepliesStats.allTime}</div>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-green-200">
+                            <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Unique Leads Replied</div>
+                            <div className="text-3xl font-bold text-green-600 tabular-nums">{emailRepliesStats.uniqueLeads}</div>
+                            <div className="text-xs text-slate-500 mt-1">
+                                {leads.length > 0 ? ((emailRepliesStats.uniqueLeads / leads.length) * 100).toFixed(1) : 0}% of total leads
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-green-200">
+                            <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Reply Rate</div>
+                            <div className="text-3xl font-bold text-green-600 tabular-nums">{emailRepliesStats.replyRate}%</div>
+                            <div className="text-xs text-slate-500 mt-1">
+                                {totalEmailsSent > 0 ? `${emailRepliesStats.total} / ${totalEmailsSent} emails` : 'No emails sent'}
+                            </div>
+                        </div>
+                    </div>
+                    {emailRepliesStats.allTime === 0 && (
+                        <div className="mt-4 text-center text-sm text-slate-500 bg-white rounded-lg p-4 border border-green-200">
+                            No email replies yet. Keep engaging with your leads!
+                        </div>
+                    )}
                 </div>
-                {emailRepliesStats.allTime === 0 && (
-                    <div className="px-3 pb-3 text-sm text-slate-500">No email replies yet</div>
-                )}
             </div>
+
+            {/* Template Insights Modal */}
+            {selectedTemplate && templateInsights && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+                        {/* Modal Header */}
+                        <div className="px-4 py-3 border-b border-slate-200 flex justify-between items-start bg-gradient-to-r from-indigo-50 to-white">
+                            <div className="flex-1 min-w-0 pr-4">
+                                <h2 className="text-lg font-bold text-slate-900 mb-1">Template Insights</h2>
+                                <p className="text-sm font-semibold text-slate-900 break-words">{selectedTemplate}</p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedTemplate(null)}
+                                className="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-white transition-colors flex-shrink-0"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="flex-1 overflow-y-auto px-6 py-4">
+                            <p className="text-sm text-slate-600 mb-4">
+                                A summary of the performance for the selected email template is shown below:
+                            </p>
+                            
+                            {/* Main Content: Statistics Snapshot + Chart */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {/* Left: Statistics Snapshot Table */}
+                                <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                                    <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+                                        <h3 className="text-sm font-semibold text-slate-900">Statistics Snapshot</h3>
+                                    </div>
+                                    <div className="p-4">
+                                        <table className="w-full text-sm">
+                                            <tbody className="space-y-2">
+                                                <tr className="border-b border-slate-100">
+                                                    <td className="py-2.5 pr-4 font-medium text-slate-700 align-top w-1/3">Email Subject:</td>
+                                                    <td className="py-2.5 text-slate-900 break-words">{templateInsights.template}</td>
+                                                </tr>
+                                                <tr className="border-b border-slate-100">
+                                                    <td className="py-2.5 pr-4 font-medium text-slate-700 align-top">Total Sent:</td>
+                                                    <td className="py-2.5 text-slate-900 font-semibold tabular-nums">{templateInsights.totalSent} emails</td>
+                                                </tr>
+                                                {templateInsights.firstSent && (
+                                                    <tr className="border-b border-slate-100">
+                                                        <td className="py-2.5 pr-4 font-medium text-slate-700 align-top">Start Sending:</td>
+                                                        <td className="py-2.5 text-slate-900">
+                                                            {templateInsights.firstSent.toLocaleDateString('en-US', { 
+                                                                month: 'long', 
+                                                                day: 'numeric', 
+                                                                year: 'numeric' 
+                                                            })}, {templateInsights.firstSent.toLocaleTimeString('en-US', { 
+                                                                hour: 'numeric', 
+                                                                minute: '2-digit',
+                                                                hour12: true 
+                                                            })}
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                {templateInsights.lastSent && (
+                                                    <tr className="border-b border-slate-100">
+                                                        <td className="py-2.5 pr-4 font-medium text-slate-700 align-top">Finished Sending:</td>
+                                                        <td className="py-2.5 text-slate-900">
+                                                            {templateInsights.lastSent.toLocaleDateString('en-US', { 
+                                                                month: 'long', 
+                                                                day: 'numeric', 
+                                                                year: 'numeric' 
+                                                            })}, {templateInsights.lastSent.toLocaleTimeString('en-US', { 
+                                                                hour: 'numeric', 
+                                                                minute: '2-digit',
+                                                                hour12: true 
+                                                            })}
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                {templateInsights.firstSent && templateInsights.lastSent && (
+                                                    <tr className="border-b border-slate-100">
+                                                        <td className="py-2.5 pr-4 font-medium text-slate-700 align-top">Sending Time:</td>
+                                                        <td className="py-2.5 text-slate-900">
+                                                            {(() => {
+                                                                const firstTime = templateInsights.firstSent.getTime();
+                                                                const lastTime = templateInsights.lastSent.getTime();
+                                                                const diff = Math.abs(lastTime - firstTime);
+                                                                
+                                                                const totalSeconds = Math.floor(diff / 1000);
+                                                                const minutes = Math.floor(totalSeconds / 60);
+                                                                const seconds = totalSeconds % 60;
+                                                                
+                                                                if (minutes > 0) {
+                                                                    return `${minutes} minute${minutes !== 1 ? 's' : ''}${seconds > 0 ? `, ${seconds} second${seconds !== 1 ? 's' : ''}` : ''}`;
+                                                                }
+                                                                return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+                                                            })()}
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                <tr className="border-b border-slate-100">
+                                                    <td className="py-2.5 pr-4 font-medium text-slate-700 align-top">Sent To:</td>
+                                                    <td className="py-2.5 text-slate-900 tabular-nums">
+                                                        {templateInsights.uniqueLeads} of {templateInsights.uniqueLeads}
+                                                    </td>
+                                                </tr>
+                                                {templateInsights.replies.length > 0 && (
+                                                    <tr className="border-b border-slate-100">
+                                                        <td className="py-2.5 pr-4 font-medium text-slate-700 align-top">Replied:</td>
+                                                        <td className="py-2.5 text-slate-900 tabular-nums">
+                                                            {templateInsights.replies.length} / {templateInsights.uniqueRepliedLeads} Unique Replies
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                {templateInsights.replyRate > 0 && (
+                                                    <tr className="border-b border-slate-100">
+                                                        <td className="py-2.5 pr-4 font-medium text-slate-700 align-top">Reply Rate:</td>
+                                                        <td className="py-2.5 text-slate-900 font-semibold tabular-nums">
+                                                            {templateInsights.replyRate.toFixed(2)}%
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Right: Email Campaign Summary Chart */}
+                                {templateInsights.countryDistribution.length > 0 && (
+                                    <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
+                                        <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+                                            <h3 className="text-sm font-semibold text-slate-900">Geographic Distribution Chart</h3>
+                                        </div>
+                                        <div className="p-6">
+                                            <CountryPieChart data={templateInsights.countryDistribution} />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
