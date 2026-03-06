@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Loader2, Mail, Send, Users, TrendingUp, MessageSquare, BarChart3, PieChart, X, Calendar, Clock, CheckCircle2 } from 'lucide-react';
 import { Lead, EmailLog } from '../types';
-import { emailLogsApi, emailRepliesApi } from '../services/apiService';
+import { emailLogsApi, emailRepliesApi, emailTemplatesApi } from '../services/apiService';
 import { PipelineBars, StatCard, EmailActivityChart, CountryPieChart } from '../components/common/Stats';
 
 interface DashboardProps {
@@ -17,10 +17,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
     const [loadingEmailReplies, setLoadingEmailReplies] = useState(false);
     const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'yesterday' | 'this-week' | 'this-month'>('all');
     const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+    const [emailTemplates, setEmailTemplates] = useState<Array<{ subject: string; language?: string }>>([]);
 
     useEffect(() => {
         loadEmailLogs();
         loadEmailReplies();
+        emailTemplatesApi.getAll().then(setEmailTemplates).catch(() => {});
     }, []);
 
     const loadEmailLogs = async () => {
@@ -424,18 +426,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
             }
         });
         
-        const countryDistribution = Array.from(countryMap.entries())
+        let countryDistribution = Array.from(countryMap.entries())
             .map(([name, count]) => ({ name, count }))
             .sort((a, b) => b.count - a.count);
+
+        // EN template should exclude Vietnam (same rule as LeadsView send filter)
+        const isEnTemplate = emailTemplates.some(
+            t => (t.subject || '').trim() === selectedTemplate && (t.language || '').toLowerCase() === 'en'
+        );
+        if (isEnTemplate) {
+            const vietnamLower = (s: string) => {
+                const n = (s || '').toLowerCase().trim();
+                return n === 'vietnam' || n === 'việt nam';
+            };
+            countryDistribution = countryDistribution.filter(c => !vietnamLower(c.name));
+        }
         
-        // Verify: sum should equal totalSent
-        const distributionSum = countryDistribution.reduce((sum, item) => sum + item.count, 0);
-        if (distributionSum !== templateLogs.length) {
-            console.warn('Country distribution sum mismatch:', {
-                distributionSum,
-                totalSent: templateLogs.length,
-                difference: templateLogs.length - distributionSum
-            });
+        // Verify: sum should equal totalSent (skip when EN template filtered out Vietnam)
+        if (!isEnTemplate) {
+            const distributionSum = countryDistribution.reduce((sum, item) => sum + item.count, 0);
+            if (distributionSum !== templateLogs.length) {
+                console.warn('Country distribution sum mismatch:', {
+                    distributionSum,
+                    totalSent: templateLogs.length,
+                    difference: templateLogs.length - distributionSum
+                });
+            }
         }
 
         // Reply rate
@@ -537,7 +553,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                 })()
                 : null
         };
-    }, [selectedTemplate, allEmailLogs, allEmailReplies, leads]);
+    }, [selectedTemplate, allEmailLogs, allEmailReplies, leads, emailTemplates]);
 
     if (loading) {
         return (
