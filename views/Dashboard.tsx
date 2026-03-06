@@ -601,7 +601,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
             </div>
 
             {/* Key Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                 <StatCard
                     title="Total Leads"
                     value={stats.total}
@@ -615,33 +615,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                     subtitle={`${sentEmailsCount} leads contacted`}
                     color="blue"
                 />
-                <StatCard
-                    title="Email Replies"
-                    value={emailRepliesStats.total}
-                    icon={<MessageSquare size={20} />}
-                    subtitle={`${emailRepliesStats.replyRate}% reply rate`}
-                    color="green"
-                />
-                <StatCard
-                    title="Unique Replies"
-                    value={emailRepliesStats.uniqueLeads}
-                    icon={<TrendingUp size={20} />}
-                    subtitle={`${leads.length > 0 ? ((emailRepliesStats.uniqueLeads / leads.length) * 100).toFixed(1) : 0}% of leads`}
-                    color="purple"
-                />
-            </div>
-
-            {/* Email Activity Chart */}
-            <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
-                    <div className="flex items-center gap-2">
-                        <BarChart3 size={18} className="text-indigo-600" />
-                        <h2 className="text-base font-semibold text-slate-900">Email Activity (Last 7 Days)</h2>
-                    </div>
-                </div>
-                <div className="p-4">
-                    <EmailActivityChart emailLogs={emailActivityData} />
-                </div>
             </div>
 
             {/* Template Performance - Split Layout */}
@@ -753,44 +726,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                     </div>
                 </div>
             )}
-
-            {/* Email Replies Summary */}
-            <div className="border border-slate-200 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-green-200">
-                    <div className="flex items-center gap-2">
-                        <MessageSquare size={18} className="text-green-600" />
-                        <h2 className="text-base font-semibold text-slate-900">Email Replies Performance</h2>
-                    </div>
-                </div>
-                <div className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white rounded-lg p-4 border border-green-200">
-                            <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Total Replies</div>
-                            <div className="text-3xl font-bold text-green-600 tabular-nums">{emailRepliesStats.total}</div>
-                            <div className="text-xs text-slate-500 mt-1">All time: {emailRepliesStats.allTime}</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-4 border border-green-200">
-                            <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Unique Leads Replied</div>
-                            <div className="text-3xl font-bold text-green-600 tabular-nums">{emailRepliesStats.uniqueLeads}</div>
-                            <div className="text-xs text-slate-500 mt-1">
-                                {leads.length > 0 ? ((emailRepliesStats.uniqueLeads / leads.length) * 100).toFixed(1) : 0}% of total leads
-                            </div>
-                        </div>
-                        <div className="bg-white rounded-lg p-4 border border-green-200">
-                            <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Reply Rate</div>
-                            <div className="text-3xl font-bold text-green-600 tabular-nums">{emailRepliesStats.replyRate}%</div>
-                            <div className="text-xs text-slate-500 mt-1">
-                                {totalEmailsSent > 0 ? `${emailRepliesStats.total} / ${totalEmailsSent} emails` : 'No emails sent'}
-                            </div>
-                        </div>
-                    </div>
-                    {emailRepliesStats.allTime === 0 && (
-                        <div className="mt-4 text-center text-sm text-slate-500 bg-white rounded-lg p-4 border border-green-200">
-                            No email replies yet. Keep engaging with your leads!
-                        </div>
-                    )}
-                </div>
-            </div>
 
             {/* Template Insights Modal */}
             {selectedTemplate && templateInsights && (
