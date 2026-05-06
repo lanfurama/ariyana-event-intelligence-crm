@@ -5,6 +5,8 @@ import type React from 'react';
 import { useMemo } from 'react';
 import { extractEventModalData } from './EventModal/eventModalData';
 import { ModalHeader } from './EventModal/ModalHeader';
+import { SummaryStatistics } from './EventModal/SummaryStatistics';
+import { DataQualityIssues } from './EventModal/DataQualityIssues';
 
 interface EventModalProps {
   event: {
@@ -39,55 +41,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
         {/* Modal Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="space-y-3">
-            {/* Summary Statistics */}
-            {(statistics.totalEditions > 1 ||
-              statistics.locations.size > 0 ||
-              statistics.countries.size > 0 ||
-              statistics.cities.size > 0) && (
-              <div className="bg-slate-50 rounded border border-slate-200 px-4 py-3">
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">Tóm tắt</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {statistics.totalEditions > 1 && (
-                    <div>
-                      <div className="text-xs text-slate-500 mb-0.5">Tổng số editions</div>
-                      <div className="text-lg font-semibold text-slate-900">
-                        {statistics.totalEditions}
-                      </div>
-                    </div>
-                  )}
-                  {statistics.cities.size > 0 && (
-                    <div>
-                      <div className="text-xs text-slate-500 mb-0.5">Thành phố</div>
-                      <div className="text-lg font-semibold text-slate-900">
-                        {statistics.cities.size}
-                      </div>
-                      <div className="text-xs text-slate-600 mt-0.5">
-                        {Array.from(statistics.cities).slice(0, 2).join(', ')}
-                        {statistics.cities.size > 2 ? '...' : ''}
-                      </div>
-                    </div>
-                  )}
-                  {statistics.countries.size > 0 && (
-                    <div>
-                      <div className="text-xs text-slate-500 mb-0.5">Quốc gia</div>
-                      <div className="text-lg font-semibold text-slate-900">
-                        {statistics.countries.size}
-                      </div>
-                      <div className="text-xs text-slate-600 mt-0.5">
-                        {Array.from(statistics.countries).slice(0, 2).join(', ')}
-                        {statistics.countries.size > 2 ? '...' : ''}
-                      </div>
-                    </div>
-                  )}
-                  {dataObj.SEQUENCE && (
-                    <div>
-                      <div className="text-xs text-slate-500 mb-0.5">Sequence</div>
-                      <div className="text-lg font-semibold text-slate-900">{dataObj.SEQUENCE}</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            <SummaryStatistics statistics={statistics} sequence={dataObj.SEQUENCE} />
 
             {/* Related Organizations */}
             {relatedData.organizations.length > 0 && (
@@ -245,52 +199,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
               </div>
             )}
 
-            {/* Data Quality Issues */}
-            {event.issues && Array.isArray(event.issues) && event.issues.length > 0 && (
-              <div className="bg-slate-50 rounded border border-slate-200 px-4 py-3">
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">
-                  Vấn đề về chất lượng dữ liệu
-                </h3>
-                <div className="space-y-2">
-                  {event.issues.filter((i: any) => i.severity === 'critical').length > 0 && (
-                    <div>
-                      <div className="text-xs font-medium text-red-700 mb-1">Quan trọng:</div>
-                      {event.issues
-                        .filter((i: any) => i.severity === 'critical')
-                        .map((issue: any, idx: number) => (
-                          <div key={idx} className="text-sm text-red-700 mb-1 pl-3">
-                            • {issue.message}
-                          </div>
-                        ))}
-                    </div>
-                  )}
-                  {event.issues.filter((i: any) => i.severity === 'warning').length > 0 && (
-                    <div>
-                      <div className="text-xs font-medium text-amber-700 mb-1">Cảnh báo:</div>
-                      {event.issues
-                        .filter((i: any) => i.severity === 'warning')
-                        .map((issue: any, idx: number) => (
-                          <div key={idx} className="text-sm text-amber-700 mb-1 pl-3">
-                            • {issue.message}
-                          </div>
-                        ))}
-                    </div>
-                  )}
-                  {event.issues.filter((i: any) => i.severity === 'info').length > 0 && (
-                    <div>
-                      <div className="text-xs font-medium text-slate-600 mb-1">Thông tin:</div>
-                      {event.issues
-                        .filter((i: any) => i.severity === 'info')
-                        .map((issue: any, idx: number) => (
-                          <div key={idx} className="text-sm text-slate-600 mb-1 pl-3">
-                            • {issue.message}
-                          </div>
-                        ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            <DataQualityIssues issues={event.issues} />
 
             {/* All Event Data in Table Format */}
             {Object.keys(dataObj).length > 0 && (
