@@ -50,9 +50,34 @@ View your app in AI Studio: https://ai.studio/apps/drive/1Yfs1wMDaCWebViQbPgpx_r
    ```
 
 4. **Run the app:**
+
    ```bash
+   # Frontend (Vite dev server with serverless API proxy)
    npm run dev
+
+   # Standalone backend (alternative — runs Express directly on PORT)
+   npm run dev:api
    ```
+
+5. **Daily development scripts:**
+
+   ```bash
+   npm run lint           # ESLint check (warnings allowed; errors block)
+   npm run lint:fix       # ESLint auto-fix
+   npm run format         # Prettier write
+   npm run format:check   # Prettier verify only
+   npm run typecheck      # tsc --noEmit (root)
+   npm run typecheck:api  # tsc --noEmit (api/)
+   npm run build          # Production build
+   ```
+
+   The pre-commit hook runs `lint-staged` automatically (ESLint --fix +
+   Prettier on staged files; blocks on lint errors). The pre-push hook
+   runs the full typecheck — this compensates for the absence of CI.
+   To bypass in an emergency: `--no-verify` (use sparingly).
+
+   Some pre-existing tech debt is documented in `STRICT_DEBT.md`. Each
+   entry is scheduled for a specific future sub-project.
 
 ### Security Notes:
 
@@ -60,4 +85,5 @@ View your app in AI Studio: https://ai.studio/apps/drive/1Yfs1wMDaCWebViQbPgpx_r
 - ✅ Backend API routes use environment variables only
 - ✅ Frontend calls backend APIs, never directly uses API keys
 - ✅ Database credentials are in `.env` file only
-- ✅ See [SECURITY_CHECK.md](SECURITY_CHECK.md) for detailed security audit
+- ✅ Environment variables validated at boot via `api/src/config/env.ts`
+  (Zod schema). Missing/invalid keys cause fail-fast with a clear error.
