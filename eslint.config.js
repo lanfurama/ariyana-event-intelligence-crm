@@ -46,6 +46,18 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       '@typescript-eslint/consistent-type-imports': 'error',
+      // Permit @ts-nocheck and @ts-expect-error when accompanied by an explanatory
+      // comment (the STRICT_DEBT pattern). Bare suppressions remain forbidden.
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': true,
+          'ts-nocheck': false,
+          'ts-check': false,
+          minimumDescriptionLength: 10,
+        },
+      ],
       '@typescript-eslint/no-unused-vars': [
         'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
@@ -70,6 +82,18 @@ export default tseslint.config(
     rules: {
       'no-console': 'off',
       '@typescript-eslint/consistent-type-imports': 'error',
+      // Permit @ts-nocheck and @ts-expect-error when accompanied by an explanatory
+      // comment (the STRICT_DEBT pattern). Bare suppressions remain forbidden.
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': true,
+          'ts-nocheck': false,
+          'ts-check': false,
+          minimumDescriptionLength: 10,
+        },
+      ],
       '@typescript-eslint/no-unused-vars': [
         'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
