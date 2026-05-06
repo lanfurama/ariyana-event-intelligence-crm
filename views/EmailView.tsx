@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { Mail, FileText } from 'lucide-react';
 import type { User } from '../types';
 import { EmailTemplatesView } from './EmailTemplatesView';

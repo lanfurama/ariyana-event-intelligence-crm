@@ -1,5 +1,5 @@
 import { query } from '../config/database.js';
-import { User } from '../types/index.js';
+import type { User } from '../types/index.js';
 
 export class UserModel {
   static async getAll(): Promise<User[]> {

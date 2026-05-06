@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import type nodemailer from 'nodemailer';
 import { EmailUtils } from './utils.js';
 import { EMAIL_CONFIG } from './config.js';
 import type { MailOptions, NodemailerAttachment } from './types.js';

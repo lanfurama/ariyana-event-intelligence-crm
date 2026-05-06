@@ -1,5 +1,5 @@
 import { query } from '../config/database.js';
-import { EmailReply } from '../types/index.js';
+import type { EmailReply } from '../types/index.js';
 
 export class EmailReplyModel {
   static async getAll(leadId?: string, emailLogId?: string): Promise<EmailReply[]> {

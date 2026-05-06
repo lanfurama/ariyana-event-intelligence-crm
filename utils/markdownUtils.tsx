@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 // Helper to format inline markdown (bold, italic, code)
 export const formatInlineMarkdown = (text: string): React.ReactNode => {

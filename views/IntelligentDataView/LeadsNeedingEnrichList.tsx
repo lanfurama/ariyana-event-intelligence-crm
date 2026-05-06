@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Users } from 'lucide-react';
 import type { Lead } from '../../types';
 import { EnrichRow } from './EnrichRow';

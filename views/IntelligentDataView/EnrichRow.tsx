@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import type { Lead } from '../../types';
 import { isLeadMissingPersonInfo } from '../../utils/leadEnrichUtils';

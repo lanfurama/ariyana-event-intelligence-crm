@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { BrainCircuit, Loader2 } from 'lucide-react';
 
 interface BatchAnalysisControlsProps {

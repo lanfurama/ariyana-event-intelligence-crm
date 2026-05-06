@@ -1,5 +1,5 @@
 import { query } from '../config/database.js';
-import { EmailLog, EmailLogAttachment } from '../types/index.js';
+import type { EmailLog, EmailLogAttachment } from '../types/index.js';
 
 export class EmailLogModel {
   static async getAll(leadId?: string): Promise<EmailLog[]> {

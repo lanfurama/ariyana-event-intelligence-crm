@@ -11,7 +11,7 @@ import {
   User as UserIcon,
   Menu,
 } from 'lucide-react';
-import { User } from '../types';
+import type { User } from '../types';
 import { NavItem } from './common/NavItem';
 
 interface SidebarProps {

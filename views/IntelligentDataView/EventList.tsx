@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Search, Check, Loader2, X, FileText, Sparkles } from 'lucide-react';
 
 interface OrganizationProgress {

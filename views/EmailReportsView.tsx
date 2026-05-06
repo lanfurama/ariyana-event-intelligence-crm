@@ -13,7 +13,8 @@ import {
   Save,
   Power,
 } from 'lucide-react';
-import { emailReportsApi, EmailReportsConfig, EmailReportsLog } from '../services/apiService';
+import type { EmailReportsConfig, EmailReportsLog } from '../services/apiService';
+import { emailReportsApi } from '../services/apiService';
 
 // Common timezones
 const TIMEZONES = [

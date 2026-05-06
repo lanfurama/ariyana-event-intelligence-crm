@@ -1,10 +1,11 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { query } from '../config/database.js';
-import { Lead } from '../types/index.js';
+import type { Lead } from '../types/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -588,7 +589,7 @@ If ANY of these fields is empty or incomplete, you MUST:
     });
 
     // Handle tool calls if any
-    let finalResponse = response.choices[0]?.message?.content || '';
+    const finalResponse = response.choices[0]?.message?.content || '';
 
     // If model requested tool use, we would need to handle it here
     // For now, OpenAI's function calling will be handled by the model internally

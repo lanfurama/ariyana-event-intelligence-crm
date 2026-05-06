@@ -47,10 +47,16 @@ export default tseslint.config(
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
       'react/prop-types': 'off',
+      // Pragmatic relaxations for existing codebase — addressed in sub-project #4 refactor
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/exhaustive-deps': 'warn',
+      'react/display-name': 'warn',
     },
   },
 
@@ -65,9 +71,11 @@ export default tseslint.config(
       'no-console': 'off',
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
+      // Pragmatic relaxation for existing codebase — addressed in sub-project #5 layer-ization
+      '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
 

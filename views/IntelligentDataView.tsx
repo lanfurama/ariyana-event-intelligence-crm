@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import type React from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { BrainCircuit, Search, X } from 'lucide-react';
 import type { Lead } from '../types';
 import type { ParsedEnrichContact } from '../utils/leadEnrichUtils';

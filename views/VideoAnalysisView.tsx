@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2, BrainCircuit, FileText, Upload, Film, X } from 'lucide-react';
 import * as GeminiService from '../services/geminiService';
 import {

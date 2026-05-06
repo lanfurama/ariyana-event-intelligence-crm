@@ -192,7 +192,7 @@ export class ReportStatsService {
         end.setHours(23, 59, 59, 999);
         break;
 
-      case 'weekly':
+      case 'weekly': {
         // Start of week (Monday)
         start = new Date(now);
         const dayOfWeek = start.getDay();
@@ -205,6 +205,7 @@ export class ReportStatsService {
         end.setDate(end.getDate() + 6);
         end.setHours(23, 59, 59, 999);
         break;
+      }
 
       case 'monthly':
         // Start of month

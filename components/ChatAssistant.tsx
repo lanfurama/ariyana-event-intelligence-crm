@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Send, Loader2 } from 'lucide-react';
-import { User, ChatMessage } from '../types';
+import type { User, ChatMessage } from '../types';
 import { chatMessagesApi } from '../services/apiService';
 import * as GPTService from '../services/gptService';
 import { extractRetryDelay, isRateLimitError } from '../services/gptService';

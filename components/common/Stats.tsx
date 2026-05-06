@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import { EmailLog } from '../../types';
+import type React from 'react';
+import { useMemo } from 'react';
+import type { EmailLog } from '../../types';
 
 export const EmailActivityChart = ({ emailLogs }: { emailLogs: EmailLog[] }) => {
   const dailyActivity = useMemo(() => {

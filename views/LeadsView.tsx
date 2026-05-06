@@ -21,7 +21,7 @@ import {
   MoreHorizontal,
   ExternalLink,
 } from 'lucide-react';
-import { Lead, EmailTemplate, User, EmailLog } from '../types';
+import type { Lead, EmailTemplate, User, EmailLog } from '../types';
 import { emailLogsApi, emailRepliesApi, emailTemplatesApi, leadsApi } from '../services/apiService';
 import { mapLeadFromDB, mapLeadToDB } from '../utils/leadUtils';
 import * as XLSX from 'xlsx';

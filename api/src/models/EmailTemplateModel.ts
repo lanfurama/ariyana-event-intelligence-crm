@@ -1,5 +1,5 @@
 import { query } from '../config/database.js';
-import { EmailTemplate, EmailTemplateAttachment } from '../types/index.js';
+import type { EmailTemplate, EmailTemplateAttachment } from '../types/index.js';
 
 export class EmailTemplateModel {
   static async getAll(): Promise<EmailTemplate[]> {

@@ -1,4 +1,4 @@
-import { Lead, User } from './types';
+import type { Lead, User } from './types';
 
 export const EMAIL_TEMPLATES = [
   {

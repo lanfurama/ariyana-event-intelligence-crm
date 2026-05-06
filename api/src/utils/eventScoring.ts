@@ -34,7 +34,7 @@ function isValidPhone(phone: string): boolean {
   if (!phone || typeof phone !== 'string') return false;
   const phoneStr = phone.trim();
   // Remove common phone formatting characters
-  const cleaned = phoneStr.replace(/[\s\-\(\)\+]/g, '');
+  const cleaned = phoneStr.replace(/[\s\-()+]/g, '');
   // Check if it contains at least 7 digits (minimum for a valid phone number)
   return /^\d{7,}$/.test(cleaned);
 }

@@ -1,5 +1,7 @@
-import express, { Request, Response } from 'express';
-import { EmailReportsConfigModel, EmailReportsConfig } from '../models/EmailReportsConfigModel.js';
+import type { Request, Response } from 'express';
+import express from 'express';
+import type { EmailReportsConfig } from '../models/EmailReportsConfigModel.js';
+import { EmailReportsConfigModel } from '../models/EmailReportsConfigModel.js';
 import { sendManagerReport } from '../services/managerReportService.js';
 import { triggerReportsManually } from '../services/scheduledReportsJob.js';
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Loader2, Save } from 'lucide-react';
-import { User } from '../types';
+import type { User } from '../types';
 import { usersApi } from '../services/apiService';
 
 export const UserProfileView = ({

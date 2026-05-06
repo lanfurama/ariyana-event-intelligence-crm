@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, ChevronRight, Loader2, X } from 'lucide-react';
-import { User } from '../types';
+import type { User } from '../types';
 import { usersApi } from '../services/apiService';
 import { USERS } from '../constants';
 

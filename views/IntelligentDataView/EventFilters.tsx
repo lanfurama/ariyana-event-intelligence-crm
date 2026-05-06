@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Search, ChevronUp, ChevronDown, X } from 'lucide-react';
 
 interface EventFiltersProps {

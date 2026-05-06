@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import type React from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Loader2,
   Mail,
@@ -13,7 +14,7 @@ import {
   Clock,
   CheckCircle2,
 } from 'lucide-react';
-import { Lead, EmailLog } from '../types';
+import type { Lead, EmailLog } from '../types';
 import { emailLogsApi, emailRepliesApi, emailTemplatesApi } from '../services/apiService';
 import {
   PipelineBars,

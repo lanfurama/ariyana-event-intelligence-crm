@@ -1,6 +1,8 @@
 import { getTransporter } from '../utils/emailSender.js';
-import { ReportStatsService, ReportStats } from './reportStatsService.js';
-import { EmailReportsConfigModel, EmailReportsConfig } from '../models/EmailReportsConfigModel.js';
+import type { ReportStats } from './reportStatsService.js';
+import { ReportStatsService } from './reportStatsService.js';
+import type { EmailReportsConfig } from '../models/EmailReportsConfigModel.js';
+import { EmailReportsConfigModel } from '../models/EmailReportsConfigModel.js';
 
 const defaultFromEmail =
   process.env.DEFAULT_FROM_EMAIL || process.env.EMAIL_HOST_USER || 'marketing@furamavietnam.com';

@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Skeleton } from './Skeleton';
 
 export const LeadsSkeleton: React.FC = () => {

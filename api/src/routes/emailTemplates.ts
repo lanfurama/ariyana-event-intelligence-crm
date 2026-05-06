@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { EmailTemplateModel } from '../models/EmailTemplateModel.js';
 import { sendTestEmail } from '../utils/emailSender.js';
 import type { EmailTemplateAttachment } from '../types/index.js';

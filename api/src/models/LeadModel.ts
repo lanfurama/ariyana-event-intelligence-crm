@@ -1,5 +1,5 @@
 import { query } from '../config/database.js';
-import { Lead, LeadWithEmailCount } from '../types/index.js';
+import type { Lead, LeadWithEmailCount } from '../types/index.js';
 
 // Helper function to ensure industry is never null/empty
 function normalizeIndustry(industry: string | null | undefined): string {

@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { X, Loader2, CheckCircle, AlertCircle, Database } from 'lucide-react';
 import type { ParsedEnrichContact } from '../../utils/leadEnrichUtils';
 

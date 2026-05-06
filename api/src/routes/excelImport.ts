@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { GoogleGenAI } from '@google/genai';
@@ -110,7 +111,7 @@ function cleanValue(value: any): any {
 // Helper function to clean field names
 function cleanFieldName(fieldName: string): string {
   // Remove special characters, normalize spaces
-  let cleaned = fieldName
+  const cleaned = fieldName
     .trim()
     .replace(/[^\w\s]/g, '') // Remove special chars except word chars and spaces
     .replace(/\s+/g, ' ') // Normalize spaces

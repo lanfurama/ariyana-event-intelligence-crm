@@ -1,4 +1,5 @@
-import { Router, Request, Response } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { EmailReplyModel } from '../models/EmailReplyModel.js';
 import { ImapService } from '../utils/imapService.js';
 import { EmailLogModel } from '../models/EmailLogModel.js';

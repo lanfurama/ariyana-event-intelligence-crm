@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { FileSpreadsheet, Loader2, X } from 'lucide-react';
 
 interface EmailSendSummary {

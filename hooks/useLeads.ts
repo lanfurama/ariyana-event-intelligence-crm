@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Lead, User } from '../types';
+import type { Lead, User } from '../types';
 import { leadsApi } from '../services/apiService';
 import { mapLeadFromDB, mapLeadToDB } from '../utils/leadUtils';
 import { INITIAL_LEADS } from '../constants';

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import type React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Plus,
   Search,
@@ -13,7 +14,8 @@ import {
   Mail,
   Loader2,
 } from 'lucide-react';
-import { EmailTemplate, EmailTemplateAttachment, Attachment } from '../types';
+import type { EmailTemplate, Attachment } from '../types';
+import { EmailTemplateAttachment } from '../types';
 import { emailTemplatesApi } from '../services/apiService';
 
 export const EmailTemplatesView = () => {

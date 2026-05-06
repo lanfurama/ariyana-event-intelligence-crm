@@ -1,5 +1,5 @@
 import { query } from '../config/database.js';
-import { ChatMessage } from '../types/index.js';
+import type { ChatMessage } from '../types/index.js';
 
 export class ChatMessageModel {
   // Get all messages for a specific user

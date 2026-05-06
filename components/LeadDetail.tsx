@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import {
   Search,
   Mail,
@@ -13,7 +14,7 @@ import {
   CheckCircle,
   Lock,
 } from 'lucide-react';
-import { Lead, User, EmailTemplate, EmailReply } from '../types';
+import type { Lead, User, EmailTemplate, EmailReply } from '../types';
 import * as VertexAiService from '../services/vertexAiService';
 import * as GeminiService from '../services/geminiService';
 import { emailTemplatesApi, emailLogsApi, emailRepliesApi, leadsApi } from '../services/apiService';
@@ -248,7 +249,7 @@ export const LeadDetail = ({
       return urlObj.hostname.replace('www.', '').toLowerCase();
     } catch {
       // If URL parsing fails, try to extract domain manually
-      const match = website.match(/(?:https?:\/\/)?(?:www\.)?([^\/]+)/);
+      const match = website.match(/(?:https?:\/\/)?(?:www\.)?([^/]+)/);
       return match ? match[1].toLowerCase() : null;
     }
   };
@@ -1501,7 +1502,7 @@ export const LeadDetail = ({
                               return urlObj.hostname.replace(/^www\./, '').toLowerCase();
                             } catch {
                               // Fallback: extract domain manually
-                              const match = uri.match(/(?:https?:\/\/)?(?:www\.)?([^\/]+)/);
+                              const match = uri.match(/(?:https?:\/\/)?(?:www\.)?([^/]+)/);
                               return match ? match[1].toLowerCase() : uri.toLowerCase();
                             }
                           };
@@ -1911,7 +1912,9 @@ export const LeadDetail = ({
                     <Check size={24} />
                   </div>
                   <h3 className="text-lg font-bold text-green-800">Email Client Opened!</h3>
-                  <p className="text-sm text-green-600 mt-1">Lead status updated to "Contacted".</p>
+                  <p className="text-sm text-green-600 mt-1">
+                    Lead status updated to &quot;Contacted&quot;.
+                  </p>
                   <button
                     onClick={() => {
                       setDraftedEmail(null);
@@ -1979,7 +1982,7 @@ export const LeadDetail = ({
                 ) : (
                   <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-lg border border-slate-100">
                     <Mail className="mx-auto mb-2 text-slate-300" size={24} />
-                    No replies yet. Click "Check Inbox" to check for new replies.
+                    No replies yet. Click &quot;Check Inbox&quot; to check for new replies.
                   </div>
                 )}
               </div>
