@@ -9,6 +9,7 @@ import {
   buildGeminiDraftEmailPrompt,
   parseGeminiDraftEmailResponse,
 } from '../services/ai/prompts/draftEmail.js';
+import { buildGeminiChatSystemInstruction } from '../services/ai/prompts/chat.js';
 
 const router = Router();
 
@@ -278,20 +279,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     const iccaKnowledge = await getICCALeadsKnowledge();
 
     // Build enhanced system instruction with ICCA Leads knowledge
-    const systemInstruction = `You are a helpful sales assistant for Ariyana Convention Centre in Danang, Vietnam. You help the sales team analyze leads, suggest strategies, and answer questions about the MICE industry in Vietnam.
-
-Your knowledge base includes data from ICCA (International Congress and Convention Association) Leads that have been imported and analyzed. Use this data to provide accurate, data-driven insights.
-
-${iccaKnowledge}
-
-When answering questions:
-1. Reference specific leads, organizations, or patterns from the ICCA Leads knowledge base when relevant
-2. Provide statistics and insights based on the actual data in the knowledge base
-3. Suggest strategies based on patterns you observe in the leads data
-4. Help identify high-potential leads based on criteria like Vietnam event history, delegate counts, and industry
-5. Answer questions about market trends, industry distribution, and geographic patterns using the knowledge base
-
-Always be specific and data-driven in your responses. If you reference a lead or organization, use the actual information from the knowledge base.`;
+    const systemInstruction = buildGeminiChatSystemInstruction(iccaKnowledge);
 
     const ai = getAiClient();
     const chat = ai.chats.create({

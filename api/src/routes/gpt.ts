@@ -13,6 +13,7 @@ import {
   buildOpenaiDraftEmailPrompt,
   OPENAI_DRAFT_EMAIL_SYSTEM_MESSAGE,
 } from '../services/ai/prompts/draftEmail.js';
+import { buildOpenaiChatSystemInstruction } from '../services/ai/prompts/chat.js';
 
 const router = Router();
 
@@ -697,11 +698,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     const iccaKnowledge = await getICCALeadsKnowledge();
 
     // Build enhanced system instruction with ICCA Leads knowledge
-    const systemInstruction = `Sales assistant for Ariyana Convention Centre Danang. Use ICCA Leads data for accurate insights.
-
-${iccaKnowledge}
-
-Rules: Reference specific leads/data. Provide stats from knowledge base. Suggest strategies based on patterns. Identify high-potential leads (Vietnam history, delegates, industry). Be data-driven and specific.`;
+    const systemInstruction = buildOpenaiChatSystemInstruction(iccaKnowledge);
 
     const openai = getAiClient();
 
