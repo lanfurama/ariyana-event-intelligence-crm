@@ -18,9 +18,7 @@ async function verify() {
     console.log('✅ Database connected\n');
 
     // 1. Count sent email logs
-    const sentLogs = await query(
-      "SELECT COUNT(*) as count FROM email_logs WHERE status = 'sent'"
-    );
+    const sentLogs = await query("SELECT COUNT(*) as count FROM email_logs WHERE status = 'sent'");
     const sentCount = parseInt((sentLogs.rows[0] as any).count);
     console.log(`📧 email_logs with status='sent': ${sentCount}`);
 
@@ -43,7 +41,9 @@ async function verify() {
     `);
 
     if (mismatches.rows.length > 0) {
-      console.log(`⚠️  Found ${mismatches.rows.length} lead(s) with sent emails but status != 'Contacted':`);
+      console.log(
+        `⚠️  Found ${mismatches.rows.length} lead(s) with sent emails but status != 'Contacted':`,
+      );
       mismatches.rows.forEach((r: any) => {
         console.log(`   - ${r.company_name} (id: ${r.id}) status=${r.status}`);
       });

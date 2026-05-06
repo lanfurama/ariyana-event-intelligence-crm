@@ -3,7 +3,12 @@ import { Lead, LeadWithEmailCount } from '../types/index.js';
 
 // Helper function to ensure industry is never null/empty
 function normalizeIndustry(industry: string | null | undefined): string {
-  if (!industry || industry.trim() === '' || industry.toLowerCase() === 'n/a' || industry.toLowerCase() === 'null') {
+  if (
+    !industry ||
+    industry.trim() === '' ||
+    industry.toLowerCase() === 'n/a' ||
+    industry.toLowerCase() === 'null'
+  ) {
     return 'Unknown';
   }
   return industry.trim();
@@ -119,7 +124,7 @@ export class LeadModel {
         lead.lead_score || null,
         lead.last_score_update ? new Date(lead.last_score_update) : null,
         lead.type || null,
-      ]
+      ],
     );
     return result.rows[0];
   }
@@ -152,7 +157,9 @@ export class LeadModel {
       secondary_person_email: lead.secondary_person_email,
       number_of_delegates: lead.number_of_delegates,
       lead_score: lead.lead_score,
-      last_score_update: lead.last_score_update ? new Date(lead.last_score_update) : lead.last_score_update,
+      last_score_update: lead.last_score_update
+        ? new Date(lead.last_score_update)
+        : lead.last_score_update,
       type: lead.type,
     };
 
@@ -170,7 +177,7 @@ export class LeadModel {
     values.push(id);
     const result = await query(
       `UPDATE leads SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
-      values
+      values,
     );
     return result.rows[0] || null;
   }
@@ -187,14 +194,12 @@ export class LeadModel {
     byCountry: Record<string, number>;
   }> {
     const totalResult = await query('SELECT COUNT(*) as count FROM leads');
-    const statusResult = await query(
-      'SELECT status, COUNT(*) as count FROM leads GROUP BY status'
-    );
+    const statusResult = await query('SELECT status, COUNT(*) as count FROM leads GROUP BY status');
     const industryResult = await query(
-      'SELECT industry, COUNT(*) as count FROM leads GROUP BY industry'
+      'SELECT industry, COUNT(*) as count FROM leads GROUP BY industry',
     );
     const countryResult = await query(
-      'SELECT country, COUNT(*) as count FROM leads GROUP BY country'
+      'SELECT country, COUNT(*) as count FROM leads GROUP BY country',
     );
 
     const byStatus: Record<string, number> = {};

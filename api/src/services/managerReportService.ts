@@ -2,22 +2,24 @@ import { getTransporter } from '../utils/emailSender.js';
 import { ReportStatsService, ReportStats } from './reportStatsService.js';
 import { EmailReportsConfigModel, EmailReportsConfig } from '../models/EmailReportsConfigModel.js';
 
-const defaultFromEmail = process.env.DEFAULT_FROM_EMAIL || process.env.EMAIL_HOST_USER || 'marketing@furamavietnam.com';
+const defaultFromEmail =
+  process.env.DEFAULT_FROM_EMAIL || process.env.EMAIL_HOST_USER || 'marketing@furamavietnam.com';
 
 /**
  * Build HTML email template for manager report
  */
 function buildManagerReportEmail(
   stats: ReportStats,
-  config: EmailReportsConfig
+  config: EmailReportsConfig,
 ): { subject: string; text: string; html: string } {
-  const periodLabel = 
-    stats.period.type === 'daily' ? 'Hôm nay' :
-    stats.period.type === 'weekly' ? 'Tuần này' :
-    'Tháng này';
+  const periodLabel =
+    stats.period.type === 'daily'
+      ? 'Hôm nay'
+      : stats.period.type === 'weekly'
+        ? 'Tuần này'
+        : 'Tháng này';
 
-  const periodDateRange = 
-    `${stats.period.start.toLocaleDateString('vi-VN')} - ${stats.period.end.toLocaleDateString('vi-VN')}`;
+  const periodDateRange = `${stats.period.start.toLocaleDateString('vi-VN')} - ${stats.period.end.toLocaleDateString('vi-VN')}`;
 
   const recipientName = config.recipient_name || 'Manager';
 
@@ -129,7 +131,7 @@ function buildManagerReportEmail(
           </thead>
           <tbody>
       `;
-      stats.emails.byDay.forEach(day => {
+      stats.emails.byDay.forEach((day) => {
         html += `
           <tr>
             <td>${new Date(day.date).toLocaleDateString('vi-VN')}</td>
@@ -264,15 +266,21 @@ Xin chào ${recipientName},
 
 Đây là báo cáo tự động về tình hình hoạt động CRM của bạn ${periodLabel.toLowerCase()}.
 
-${config.include_stats ? `
+${
+  config.include_stats
+    ? `
 TỔNG QUAN THỐNG KÊ:
 - Tổng Leads: ${stats.leads.total}
 - Leads Mới ${periodLabel}: ${stats.leads.newInPeriod}
 - Đã Liên Hệ: ${stats.leads.contacted}
 - Đã Qualify: ${stats.leads.qualified}
-` : ''}
+`
+    : ''
+}
 
-${config.include_email_activity ? `
+${
+  config.include_email_activity
+    ? `
 HOẠT ĐỘNG EMAIL:
 - Tổng email đã gửi: ${stats.emails.sent}
 - Email gửi ${periodLabel.toLowerCase()}: ${stats.emails.sentInPeriod}
@@ -280,16 +288,26 @@ HOẠT ĐỘNG EMAIL:
 - Replies ${periodLabel.toLowerCase()}: ${stats.emails.repliesInPeriod}
 - Tỷ lệ reply: ${stats.emails.replyRate}%
 - Số leads đã được liên hệ: ${stats.emails.uniqueLeadsContacted}
-` : ''}
+`
+    : ''
+}
 
-${config.include_new_leads ? `
+${
+  config.include_new_leads
+    ? `
 LEADS MỚI ${periodLabel.toUpperCase()}: ${stats.leads.newInPeriod}
-` : ''}
+`
+    : ''
+}
 
-${config.include_top_leads && stats.topLeads.length > 0 ? `
+${
+  config.include_top_leads && stats.topLeads.length > 0
+    ? `
 TOP ${stats.topLeads.length} LEADS CÓ ĐIỂM CAO NHẤT:
 ${stats.topLeads.map((lead, i) => `${i + 1}. ${lead.companyName} - Điểm: ${lead.leadScore} - ${lead.status} - ${lead.country}`).join('\n')}
-` : ''}
+`
+    : ''
+}
 
 ---
 Báo cáo này được tạo tự động bởi hệ thống CRM Ariyana Convention Centre.
@@ -304,28 +322,28 @@ Thời gian tạo: ${new Date().toLocaleString('vi-VN')}
 /**
  * Send manager report email
  */
-export async function sendManagerReport(config: EmailReportsConfig): Promise<{ success: boolean; error?: string }> {
+export async function sendManagerReport(
+  config: EmailReportsConfig,
+): Promise<{ success: boolean; error?: string }> {
   try {
     const transporter = getTransporter();
     if (!transporter) {
       return {
         success: false,
-        error: 'Email transporter not configured. Please check EMAIL_HOST, EMAIL_HOST_USER, and EMAIL_HOST_PASSWORD.',
+        error:
+          'Email transporter not configured. Please check EMAIL_HOST, EMAIL_HOST_USER, and EMAIL_HOST_PASSWORD.',
       };
     }
 
     // Get period boundaries
-    const { start, end } = ReportStatsService.getPeriodBoundaries(
-      config.frequency,
-      new Date()
-    );
+    const { start, end } = ReportStatsService.getPeriodBoundaries(config.frequency, new Date());
 
     // Generate statistics
     const stats = await ReportStatsService.generateStats(
       start,
       end,
       config.frequency,
-      config.top_leads_count
+      config.top_leads_count,
     );
 
     // Build email
@@ -369,10 +387,7 @@ export async function sendManagerReport(config: EmailReportsConfig): Promise<{ s
 
     // Log failure
     try {
-      const { start, end } = ReportStatsService.getPeriodBoundaries(
-        config.frequency,
-        new Date()
-      );
+      const { start, end } = ReportStatsService.getPeriodBoundaries(config.frequency, new Date());
       await EmailReportsConfigModel.createLog({
         id: `report-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         config_id: config.id,
@@ -416,7 +431,9 @@ export async function processScheduledReports(): Promise<void> {
       try {
         const shouldSend = await shouldSendReport(config);
         if (shouldSend) {
-          console.log(`📤 Sending ${config.frequency} report to ${config.recipient_email} at ${config.time_hour}:${String(config.time_minute).padStart(2, '0')} (${config.timezone})...`);
+          console.log(
+            `📤 Sending ${config.frequency} report to ${config.recipient_email} at ${config.time_hour}:${String(config.time_minute).padStart(2, '0')} (${config.timezone})...`,
+          );
           const result = await sendManagerReport(config);
           if (result.success) {
             console.log(`✅ Report sent successfully to ${config.recipient_email}`);
@@ -440,7 +457,7 @@ async function shouldSendReport(config: EmailReportsConfig): Promise<boolean> {
   // Get current time in the config's timezone
   const now = new Date();
   const timezone = config.timezone || 'Asia/Ho_Chi_Minh';
-  
+
   // Get current time in the specified timezone
   const formatter = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone,
@@ -451,19 +468,19 @@ async function shouldSendReport(config: EmailReportsConfig): Promise<boolean> {
     year: 'numeric',
     hour12: false,
   });
-  
+
   const parts = formatter.formatToParts(now);
   const timeParts: Record<string, string> = {};
-  parts.forEach(part => {
+  parts.forEach((part) => {
     timeParts[part.type] = part.value;
   });
-  
+
   const hour = parseInt(timeParts.hour || '0', 10);
   const minute = parseInt(timeParts.minute || '0', 10);
   const day = parseInt(timeParts.day || '0', 10);
   const month = parseInt(timeParts.month || '0', 10);
   const year = parseInt(timeParts.year || '0', 10);
-  
+
   // Get weekday in the config's timezone
   // Use toLocaleDateString to get weekday number (0=Sunday, 6=Saturday)
   const weekdayFormatter = new Intl.DateTimeFormat('en-US', {
@@ -471,16 +488,16 @@ async function shouldSendReport(config: EmailReportsConfig): Promise<boolean> {
     weekday: 'long',
   });
   const weekdayName = weekdayFormatter.format(now);
-  
+
   // Convert weekday name to number (0=Sunday, 6=Saturday)
   const weekdayMap: Record<string, number> = {
-    'Sunday': 0,
-    'Monday': 1,
-    'Tuesday': 2,
-    'Wednesday': 3,
-    'Thursday': 4,
-    'Friday': 5,
-    'Saturday': 6,
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
   };
   const jsWeekday = weekdayMap[weekdayName] ?? now.getDay();
 
@@ -492,7 +509,7 @@ async function shouldSendReport(config: EmailReportsConfig): Promise<boolean> {
   // Check if already sent today (in config's timezone)
   if (config.last_sent_at) {
     const lastSent = new Date(config.last_sent_at);
-    
+
     // Convert last_sent_at to config's timezone for comparison
     const lastSentFormatter = new Intl.DateTimeFormat('en-US', {
       timeZone: timezone,
@@ -500,28 +517,24 @@ async function shouldSendReport(config: EmailReportsConfig): Promise<boolean> {
       month: 'numeric',
       year: 'numeric',
     });
-    
+
     const lastSentParts = lastSentFormatter.formatToParts(lastSent);
     const lastSentPartsMap: Record<string, string> = {};
-    lastSentParts.forEach(part => {
+    lastSentParts.forEach((part) => {
       lastSentPartsMap[part.type] = part.value;
     });
-    
+
     const lastSentDay = parseInt(lastSentPartsMap.day || '0', 10);
     const lastSentMonth = parseInt(lastSentPartsMap.month || '0', 10);
     const lastSentYear = parseInt(lastSentPartsMap.year || '0', 10);
-    
+
     // Check if sent today in config's timezone
-    if (
-      lastSentYear === year &&
-      lastSentMonth === month &&
-      lastSentDay === day
-    ) {
+    if (lastSentYear === year && lastSentMonth === month && lastSentDay === day) {
       // For daily, already sent today
       if (config.frequency === 'daily') {
         return false;
       }
-      
+
       // For weekly/monthly, check if sent in the same period
       if (config.frequency === 'weekly') {
         // If sent this week, don't send again
@@ -536,7 +549,7 @@ async function shouldSendReport(config: EmailReportsConfig): Promise<boolean> {
           return false; // Sent within last 7 days
         }
       }
-      
+
       if (config.frequency === 'monthly') {
         // If sent this month, don't send again
         if (lastSentMonth === month && lastSentYear === year) {

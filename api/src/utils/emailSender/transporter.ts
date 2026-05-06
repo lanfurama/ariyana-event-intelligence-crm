@@ -15,7 +15,8 @@ export class EmailTransporter {
     }
 
     if (!EMAIL_CONFIG.HOST || !EMAIL_CONFIG.USER || !EMAIL_CONFIG.PASSWORD) {
-      this.initError = 'Email credentials are not fully configured. Please set EMAIL_HOST, EMAIL_HOST_USER, and EMAIL_HOST_PASSWORD.';
+      this.initError =
+        'Email credentials are not fully configured. Please set EMAIL_HOST, EMAIL_HOST_USER, and EMAIL_HOST_PASSWORD.';
       return null;
     }
 

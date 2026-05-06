@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Loader2, 
-  BrainCircuit, 
-  FileText, 
-  Upload, 
-  Film, 
-  X 
-} from 'lucide-react';
+import { Loader2, BrainCircuit, FileText, Upload, Film, X } from 'lucide-react';
 import * as GeminiService from '../services/geminiService';
-import { extractRetryDelay as extractGeminiRetryDelay, isRateLimitError as isGeminiRateLimitError } from '../services/geminiService';
+import {
+  extractRetryDelay as extractGeminiRetryDelay,
+  isRateLimitError as isGeminiRateLimitError,
+} from '../services/geminiService';
 
 export const VideoAnalysisView = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -22,7 +18,7 @@ export const VideoAnalysisView = () => {
   useEffect(() => {
     if (rateLimitCountdown !== null && rateLimitCountdown > 0) {
       const timer = setTimeout(() => {
-        setRateLimitCountdown(prev => prev !== null ? prev - 1 : null);
+        setRateLimitCountdown((prev) => (prev !== null ? prev - 1 : null));
       }, 1000);
       return () => clearTimeout(timer);
     } else if (rateLimitCountdown === 0) {
@@ -35,7 +31,9 @@ export const VideoAnalysisView = () => {
       const file = e.target.files[0];
       // 9MB Safety Limit for XHR
       if (file.size > 9 * 1024 * 1024) {
-        setVideoAnalysisError("File too large. Please upload an image or video under 9MB for this demo.");
+        setVideoAnalysisError(
+          'File too large. Please upload an image or video under 9MB for this demo.',
+        );
         return;
       }
       setSelectedFile(file);
@@ -69,7 +67,7 @@ export const VideoAnalysisView = () => {
               setRateLimitCountdown(retryDelay);
               setVideoAnalysisError(null); // Rate limit countdown will be shown separately
             } else {
-              setVideoAnalysisError("Rate limit exceeded. Please try again later.");
+              setVideoAnalysisError('Rate limit exceeded. Please try again later.');
             }
           } else {
             setVideoAnalysisError(`Analysis failed: ${e.message || 'Unknown error occurred'}`);
@@ -80,7 +78,7 @@ export const VideoAnalysisView = () => {
       };
       reader.onerror = () => {
         setLoading(false);
-        setVideoAnalysisError("Error reading file. Please try uploading again.");
+        setVideoAnalysisError('Error reading file. Please try uploading again.');
       };
     } catch (e: any) {
       console.error(e);
@@ -90,7 +88,7 @@ export const VideoAnalysisView = () => {
           setRateLimitCountdown(retryDelay);
           setVideoAnalysisError(null); // Rate limit countdown will be shown separately
         } else {
-          setVideoAnalysisError("Rate limit exceeded. Please try again later.");
+          setVideoAnalysisError('Rate limit exceeded. Please try again later.');
         }
       } else {
         setVideoAnalysisError(`Analysis failed: ${e.message || 'Unknown error occurred'}`);
@@ -116,12 +114,23 @@ export const VideoAnalysisView = () => {
             {previewUrl ? (
               <div className="w-full relative">
                 {selectedFile?.type.startsWith('video') ? (
-                  <video src={previewUrl} controls className="w-full rounded-lg max-h-64 object-cover" />
+                  <video
+                    src={previewUrl}
+                    controls
+                    className="w-full rounded-lg max-h-64 object-cover"
+                  />
                 ) : (
-                  <img src={previewUrl} alt="Preview" className="w-full rounded-lg max-h-64 object-cover" />
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-full rounded-lg max-h-64 object-cover"
+                  />
                 )}
                 <button
-                  onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setPreviewUrl(null);
+                  }}
                   className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow"
                 >
                   <X size={14} />
@@ -133,7 +142,9 @@ export const VideoAnalysisView = () => {
                   <Upload size={32} />
                 </div>
                 <h3 className="font-semibold text-slate-700">Upload Competitor Material</h3>
-                <p className="text-sm text-slate-400 mt-2">Supports Images & Short Videos (Max 9MB)</p>
+                <p className="text-sm text-slate-400 mt-2">
+                  Supports Images & Short Videos (Max 9MB)
+                </p>
               </label>
             )}
           </div>
@@ -146,7 +157,8 @@ export const VideoAnalysisView = () => {
                   <p className="text-xs text-yellow-700 mt-1">Please wait before trying again</p>
                 </div>
                 <div className="text-2xl font-bold text-yellow-600">
-                  {Math.floor(rateLimitCountdown / 60)}:{(rateLimitCountdown % 60).toString().padStart(2, '0')}
+                  {Math.floor(rateLimitCountdown / 60)}:
+                  {(rateLimitCountdown % 60).toString().padStart(2, '0')}
                 </div>
               </div>
             </div>
@@ -172,10 +184,16 @@ export const VideoAnalysisView = () => {
 
           <button
             onClick={handleAnalyze}
-            disabled={!selectedFile || loading || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
+            disabled={
+              !selectedFile || loading || (rateLimitCountdown !== null && rateLimitCountdown > 0)
+            }
             className="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold text-lg disabled:opacity-50 flex justify-center items-center shadow-lg shadow-indigo-200"
           >
-            {loading ? <Loader2 className="animate-spin mr-2" /> : <BrainCircuit className="mr-2" />}
+            {loading ? (
+              <Loader2 className="animate-spin mr-2" />
+            ) : (
+              <BrainCircuit className="mr-2" />
+            )}
             {rateLimitCountdown !== null && rateLimitCountdown > 0
               ? `Retry in ${rateLimitCountdown}s`
               : 'Analyze with Gemini AI'}

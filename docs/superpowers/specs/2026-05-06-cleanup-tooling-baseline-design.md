@@ -12,6 +12,7 @@
 The Ariyana Event Intelligence CRM codebase (~22,661 LOC across ~95 TS/TSX files) is being optimized to be easier to maintain and upgrade. This document scopes the **first** sub-project: a tooling and cleanup baseline that introduces zero behavior changes while installing the safety rails everything else depends on.
 
 This sub-project must complete before:
+
 - #2 Test infra (Vitest needs lint config to align)
 - #4 Refactor god files (refactoring without strict types is unsafe)
 - #5 Layer-ize API
@@ -25,14 +26,14 @@ This sub-project must complete before:
 
 ### Pain points addressed
 
-| Symptom | Cause | Fix in this spec |
-|---|---|---|
-| 21 deleted files lingering in working tree | No discipline around cleanup | Section 3 — explicit deletion plan |
-| `process.env.X` scattered, app crashes mid-request when key missing | No env validation | Section 6 — Zod schema with fail-fast boot |
-| No way to detect type/lint regressions | No ESLint, no Prettier, near-empty `tsconfig.json` | Sections 4 & 5 — full strict TS + ESLint flat config |
-| Inconsistent formatting drift over time | No formatter | Section 4 — Prettier + lint-staged on pre-commit |
-| Type errors discovered only at runtime | Strict mode disabled | Section 5 — full strict, manual fix pass |
-| Risk of accidentally pushing broken code to `main` | No CI, no pre-push gate | Section 4 — pre-push hook runs `tsc --noEmit` |
+| Symptom                                                             | Cause                                              | Fix in this spec                                     |
+| ------------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------- |
+| 21 deleted files lingering in working tree                          | No discipline around cleanup                       | Section 3 — explicit deletion plan                   |
+| `process.env.X` scattered, app crashes mid-request when key missing | No env validation                                  | Section 6 — Zod schema with fail-fast boot           |
+| No way to detect type/lint regressions                              | No ESLint, no Prettier, near-empty `tsconfig.json` | Sections 4 & 5 — full strict TS + ESLint flat config |
+| Inconsistent formatting drift over time                             | No formatter                                       | Section 4 — Prettier + lint-staged on pre-commit     |
+| Type errors discovered only at runtime                              | Strict mode disabled                               | Section 5 — full strict, manual fix pass             |
+| Risk of accidentally pushing broken code to `main`                  | No CI, no pre-push gate                            | Section 4 — pre-push hook runs `tsc --noEmit`        |
 
 ---
 
@@ -67,13 +68,13 @@ This sub-project must complete before:
 
 **Decision:** Delete outright. Git history preserves them; no `archive/` folder. Folders like `archive/` accumulate cruft and signal unresolved tech debt.
 
-| Group | Files | Rationale |
-|---|---|---|
-| Old docs | `EMAIL_REPORTS_SETUP.md`, `OPTIMIZATION_REPORT.md`, `TEST_EMAIL_REPORT.md` | Will be replaced in sub-project #10 |
-| Lead CSV data | `Normal.csv`, `Portfolio_Database_with_Country.csv`, `Potential Lead for ACC_26Feb.csv` | Customer data — must not live in working tree. **⚠ See Risk R1.** |
-| One-off SQL imports | `database_schema.sql`, `scripts/import_*.sql` (7 files), `scripts/generate_*.{py,ts}` (5 files) | `migrations/` is the source of truth |
-| Windows utility | `fix-git-secrets.ps1` | One-time tool, no longer needed |
-| Legacy template | `html_templates/leads_2026FEB_ThaiACC_old.html` | Already suffixed `_old` |
+| Group               | Files                                                                                           | Rationale                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Old docs            | `EMAIL_REPORTS_SETUP.md`, `OPTIMIZATION_REPORT.md`, `TEST_EMAIL_REPORT.md`                      | Will be replaced in sub-project #10                               |
+| Lead CSV data       | `Normal.csv`, `Portfolio_Database_with_Country.csv`, `Potential Lead for ACC_26Feb.csv`         | Customer data — must not live in working tree. **⚠ See Risk R1.** |
+| One-off SQL imports | `database_schema.sql`, `scripts/import_*.sql` (7 files), `scripts/generate_*.{py,ts}` (5 files) | `migrations/` is the source of truth                              |
+| Windows utility     | `fix-git-secrets.ps1`                                                                           | One-time tool, no longer needed                                   |
+| Legacy template     | `html_templates/leads_2026FEB_ThaiACC_old.html`                                                 | Already suffixed `_old`                                           |
 
 ### `.gitignore` additions
 
@@ -116,29 +117,29 @@ Run `git log --all --diff-filter=A --name-only -- '*.csv'`. If any CSV with real
 
 ### New devDependencies
 
-| Package | Version | Role |
-|---|---|---|
-| `eslint` | ^9 | Linter (flat config) |
-| `typescript-eslint` | ^8 | TypeScript parser + rules |
-| `eslint-plugin-react` | latest stable | React rules |
-| `eslint-plugin-react-hooks` | latest stable | Exhaustive-deps, rules-of-hooks |
-| `eslint-plugin-react-refresh` | latest stable | Vite HMR-safe export check |
-| `eslint-config-prettier` | latest | Disable formatting rules ESLint would conflict on |
-| `prettier` | ^3 | Formatter |
-| `husky` | ^9 | Git hooks |
-| `lint-staged` | ^15 | Run linters on staged files |
+| Package                       | Version       | Role                                              |
+| ----------------------------- | ------------- | ------------------------------------------------- |
+| `eslint`                      | ^9            | Linter (flat config)                              |
+| `typescript-eslint`           | ^8            | TypeScript parser + rules                         |
+| `eslint-plugin-react`         | latest stable | React rules                                       |
+| `eslint-plugin-react-hooks`   | latest stable | Exhaustive-deps, rules-of-hooks                   |
+| `eslint-plugin-react-refresh` | latest stable | Vite HMR-safe export check                        |
+| `eslint-config-prettier`      | latest        | Disable formatting rules ESLint would conflict on |
+| `prettier`                    | ^3            | Formatter                                         |
+| `husky`                       | ^9            | Git hooks                                         |
+| `lint-staged`                 | ^15           | Run linters on staged files                       |
 
 `zod` already exists in dependencies — reused for env validation (Section 6).
 
 ### Configuration files
 
-| Path | Purpose |
-|---|---|
-| `eslint.config.js` | Flat config; ignores `dist/`, `node_modules/`, `api/v1/[...path].d.ts` |
-| `.prettierrc.json` | 2-space indent, single quote, trailing comma `all`, 100 col print width, semicolons on |
-| `.prettierignore` | `node_modules/`, `dist/`, `coverage/`, generated files, `migrations/*.sql` |
-| `.husky/pre-commit` | `npx lint-staged` |
-| `.husky/pre-push` | `npm run typecheck && npm run typecheck:api` |
+| Path                 | Purpose                                                                                         |
+| -------------------- | ----------------------------------------------------------------------------------------------- |
+| `eslint.config.js`   | Flat config; ignores `dist/`, `node_modules/`, `api/v1/[...path].d.ts`                          |
+| `.prettierrc.json`   | 2-space indent, single quote, trailing comma `all`, 100 col print width, semicolons on          |
+| `.prettierignore`    | `node_modules/`, `dist/`, `coverage/`, generated files, `migrations/*.sql`                      |
+| `.husky/pre-commit`  | `npx lint-staged`                                                                               |
+| `.husky/pre-push`    | `npm run typecheck && npm run typecheck:api`                                                    |
 | `.lintstagedrc.json` | `*.{ts,tsx}` → `eslint --fix` + `prettier --write`; `*.{json,md,css,html}` → `prettier --write` |
 
 ### `package.json` script additions
@@ -196,8 +197,8 @@ Solo dev, format auto, ignore bikeshed.
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": true,
-    "verbatimModuleSyntax": true
-  }
+    "verbatimModuleSyntax": true,
+  },
 }
 ```
 
@@ -307,17 +308,17 @@ Update `env.example` to match the schema 1:1: every required key listed, every o
 
 Each step is a single commit, independently revertable. No long-lived branches.
 
-| # | Commit message | Scope | Risk | Verification |
-|---|---|---|---|---|
-| 1 | `chore: cleanup legacy files and update gitignore` | Delete 21 files, update `.gitignore` | Zero (already deleted in working tree) | `npm run dev` boots, `npm run dev:api` boots |
-| 2 | `chore: setup prettier` | Install, configure, run `npm run format` once on entire repo | Whitespace-only changes | `git diff --stat` shows only formatting; app still runs |
-| 3 | `chore: setup eslint flat config` | Install, configure; do not fix yet | Zero (config-only) | `npm run lint` runs to completion (errors allowed at this step) |
-| 4 | `fix: eslint auto-fix pass` | `npm run lint:fix`, plus manual fixes for non-auto cases that don't change behavior | Low — auto-fix is conservative | `npm run lint` exits 0; manual smoke test of 2–3 main views |
-| 5 | `feat(config): zod env validation` | Add `api/src/config/env.ts`, refactor all `process.env.*` consumers, sync `env.example`. Done **before** strict mode so step 7 sees typed env. | Medium — fail-fast may surface a key that was actually missing | `npm run dev:api` boots with current `.env`; deliberately remove a key, confirm fail-fast |
-| 6 | `chore: enable typescript strict mode` | Update `tsconfig.json` and `api/tsconfig.json` only | Zero at runtime; build will break — that's expected | `npm run dev` still boots (vite is permissive); `npm run typecheck` fails as expected |
-| 7 | `fix: typescript strict — type-level fixes` | Manual fix pass; `STRICT_DEBT.md` for unfixable cases | **Highest** — touches god files | `npm run typecheck` and `npm run typecheck:api` exit 0; smoke test golden path (Leads view, Dashboard, send a test email) |
-| 8 | `chore: setup husky and lint-staged` | Install hooks, add `prepare` script | Zero | Make a trivial commit, observe pre-commit running; attempt a push, observe pre-push running |
-| 9 | `chore: update README` | Document new scripts, remove dead `SECURITY_CHECK.md` link | Zero | Read-through |
+| #   | Commit message                                     | Scope                                                                                                                                          | Risk                                                           | Verification                                                                                                              |
+| --- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `chore: cleanup legacy files and update gitignore` | Delete 21 files, update `.gitignore`                                                                                                           | Zero (already deleted in working tree)                         | `npm run dev` boots, `npm run dev:api` boots                                                                              |
+| 2   | `chore: setup prettier`                            | Install, configure, run `npm run format` once on entire repo                                                                                   | Whitespace-only changes                                        | `git diff --stat` shows only formatting; app still runs                                                                   |
+| 3   | `chore: setup eslint flat config`                  | Install, configure; do not fix yet                                                                                                             | Zero (config-only)                                             | `npm run lint` runs to completion (errors allowed at this step)                                                           |
+| 4   | `fix: eslint auto-fix pass`                        | `npm run lint:fix`, plus manual fixes for non-auto cases that don't change behavior                                                            | Low — auto-fix is conservative                                 | `npm run lint` exits 0; manual smoke test of 2–3 main views                                                               |
+| 5   | `feat(config): zod env validation`                 | Add `api/src/config/env.ts`, refactor all `process.env.*` consumers, sync `env.example`. Done **before** strict mode so step 7 sees typed env. | Medium — fail-fast may surface a key that was actually missing | `npm run dev:api` boots with current `.env`; deliberately remove a key, confirm fail-fast                                 |
+| 6   | `chore: enable typescript strict mode`             | Update `tsconfig.json` and `api/tsconfig.json` only                                                                                            | Zero at runtime; build will break — that's expected            | `npm run dev` still boots (vite is permissive); `npm run typecheck` fails as expected                                     |
+| 7   | `fix: typescript strict — type-level fixes`        | Manual fix pass; `STRICT_DEBT.md` for unfixable cases                                                                                          | **Highest** — touches god files                                | `npm run typecheck` and `npm run typecheck:api` exit 0; smoke test golden path (Leads view, Dashboard, send a test email) |
+| 8   | `chore: setup husky and lint-staged`               | Install hooks, add `prepare` script                                                                                                            | Zero                                                           | Make a trivial commit, observe pre-commit running; attempt a push, observe pre-push running                               |
+| 9   | `chore: update README`                             | Document new scripts, remove dead `SECURITY_CHECK.md` link                                                                                     | Zero                                                           | Read-through                                                                                                              |
 
 ### Total acceptance criteria
 
@@ -340,14 +341,14 @@ Because commits land directly on `main`, `git revert <sha>` is the rollback for 
 
 ## 8. Risks and mitigations
 
-| ID | Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|---|
-| R1 | CSV files contain real customer data; may exist in git history | High | High (privacy) | Out of scope here; flag to user with `git log --all` audit. Separate spec if confirmed. |
-| R2 | Strict TS forces unsafe fix on god file → silent runtime regression | Medium | High | Discipline: type-level edits only; `@ts-expect-error TODO(refactor)` for anything questionable; smoke test after step 6. |
-| R3 | `exactOptionalPropertyTypes` produces a wave of errors on React props | Medium | Medium | Acceptable — fixable mechanically by changing `T | undefined` to `T?` or vice versa. If volume is unmanageable, this single flag may be deferred (note in `STRICT_DEBT.md`). |
-| R4 | Env validation reveals a key was always missing in someone's `.env` | Low | Low | That's the point — fail-fast is the desired behavior. Document in README. |
-| R5 | `noUnusedLocals` removes a parameter the framework reads by convention | Low | Medium | Use `_` prefix to opt out per-occurrence. |
-| R6 | Husky `prepare` script fails on a fresh `npm install` if `.git` is absent (e.g., Docker build) | Low | Low | `prepare` failures are non-fatal in npm; document workaround in README if it surfaces. |
+| ID  | Risk                                                                                           | Likelihood | Impact         | Mitigation                                                                                                               |
+| --- | ---------------------------------------------------------------------------------------------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| R1  | CSV files contain real customer data; may exist in git history                                 | High       | High (privacy) | Out of scope here; flag to user with `git log --all` audit. Separate spec if confirmed.                                  |
+| R2  | Strict TS forces unsafe fix on god file → silent runtime regression                            | Medium     | High           | Discipline: type-level edits only; `@ts-expect-error TODO(refactor)` for anything questionable; smoke test after step 6. |
+| R3  | `exactOptionalPropertyTypes` produces a wave of errors on React props                          | Medium     | Medium         | Acceptable — fixable mechanically by changing `T                                                                         | undefined`to`T?`or vice versa. If volume is unmanageable, this single flag may be deferred (note in`STRICT_DEBT.md`). |
+| R4  | Env validation reveals a key was always missing in someone's `.env`                            | Low        | Low            | That's the point — fail-fast is the desired behavior. Document in README.                                                |
+| R5  | `noUnusedLocals` removes a parameter the framework reads by convention                         | Low        | Medium         | Use `_` prefix to opt out per-occurrence.                                                                                |
+| R6  | Husky `prepare` script fails on a fresh `npm install` if `.git` is absent (e.g., Docker build) | Low        | Low            | `prepare` failures are non-fatal in npm; document workaround in README if it surfaces.                                   |
 
 ---
 

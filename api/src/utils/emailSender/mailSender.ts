@@ -28,7 +28,8 @@ export class MailSender {
       text: options.text,
       html: options.html,
       cc: options.cc,
-      attachments: options.attachments && options.attachments.length > 0 ? options.attachments : undefined,
+      attachments:
+        options.attachments && options.attachments.length > 0 ? options.attachments : undefined,
     };
   }
 
@@ -45,7 +46,7 @@ export class MailSender {
       replyTo?: string;
       cc?: string | string[];
       attachments?: NodemailerAttachment[];
-    }
+    },
   ): Promise<{ messageId?: string }> {
     const mailOptions = this.buildMailOptions(options);
     const info = await transporter.sendMail(mailOptions);

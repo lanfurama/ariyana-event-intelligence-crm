@@ -4,10 +4,7 @@ import type { Lead } from '../types';
 import type { ParsedEnrichContact } from '../utils/leadEnrichUtils';
 import { useLeadsNeedingEnrich } from '../hooks/useLeadsNeedingEnrich';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import {
-  LeadsNeedingEnrichList,
-  ResearchModal,
-} from './IntelligentDataView/index';
+import { LeadsNeedingEnrichList, ResearchModal } from './IntelligentDataView/index';
 import type { ResearchModalStatus } from './IntelligentDataView/index';
 
 export interface IntelligentDataViewProps {
@@ -30,13 +27,8 @@ export const IntelligentDataView: React.FC<IntelligentDataViewProps> = ({
   const [researchError, setResearchError] = useState('');
   const [syncing, setSyncing] = useState(false);
 
-  const {
-    leadsNeedingEnrich,
-    enrichLead,
-    enrichingIds,
-    enrichError,
-    clearError,
-  } = useLeadsNeedingEnrich(leads);
+  const { leadsNeedingEnrich, enrichLead, enrichingIds, enrichError, clearError } =
+    useLeadsNeedingEnrich(leads);
 
   const visibleLeads = useMemo(() => {
     let filtered = leadsNeedingEnrich;
@@ -44,9 +36,7 @@ export const IntelligentDataView: React.FC<IntelligentDataViewProps> = ({
     const trimmedSearch = searchTerm.trim();
     if (trimmedSearch) {
       const lowered = trimmedSearch.toLowerCase();
-      filtered = filtered.filter((l) =>
-        l.companyName?.toLowerCase().includes(lowered)
-      );
+      filtered = filtered.filter((l) => l.companyName?.toLowerCase().includes(lowered));
     }
 
     if (typeFilter) {
@@ -128,7 +118,7 @@ export const IntelligentDataView: React.FC<IntelligentDataViewProps> = ({
           setResearchError(err instanceof Error ? err.message : 'Lỗi nghiên cứu');
         });
     },
-    [enrichLead]
+    [enrichLead],
   );
 
   const handleConfirmSync = useCallback(() => {
@@ -186,10 +176,7 @@ export const IntelligentDataView: React.FC<IntelligentDataViewProps> = ({
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-md">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            size={18}
-          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
             type="text"
             placeholder="Search by company name..."

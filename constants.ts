@@ -15,7 +15,7 @@ I am writing to express our keen interest in hosting [Company Name]'s upcoming e
 
 Would you be open to a brief call to discuss how we can support your future events?
 
-Best regards,`
+Best regards,`,
   },
   {
     id: 'followup',
@@ -29,7 +29,7 @@ Danang is rapidly becoming a top destination for MICE in Asia, offering excellen
 
 Looking forward to hearing from you.
 
-Best regards,`
+Best regards,`,
   },
   {
     id: 'promo',
@@ -46,29 +46,29 @@ We see a great alignment with [Company Name]'s values and event requirements. Ou
 
 Let's make your next event unforgettable.
 
-Best regards,`
-  }
+Best regards,`,
+  },
 ];
 
 export const USERS: User[] = [
-  { 
-    username: 'director', 
-    name: 'Sarah Jenkins', 
+  {
+    username: 'director',
+    name: 'Sarah Jenkins',
     role: 'Director',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah' 
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
   },
-  { 
-    username: 'sales', 
-    name: 'Mike Sales', 
+  {
+    username: 'sales',
+    name: 'Mike Sales',
     role: 'Sales',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike' 
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike',
   },
-  { 
-    username: 'viewer', 
-    name: 'Guest Viewer', 
+  {
+    username: 'viewer',
+    name: 'Guest Viewer',
     role: 'Viewer',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Guest' 
-  }
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Guest',
+  },
 ];
 
 export const INITIAL_LEADS: Lead[] = [
@@ -93,7 +93,7 @@ export const INITIAL_LEADS: Lead[] = [
     secondaryPersonName: '',
     secondaryPersonTitle: '',
     secondaryPersonEmail: '',
-    numberOfDelegates: 500
+    numberOfDelegates: 500,
   },
   {
     id: '2',
@@ -114,7 +114,7 @@ export const INITIAL_LEADS: Lead[] = [
     lastContacted: '2023-10-15',
     pastEventsHistory: '2021: Virtual; 2019: Brunei Darussalam',
     researchNotes: '',
-    numberOfDelegates: 350
+    numberOfDelegates: 350,
   },
   {
     id: '3',
@@ -133,7 +133,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: 'Technical Symposium & Exhibition target.',
     status: 'New',
     pastEventsHistory: '',
-    numberOfDelegates: 200
+    numberOfDelegates: 200,
   },
   {
     id: '4',
@@ -152,7 +152,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: '13th ASEAN Law Association General Assembly.',
     status: 'New',
     pastEventsHistory: '',
-    numberOfDelegates: 450
+    numberOfDelegates: 450,
   },
   {
     id: '5',
@@ -171,7 +171,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: 'Congress of the ASEAN Valuers Association.',
     status: 'New',
     pastEventsHistory: '',
-    numberOfDelegates: 300
+    numberOfDelegates: 300,
   },
   {
     id: '6',
@@ -190,7 +190,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: 'Strong local connection. Priority.',
     status: 'Qualified',
     pastEventsHistory: '',
-    numberOfDelegates: 600
+    numberOfDelegates: 600,
   },
   {
     id: '7',
@@ -209,9 +209,9 @@ export const INITIAL_LEADS: Lead[] = [
     notes: 'RadioAsia organizer.',
     status: 'New',
     pastEventsHistory: '2023: Seoul, Korea; 2022: New Delhi, India',
-    numberOfDelegates: 800
+    numberOfDelegates: 800,
   },
-   {
+  {
     id: '8',
     companyName: 'International Air Transport Association (IATA)',
     industry: 'Aviation',
@@ -228,7 +228,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: 'High value target for global aviation summit.',
     status: 'New',
     pastEventsHistory: '2024: Dubai, UAE; 2023: Istanbul, Turkey',
-    numberOfDelegates: 2000
+    numberOfDelegates: 2000,
   },
   {
     id: '9',
@@ -247,7 +247,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: 'International Conference on Sustainable Agriculture.',
     status: 'New',
     pastEventsHistory: '',
-    numberOfDelegates: 150
+    numberOfDelegates: 150,
   },
   {
     id: '10',
@@ -266,7 +266,7 @@ export const INITIAL_LEADS: Lead[] = [
     notes: 'ASOCIO Digital Summit.',
     status: 'New',
     pastEventsHistory: '',
-    numberOfDelegates: 1200
+    numberOfDelegates: 1200,
   },
   {
     id: '11',
@@ -285,6 +285,6 @@ export const INITIAL_LEADS: Lead[] = [
     notes: '32nd Annual Conference of AAOU.',
     status: 'New',
     pastEventsHistory: '',
-    numberOfDelegates: 400
-  }
+    numberOfDelegates: 400,
+  },
 ];

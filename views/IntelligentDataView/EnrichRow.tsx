@@ -46,11 +46,7 @@ export const EnrichRow: React.FC<EnrichRowProps> = ({ lead, onResearch, isEnrich
           disabled={isEnriching}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {isEnriching ? (
-            <Loader2 className="animate-spin" size={16} />
-          ) : (
-            <Search size={16} />
-          )}
+          {isEnriching ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} />}
           {isEnriching ? 'Researching…' : 'Research'}
         </button>
       </td>

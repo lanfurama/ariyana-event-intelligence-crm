@@ -16,17 +16,3 @@ export const StatusBadge = React.memo(({ status }: { status: string }) => {
     </span>
   );
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-

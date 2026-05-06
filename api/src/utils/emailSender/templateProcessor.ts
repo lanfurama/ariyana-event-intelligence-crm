@@ -13,22 +13,24 @@ export class TemplateProcessor {
    */
   static selectTemplateForLead(
     lead: LeadRow,
-    templates: EmailTemplateWithAttachments[]
+    templates: EmailTemplateWithAttachments[],
   ): EmailTemplateWithAttachments | null {
     if (templates.length === 0) return null;
 
     const leadHasNoType = !lead.type || String(lead.type).trim() === '';
-    const templateHasNoType = (t: EmailTemplate) => !t.lead_type || String(t.lead_type).trim() === '';
+    const templateHasNoType = (t: EmailTemplate) =>
+      !t.lead_type || String(t.lead_type).trim() === '';
 
     const leadLanguage = EmailUtils.getLanguageFromCountry(lead.country);
     const templateHasLanguage = (t: EmailTemplate, lang: string | null) =>
       lang && t.language && t.language.trim().toLowerCase() === lang.toLowerCase();
-    const templateHasNoLanguage = (t: EmailTemplate) => !t.language || String(t.language).trim() === '';
+    const templateHasNoLanguage = (t: EmailTemplate) =>
+      !t.language || String(t.language).trim() === '';
 
     // Priority 1: Match both language and lead_type
     if (leadLanguage && !leadHasNoType) {
       const exactMatch = templates.find(
-        (t) => templateHasLanguage(t, leadLanguage) && t.lead_type === lead.type
+        (t) => templateHasLanguage(t, leadLanguage) && t.lead_type === lead.type,
       );
       if (exactMatch) return exactMatch;
     }
@@ -36,7 +38,7 @@ export class TemplateProcessor {
     // Priority 2: Match language only (no lead_type requirement)
     if (leadLanguage) {
       const langMatch = templates.find(
-        (t) => templateHasLanguage(t, leadLanguage) && templateHasNoType(t)
+        (t) => templateHasLanguage(t, leadLanguage) && templateHasNoType(t),
       );
       if (langMatch) return langMatch;
     }
@@ -44,7 +46,7 @@ export class TemplateProcessor {
     // Priority 3: Match lead_type only (no language requirement)
     if (!leadHasNoType) {
       const typeMatch = templates.find(
-        (t) => t.lead_type === lead.type && templateHasNoLanguage(t)
+        (t) => t.lead_type === lead.type && templateHasNoLanguage(t),
       );
       if (typeMatch) return typeMatch;
     }
@@ -62,8 +64,14 @@ export class TemplateProcessor {
 
     const replacements: [RegExp, string][] = [
       [new RegExp(TEMPLATE_VARIABLES.COMPANY_NAME, 'g'), lead.company_name || ''],
-      [new RegExp(TEMPLATE_VARIABLES.KEY_PERSON_NAME, 'g'), (lead.key_person_name || lead.secondary_person_name || '')],
-      [new RegExp(TEMPLATE_VARIABLES.KEY_PERSON_TITLE, 'g'), (lead.key_person_title || lead.secondary_person_title || '')],
+      [
+        new RegExp(TEMPLATE_VARIABLES.KEY_PERSON_NAME, 'g'),
+        lead.key_person_name || lead.secondary_person_name || '',
+      ],
+      [
+        new RegExp(TEMPLATE_VARIABLES.KEY_PERSON_TITLE, 'g'),
+        lead.key_person_title || lead.secondary_person_title || '',
+      ],
       [new RegExp(TEMPLATE_VARIABLES.CITY, 'g'), lead.city || ''],
       [new RegExp(TEMPLATE_VARIABLES.COUNTRY, 'g'), lead.country || ''],
       [new RegExp(TEMPLATE_VARIABLES.INDUSTRY, 'g'), lead.industry || ''],

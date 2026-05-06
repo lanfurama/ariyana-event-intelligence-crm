@@ -8,31 +8,33 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
 interface LeadScoringFactors {
-    emailEngagement: number; // 0-25 points
-    eventHistory: number; // 0-25 points
-    contactQuality: number; // 0-25 points
-    companySize: number; // 0-25 points
+  emailEngagement: number; // 0-25 points
+  eventHistory: number; // 0-25 points
+  contactQuality: number; // 0-25 points
+  companySize: number; // 0-25 points
 }
 
 export class LeadScoringService {
-    /**
-     * Calculate lead score for a single lead using AI analysis
-     */
-    static async calculateLeadScore(leadId: string): Promise<{ score: number; factors: LeadScoringFactors; reasoning: string }> {
-        const lead = await LeadModel.getById(leadId);
-        if (!lead) {
-            throw new Error('Lead not found');
-        }
+  /**
+   * Calculate lead score for a single lead using AI analysis
+   */
+  static async calculateLeadScore(
+    leadId: string,
+  ): Promise<{ score: number; factors: LeadScoringFactors; reasoning: string }> {
+    const lead = await LeadModel.getById(leadId);
+    if (!lead) {
+      throw new Error('Lead not found');
+    }
 
-        // Gather interaction data
-        const emailLogs = await EmailLogModel.getByLeadId(leadId);
-        const emailReplies = await EmailReplyModel.getByLeadId(leadId);
+    // Gather interaction data
+    const emailLogs = await EmailLogModel.getByLeadId(leadId);
+    const emailReplies = await EmailReplyModel.getByLeadId(leadId);
 
-        // Build context for AI
-        const context = this.buildScoringContext(lead, emailLogs, emailReplies);
+    // Build context for AI
+    const context = this.buildScoringContext(lead, emailLogs, emailReplies);
 
-        // Ask AI to score the lead
-        const prompt = `You are a lead scoring AI for an event venue sales CRM (Ariyana Resort & Spa, Vietnam).
+    // Ask AI to score the lead
+    const prompt = `You are a lead scoring AI for an event venue sales CRM (Ariyana Resort & Spa, Vietnam).
 
 Analyze this lead and assign a quality score from 0-100 based on their potential value.
 
@@ -78,62 +80,62 @@ RESPOND WITH VALID JSON ONLY:
   "reasoning": "<brief_explanation_of_scoring>"
 }`;
 
-        try {
-            const result = await model.generateContent(prompt);
-            const responseText = result.response.text();
+    try {
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
 
-            // Parse AI response
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error('Invalid AI response format');
-            }
+      // Parse AI response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Invalid AI response format');
+      }
 
-            const scoringResult = JSON.parse(jsonMatch[0]);
+      const scoringResult = JSON.parse(jsonMatch[0]);
 
-            // Validate score range
-            const finalScore = Math.min(100, Math.max(0, scoringResult.score));
+      // Validate score range
+      const finalScore = Math.min(100, Math.max(0, scoringResult.score));
 
-            return {
-                score: finalScore,
-                factors: scoringResult.factors,
-                reasoning: scoringResult.reasoning,
-            };
-        } catch (error) {
-            console.error('AI scoring error:', error);
-            throw new Error('Failed to calculate lead score');
-        }
+      return {
+        score: finalScore,
+        factors: scoringResult.factors,
+        reasoning: scoringResult.reasoning,
+      };
+    } catch (error) {
+      console.error('AI scoring error:', error);
+      throw new Error('Failed to calculate lead score');
+    }
+  }
+
+  /**
+   * Calculate scores for multiple leads in batch
+   */
+  static async batchCalculateScores(leadIds: string[]): Promise<Map<string, number>> {
+    const scores = new Map<string, number>();
+
+    for (const leadId of leadIds) {
+      try {
+        const result = await this.calculateLeadScore(leadId);
+        scores.set(leadId, result.score);
+
+        // Update lead in database
+        await LeadModel.update(leadId, {
+          lead_score: result.score,
+          last_score_update: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error(`Failed to score lead ${leadId}:`, error);
+        scores.set(leadId, 0);
+      }
     }
 
-    /**
-     * Calculate scores for multiple leads in batch
-     */
-    static async batchCalculateScores(leadIds: string[]): Promise<Map<string, number>> {
-        const scores = new Map<string, number>();
+    return scores;
+  }
 
-        for (const leadId of leadIds) {
-            try {
-                const result = await this.calculateLeadScore(leadId);
-                scores.set(leadId, result.score);
-
-                // Update lead in database
-                await LeadModel.update(leadId, {
-                    lead_score: result.score,
-                    last_score_update: new Date().toISOString(),
-                });
-            } catch (error) {
-                console.error(`Failed to score lead ${leadId}:`, error);
-                scores.set(leadId, 0);
-            }
-        }
-
-        return scores;
-    }
-
-    /**
-     * Build context string for AI analysis
-     */
-    private static buildScoringContext(lead: Lead, emailLogs: any[], emailReplies: any[]): string {
-        return `
+  /**
+   * Build context string for AI analysis
+   */
+  private static buildScoringContext(lead: Lead, emailLogs: any[], emailReplies: any[]): string {
+    return `
 Company: ${lead.company_name}
 Industry: ${lead.industry}
 Country: ${lead.country}
@@ -158,50 +160,50 @@ Email Interaction:
 
 Notes: ${lead.notes || 'None'}
 `.trim();
-    }
+  }
 
-    /**
-     * Get top scored leads
-     */
-    static async getTopScoredLeads(limit: number = 10): Promise<Lead[]> {
-        const leads = await LeadModel.getAll();
-        return leads
-            .filter(lead => lead.lead_score !== null && lead.lead_score !== undefined)
-            .sort((a, b) => (b.lead_score || 0) - (a.lead_score || 0))
-            .slice(0, limit);
-    }
+  /**
+   * Get top scored leads
+   */
+  static async getTopScoredLeads(limit: number = 10): Promise<Lead[]> {
+    const leads = await LeadModel.getAll();
+    return leads
+      .filter((lead) => lead.lead_score !== null && lead.lead_score !== undefined)
+      .sort((a, b) => (b.lead_score || 0) - (a.lead_score || 0))
+      .slice(0, limit);
+  }
 
-    /**
-     * Get score distribution statistics
-     */
-    static async getScoreDistribution(): Promise<{
-        high: number; // 70-100
-        medium: number; // 40-69
-        low: number; // 0-39
-        unscored: number;
-    }> {
-        const leads = await LeadModel.getAll();
+  /**
+   * Get score distribution statistics
+   */
+  static async getScoreDistribution(): Promise<{
+    high: number; // 70-100
+    medium: number; // 40-69
+    low: number; // 0-39
+    unscored: number;
+  }> {
+    const leads = await LeadModel.getAll();
 
-        const distribution = {
-            high: 0,
-            medium: 0,
-            low: 0,
-            unscored: 0,
-        };
+    const distribution = {
+      high: 0,
+      medium: 0,
+      low: 0,
+      unscored: 0,
+    };
 
-        leads.forEach(lead => {
-            const score = lead.lead_score;
-            if (score === null || score === undefined) {
-                distribution.unscored++;
-            } else if (score >= 70) {
-                distribution.high++;
-            } else if (score >= 40) {
-                distribution.medium++;
-            } else {
-                distribution.low++;
-            }
-        });
+    leads.forEach((lead) => {
+      const score = lead.lead_score;
+      if (score === null || score === undefined) {
+        distribution.unscored++;
+      } else if (score >= 70) {
+        distribution.high++;
+      } else if (score >= 40) {
+        distribution.medium++;
+      } else {
+        distribution.low++;
+      }
+    });
 
-        return distribution;
-    }
+    return distribution;
+  }
 }

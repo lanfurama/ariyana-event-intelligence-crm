@@ -3,7 +3,12 @@ import multer from 'multer';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
-import { detectDataIssues, calculateDataQualityScore, extractOrganizationName, type OrganizationData } from '../utils/dataQuality.js';
+import {
+  detectDataIssues,
+  calculateDataQualityScore,
+  extractOrganizationName,
+  type OrganizationData,
+} from '../utils/dataQuality.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,10 +25,12 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'text/csv' || 
-        file.mimetype === 'text/plain' ||
-        file.originalname.endsWith('.csv') ||
-        file.originalname.endsWith('.txt')) {
+    if (
+      file.mimetype === 'text/csv' ||
+      file.mimetype === 'text/plain' ||
+      file.originalname.endsWith('.csv') ||
+      file.originalname.endsWith('.txt')
+    ) {
       cb(null, true);
     } else {
       cb(new Error('Only CSV files (.csv, .txt) are allowed'));
@@ -36,49 +43,59 @@ function cleanValue(value: any): any {
   if (value === null || value === undefined) {
     return null;
   }
-  
+
   if (typeof value === 'string') {
     // Trim whitespace
     let cleaned = value.trim();
-    
+
     // Remove zero-width characters and other invisible characters
     cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, '');
-    
+
     // Remove BOM (Byte Order Mark) if present
-    if (cleaned.charCodeAt(0) === 0xFEFF) {
+    if (cleaned.charCodeAt(0) === 0xfeff) {
       cleaned = cleaned.slice(1);
     }
-    
+
     // Normalize empty strings to null
-    if (cleaned === '' || cleaned === 'N/A' || cleaned === 'n/a' || cleaned === 'NULL' || cleaned === 'null' || cleaned === '-') {
+    if (
+      cleaned === '' ||
+      cleaned === 'N/A' ||
+      cleaned === 'n/a' ||
+      cleaned === 'NULL' ||
+      cleaned === 'null' ||
+      cleaned === '-'
+    ) {
       return null;
     }
-    
+
     // Remove excessive whitespace (multiple spaces/tabs/newlines)
     cleaned = cleaned.replace(/\s+/g, ' ').trim();
-    
+
     // Remove quotes if present (CSV often has quoted values)
-    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || 
-        (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+    if (
+      (cleaned.startsWith('"') && cleaned.endsWith('"')) ||
+      (cleaned.startsWith("'") && cleaned.endsWith("'"))
+    ) {
       cleaned = cleaned.slice(1, -1);
     }
-    
+
     return cleaned;
   }
-  
+
   if (typeof value === 'number') {
     if (isNaN(value) || !isFinite(value)) {
       return null;
     }
     return value;
   }
-  
+
   return value;
 }
 
 // Helper function to clean field names
 function cleanFieldName(fieldName: string): string {
-  return fieldName.trim()
+  return fieldName
+    .trim()
     .replace(/[^\w\s]/g, '') // Remove special chars except word chars and spaces
     .replace(/\s+/g, ' ') // Normalize spaces
     .trim();
@@ -86,32 +103,32 @@ function cleanFieldName(fieldName: string): string {
 
 // Parse CSV with proper handling
 function parseCSV(csvText: string): { rows: any[]; headers: string[] } {
-  const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0);
-  
+  const lines = csvText.split(/\r?\n/).filter((line) => line.trim().length > 0);
+
   if (lines.length === 0) {
     return { rows: [], headers: [] };
   }
-  
+
   // Parse header
   const headerLine = lines[0];
-  const headers = headerLine.split(',').map(h => cleanFieldName(h.trim()));
-  
+  const headers = headerLine.split(',').map((h) => cleanFieldName(h.trim()));
+
   // Parse data rows
   const rows: any[] = [];
   const seenRows = new Set<string>(); // Track duplicates
-  
+
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    
+
     // Simple CSV parsing (handles quoted values)
     const values: string[] = [];
     let current = '';
     let inQuotes = false;
-    
+
     for (let j = 0; j < line.length; j++) {
       const char = line[j];
-      
+
       if (char === '"') {
         inQuotes = !inQuotes;
       } else if (char === ',' && !inQuotes) {
@@ -122,28 +139,28 @@ function parseCSV(csvText: string): { rows: any[]; headers: string[] } {
       }
     }
     values.push(current.trim()); // Add last value
-    
+
     // Map values to headers
     const row: any = {};
     headers.forEach((header, idx) => {
       const value = values[idx];
       row[header] = cleanValue(value);
     });
-    
+
     // Skip if all values are null/empty
-    const hasData = Object.values(row).some(v => v !== null && v !== undefined);
+    const hasData = Object.values(row).some((v) => v !== null && v !== undefined);
     if (!hasData) continue;
-    
+
     // Create hash for duplicate detection
     const rowHash = JSON.stringify(Object.entries(row).slice(0, 3));
     if (seenRows.has(rowHash)) {
       continue; // Skip duplicate
     }
     seenRows.add(rowHash);
-    
+
     rows.push(row);
   }
-  
+
   return { rows, headers };
 }
 
@@ -160,50 +177,55 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
 
     // Read CSV file as text
     const csvText = req.file.buffer.toString('utf-8');
-    
+
     // Clean BOM if present
-    const cleanText = csvText.charCodeAt(0) === 0xFEFF ? csvText.slice(1) : csvText;
-    
+    const cleanText = csvText.charCodeAt(0) === 0xfeff ? csvText.slice(1) : csvText;
+
     // Parse CSV
     const { rows, headers } = parseCSV(cleanText);
-    
+
     console.log(`✅ [CSV Import] Parsed ${rows.length} rows with ${headers.length} columns`);
     console.log(`📊 [CSV Import] Headers:`, headers);
 
     // Extract organizations and detect data issues
     const organizations: OrganizationData[] = [];
     const seenNames = new Set<string>();
-    
+
     rows.forEach((row: any) => {
       const orgName = extractOrganizationName(row);
       if (!orgName || orgName === 'N/A') {
         return; // Skip rows without valid organization name
       }
-      
+
       // Check for duplicates (case-insensitive)
       const nameKey = orgName.toLowerCase().trim();
       if (seenNames.has(nameKey)) {
         return; // Skip duplicates
       }
       seenNames.add(nameKey);
-      
+
       // Detect data issues
       const issues = detectDataIssues(row, orgName);
       const dataQualityScore = calculateDataQualityScore(row, issues);
-      
+
       organizations.push({
         name: orgName,
         rawData: row,
         issues,
         dataQualityScore,
-        hasContactInfo: issues.filter(i => i.field === 'contact' && i.severity === 'critical').length === 0,
-        hasLocationInfo: issues.filter(i => i.field === 'location' && i.severity === 'critical').length === 0,
-        hasEventInfo: issues.filter(i => i.field === 'delegates' || i.field === 'events').length < 2,
+        hasContactInfo:
+          issues.filter((i) => i.field === 'contact' && i.severity === 'critical').length === 0,
+        hasLocationInfo:
+          issues.filter((i) => i.field === 'location' && i.severity === 'critical').length === 0,
+        hasEventInfo:
+          issues.filter((i) => i.field === 'delegates' || i.field === 'events').length < 2,
       });
     });
-    
+
     console.log(`✅ [CSV Import] Extracted ${organizations.length} unique organizations`);
-    console.log(`📊 [CSV Import] Organizations with data issues: ${organizations.filter(o => o.issues.length > 0).length}`);
+    console.log(
+      `📊 [CSV Import] Organizations with data issues: ${organizations.filter((o) => o.issues.length > 0).length}`,
+    );
 
     // Convert to text format for AI analysis
     const textData = rows
@@ -215,7 +237,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
           .join(', ');
         return `Row ${idx + 1}: ${rowData}`;
       })
-      .filter(line => line.length > 10)
+      .filter((line) => line.length > 10)
       .join('\n');
 
     const summary = {
@@ -228,7 +250,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       success: true,
       summary,
       preview: rows.slice(0, Math.min(50, rows.length)), // First 50 rows as preview
-      organizations: organizations.map(org => ({
+      organizations: organizations.map((org) => ({
         name: org.name,
         dataQualityScore: org.dataQualityScore,
         issues: org.issues,
@@ -250,4 +272,3 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
 });
 
 export default router;
-

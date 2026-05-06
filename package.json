@@ -8,6 +8,8 @@
     "dev:api": "tsx watch api/src/server.ts",
     "build": "vite build",
     "preview": "vite preview",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "verify:send-mail": "npm run verify:send-mail --prefix api",
     "send:dmc-test": "npm run send:dmc-test --prefix api"
   },
@@ -43,6 +45,7 @@
     "@types/nodemailer": "^6.4.14",
     "@types/pg": "^8.10.9",
     "@vitejs/plugin-react": "^5.0.0",
+    "prettier": "3.8.3",
     "tsx": "^4.7.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"

@@ -43,11 +43,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-        aria-hidden
-      />
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
       <div
         className="relative w-full max-w-2xl max-h-[85vh] flex flex-col bg-white rounded-xl shadow-xl border border-slate-200"
         role="dialog"
@@ -88,16 +84,26 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({
                   {hasParsedContact ? (
                     <div className="text-sm text-green-800 space-y-1">
                       {parsedContact.keyPersonName && (
-                        <p><span className="font-medium">Tên:</span> {parsedContact.keyPersonName}</p>
+                        <p>
+                          <span className="font-medium">Tên:</span> {parsedContact.keyPersonName}
+                        </p>
                       )}
                       {parsedContact.keyPersonTitle && (
-                        <p><span className="font-medium">Chức danh:</span> {parsedContact.keyPersonTitle}</p>
+                        <p>
+                          <span className="font-medium">Chức danh:</span>{' '}
+                          {parsedContact.keyPersonTitle}
+                        </p>
                       )}
                       {parsedContact.keyPersonEmail && (
-                        <p><span className="font-medium">Email:</span> {parsedContact.keyPersonEmail}</p>
+                        <p>
+                          <span className="font-medium">Email:</span> {parsedContact.keyPersonEmail}
+                        </p>
                       )}
                       {parsedContact.keyPersonPhone && (
-                        <p><span className="font-medium">Điện thoại:</span> {parsedContact.keyPersonPhone}</p>
+                        <p>
+                          <span className="font-medium">Điện thoại:</span>{' '}
+                          {parsedContact.keyPersonPhone}
+                        </p>
                       )}
                     </div>
                   ) : null}
@@ -124,9 +130,12 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({
               <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200">
                 <AlertCircle className="text-amber-600 shrink-0 mt-0.5" size={22} />
                 <div>
-                  <p className="font-semibold text-amber-800">Không tìm thấy thông tin key person</p>
+                  <p className="font-semibold text-amber-800">
+                    Không tìm thấy thông tin key person
+                  </p>
                   <p className="text-sm text-amber-700 mt-0.5">
-                    AI không tìm được tên, email hoặc số điện thoại phù hợp. Bạn có thể tham khảo nội dung bên dưới và vẫn đồng bộ nếu cần.
+                    AI không tìm được tên, email hoặc số điện thoại phù hợp. Bạn có thể tham khảo
+                    nội dung bên dưới và vẫn đồng bộ nếu cần.
                   </p>
                 </div>
               </div>
@@ -157,7 +166,8 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({
         <div className="px-5 py-4 border-t border-slate-200 flex flex-col gap-3">
           {!canSync && (status === 'success' || status === 'no_result') && (
             <p className="text-sm text-amber-700">
-              Chưa thể đồng bộ: cần có email hoặc số điện thoại của key person. Chỉ có tên/chức danh thì chưa đủ để lưu vào CRM.
+              Chưa thể đồng bộ: cần có email hoặc số điện thoại của key person. Chỉ có tên/chức danh
+              thì chưa đủ để lưu vào CRM.
             </p>
           )}
           <div className="flex justify-end gap-2">
@@ -168,11 +178,7 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({
                 disabled={syncing}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 disabled:opacity-60 transition-colors"
               >
-                {syncing ? (
-                  <Loader2 className="animate-spin" size={18} />
-                ) : (
-                  <Database size={18} />
-                )}
+                {syncing ? <Loader2 className="animate-spin" size={18} /> : <Database size={18} />}
                 {syncing ? 'Đang đồng bộ...' : 'Đồng bộ vào hệ thống'}
               </button>
             )}

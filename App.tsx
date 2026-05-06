@@ -6,14 +6,30 @@ import { useLeads } from './hooks/useLeads';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 
 // Lazy load views for better initial load performance
-const Dashboard = React.lazy(() => import('./views/Dashboard').then(module => ({ default: module.Dashboard })));
-const LeadsView = React.lazy(() => import('./views/LeadsView').then(module => ({ default: module.LeadsView })));
-const LeadDetail = React.lazy(() => import('./components/LeadDetail').then(module => ({ default: module.LeadDetail })));
-const IntelligentDataView = React.lazy(() => import('./views/IntelligentDataView').then(module => ({ default: module.IntelligentDataView })));
-const ChatAssistant = React.lazy(() => import('./components/ChatAssistant').then(module => ({ default: module.ChatAssistant })));
-const EmailView = React.lazy(() => import('./views/EmailView').then(module => ({ default: module.EmailView })));
-const UserProfileView = React.lazy(() => import('./views/UserProfileView').then(module => ({ default: module.UserProfileView })));
-const VideoAnalysisView = React.lazy(() => import('./views/VideoAnalysisView').then(module => ({ default: module.VideoAnalysisView })));
+const Dashboard = React.lazy(() =>
+  import('./views/Dashboard').then((module) => ({ default: module.Dashboard })),
+);
+const LeadsView = React.lazy(() =>
+  import('./views/LeadsView').then((module) => ({ default: module.LeadsView })),
+);
+const LeadDetail = React.lazy(() =>
+  import('./components/LeadDetail').then((module) => ({ default: module.LeadDetail })),
+);
+const IntelligentDataView = React.lazy(() =>
+  import('./views/IntelligentDataView').then((module) => ({ default: module.IntelligentDataView })),
+);
+const ChatAssistant = React.lazy(() =>
+  import('./components/ChatAssistant').then((module) => ({ default: module.ChatAssistant })),
+);
+const EmailView = React.lazy(() =>
+  import('./views/EmailView').then((module) => ({ default: module.EmailView })),
+);
+const UserProfileView = React.lazy(() =>
+  import('./views/UserProfileView').then((module) => ({ default: module.UserProfileView })),
+);
+const VideoAnalysisView = React.lazy(() =>
+  import('./views/VideoAnalysisView').then((module) => ({ default: module.VideoAnalysisView })),
+);
 
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -119,11 +135,11 @@ const App = () => {
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
 
-      <main className={`flex-1 relative transition-all duration-300 ease-in-out overflow-hidden h-full ${sidebarOpen ? 'md:ml-52' : 'ml-0'}`}>
+      <main
+        className={`flex-1 relative transition-all duration-300 ease-in-out overflow-hidden h-full ${sidebarOpen ? 'md:ml-52' : 'ml-0'}`}
+      >
         <div className="h-full w-full overflow-auto">
-          <Suspense fallback={<LoadingSpinner />}>
-            {renderContent()}
-          </Suspense>
+          <Suspense fallback={<LoadingSpinner />}>{renderContent()}</Suspense>
         </div>
       </main>
 

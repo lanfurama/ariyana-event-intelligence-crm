@@ -15,7 +15,7 @@ export const ChatAssistant = ({ user }: { user: User }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(scrollToBottom, [messages]);
@@ -32,7 +32,7 @@ export const ChatAssistant = ({ user }: { user: User }) => {
         console.log('📥 Loaded', dbMessages.length, 'messages from database');
 
         // Map database format to frontend format
-        const mappedMessages: ChatMessage[] = dbMessages.map(msg => ({
+        const mappedMessages: ChatMessage[] = dbMessages.map((msg) => ({
           id: msg.id,
           role: msg.role,
           text: msg.text,
@@ -45,7 +45,7 @@ export const ChatAssistant = ({ user }: { user: User }) => {
             id: '1',
             role: 'assistant',
             text: 'Hello! I am your Ariyana Sales Assistant. How can I help you analyze the market today?',
-            timestamp: new Date()
+            timestamp: new Date(),
           };
           setMessages([welcomeMsg]);
           // Save welcome message to database
@@ -53,14 +53,17 @@ export const ChatAssistant = ({ user }: { user: User }) => {
             console.log('💾 Saving welcome message to database:', {
               id: welcomeMsg.id,
               username: user.username,
-              timestamp: welcomeMsg.timestamp
+              timestamp: welcomeMsg.timestamp,
             });
             const saved = await chatMessagesApi.create({
               id: welcomeMsg.id,
               username: user.username,
               role: welcomeMsg.role,
               text: welcomeMsg.text,
-              timestamp: welcomeMsg.timestamp instanceof Date ? welcomeMsg.timestamp.toISOString() : welcomeMsg.timestamp,
+              timestamp:
+                welcomeMsg.timestamp instanceof Date
+                  ? welcomeMsg.timestamp.toISOString()
+                  : welcomeMsg.timestamp,
             });
             console.log('✅ Welcome message saved successfully:', saved.id);
           } catch (error: any) {
@@ -80,7 +83,7 @@ export const ChatAssistant = ({ user }: { user: User }) => {
           id: '1',
           role: 'assistant',
           text: 'Hello! I am your Ariyana Sales Assistant. How can I help you analyze the market today?',
-          timestamp: new Date()
+          timestamp: new Date(),
         };
         setMessages([welcomeMsg]);
       } finally {
@@ -95,7 +98,7 @@ export const ChatAssistant = ({ user }: { user: User }) => {
   useEffect(() => {
     if (rateLimitCountdown !== null && rateLimitCountdown > 0) {
       const timer = setTimeout(() => {
-        setRateLimitCountdown(prev => prev !== null ? prev - 1 : null);
+        setRateLimitCountdown((prev) => (prev !== null ? prev - 1 : null));
       }, 1000);
       return () => clearTimeout(timer);
     } else if (rateLimitCountdown === 0) {
@@ -106,8 +109,13 @@ export const ChatAssistant = ({ user }: { user: User }) => {
   const handleSend = async () => {
     if (!input.trim() || (rateLimitCountdown !== null && rateLimitCountdown > 0) || !user) return;
 
-    const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', text: input, timestamp: new Date() };
-    setMessages(prev => [...prev, userMsg]);
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      text: input,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMsg]);
     const currentInput = input;
     setInput('');
     setLoading(true);
@@ -120,34 +128,42 @@ export const ChatAssistant = ({ user }: { user: User }) => {
         username: user.username,
         role: userMsg.role,
         text: userMsg.text.substring(0, 50),
-        timestamp: userMsg.timestamp
+        timestamp: userMsg.timestamp,
       });
       const saved = await chatMessagesApi.create({
         id: userMsg.id,
         username: user.username,
         role: userMsg.role,
         text: userMsg.text,
-        timestamp: userMsg.timestamp instanceof Date ? userMsg.timestamp.toISOString() : userMsg.timestamp,
+        timestamp:
+          userMsg.timestamp instanceof Date ? userMsg.timestamp.toISOString() : userMsg.timestamp,
       });
       console.log('✅ User message saved successfully:', saved.id);
     } catch (error: any) {
       console.error('❌ Error saving user message:', error);
       console.error('Error details:', error.message, error.stack);
       // Show error to user but don't block the chat
-      alert(`Warning: Could not save message to database. ${error.message || 'Please check console for details.'}`);
+      alert(
+        `Warning: Could not save message to database. ${error.message || 'Please check console for details.'}`,
+      );
     }
 
     try {
       // Prepare history for API (GPT format)
-      const history = messages.map(m => ({
+      const history = messages.map((m) => ({
         role: m.role === 'model' ? 'assistant' : m.role, // Convert 'model' to 'assistant' for GPT
-        content: m.text
+        content: m.text,
       }));
 
       const responseText = await GPTService.sendChatMessage(history, currentInput);
 
-      const botMsg: ChatMessage = { id: (Date.now() + 1).toString(), role: 'assistant', text: responseText, timestamp: new Date() };
-      setMessages(prev => [...prev, botMsg]);
+      const botMsg: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        text: responseText,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, botMsg]);
 
       // Save bot message to database
       try {
@@ -156,14 +172,15 @@ export const ChatAssistant = ({ user }: { user: User }) => {
           username: user.username,
           role: botMsg.role,
           text: botMsg.text.substring(0, 50),
-          timestamp: botMsg.timestamp
+          timestamp: botMsg.timestamp,
         });
         const saved = await chatMessagesApi.create({
           id: botMsg.id,
           username: user.username,
           role: botMsg.role,
           text: botMsg.text,
-          timestamp: botMsg.timestamp instanceof Date ? botMsg.timestamp.toISOString() : botMsg.timestamp,
+          timestamp:
+            botMsg.timestamp instanceof Date ? botMsg.timestamp.toISOString() : botMsg.timestamp,
         });
         console.log('✅ Bot message saved successfully:', saved.id);
       } catch (error: any) {
@@ -189,9 +206,9 @@ export const ChatAssistant = ({ user }: { user: User }) => {
           id: Date.now().toString(),
           role: 'assistant',
           text: `Rate limit exceeded. Please wait ${retryDelay || 'a moment'} seconds before trying again.`,
-          timestamp: new Date()
+          timestamp: new Date(),
         };
-        setMessages(prev => [...prev, errorMsg]);
+        setMessages((prev) => [...prev, errorMsg]);
 
         // Save error message to database
         try {
@@ -210,20 +227,29 @@ export const ChatAssistant = ({ user }: { user: User }) => {
         let errorText = "I'm having trouble connecting right now. Please try again.";
 
         // Check if API key is missing
-        if (e.message && (e.message.includes('API Key not found') || e.message.includes('OPENAI_API_KEY'))) {
-          errorText = "⚠️ OpenAI API Key is not configured. Please set OPENAI_API_KEY in your .env file.";
+        if (
+          e.message &&
+          (e.message.includes('API Key not found') || e.message.includes('OPENAI_API_KEY'))
+        ) {
+          errorText =
+            '⚠️ OpenAI API Key is not configured. Please set OPENAI_API_KEY in your .env file.';
         }
         // Check for network errors
-        else if (e.message && (e.message.includes('fetch failed') || e.message.includes('network') || e.message.includes('Failed to fetch'))) {
-          errorText = "🌐 Network error. Please check your internet connection and try again.";
+        else if (
+          e.message &&
+          (e.message.includes('fetch failed') ||
+            e.message.includes('network') ||
+            e.message.includes('Failed to fetch'))
+        ) {
+          errorText = '🌐 Network error. Please check your internet connection and try again.';
         }
         // Check for API errors
         else if (e.message && (e.message.includes('401') || e.message.includes('Unauthorized'))) {
-          errorText = "🔑 Invalid API Key. Please check your OPENAI_API_KEY in .env file.";
+          errorText = '🔑 Invalid API Key. Please check your OPENAI_API_KEY in .env file.';
         }
         // Check for API quota errors
         else if (e.message && (e.message.includes('quota') || e.message.includes('429'))) {
-          errorText = "⏱️ API quota exceeded. Please try again later.";
+          errorText = '⏱️ API quota exceeded. Please try again later.';
         }
         // Show detailed error in development
         else if (import.meta.env.DEV && e.message) {
@@ -234,9 +260,9 @@ export const ChatAssistant = ({ user }: { user: User }) => {
           id: Date.now().toString(),
           role: 'assistant',
           text: errorText,
-          timestamp: new Date()
+          timestamp: new Date(),
         };
-        setMessages(prev => [...prev, errorMsg]);
+        setMessages((prev) => [...prev, errorMsg]);
 
         // Save error message to database
         try {
@@ -274,15 +300,19 @@ export const ChatAssistant = ({ user }: { user: User }) => {
           </div>
         ) : (
           messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] p-4 rounded-lg shadow-sm text-sm ${msg.role === 'user'
-                ? 'bg-blue-600 text-white rounded-br-none'
-                : 'bg-white text-slate-700 border border-slate-200 rounded-bl-none'
-                }`}>
+            <div
+              key={msg.id}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] p-4 rounded-lg shadow-sm text-sm ${
+                  msg.role === 'user'
+                    ? 'bg-blue-600 text-white rounded-br-none'
+                    : 'bg-white text-slate-700 border border-slate-200 rounded-bl-none'
+                }`}
+              >
                 {msg.role === 'assistant' ? (
-                  <div className="prose prose-sm max-w-none">
-                    {formatMarkdown(msg.text)}
-                  </div>
+                  <div className="prose prose-sm max-w-none">{formatMarkdown(msg.text)}</div>
                 ) : (
                   <div className="whitespace-pre-wrap">{msg.text}</div>
                 )}
@@ -307,10 +337,13 @@ export const ChatAssistant = ({ user }: { user: User }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-yellow-800">Rate Limit Exceeded</p>
-              <p className="text-xs text-yellow-700 mt-1">Please wait before sending another message</p>
+              <p className="text-xs text-yellow-700 mt-1">
+                Please wait before sending another message
+              </p>
             </div>
             <div className="text-xl font-bold text-yellow-600">
-              {Math.floor(rateLimitCountdown / 60)}:{(rateLimitCountdown % 60).toString().padStart(2, '0')}
+              {Math.floor(rateLimitCountdown / 60)}:
+              {(rateLimitCountdown % 60).toString().padStart(2, '0')}
             </div>
           </div>
         </div>
@@ -320,7 +353,11 @@ export const ChatAssistant = ({ user }: { user: User }) => {
         <div className="flex items-center space-x-2">
           <input
             className="flex-1 p-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
-            placeholder={rateLimitCountdown !== null && rateLimitCountdown > 0 ? `Wait ${rateLimitCountdown}s...` : "Ask about leads, email templates, or market trends..."}
+            placeholder={
+              rateLimitCountdown !== null && rateLimitCountdown > 0
+                ? `Wait ${rateLimitCountdown}s...`
+                : 'Ask about leads, email templates, or market trends...'
+            }
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -328,7 +365,9 @@ export const ChatAssistant = ({ user }: { user: User }) => {
           />
           <button
             onClick={handleSend}
-            disabled={loading || !input.trim() || (rateLimitCountdown !== null && rateLimitCountdown > 0)}
+            disabled={
+              loading || !input.trim() || (rateLimitCountdown !== null && rateLimitCountdown > 0)
+            }
             className="p-3 bg-blue-600 text-white rounded-lg disabled:opacity-50"
           >
             <Send size={20} />

@@ -50,15 +50,15 @@ export class ReportStatsService {
     periodStart: Date,
     periodEnd: Date,
     periodType: 'daily' | 'weekly' | 'monthly',
-    topLeadsCount: number = 10
+    topLeadsCount: number = 10,
   ): Promise<ReportStats> {
     // Get all leads
     const allLeads = await LeadModel.getAll();
-    
+
     // Get all email logs
     const allEmailLogs = await EmailLogModel.getAll();
-    const sentEmailLogs = allEmailLogs.filter(log => log.status === 'sent');
-    
+    const sentEmailLogs = allEmailLogs.filter((log) => log.status === 'sent');
+
     // Get all email replies
     const allEmailReplies = await EmailReplyModel.getAll();
 
@@ -67,21 +67,22 @@ export class ReportStatsService {
     const periodEndStr = periodEnd.toISOString();
 
     // Leads stats
-    const newLeadsInPeriod = allLeads.filter(lead => {
+    const newLeadsInPeriod = allLeads.filter((lead) => {
       if (!lead.created_at) return false;
-      const createdAt = typeof lead.created_at === 'string' ? new Date(lead.created_at) : lead.created_at;
+      const createdAt =
+        typeof lead.created_at === 'string' ? new Date(lead.created_at) : lead.created_at;
       return createdAt >= periodStart && createdAt <= periodEnd;
     });
 
     const leadsByStatus: Record<string, number> = {};
-    allLeads.forEach(lead => {
+    allLeads.forEach((lead) => {
       const status = lead.status || 'New';
       leadsByStatus[status] = (leadsByStatus[status] || 0) + 1;
     });
 
     // Country distribution
     const countryMap = new Map<string, number>();
-    allLeads.forEach(lead => {
+    allLeads.forEach((lead) => {
       const country = lead.country || 'Unknown';
       countryMap.set(country, (countryMap.get(country) || 0) + 1);
     });
@@ -92,7 +93,7 @@ export class ReportStatsService {
 
     // Industry distribution
     const industryMap = new Map<string, number>();
-    allLeads.forEach(lead => {
+    allLeads.forEach((lead) => {
       const industry = lead.industry || 'Unknown';
       industryMap.set(industry, (industryMap.get(industry) || 0) + 1);
     });
@@ -102,24 +103,23 @@ export class ReportStatsService {
       .slice(0, 10);
 
     // Email stats
-    const emailsSentInPeriod = sentEmailLogs.filter(log => {
+    const emailsSentInPeriod = sentEmailLogs.filter((log) => {
       const logDate = new Date(log.date);
       return logDate >= periodStart && logDate <= periodEnd;
     });
 
-    const repliesInPeriod = allEmailReplies.filter(reply => {
+    const repliesInPeriod = allEmailReplies.filter((reply) => {
       const replyDate = new Date(reply.reply_date);
       return replyDate >= periodStart && replyDate <= periodEnd;
     });
 
-    const uniqueLeadsContacted = new Set(sentEmailLogs.map(log => log.lead_id)).size;
-    const replyRate = sentEmailLogs.length > 0 
-      ? (allEmailReplies.length / sentEmailLogs.length) * 100 
-      : 0;
+    const uniqueLeadsContacted = new Set(sentEmailLogs.map((log) => log.lead_id)).size;
+    const replyRate =
+      sentEmailLogs.length > 0 ? (allEmailReplies.length / sentEmailLogs.length) * 100 : 0;
 
     // Email activity by day
     const emailByDayMap = new Map<string, number>();
-    emailsSentInPeriod.forEach(log => {
+    emailsSentInPeriod.forEach((log) => {
       const dateStr = new Date(log.date).toISOString().split('T')[0];
       emailByDayMap.set(dateStr, (emailByDayMap.get(dateStr) || 0) + 1);
     });
@@ -129,10 +129,10 @@ export class ReportStatsService {
 
     // Top leads by score
     const topLeads = allLeads
-      .filter(lead => lead.lead_score !== null && lead.lead_score !== undefined)
+      .filter((lead) => lead.lead_score !== null && lead.lead_score !== undefined)
       .sort((a, b) => (b.lead_score || 0) - (a.lead_score || 0))
       .slice(0, topLeadsCount)
-      .map(lead => ({
+      .map((lead) => ({
         id: lead.id,
         companyName: lead.company_name || 'Unknown',
         leadScore: lead.lead_score || 0,
@@ -153,9 +153,9 @@ export class ReportStatsService {
       },
       leads: {
         total: allLeads.length,
-        new: allLeads.filter(l => l.status === 'New').length,
-        contacted: allLeads.filter(l => l.status === 'Contacted').length,
-        qualified: allLeads.filter(l => l.status === 'Qualified').length,
+        new: allLeads.filter((l) => l.status === 'New').length,
+        contacted: allLeads.filter((l) => l.status === 'Contacted').length,
+        qualified: allLeads.filter((l) => l.status === 'Qualified').length,
         newInPeriod: newLeadsInPeriod.length,
         byStatus: leadsByStatus,
         byCountry,
@@ -179,7 +179,7 @@ export class ReportStatsService {
    */
   static getPeriodBoundaries(
     frequency: 'daily' | 'weekly' | 'monthly',
-    referenceDate: Date = new Date()
+    referenceDate: Date = new Date(),
   ): { start: Date; end: Date } {
     const now = new Date(referenceDate);
     let start: Date;
@@ -199,7 +199,7 @@ export class ReportStatsService {
         const diff = start.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust to Monday
         start.setDate(diff);
         start.setHours(0, 0, 0, 0);
-        
+
         // End of week (Sunday)
         end = new Date(start);
         end.setDate(end.getDate() + 6);
@@ -210,7 +210,7 @@ export class ReportStatsService {
         // Start of month
         start = new Date(now.getFullYear(), now.getMonth(), 1);
         start.setHours(0, 0, 0, 0);
-        
+
         // End of month
         end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         end.setHours(23, 59, 59, 999);

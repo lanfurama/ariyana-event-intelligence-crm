@@ -9,11 +9,22 @@ const router = Router();
 router.post('/send-test', async (req: Request, res: Response) => {
   try {
     const { to, subject, body, attachments, cc } = req.body || {};
-    if (!to || typeof to !== 'string' || !subject || typeof subject !== 'string' || !body || typeof body !== 'string') {
-      console.error('[send-test] Invalid body:', { hasTo: !!to, hasSubject: !!subject, hasBody: !!body });
+    if (
+      !to ||
+      typeof to !== 'string' ||
+      !subject ||
+      typeof subject !== 'string' ||
+      !body ||
+      typeof body !== 'string'
+    ) {
+      console.error('[send-test] Invalid body:', {
+        hasTo: !!to,
+        hasSubject: !!subject,
+        hasBody: !!body,
+      });
       return res.status(400).json({ error: 'to, subject, and body are required' });
     }
-    const ccList = Array.isArray(cc) ? cc : (cc ? [cc] : []);
+    const ccList = Array.isArray(cc) ? cc : cc ? [cc] : [];
     const result = await sendTestEmail(to.trim(), subject, body, attachments || [], ccList);
     if (!result.success) {
       return res.status(500).json({ error: result.error || 'Failed to send test email' });
@@ -34,7 +45,7 @@ router.get('/', async (req: Request, res: Response) => {
       templates.map(async (template) => {
         const attachments = await EmailTemplateModel.getAttachments(template.id);
         return { ...template, attachments };
-      })
+      }),
     );
     res.json(templatesWithAttachments);
   } catch (error: any) {
@@ -63,12 +74,18 @@ router.post('/', async (req: Request, res: Response) => {
   try {
     const { attachments, ...templateData } = req.body;
     const template = await EmailTemplateModel.create(templateData);
-    
+
     // Create attachments if provided
     if (attachments && Array.isArray(attachments) && attachments.length > 0) {
-      console.log(`[create] Creating ${attachments.length} attachment(s) for template ${template.id}`);
+      console.log(
+        `[create] Creating ${attachments.length} attachment(s) for template ${template.id}`,
+      );
       for (const attachment of attachments) {
-        console.log(`[create] Creating attachment:`, { name: attachment.name, type: attachment.type, hasFileData: !!attachment.file_data });
+        console.log(`[create] Creating attachment:`, {
+          name: attachment.name,
+          type: attachment.type,
+          hasFileData: !!attachment.file_data,
+        });
         await EmailTemplateModel.createAttachment({
           template_id: template.id,
           name: attachment.name,
@@ -78,7 +95,7 @@ router.post('/', async (req: Request, res: Response) => {
         });
       }
     }
-    
+
     const templateAttachments = await EmailTemplateModel.getAttachments(template.id);
     res.status(201).json({ ...template, attachments: templateAttachments });
   } catch (error: any) {
@@ -95,17 +112,23 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (!template) {
       return res.status(404).json({ error: 'Email template not found' });
     }
-    
+
     // Update attachments if provided
     if (attachments !== undefined) {
       // Delete existing attachments
       await EmailTemplateModel.deleteAttachmentsByTemplateId(req.params.id);
-      
+
       // Create new attachments
       if (Array.isArray(attachments) && attachments.length > 0) {
-        console.log(`[update] Creating ${attachments.length} attachment(s) for template ${req.params.id}`);
+        console.log(
+          `[update] Creating ${attachments.length} attachment(s) for template ${req.params.id}`,
+        );
         for (const attachment of attachments) {
-          console.log(`[update] Creating attachment:`, { name: attachment.name, type: attachment.type, hasFileData: !!attachment.file_data });
+          console.log(`[update] Creating attachment:`, {
+            name: attachment.name,
+            type: attachment.type,
+            hasFileData: !!attachment.file_data,
+          });
           await EmailTemplateModel.createAttachment({
             template_id: req.params.id,
             name: attachment.name,
@@ -116,7 +139,7 @@ router.put('/:id', async (req: Request, res: Response) => {
         }
       }
     }
-    
+
     const templateAttachments = await EmailTemplateModel.getAttachments(req.params.id);
     res.json({ ...template, attachments: templateAttachments });
   } catch (error: any) {
@@ -179,4 +202,3 @@ router.delete('/attachments/:attachmentId', async (req: Request, res: Response) 
 });
 
 export default router;
-

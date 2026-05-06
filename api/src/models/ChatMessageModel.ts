@@ -6,9 +6,9 @@ export class ChatMessageModel {
   static async getByUsername(username: string): Promise<ChatMessage[]> {
     const result = await query(
       'SELECT * FROM chat_messages WHERE username = $1 ORDER BY timestamp ASC',
-      [username]
+      [username],
     );
-    return result.rows.map(row => ({
+    return result.rows.map((row) => ({
       ...row,
       // Normalize 'model' to 'assistant' for frontend (GPT standard)
       role: row.role === 'model' ? 'assistant' : row.role,
@@ -35,12 +35,12 @@ export class ChatMessageModel {
   static async create(message: Omit<ChatMessage, 'created_at'>): Promise<ChatMessage> {
     // Normalize 'assistant' to 'model' for database storage (backward compatibility)
     const dbRole = message.role === 'assistant' ? 'model' : message.role;
-    
+
     const result = await query(
       `INSERT INTO chat_messages (id, username, role, text, timestamp)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [message.id, message.username, dbRole, message.text, message.timestamp]
+      [message.id, message.username, dbRole, message.text, message.timestamp],
     );
     const row = result.rows[0];
     return {

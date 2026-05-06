@@ -39,7 +39,7 @@ const corsOptions = {
       'http://localhost:3000',
       'http://127.0.0.1:5173',
       'http://127.0.0.1:3000',
-      process.env.CORS_ORIGIN
+      process.env.CORS_ORIGIN,
     ].filter(Boolean);
 
     if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
@@ -61,7 +61,7 @@ app.get('/test', (req, res) => {
   res.json({
     status: 'ok',
     message: 'API server is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -75,7 +75,7 @@ app.get('/health', async (req, res) => {
     res.status(500).json({
       status: 'error',
       database: 'disconnected',
-      message: 'Database connection failed but API is running'
+      message: 'Database connection failed but API is running',
     });
   }
 });
@@ -137,7 +137,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📚 API docs: http://localhost:${PORT}/`);
   console.log(`🌐 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-  
+
   // Start scheduled reports job
   try {
     startScheduledReportsJob();
@@ -147,4 +147,3 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 export default app;
-

@@ -17,7 +17,14 @@ export class EmailTemplateModel {
       `INSERT INTO email_templates (id, name, subject, body, lead_type, language) 
        VALUES ($1, $2, $3, $4, $5, $6) 
        RETURNING *`,
-      [template.id, template.name, template.subject, template.body, template.lead_type || null, template.language || null]
+      [
+        template.id,
+        template.name,
+        template.subject,
+        template.body,
+        template.lead_type || null,
+        template.language || null,
+      ],
     );
     return result.rows[0];
   }
@@ -55,7 +62,7 @@ export class EmailTemplateModel {
     values.push(id);
     const result = await query(
       `UPDATE email_templates SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
-      values
+      values,
     );
     return result.rows[0] || null;
   }
@@ -69,38 +76,46 @@ export class EmailTemplateModel {
   static async getAttachments(templateId: string): Promise<EmailTemplateAttachment[]> {
     const result = await query(
       'SELECT id, template_id, name, size, type, file_data, created_at FROM email_template_attachments WHERE template_id = $1 ORDER BY created_at',
-      [templateId]
+      [templateId],
     );
-    console.log(`[getAttachments] Found ${result.rows.length} attachments for template ${templateId}`);
+    console.log(
+      `[getAttachments] Found ${result.rows.length} attachments for template ${templateId}`,
+    );
     result.rows.forEach((att, idx) => {
-      console.log(`[getAttachments] Attachment ${idx + 1}: name=${att.name}, type=${att.type}, hasFileData=${!!att.file_data}, fileDataLength=${att.file_data?.length || 0}`);
+      console.log(
+        `[getAttachments] Attachment ${idx + 1}: name=${att.name}, type=${att.type}, hasFileData=${!!att.file_data}, fileDataLength=${att.file_data?.length || 0}`,
+      );
     });
     return result.rows;
   }
 
-  static async createAttachment(attachment: EmailTemplateAttachment): Promise<EmailTemplateAttachment> {
+  static async createAttachment(
+    attachment: EmailTemplateAttachment,
+  ): Promise<EmailTemplateAttachment> {
     // For links, file_data contains display name, name contains URL
     // Ensure file_data is never null - use name as fallback for links
     const fileData = attachment.file_data || (attachment.type === 'link' ? attachment.name : '');
-    
+
     if (!fileData) {
       throw new Error(`file_data is required for attachment: ${attachment.name}`);
     }
-    
-    console.log(`[createAttachment] Inserting: template_id=${attachment.template_id}, name=${attachment.name}, type=${attachment.type}, file_data length=${fileData.length}`);
-    
+
+    console.log(
+      `[createAttachment] Inserting: template_id=${attachment.template_id}, name=${attachment.name}, type=${attachment.type}, file_data length=${fileData.length}`,
+    );
+
     try {
       const result = await query(
         `INSERT INTO email_template_attachments (template_id, name, size, type, file_data)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
         [
-          attachment.template_id, 
-          attachment.name, 
-          attachment.size || 0, 
-          attachment.type || 'application/octet-stream', 
-          fileData
-        ]
+          attachment.template_id,
+          attachment.name,
+          attachment.size || 0,
+          attachment.type || 'application/octet-stream',
+          fileData,
+        ],
       );
       console.log(`[createAttachment] Created attachment with id: ${result.rows[0]?.id}`);
       return result.rows[0];
@@ -116,8 +131,9 @@ export class EmailTemplateModel {
   }
 
   static async deleteAttachmentsByTemplateId(templateId: string): Promise<boolean> {
-    const result = await query('DELETE FROM email_template_attachments WHERE template_id = $1', [templateId]);
+    const result = await query('DELETE FROM email_template_attachments WHERE template_id = $1', [
+      templateId,
+    ]);
     return (result.rowCount ?? 0) > 0;
   }
 }
-

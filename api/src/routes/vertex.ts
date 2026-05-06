@@ -19,9 +19,7 @@ function getVertexConfig() {
   const location = process.env.VERTEX_AI_LOCATION ?? 'europe-west4';
 
   if (!apiKey || !projectId) {
-    throw new Error(
-      'VERTEX_AI_API_KEY and VERTEX_AI_PROJECT_ID are required. Set them in .env.'
-    );
+    throw new Error('VERTEX_AI_API_KEY and VERTEX_AI_PROJECT_ID are required. Set them in .env.');
   }
   return { apiKey, projectId, location };
 }
@@ -39,10 +37,14 @@ function toEnrichContext(body: Record<string, unknown>): EnrichContext {
     keyPersonPhone: body.keyPersonPhone != null ? String(body.keyPersonPhone).trim() : undefined,
     notes: body.notes != null ? String(body.notes).trim() : undefined,
     researchNotes: body.researchNotes != null ? String(body.researchNotes).trim() : undefined,
-    pastEventsHistory: body.pastEventsHistory != null ? String(body.pastEventsHistory).trim() : undefined,
-    secondaryPersonName: body.secondaryPersonName != null ? String(body.secondaryPersonName).trim() : undefined,
-    secondaryPersonTitle: body.secondaryPersonTitle != null ? String(body.secondaryPersonTitle).trim() : undefined,
-    secondaryPersonEmail: body.secondaryPersonEmail != null ? String(body.secondaryPersonEmail).trim() : undefined,
+    pastEventsHistory:
+      body.pastEventsHistory != null ? String(body.pastEventsHistory).trim() : undefined,
+    secondaryPersonName:
+      body.secondaryPersonName != null ? String(body.secondaryPersonName).trim() : undefined,
+    secondaryPersonTitle:
+      body.secondaryPersonTitle != null ? String(body.secondaryPersonTitle).trim() : undefined,
+    secondaryPersonEmail:
+      body.secondaryPersonEmail != null ? String(body.secondaryPersonEmail).trim() : undefined,
   };
 }
 
@@ -88,7 +90,10 @@ router.post('/enrich', async (req: Request, res: Response) => {
 
     if (!response.ok) {
       const message =
-        data?.error?.message || data?.error?.status || response.statusText || 'Vertex AI request failed';
+        data?.error?.message ||
+        data?.error?.status ||
+        response.statusText ||
+        'Vertex AI request failed';
       console.error('[Vertex enrich] API error:', response.status, message);
       return res.status(response.status >= 500 ? 502 : 400).json({
         error: message,
@@ -99,8 +104,7 @@ router.post('/enrich', async (req: Request, res: Response) => {
       });
     }
 
-    const text =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No results found.';
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'No results found.';
     res.json({ text });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Enrichment failed';

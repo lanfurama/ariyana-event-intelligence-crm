@@ -40,7 +40,7 @@ const getICCALeadsKnowledge = async (): Promise<string> => {
     const highPriorityLeads: Lead[] = [];
     const vietnamLeads: Lead[] = [];
 
-    leads.forEach(lead => {
+    leads.forEach((lead) => {
       // Group by industry
       const industry = lead.industry || 'Unknown';
       if (!byIndustry[industry]) byIndustry[industry] = [];
@@ -52,7 +52,10 @@ const getICCALeadsKnowledge = async (): Promise<string> => {
       byCountry[country].push(lead);
 
       // High priority: has Vietnam events or high delegate count
-      if (lead.vietnam_events > 0 || (lead.number_of_delegates && lead.number_of_delegates >= 300)) {
+      if (
+        lead.vietnam_events > 0 ||
+        (lead.number_of_delegates && lead.number_of_delegates >= 300)
+      ) {
         highPriorityLeads.push(lead);
       }
 
@@ -70,9 +73,11 @@ const getICCALeadsKnowledge = async (): Promise<string> => {
 
     // Industry breakdown
     knowledge += `Industry Distribution:\n`;
-    Object.entries(byIndustry).slice(0, 10).forEach(([industry, industryLeads]) => {
-      knowledge += `- ${industry}: ${industryLeads.length} leads\n`;
-    });
+    Object.entries(byIndustry)
+      .slice(0, 10)
+      .forEach(([industry, industryLeads]) => {
+        knowledge += `- ${industry}: ${industryLeads.length} leads\n`;
+      });
     knowledge += `\n`;
 
     // Country breakdown
@@ -104,7 +109,8 @@ const getICCALeadsKnowledge = async (): Promise<string> => {
       vietnamLeads.slice(0, 15).forEach((lead, idx) => {
         knowledge += `${idx + 1}. ${lead.company_name}`;
         knowledge += ` - ${lead.vietnam_events} Vietnam event(s)`;
-        if (lead.past_events_history) knowledge += ` - History: ${lead.past_events_history.substring(0, 100)}`;
+        if (lead.past_events_history)
+          knowledge += ` - History: ${lead.past_events_history.substring(0, 100)}`;
         if (lead.key_person_email) knowledge += ` - Email: ${lead.key_person_email}`;
         knowledge += `\n`;
       });
@@ -113,17 +119,18 @@ const getICCALeadsKnowledge = async (): Promise<string> => {
 
     // Key patterns and insights
     knowledge += `Key Patterns:\n`;
-    const avgDelegates = leads
-      .filter(l => l.number_of_delegates)
-      .reduce((sum, l) => sum + (l.number_of_delegates || 0), 0) / 
-      leads.filter(l => l.number_of_delegates).length || 0;
+    const avgDelegates =
+      leads
+        .filter((l) => l.number_of_delegates)
+        .reduce((sum, l) => sum + (l.number_of_delegates || 0), 0) /
+        leads.filter((l) => l.number_of_delegates).length || 0;
     if (avgDelegates > 0) {
       knowledge += `- Average delegate count: ${Math.round(avgDelegates)}\n`;
     }
     const totalVietnamEvents = leads.reduce((sum, l) => sum + l.vietnam_events, 0);
     knowledge += `- Total Vietnam events across all leads: ${totalVietnamEvents}\n`;
-    const leadsWithEmail = leads.filter(l => l.key_person_email).length;
-    knowledge += `- Leads with contact email: ${leadsWithEmail} (${Math.round(leadsWithEmail / leads.length * 100)}%)\n`;
+    const leadsWithEmail = leads.filter((l) => l.key_person_email).length;
+    knowledge += `- Leads with contact email: ${leadsWithEmail} (${Math.round((leadsWithEmail / leads.length) * 100)}%)\n`;
     knowledge += `\n`;
 
     knowledge += `=== END OF ICCA LEADS KNOWLEDGE BASE ===\n\n`;
@@ -171,12 +178,12 @@ router.post('/extract-organizations', async (req: Request, res: Response) => {
 Return: {"organizations": [{"name": "Org Name", "rowIndex": 1, "sourceField": "Field"}]}`;
 
     console.log('🟢 [GPT API] Extract organizations request');
-    
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
+        { role: 'user', content: userPrompt },
       ],
       response_format: { type: 'json_object' },
       temperature: 0, // Zero temperature for maximum accuracy - no hallucination
@@ -565,15 +572,16 @@ If ANY of these fields is empty or incomplete, you MUST:
 3. Only output JSON after ensuring these fields are filled or properly flagged in problems array`;
 
     console.log('🟢 [GPT API] Strategic analysis request');
-    
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { 
-          role: 'system', 
-          content: 'You are an expert MICE industry analyst specializing in event research and analysis. CRITICAL RULES: 1) Only provide FACTUAL, VERIFIED information from your knowledge base. 2) NEVER guess or invent data. 3) If information is not available, use empty string "" for strings or null for numbers. 4) Be precise and accurate - incorrect data is worse than missing data. 5) Research thoroughly using your training data knowledge. 6) Follow all format requirements exactly.' 
+        {
+          role: 'system',
+          content:
+            'You are an expert MICE industry analyst specializing in event research and analysis. CRITICAL RULES: 1) Only provide FACTUAL, VERIFIED information from your knowledge base. 2) NEVER guess or invent data. 3) If information is not available, use empty string "" for strings or null for numbers. 4) Be precise and accurate - incorrect data is worse than missing data. 5) Research thoroughly using your training data knowledge. 6) Follow all format requirements exactly.',
         },
-        { role: 'user', content: prompt }
+        { role: 'user', content: prompt },
       ],
       temperature: 0, // Zero temperature for maximum accuracy and consistency
       max_tokens: 4000, // Ensure sufficient tokens for comprehensive analysis
@@ -581,7 +589,7 @@ If ANY of these fields is empty or incomplete, you MUST:
 
     // Handle tool calls if any
     let finalResponse = response.choices[0]?.message?.content || '';
-    
+
     // If model requested tool use, we would need to handle it here
     // For now, OpenAI's function calling will be handled by the model internally
     // In production, you might want to implement actual web search integration
@@ -722,15 +730,15 @@ CRITICAL ACCURACY REQUIREMENTS:
 8. Double-check all contact information, dates, and names for accuracy`;
 
     console.log('🟢 [GPT API] Data enrichment request');
-    
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini', // Using GPT-4o-mini for cost efficiency (60-90% cheaper than GPT-4o)
       messages: [
-        { 
-          role: 'system', 
-          content: `You are an expert MICE industry researcher. CRITICAL ACCURACY RULES: 1) Only provide FACTUAL, VERIFIED information from your knowledge base. 2) NEVER guess, invent, or hallucinate data. 3) If information is truly unavailable after thorough research, use empty string "" for strings or null for numbers. 4) Priority fields: Secretary General, Organizing Chairman, website, email, contact information. 5) Research thoroughly - check organization websites, member directories, event history. 6) Return valid JSON only. 7) Incorrect data is WORSE than missing data - accuracy over completeness.` 
+        {
+          role: 'system',
+          content: `You are an expert MICE industry researcher. CRITICAL ACCURACY RULES: 1) Only provide FACTUAL, VERIFIED information from your knowledge base. 2) NEVER guess, invent, or hallucinate data. 3) If information is truly unavailable after thorough research, use empty string "" for strings or null for numbers. 4) Priority fields: Secretary General, Organizing Chairman, website, email, contact information. 5) Research thoroughly - check organization websites, member directories, event history. 6) Return valid JSON only. 7) Incorrect data is WORSE than missing data - accuracy over completeness.`,
         },
-        { role: 'user', content: prompt }
+        { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },
       temperature: 0, // Zero temperature for maximum accuracy
@@ -739,7 +747,7 @@ CRITICAL ACCURACY REQUIREMENTS:
 
     const content = response.choices[0]?.message?.content || '{}';
     let enrichedData = {};
-    
+
     try {
       enrichedData = JSON.parse(content);
     } catch (e) {
@@ -747,9 +755,9 @@ CRITICAL ACCURACY REQUIREMENTS:
       enrichedData = { researchSummary: content };
     }
 
-    res.json({ 
-      text: JSON.stringify(enrichedData, null, 2), 
-      research: enrichedData 
+    res.json({
+      text: JSON.stringify(enrichedData, null, 2),
+      research: enrichedData,
     });
   } catch (error: any) {
     console.error('Error in enrich:', error);
@@ -791,8 +799,11 @@ Return a JSON object with "subject" and "body" fields.`;
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'You are an expert sales email writer specializing in MICE industry outreach.' },
-        { role: 'user', content: prompt }
+        {
+          role: 'system',
+          content: 'You are an expert sales email writer specializing in MICE industry outreach.',
+        },
+        { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },
       temperature: 0, // Zero temperature for accurate, factual email content
@@ -835,16 +846,14 @@ Rules: Reference specific leads/data. Provide stats from knowledge base. Suggest
 
     const openai = getAiClient();
 
-    const messages: any[] = [
-      { role: 'system', content: systemInstruction }
-    ];
+    const messages: any[] = [{ role: 'system', content: systemInstruction }];
 
     // Convert history format if needed
     if (history && Array.isArray(history)) {
       history.forEach((msg: any) => {
         messages.push({
           role: msg.role || 'user',
-          content: msg.content || msg.text || ''
+          content: msg.content || msg.text || '',
         });
       });
     }
@@ -938,15 +947,16 @@ CRITICAL:
 - Check event history carefully for Vietnam locations`;
 
     console.log('🟢 [GPT API] Checking event eligibility:', eventName);
-    
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { 
-          role: 'system', 
-          content: 'You are an expert MICE industry analyst specializing in ICCA-qualified events and Vietnam market analysis. Provide factual, conservative assessments based on event data and industry knowledge.' 
+        {
+          role: 'system',
+          content:
+            'You are an expert MICE industry analyst specializing in ICCA-qualified events and Vietnam market analysis. Provide factual, conservative assessments based on event data and industry knowledge.',
         },
-        { role: 'user', content: prompt }
+        { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },
       temperature: 0, // Zero temperature for factual accuracy
@@ -955,7 +965,7 @@ CRITICAL:
 
     const content = response.choices[0]?.message?.content || '{}';
     let eligibilityData = {};
-    
+
     try {
       eligibilityData = JSON.parse(content);
     } catch (e) {
@@ -972,13 +982,13 @@ CRITICAL:
         yearsSinceLastEvent: null,
         isEligible: false,
         eligibilityReason: 'Unable to verify eligibility criteria',
-        recommendation: 'review'
+        recommendation: 'review',
       };
     }
 
-    res.json({ 
+    res.json({
       success: true,
-      data: eligibilityData 
+      data: eligibilityData,
     });
   } catch (error: any) {
     console.error('Error in check-event-eligibility:', error);
@@ -1002,13 +1012,13 @@ router.post('/research-edition', async (req: Request, res: Response) => {
     }
 
     // TEMPORARILY DISABLED: Return empty data without calling GPT API
-    res.json({ 
+    res.json({
       success: true,
       data: {
         organizingChairman: '',
         secretaryGeneral: '',
-        confidence: 'low'
-      }
+        confidence: 'low',
+      },
     });
 
     /* DISABLED AI RESEARCH CODE - Keep for reference
@@ -1074,15 +1084,13 @@ Return JSON:
       data: researchData 
     });
     */
-
   } catch (error: any) {
     console.error('Edition research error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to research edition leadership',
-      message: error.message 
+      message: error.message,
     });
   }
 });
 
 export default router;
-

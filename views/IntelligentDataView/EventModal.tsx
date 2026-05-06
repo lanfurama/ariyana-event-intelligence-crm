@@ -83,13 +83,11 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
                 fields.SeriesID === seriesId ||
                 fields.seriesId === seriesId)) ||
             (ecode &&
-              (fields.ECODE === ecode ||
-                fields.Ecode === ecode ||
-                fields.ecode === ecode)) ||
+              (fields.ECODE === ecode || fields.Ecode === ecode || fields.ecode === ecode)) ||
             (dataObj.SERIESNAME &&
               fields.SERIESNAME &&
               fields.SERIESNAME.toLowerCase().includes(
-                dataObj.SERIESNAME.toLowerCase().substring(0, 20)
+                dataObj.SERIESNAME.toLowerCase().substring(0, 20),
               ));
 
           if (isRelated) {
@@ -225,8 +223,8 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
                     event.dataQualityScore >= 80
                       ? 'bg-green-50 text-green-700 border border-green-200'
                       : event.dataQualityScore >= 60
-                      ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-                      : 'bg-red-50 text-red-700 border border-red-200'
+                        ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                        : 'bg-red-50 text-red-700 border border-red-200'
                   }`}
                 >
                   {event.dataQualityScore}%
@@ -268,9 +266,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
                         {statistics.cities.size}
                       </div>
                       <div className="text-xs text-slate-600 mt-0.5">
-                        {Array.from(statistics.cities)
-                          .slice(0, 2)
-                          .join(', ')}
+                        {Array.from(statistics.cities).slice(0, 2).join(', ')}
                         {statistics.cities.size > 2 ? '...' : ''}
                       </div>
                     </div>
@@ -282,9 +278,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
                         {statistics.countries.size}
                       </div>
                       <div className="text-xs text-slate-600 mt-0.5">
-                        {Array.from(statistics.countries)
-                          .slice(0, 2)
-                          .join(', ')}
+                        {Array.from(statistics.countries).slice(0, 2).join(', ')}
                         {statistics.countries.size > 2 ? '...' : ''}
                       </div>
                     </div>
@@ -292,9 +286,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
                   {dataObj.SEQUENCE && (
                     <div>
                       <div className="text-xs text-slate-500 mb-0.5">Sequence</div>
-                      <div className="text-lg font-semibold text-slate-900">
-                        {dataObj.SEQUENCE}
-                      </div>
+                      <div className="text-lg font-semibold text-slate-900">{dataObj.SEQUENCE}</div>
                     </div>
                   )}
                 </div>
@@ -304,9 +296,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
             {/* Related Organizations */}
             {relatedData.organizations.length > 0 && (
               <div className="bg-white rounded border border-slate-200 px-4 py-3">
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">
-                  Thông tin tổ chức
-                </h3>
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">Thông tin tổ chức</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {relatedData.organizations[0] &&
                     Object.entries(relatedData.organizations[0]).map(
@@ -334,7 +324,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
                               )}
                             </div>
                           </div>
-                        )
+                        ),
                     )}
                 </div>
               </div>
@@ -361,9 +351,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
                             {Object.entries(contact)
                               .filter(
                                 ([_, value]) =>
-                                  value &&
-                                  String(value).trim() &&
-                                  String(value).trim() !== 'N/A'
+                                  value && String(value).trim() && String(value).trim() !== 'N/A',
                               )
                               .map(([key, value]) => {
                                 const formattedKey = key
@@ -462,53 +450,51 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
             )}
 
             {/* Data Quality Issues */}
-            {event.issues &&
-              Array.isArray(event.issues) &&
-              event.issues.length > 0 && (
-                <div className="bg-slate-50 rounded border border-slate-200 px-4 py-3">
-                  <h3 className="text-sm font-semibold text-slate-700 mb-2">
-                    Vấn đề về chất lượng dữ liệu
-                  </h3>
-                  <div className="space-y-2">
-                    {event.issues.filter((i: any) => i.severity === 'critical').length > 0 && (
-                      <div>
-                        <div className="text-xs font-medium text-red-700 mb-1">Quan trọng:</div>
-                        {event.issues
-                          .filter((i: any) => i.severity === 'critical')
-                          .map((issue: any, idx: number) => (
-                            <div key={idx} className="text-sm text-red-700 mb-1 pl-3">
-                              • {issue.message}
-                            </div>
-                          ))}
-                      </div>
-                    )}
-                    {event.issues.filter((i: any) => i.severity === 'warning').length > 0 && (
-                      <div>
-                        <div className="text-xs font-medium text-amber-700 mb-1">Cảnh báo:</div>
-                        {event.issues
-                          .filter((i: any) => i.severity === 'warning')
-                          .map((issue: any, idx: number) => (
-                            <div key={idx} className="text-sm text-amber-700 mb-1 pl-3">
-                              • {issue.message}
-                            </div>
-                          ))}
-                      </div>
-                    )}
-                    {event.issues.filter((i: any) => i.severity === 'info').length > 0 && (
-                      <div>
-                        <div className="text-xs font-medium text-slate-600 mb-1">Thông tin:</div>
-                        {event.issues
-                          .filter((i: any) => i.severity === 'info')
-                          .map((issue: any, idx: number) => (
-                            <div key={idx} className="text-sm text-slate-600 mb-1 pl-3">
-                              • {issue.message}
-                            </div>
-                          ))}
-                      </div>
-                    )}
-                  </div>
+            {event.issues && Array.isArray(event.issues) && event.issues.length > 0 && (
+              <div className="bg-slate-50 rounded border border-slate-200 px-4 py-3">
+                <h3 className="text-sm font-semibold text-slate-700 mb-2">
+                  Vấn đề về chất lượng dữ liệu
+                </h3>
+                <div className="space-y-2">
+                  {event.issues.filter((i: any) => i.severity === 'critical').length > 0 && (
+                    <div>
+                      <div className="text-xs font-medium text-red-700 mb-1">Quan trọng:</div>
+                      {event.issues
+                        .filter((i: any) => i.severity === 'critical')
+                        .map((issue: any, idx: number) => (
+                          <div key={idx} className="text-sm text-red-700 mb-1 pl-3">
+                            • {issue.message}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                  {event.issues.filter((i: any) => i.severity === 'warning').length > 0 && (
+                    <div>
+                      <div className="text-xs font-medium text-amber-700 mb-1">Cảnh báo:</div>
+                      {event.issues
+                        .filter((i: any) => i.severity === 'warning')
+                        .map((issue: any, idx: number) => (
+                          <div key={idx} className="text-sm text-amber-700 mb-1 pl-3">
+                            • {issue.message}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                  {event.issues.filter((i: any) => i.severity === 'info').length > 0 && (
+                    <div>
+                      <div className="text-xs font-medium text-slate-600 mb-1">Thông tin:</div>
+                      {event.issues
+                        .filter((i: any) => i.severity === 'info')
+                        .map((issue: any, idx: number) => (
+                          <div key={idx} className="text-sm text-slate-600 mb-1 pl-3">
+                            • {issue.message}
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+            )}
 
             {/* All Event Data in Table Format */}
             {Object.keys(dataObj).length > 0 && (
@@ -565,9 +551,7 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
                             valueStr === 'null' ||
                             valueStr === 'undefined'
                           ) {
-                            displayValue = (
-                              <span className="text-slate-400 italic">Không có</span>
-                            );
+                            displayValue = <span className="text-slate-400 italic">Không có</span>;
                           } else if (typeof value === 'boolean') {
                             displayValue = value ? 'Có' : 'Không';
                           } else if (
@@ -576,7 +560,9 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
                           ) {
                             displayValue = (
                               <a
-                                href={valueStr.startsWith('http') ? valueStr : `https://${valueStr}`}
+                                href={
+                                  valueStr.startsWith('http') ? valueStr : `https://${valueStr}`
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:underline break-all"

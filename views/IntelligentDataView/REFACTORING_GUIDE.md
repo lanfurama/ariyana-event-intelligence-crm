@@ -11,14 +11,17 @@
 ## 📋 Các Components Còn Cần Tạo
 
 ### 1. EventList Component (Ưu tiên: CAO)
+
 **File:** `views/IntelligentDataView/EventList.tsx`
 
 **Chức năng:**
+
 - Hiển thị bảng danh sách events
 - Hiển thị status, score, actions cho mỗi event
 - Xử lý click để mở modal
 
 **Props cần:**
+
 ```typescript
 interface EventListProps {
   events: Array<{
@@ -45,14 +48,17 @@ interface EventListProps {
 ---
 
 ### 2. EventModal Component (Ưu tiên: CAO)
+
 **File:** `views/IntelligentDataView/EventModal.tsx`
 
 **Chức năng:**
+
 - Modal hiển thị chi tiết event
 - Hiển thị raw data, related data, data quality issues
 - Rất lớn (~450 dòng code)
 
 **Props cần:**
+
 ```typescript
 interface EventModalProps {
   event: {
@@ -73,14 +79,17 @@ interface EventModalProps {
 ---
 
 ### 3. BatchAnalysisControls Component (Ưu tiên: TRUNG BÌNH)
+
 **File:** `views/IntelligentDataView/BatchAnalysisControls.tsx`
 
 **Chức năng:**
+
 - Button "Analyze Events"
 - Hiển thị progress và status
 - Rate limit countdown
 
 **Props cần:**
+
 ```typescript
 interface BatchAnalysisControlsProps {
   eventsCount: number;
@@ -96,9 +105,11 @@ interface BatchAnalysisControlsProps {
 ---
 
 ### 4. ScoringUtils Helper (Ưu tiên: TRUNG BÌNH)
+
 **File:** `views/IntelligentDataView/scoringUtils.ts`
 
 **Chức năng:**
+
 - Tách các helper functions ra khỏi component
 - `calculateHistoryScore`
 - `calculateRegionScore`
@@ -113,9 +124,11 @@ interface BatchAnalysisControlsProps {
 ---
 
 ### 5. ErrorDisplay Component (Ưu tiên: THẤP)
+
 **File:** `views/IntelligentDataView/ErrorDisplay.tsx`
 
 **Chức năng:**
+
 - Hiển thị error messages
 - Rate limit warnings
 
@@ -134,6 +147,7 @@ import { ScoringCriteriaPanel, FileUploadSection, EventFilters } from './Intelli
 ### Bước 2: Thay thế các sections
 
 **Thay Scoring Criteria Panel:**
+
 ```typescript
 // Thay dòng 2664-2744
 <ScoringCriteriaPanel
@@ -143,6 +157,7 @@ import { ScoringCriteriaPanel, FileUploadSection, EventFilters } from './Intelli
 ```
 
 **Thay File Upload Section:**
+
 ```typescript
 // Thay dòng 2747-2819
 <FileUploadSection
@@ -162,6 +177,7 @@ import { ScoringCriteriaPanel, FileUploadSection, EventFilters } from './Intelli
 ```
 
 **Thay Event Filters:**
+
 ```typescript
 // Thay dòng 2876-3001
 <EventFilters

@@ -40,7 +40,9 @@ async function testEmailReport() {
     console.log(`   ID: ${testConfig.id}`);
     console.log(`   Email: ${testConfig.recipient_email}`);
     console.log(`   Frequency: ${testConfig.frequency}`);
-    console.log(`   Time: ${String(testConfig.time_hour).padStart(2, '0')}:${String(testConfig.time_minute).padStart(2, '0')}\n`);
+    console.log(
+      `   Time: ${String(testConfig.time_hour).padStart(2, '0')}:${String(testConfig.time_minute).padStart(2, '0')}\n`,
+    );
 
     // Send report immediately
     console.log('📧 Sending test report now...\n');

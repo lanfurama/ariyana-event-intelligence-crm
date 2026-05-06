@@ -1,7 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { LeadModel } from '../models/LeadModel.js';
 import { EmailLogModel } from '../models/EmailLogModel.js';
-import { sendLeadEmails, sendLeadEmailsWithCustomContent, type CustomEmailContent } from '../utils/emailSender.js';
+import {
+  sendLeadEmails,
+  sendLeadEmailsWithCustomContent,
+  type CustomEmailContent,
+} from '../utils/emailSender.js';
 import type { Lead } from '../types/index.js';
 import { query } from '../config/database.js';
 
@@ -103,10 +107,10 @@ router.delete('/:id', async (req: Request, res: Response) => {
 // POST /api/leads/send-email - Send single email (for progress UX)
 router.post('/send-email', async (req: Request, res: Response) => {
   try {
-    const { leadId, subject, body, cc, attachments } = req.body as { 
-      leadId?: string; 
-      subject?: string; 
-      body?: string; 
+    const { leadId, subject, body, cc, attachments } = req.body as {
+      leadId?: string;
+      subject?: string;
+      body?: string;
       cc?: string;
       attachments?: Array<{ name: string; file_data: string; type?: string }>;
     };
@@ -122,7 +126,7 @@ router.post('/send-email', async (req: Request, res: Response) => {
 
     const summary = await sendLeadEmailsWithCustomContent(
       [lead],
-      [{ leadId, subject, body, cc, attachments }]
+      [{ leadId, subject, body, cc, attachments }],
     );
 
     if (summary.sent === 0 && summary.failures?.length) {
@@ -136,11 +140,13 @@ router.post('/send-email', async (req: Request, res: Response) => {
       const timestamp = new Date().toISOString();
       const updateResult = await query(
         'UPDATE leads SET status = $1, last_contacted = $2 WHERE id = $3 RETURNING id, status',
-        ['Contacted', new Date(timestamp), leadId]
+        ['Contacted', new Date(timestamp), leadId],
       );
       if ((updateResult.rowCount ?? 0) === 0) {
         console.error(`[send-email] Failed to update lead ${leadId} status - 0 rows affected`);
-        return res.status(500).json({ error: 'Email sent but failed to update lead status in database.' });
+        return res
+          .status(500)
+          .json({ error: 'Email sent but failed to update lead status in database.' });
       }
       const sent = summary.sentEmails?.[0];
       if (sent?.subject) {
@@ -170,9 +176,13 @@ router.post('/send-email', async (req: Request, res: Response) => {
 // POST /api/leads/send-emails - Send email campaign to leads
 router.post('/send-emails', async (req: Request, res: Response) => {
   try {
-    const leadIds = Array.isArray(req.body?.leadIds) ? (req.body.leadIds as string[]).filter(Boolean) : [];
-    const customEmails = Array.isArray(req.body?.emails) ? (req.body.emails as CustomEmailContent[]) : undefined;
-    
+    const leadIds = Array.isArray(req.body?.leadIds)
+      ? (req.body.leadIds as string[]).filter(Boolean)
+      : [];
+    const customEmails = Array.isArray(req.body?.emails)
+      ? (req.body.emails as CustomEmailContent[])
+      : undefined;
+
     let leads = leadIds.length > 0 ? await LeadModel.getByIds(leadIds) : await LeadModel.getAll();
 
     if (leads.length === 0) {
@@ -181,23 +191,27 @@ router.post('/send-emails', async (req: Request, res: Response) => {
 
     leads = leads.filter((l) => (l.status || 'New') === 'New');
     if (leads.length === 0) {
-      return res.status(400).json({ error: 'No leads with status New available for email dispatch. Only New leads can receive emails.' });
+      return res.status(400).json({
+        error:
+          'No leads with status New available for email dispatch. Only New leads can receive emails.',
+      });
     }
 
     // Use custom emails if provided, otherwise use default template
-    const emailSummary = customEmails && customEmails.length > 0
-      ? await sendLeadEmailsWithCustomContent(leads, customEmails)
-      : await sendLeadEmails(leads);
+    const emailSummary =
+      customEmails && customEmails.length > 0
+        ? await sendLeadEmailsWithCustomContent(leads, customEmails)
+        : await sendLeadEmails(leads);
 
     let updatedLeads: Lead[] = [];
     if (emailSummary.successIds && emailSummary.successIds.length > 0) {
       const timestamp = new Date().toISOString();
-      
+
       // Create maps of leadId to subject and messageId from sent emails
       const subjectMap = new Map<string, string>();
       const messageIdMap = new Map<string, string>();
       if (emailSummary.sentEmails) {
-        emailSummary.sentEmails.forEach(email => {
+        emailSummary.sentEmails.forEach((email) => {
           subjectMap.set(email.leadId, email.subject);
           if (email.messageId) {
             messageIdMap.set(email.leadId, email.messageId);
@@ -209,16 +223,19 @@ router.post('/send-emails', async (req: Request, res: Response) => {
         emailSummary.successIds.map(async (leadId) => {
           try {
             // Update lead status
-            const updatedLead = await LeadModel.update(leadId, { status: 'Contacted', last_contacted: timestamp });
-            
+            const updatedLead = await LeadModel.update(leadId, {
+              status: 'Contacted',
+              last_contacted: timestamp,
+            });
+
             // Create email log with the actual subject and message_id that was sent
             const subject = subjectMap.get(leadId);
             const messageId = messageIdMap.get(leadId);
-            const lead = leads.find(l => l.id === leadId);
-            
+            const lead = leads.find((l) => l.id === leadId);
+
             if (subject && lead) {
               const emailLogId = `email-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-              
+
               try {
                 await EmailLogModel.create({
                   id: emailLogId,
@@ -228,7 +245,9 @@ router.post('/send-emails', async (req: Request, res: Response) => {
                   status: 'sent',
                   message_id: messageId || null,
                 });
-                console.log(`✅ Email log created for lead ${leadId}: ${subject}${messageId ? ` (Message-ID: ${messageId})` : ''}`);
+                console.log(
+                  `✅ Email log created for lead ${leadId}: ${subject}${messageId ? ` (Message-ID: ${messageId})` : ''}`,
+                );
               } catch (logError) {
                 console.error(`❌ Error creating email log for lead ${leadId}:`, logError);
                 // Don't fail the whole operation if log creation fails
@@ -236,13 +255,13 @@ router.post('/send-emails', async (req: Request, res: Response) => {
             } else {
               console.warn(`⚠️ No subject found for lead ${leadId}, skipping email log creation`);
             }
-            
+
             return updatedLead;
           } catch (updateError) {
             console.error(`Error updating lead ${leadId} after email send:`, updateError);
             return null;
           }
-        })
+        }),
       );
       updatedLeads = updated.filter((lead): lead is NonNullable<typeof lead> => Boolean(lead));
     }
@@ -250,7 +269,7 @@ router.post('/send-emails', async (req: Request, res: Response) => {
     // Create email logs for failed emails
     if (emailSummary.failures && emailSummary.failures.length > 0) {
       const timestamp = new Date().toISOString();
-      
+
       await Promise.all(
         emailSummary.failures.map(async (failure) => {
           // Only create log if we have leadId and subject (attempted to send but failed)
@@ -264,13 +283,18 @@ router.post('/send-emails', async (req: Request, res: Response) => {
                 subject: failure.subject,
                 status: 'failed',
               });
-              console.log(`⚠️ Failed email log created for lead ${failure.leadId}: ${failure.subject} - ${failure.error}`);
+              console.log(
+                `⚠️ Failed email log created for lead ${failure.leadId}: ${failure.subject} - ${failure.error}`,
+              );
             } catch (logError) {
-              console.error(`❌ Error creating failed email log for lead ${failure.leadId}:`, logError);
+              console.error(
+                `❌ Error creating failed email log for lead ${failure.leadId}:`,
+                logError,
+              );
               // Don't fail the whole operation if log creation fails
             }
           }
-        })
+        }),
       );
     }
 

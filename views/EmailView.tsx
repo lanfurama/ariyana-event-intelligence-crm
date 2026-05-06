@@ -17,9 +17,7 @@ export const EmailView: React.FC<EmailViewProps> = ({ user }) => {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="px-6 pt-6 pb-2 border-b border-slate-200 bg-white/80">
-        <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-4">
-          Email
-        </h2>
+        <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-4">Email</h2>
         <div className="flex gap-1 p-1 bg-slate-100 rounded-lg w-fit">
           <button
             type="button"

@@ -53,7 +53,9 @@ export class EmailReportsConfigModel {
     return result.rows[0] || null;
   }
 
-  static async create(config: Omit<EmailReportsConfig, 'created_at' | 'updated_at' | 'last_sent_at'>): Promise<EmailReportsConfig> {
+  static async create(
+    config: Omit<EmailReportsConfig, 'created_at' | 'updated_at' | 'last_sent_at'>,
+  ): Promise<EmailReportsConfig> {
     const result = await query(
       `INSERT INTO email_reports_config (
         id, recipient_email, recipient_name, frequency, day_of_week, day_of_month,
@@ -78,12 +80,15 @@ export class EmailReportsConfigModel {
         config.include_email_activity !== undefined ? config.include_email_activity : true,
         config.include_top_leads !== undefined ? config.include_top_leads : true,
         config.top_leads_count || 10,
-      ]
+      ],
     );
     return result.rows[0];
   }
 
-  static async update(id: string, config: Partial<EmailReportsConfig>): Promise<EmailReportsConfig | null> {
+  static async update(
+    id: string,
+    config: Partial<EmailReportsConfig>,
+  ): Promise<EmailReportsConfig | null> {
     const fields: string[] = [];
     const values: any[] = [];
     let paramCount = 1;
@@ -158,7 +163,7 @@ export class EmailReportsConfigModel {
     values.push(id);
     const result = await query(
       `UPDATE email_reports_config SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
-      values
+      values,
     );
     return result.rows[0] || null;
   }
@@ -186,7 +191,7 @@ export class EmailReportsConfigModel {
         log.status,
         log.error_message || null,
         log.stats_summary ? JSON.stringify(log.stats_summary) : null,
-      ]
+      ],
     );
     return result.rows[0];
   }

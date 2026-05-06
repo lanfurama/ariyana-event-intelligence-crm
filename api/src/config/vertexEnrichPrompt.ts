@@ -66,12 +66,19 @@ export function buildEnrichPrompt(ctx: EnrichContext): string {
   if (keyPersonEmail) contextLines.push(`- Known email (verify/update): ${keyPersonEmail}`);
   if (city) contextLines.push(`- City: ${city}`);
   if (country) contextLines.push(`- Country: ${country}`);
-  if (website) contextLines.push(`- Website: ${website} (use to verify domain, find contact pages)`);
+  if (website)
+    contextLines.push(`- Website: ${website} (use to verify domain, find contact pages)`);
   if (industry) contextLines.push(`- Industry: ${industry}`);
-  if (pastEventsHistory) contextLines.push(`- Past events: ${pastEventsHistory.slice(0, 300)}${pastEventsHistory.length > 300 ? '...' : ''}`);
+  if (pastEventsHistory)
+    contextLines.push(
+      `- Past events: ${pastEventsHistory.slice(0, 300)}${pastEventsHistory.length > 300 ? '...' : ''}`,
+    );
   if (secondaryPerson) contextLines.push(`- Secondary contact (alternative): ${secondaryPerson}`);
   if (notes) contextLines.push(`- Notes: ${notes.slice(0, 200)}${notes.length > 200 ? '...' : ''}`);
-  if (researchNotes) contextLines.push(`- Previous research: ${researchNotes.slice(0, 200)}${researchNotes.length > 200 ? '...' : ''}`);
+  if (researchNotes)
+    contextLines.push(
+      `- Previous research: ${researchNotes.slice(0, 200)}${researchNotes.length > 200 ? '...' : ''}`,
+    );
 
   return `GOAL: Find ONE key person for this organization who has: (1) full name, (2) job title, and (3) EMAIL.
 Do NOT return a key person with Email as "Not found" unless you have completed all search steps below and still found nothing.

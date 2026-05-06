@@ -24,11 +24,15 @@ const getImapHost = (): string => {
   if (emailImapHost) {
     return emailImapHost;
   }
-  
+
   // Auto-detect based on email domain
   if (emailUser) {
     const domain = emailUser.split('@')[1]?.toLowerCase();
-    if (domain?.includes('outlook.com') || domain?.includes('hotmail.com') || domain?.includes('live.com')) {
+    if (
+      domain?.includes('outlook.com') ||
+      domain?.includes('hotmail.com') ||
+      domain?.includes('live.com')
+    ) {
       return 'imap-mail.outlook.com'; // Outlook.com personal
     }
     if (domain?.includes('office365.com') || domain?.includes('microsoft.com')) {
@@ -38,12 +42,12 @@ const getImapHost = (): string => {
       return 'imap.gmail.com'; // Gmail
     }
   }
-  
+
   // Default: try to convert SMTP host to IMAP (e.g., smtp.gmail.com -> imap.gmail.com)
   if (emailHost.includes('smtp.')) {
     return emailHost.replace('smtp.', 'imap.');
   }
-  
+
   // Final fallback
   return 'imap.gmail.com';
 };
@@ -62,7 +66,7 @@ export class ImapService {
     }
 
     const imapHost = getImapHost();
-    
+
     return {
       user: emailUser,
       password: emailPassword,
@@ -113,7 +117,7 @@ export class ImapService {
             }
 
             // Limit number of emails to process
-            const emailsToProcess = options.maxEmails 
+            const emailsToProcess = options.maxEmails
               ? results.slice(0, options.maxEmails)
               : results;
 
@@ -140,7 +144,7 @@ export class ImapService {
                         return; // Skip this email if subject doesn't match
                       }
                     }
-                    
+
                     await this.processEmailReply(parsed);
                     processedCount++;
                   } catch (error: any) {
@@ -209,12 +213,14 @@ export class ImapService {
 
       // Find email log by message_id
       const emailLogs = await EmailLogModel.getAll();
-      matchedEmailLog = emailLogs.find(log => 
-        log.message_id && log.message_id.includes(searchId.replace(/[<>]/g, ''))
+      matchedEmailLog = emailLogs.find(
+        (log) => log.message_id && log.message_id.includes(searchId.replace(/[<>]/g, '')),
       );
 
       if (matchedEmailLog) {
-        console.log(`✅ [IMAP] Matched reply to email log ${matchedEmailLog.id} (Message-ID: ${searchId})`);
+        console.log(
+          `✅ [IMAP] Matched reply to email log ${matchedEmailLog.id} (Message-ID: ${searchId})`,
+        );
         break;
       }
     }
@@ -224,9 +230,10 @@ export class ImapService {
       const emailLogs = await EmailLogModel.getAll();
       // Look for emails with similar subject (replies usually have "Re: " prefix)
       const originalSubject = subject.replace(/^(Re:|RE:|re:)\s*/i, '').trim();
-      matchedEmailLog = emailLogs.find(log => 
-        log.subject.toLowerCase().includes(originalSubject.toLowerCase()) ||
-        originalSubject.toLowerCase().includes(log.subject.toLowerCase())
+      matchedEmailLog = emailLogs.find(
+        (log) =>
+          log.subject.toLowerCase().includes(originalSubject.toLowerCase()) ||
+          originalSubject.toLowerCase().includes(log.subject.toLowerCase()),
       );
 
       if (matchedEmailLog) {
@@ -263,7 +270,10 @@ export class ImapService {
    * Count emails in inbox by subject filter
    * Returns count of emails matching the subject (case-insensitive partial match)
    */
-  static async countEmailsBySubject(subjectFilter: string, options: { since?: Date; includeRead?: boolean } = {}): Promise<number> {
+  static async countEmailsBySubject(
+    subjectFilter: string,
+    options: { since?: Date; includeRead?: boolean } = {},
+  ): Promise<number> {
     const config = this.getImapConfig();
     if (!config) {
       throw new Error('IMAP not configured. Please set EMAIL_HOST_USER and EMAIL_HOST_PASSWORD.');
@@ -324,7 +334,9 @@ export class ImapService {
 
             fetch.once('end', () => {
               imap.end();
-              console.log(`📊 [IMAP] Found ${count} email(s) with subject containing "${subjectFilter}"`);
+              console.log(
+                `📊 [IMAP] Found ${count} email(s) with subject containing "${subjectFilter}"`,
+              );
               resolve(count);
             });
 
@@ -377,4 +389,3 @@ export class ImapService {
     });
   }
 }
-

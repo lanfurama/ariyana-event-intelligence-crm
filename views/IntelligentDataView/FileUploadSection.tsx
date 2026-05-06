@@ -66,8 +66,8 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             emailSendSummary.skipped
               ? 'bg-yellow-50 border-yellow-200'
               : emailSendSummary.failures.length > 0
-              ? 'bg-orange-50 border-orange-200'
-              : 'bg-indigo-50 border-indigo-200'
+                ? 'bg-orange-50 border-orange-200'
+                : 'bg-indigo-50 border-indigo-200'
           }`}
         >
           <div className="flex items-start justify-between">
@@ -75,7 +75,8 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
               <p className="text-sm font-semibold text-slate-800">Auto email campaign</p>
               <p className="text-xs text-slate-600 mt-0.5">
                 {emailSendSummary.skipped
-                  ? emailSendSummary.message || 'Email automation skipped because credentials are missing.'
+                  ? emailSendSummary.message ||
+                    'Email automation skipped because credentials are missing.'
                   : `Sent ${emailSendSummary.sent} of ${emailSendSummary.attempted} emails automatically.`}
               </p>
               {!emailSendSummary.skipped && emailSendSummary.message && (

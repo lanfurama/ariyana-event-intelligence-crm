@@ -33,7 +33,10 @@ export class EmailUtils {
    */
   static parseCcAddresses(cc?: string): string[] {
     if (!cc) return [];
-    return cc.split(',').map(addr => addr.trim()).filter(Boolean);
+    return cc
+      .split(',')
+      .map((addr) => addr.trim())
+      .filter(Boolean);
   }
 
   /**
@@ -58,7 +61,9 @@ export class EmailUtils {
    */
   static calculateAttachmentsSize(attachments: NodemailerAttachment[]): number {
     return attachments.reduce((sum, att) => {
-      const size = Buffer.isBuffer(att.content) ? att.content.length : (att.content as string).length;
+      const size = Buffer.isBuffer(att.content)
+        ? att.content.length
+        : (att.content as string).length;
       return sum + size;
     }, 0);
   }

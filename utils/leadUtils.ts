@@ -55,17 +55,3 @@ export const mapLeadToDB = (lead: Lead): any => {
     type: lead.type || null,
   };
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-

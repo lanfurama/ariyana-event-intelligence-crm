@@ -22,7 +22,9 @@ export class EmailLogModel {
   }
 
   static async getByLeadId(leadId: string): Promise<EmailLog[]> {
-    const result = await query('SELECT * FROM email_logs WHERE lead_id = $1 ORDER BY date DESC', [leadId]);
+    const result = await query('SELECT * FROM email_logs WHERE lead_id = $1 ORDER BY date DESC', [
+      leadId,
+    ]);
     return result.rows;
   }
 
@@ -38,7 +40,7 @@ export class EmailLogModel {
         emailLog.subject,
         emailLog.status,
         (emailLog as any).message_id || null,
-      ]
+      ],
     );
     return result.rows[0];
   }
@@ -54,9 +56,7 @@ export class EmailLogModel {
     }
     if (emailLog.date !== undefined) {
       fields.push(`date = $${paramCount++}`);
-      values.push(
-        typeof emailLog.date === 'string' ? new Date(emailLog.date) : emailLog.date
-      );
+      values.push(typeof emailLog.date === 'string' ? new Date(emailLog.date) : emailLog.date);
     }
     if (emailLog.subject !== undefined) {
       fields.push(`subject = $${paramCount++}`);
@@ -78,7 +78,7 @@ export class EmailLogModel {
     values.push(id);
     const result = await query(
       `UPDATE email_logs SET ${fields.join(', ')} WHERE id = $${paramCount} RETURNING *`,
-      values
+      values,
     );
     return result.rows[0] || null;
   }
@@ -92,19 +92,17 @@ export class EmailLogModel {
   static async getAttachments(emailLogId: string): Promise<EmailLogAttachment[]> {
     const result = await query(
       'SELECT * FROM email_log_attachments WHERE email_log_id = $1 ORDER BY created_at',
-      [emailLogId]
+      [emailLogId],
     );
     return result.rows;
   }
 
-  static async createAttachment(
-    attachment: EmailLogAttachment
-  ): Promise<EmailLogAttachment> {
+  static async createAttachment(attachment: EmailLogAttachment): Promise<EmailLogAttachment> {
     const result = await query(
       `INSERT INTO email_log_attachments (email_log_id, name, size, type) 
        VALUES ($1, $2, $3, $4) 
        RETURNING *`,
-      [attachment.email_log_id, attachment.name, attachment.size, attachment.type]
+      [attachment.email_log_id, attachment.name, attachment.size, attachment.type],
     );
     return result.rows[0];
   }
@@ -114,4 +112,3 @@ export class EmailLogModel {
     return (result.rowCount ?? 0) > 0;
   }
 }
-

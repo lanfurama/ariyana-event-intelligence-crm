@@ -60,12 +60,20 @@ router.post('/config', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'frequency must be daily, weekly, or monthly' });
     }
 
-    if (frequency === 'weekly' && (day_of_week === undefined || day_of_week < 0 || day_of_week > 6)) {
+    if (
+      frequency === 'weekly' &&
+      (day_of_week === undefined || day_of_week < 0 || day_of_week > 6)
+    ) {
       return res.status(400).json({ error: 'day_of_week (0-6) is required for weekly frequency' });
     }
 
-    if (frequency === 'monthly' && (day_of_month === undefined || day_of_month < 1 || day_of_month > 28)) {
-      return res.status(400).json({ error: 'day_of_month (1-28) is required for monthly frequency' });
+    if (
+      frequency === 'monthly' &&
+      (day_of_month === undefined || day_of_month < 1 || day_of_month > 28)
+    ) {
+      return res
+        .status(400)
+        .json({ error: 'day_of_month (1-28) is required for monthly frequency' });
     }
 
     if (time_hour === undefined || time_hour < 0 || time_hour > 23) {
@@ -130,9 +138,12 @@ router.put('/config/:id', async (req: Request, res: Response) => {
     if (req.body.timezone !== undefined) updates.timezone = req.body.timezone;
     if (req.body.enabled !== undefined) updates.enabled = req.body.enabled;
     if (req.body.include_stats !== undefined) updates.include_stats = req.body.include_stats;
-    if (req.body.include_new_leads !== undefined) updates.include_new_leads = req.body.include_new_leads;
-    if (req.body.include_email_activity !== undefined) updates.include_email_activity = req.body.include_email_activity;
-    if (req.body.include_top_leads !== undefined) updates.include_top_leads = req.body.include_top_leads;
+    if (req.body.include_new_leads !== undefined)
+      updates.include_new_leads = req.body.include_new_leads;
+    if (req.body.include_email_activity !== undefined)
+      updates.include_email_activity = req.body.include_email_activity;
+    if (req.body.include_top_leads !== undefined)
+      updates.include_top_leads = req.body.include_top_leads;
     if (req.body.top_leads_count !== undefined) updates.top_leads_count = req.body.top_leads_count;
 
     const updated = await EmailReportsConfigModel.update(req.params.id, updates);

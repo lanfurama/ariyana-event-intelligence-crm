@@ -20,7 +20,7 @@ async function runMigration(migrationFile: string) {
 
     const cleanedSQL = migrationSQL
       .split('\n')
-      .filter(line => {
+      .filter((line) => {
         const trimmed = line.trim();
         return trimmed.length > 0 && !trimmed.startsWith('--');
       })
@@ -69,11 +69,12 @@ async function runMigration(migrationFile: string) {
           const rows = (result as { rowCount?: number }).rowCount ?? 0;
           console.log(`  ✅ Statement ${i + 1} OK${rows >= 0 ? ` (${rows} rows affected)` : ''}\n`);
         } catch (error: any) {
-          if (error.message && (
-            error.message.includes('already exists') ||
-            error.message.includes('duplicate key') ||
-            (error.message.includes('relation') && error.message.includes('already exists'))
-          )) {
+          if (
+            error.message &&
+            (error.message.includes('already exists') ||
+              error.message.includes('duplicate key') ||
+              (error.message.includes('relation') && error.message.includes('already exists')))
+          ) {
             console.log(`  ⚠️  Statement ${i + 1} skipped (already exists)\n`);
           } else {
             console.error(`  ❌ Error in statement ${i + 1}:`, error.message);

@@ -38,7 +38,7 @@ router.post('/check-inbox', async (req: Request, res: Response) => {
   try {
     const { since, maxEmails, subjectFilter } = req.body;
     const sinceDate = since ? new Date(since) : undefined;
-    
+
     const processedCount = await ImapService.checkInboxForReplies({
       since: sinceDate,
       maxEmails: maxEmails || 50,
@@ -153,4 +153,3 @@ router.delete('/:id', async (req: Request, res: Response) => {
 });
 
 export default router;
-

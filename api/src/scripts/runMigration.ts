@@ -11,13 +11,16 @@ async function runMigration() {
     console.log('🔄 Running email reports migration...\n');
 
     // Read migration file
-    const migrationPath = resolve(__dirname, '../../../migrations/002_add_email_reports_config.sql');
+    const migrationPath = resolve(
+      __dirname,
+      '../../../migrations/002_add_email_reports_config.sql',
+    );
     const migrationSQL = readFileSync(migrationPath, 'utf-8');
 
     // Remove comments (lines starting with --)
     const cleanedSQL = migrationSQL
       .split('\n')
-      .filter(line => {
+      .filter((line) => {
         const trimmed = line.trim();
         return trimmed.length > 0 && !trimmed.startsWith('--');
       })
@@ -72,11 +75,12 @@ async function runMigration() {
           console.log(`  ✅ Statement ${i + 1} executed successfully\n`);
         } catch (error: any) {
           // Ignore "already exists" errors (for CREATE TABLE IF NOT EXISTS, CREATE INDEX IF NOT EXISTS)
-          if (error.message && (
-            error.message.includes('already exists') ||
-            error.message.includes('duplicate key') ||
-            error.message.includes('relation') && error.message.includes('already exists')
-          )) {
+          if (
+            error.message &&
+            (error.message.includes('already exists') ||
+              error.message.includes('duplicate key') ||
+              (error.message.includes('relation') && error.message.includes('already exists')))
+          ) {
             console.log(`  ⚠️  Statement ${i + 1} skipped (already exists)\n`);
           } else {
             console.error(`  ❌ Error in statement ${i + 1}:`, error.message);

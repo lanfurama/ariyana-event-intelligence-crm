@@ -58,11 +58,21 @@ export const EventList: React.FC<EventListProps> = ({
           <table className="w-full">
             <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-12">#</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider min-w-[300px]">Event Name</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-28">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-24">Score</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-700 uppercase tracking-wider w-32">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-12">
+                  #
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider min-w-[300px]">
+                  Event Name
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-28">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-24">
+                  Score
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-700 uppercase tracking-wider w-32">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
@@ -86,11 +96,21 @@ export const EventList: React.FC<EventListProps> = ({
         <table className="w-full">
           <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-12">#</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider min-w-[300px]">Event Name</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-28">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-24">Score</th>
-              <th className="px-4 py-3 text-center text-xs font-bold text-slate-700 uppercase tracking-wider w-32">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-12">
+                #
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider min-w-[300px]">
+                Event Name
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-28">
+                Status
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-24">
+                Score
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-bold text-slate-700 uppercase tracking-wider w-32">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-slate-200">
@@ -101,12 +121,12 @@ export const EventList: React.FC<EventListProps> = ({
                   progress?.status === 'completed'
                     ? 'bg-green-50/30'
                     : progress?.status === 'analyzing'
-                    ? 'bg-blue-50/30'
-                    : progress?.status === 'error'
-                    ? 'bg-red-50/30'
-                    : wasSkipped
-                    ? 'bg-amber-50/30'
-                    : ''
+                      ? 'bg-blue-50/30'
+                      : progress?.status === 'error'
+                        ? 'bg-red-50/30'
+                        : wasSkipped
+                          ? 'bg-amber-50/30'
+                          : ''
                 }`}
               >
                 <td className="px-4 py-3 text-sm font-medium text-slate-600">{idx + 1}</td>
@@ -144,23 +164,23 @@ export const EventList: React.FC<EventListProps> = ({
                         progress?.status === 'completed'
                           ? 'bg-green-100 text-green-800'
                           : progress?.status === 'analyzing'
-                          ? 'bg-blue-100 text-blue-800'
-                          : progress?.status === 'error'
-                          ? 'bg-red-100 text-red-800'
-                          : wasSkipped
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-slate-100 text-slate-600'
+                            ? 'bg-blue-100 text-blue-800'
+                            : progress?.status === 'error'
+                              ? 'bg-red-100 text-red-800'
+                              : wasSkipped
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-slate-100 text-slate-600'
                       }`}
                     >
                       {progress?.status === 'completed'
                         ? 'Completed'
                         : progress?.status === 'analyzing'
-                        ? 'Analyzing'
-                        : progress?.status === 'error'
-                        ? 'Error'
-                        : wasSkipped
-                        ? 'Not Analyzed'
-                        : 'Pending'}
+                          ? 'Analyzing'
+                          : progress?.status === 'error'
+                            ? 'Error'
+                            : wasSkipped
+                              ? 'Not Analyzed'
+                              : 'Pending'}
                     </span>
                     {wasSkipped && skipReason && (
                       <span
@@ -170,14 +190,18 @@ export const EventList: React.FC<EventListProps> = ({
                         ⚠️ {skipReason}
                       </span>
                     )}
-                    {progress?.status === 'completed' && progress.result && (() => {
-                      const eventName = (progress.result.companyName || event.name || '').toLowerCase().trim();
-                      return savedToDatabase.has(eventName) ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
-                          ✓ Đã lưu vào database
-                        </span>
-                      ) : null;
-                    })()}
+                    {progress?.status === 'completed' &&
+                      progress.result &&
+                      (() => {
+                        const eventName = (progress.result.companyName || event.name || '')
+                          .toLowerCase()
+                          .trim();
+                        return savedToDatabase.has(eventName) ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
+                            ✓ Đã lưu vào database
+                          </span>
+                        ) : null;
+                      })()}
                   </div>
                 </td>
 
@@ -196,8 +220,8 @@ export const EventList: React.FC<EventListProps> = ({
                         event.dataQualityScore >= 80
                           ? 'text-green-600'
                           : event.dataQualityScore >= 60
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
                       }`}
                     >
                       {event.dataQualityScore}%
@@ -236,7 +260,7 @@ export const EventList: React.FC<EventListProps> = ({
                           if (hasEditions) {
                             const eventName = progress.result.companyName || event.name;
                             const isResearching = Array.from(researchingEditions).some((key) =>
-                              key.includes(eventName)
+                              key.includes(eventName),
                             );
 
                             return (

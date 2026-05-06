@@ -11,7 +11,7 @@ import {
   AlertCircle,
   Sparkles,
   Mail,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 import { EmailTemplate, EmailTemplateAttachment, Attachment } from '../types';
 import { emailTemplatesApi } from '../services/apiService';
@@ -22,8 +22,16 @@ export const EmailTemplatesView = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', subject: '', body: '', leadType: '', language: '' });
-  const [formErrors, setFormErrors] = useState<{ name?: string; subject?: string; body?: string }>({});
+  const [formData, setFormData] = useState({
+    name: '',
+    subject: '',
+    body: '',
+    leadType: '',
+    language: '',
+  });
+  const [formErrors, setFormErrors] = useState<{ name?: string; subject?: string; body?: string }>(
+    {},
+  );
   const [testEmail, setTestEmail] = useState('');
   const [testCc, setTestCc] = useState('');
   const [sendingTest, setSendingTest] = useState(false);
@@ -45,7 +53,8 @@ export const EmailTemplatesView = () => {
   useEffect(() => {
     if (showModal && bodyViewMode === 'preview' && contentEditableRef.current) {
       const switchedToPreview = prevBodyViewModeRef.current !== 'preview';
-      const bodyChangedExternally = prevBodyRef.current !== formData.body && !isInternalEditRef.current;
+      const bodyChangedExternally =
+        prevBodyRef.current !== formData.body && !isInternalEditRef.current;
       const isInitialLoad = !prevBodyRef.current && formData.body;
 
       // Only update innerHTML when:
@@ -53,7 +62,9 @@ export const EmailTemplatesView = () => {
       // 2. Body changed externally (not from user editing in preview mode)
       // 3. Initial load when modal opens
       if (switchedToPreview || bodyChangedExternally || isInitialLoad) {
-        const newContent = formData.body || '<div style="padding: 20px; color: #666; text-align: center;">Click here to start editing your email template. Use variables like {{keyPersonName}}, {{companyName}}, etc.</div>';
+        const newContent =
+          formData.body ||
+          '<div style="padding: 20px; color: #666; text-align: center;">Click here to start editing your email template. Use variables like {{keyPersonName}}, {{companyName}}, etc.</div>';
         // Only update if different to avoid unnecessary DOM manipulation
         if (contentEditableRef.current.innerHTML !== newContent) {
           contentEditableRef.current.innerHTML = newContent;
@@ -75,7 +86,10 @@ export const EmailTemplatesView = () => {
     try {
       const data = await emailTemplatesApi.getAll();
       console.log('Loaded templates:', data);
-      console.log('Templates with attachments:', data.map(t => ({ id: t.id, name: t.name, attachmentsCount: t.attachments?.length || 0 })));
+      console.log(
+        'Templates with attachments:',
+        data.map((t) => ({ id: t.id, name: t.name, attachmentsCount: t.attachments?.length || 0 })),
+      );
       setTemplates(data);
     } catch (error) {
       console.error('Error loading templates:', error);
@@ -113,35 +127,37 @@ export const EmailTemplatesView = () => {
     setTestEmail('');
     setTestCc('');
     setShowModal(true);
-    
+
     // Load attachments (both files and links)
     if (template.attachments && template.attachments.length > 0) {
-      setAttachments(template.attachments.map(att => {
-        // Check if it's a link (type === 'link')
-        if (att.type === 'link') {
-          return {
-            name: att.name, // URL
-            size: 0,
-            type: 'link',
-            file_data: att.file_data || att.name, // Display name
-            is_link: true,
-          };
-        } else {
-          return {
-            name: att.name,
-            size: att.size,
-            type: att.type,
-            file_data: att.file_data,
-            is_link: false,
-          };
-        }
-      }));
+      setAttachments(
+        template.attachments.map((att) => {
+          // Check if it's a link (type === 'link')
+          if (att.type === 'link') {
+            return {
+              name: att.name, // URL
+              size: 0,
+              type: 'link',
+              file_data: att.file_data || att.name, // Display name
+              is_link: true,
+            };
+          } else {
+            return {
+              name: att.name,
+              size: att.size,
+              type: att.type,
+              file_data: att.file_data,
+              is_link: false,
+            };
+          }
+        }),
+      );
     } else {
       setAttachments([]);
     }
     setAttachmentLink('');
     setAttachmentLinkName('');
-    
+
     // Reset internal edit flag when opening modal
     isInternalEditRef.current = false;
   };
@@ -181,10 +197,11 @@ export const EmailTemplatesView = () => {
 
     try {
       // Save both file attachments and links
-      const attachmentsData = attachments.map(att => {
+      const attachmentsData = attachments.map((att) => {
         if (att.is_link) {
           // For links: name = URL, file_data = display name
-          const displayName = att.file_data && att.file_data.trim() ? att.file_data.trim() : att.name;
+          const displayName =
+            att.file_data && att.file_data.trim() ? att.file_data.trim() : att.name;
           return {
             name: att.name, // URL
             size: 0,
@@ -201,7 +218,7 @@ export const EmailTemplatesView = () => {
           };
         }
       });
-      
+
       console.log('Saving attachments:', attachmentsData);
 
       if (editingTemplate) {
@@ -254,9 +271,10 @@ export const EmailTemplatesView = () => {
 
   const handleSendTest = async () => {
     // Sync body from contentEditable when in preview mode
-    const body = bodyViewMode === 'preview' && contentEditableRef.current
-      ? contentEditableRef.current.innerHTML
-      : formData.body;
+    const body =
+      bodyViewMode === 'preview' && contentEditableRef.current
+        ? contentEditableRef.current.innerHTML
+        : formData.body;
     if (!formData.subject.trim() || !body.trim()) {
       alert('Subject and body are required to send a test email');
       return;
@@ -271,11 +289,14 @@ export const EmailTemplatesView = () => {
       alert('Invalid email address');
       return;
     }
-    
+
     // Validate CC emails if provided
     let ccEmails: string[] = [];
     if (testCc.trim()) {
-      const ccList = testCc.split(',').map(e => e.trim()).filter(e => e);
+      const ccList = testCc
+        .split(',')
+        .map((e) => e.trim())
+        .filter((e) => e);
       for (const ccEmail of ccList) {
         if (!emailRegex.test(ccEmail)) {
           alert(`Invalid CC email address: ${ccEmail}`);
@@ -284,42 +305,56 @@ export const EmailTemplatesView = () => {
       }
       ccEmails = ccList;
     }
-    
+
     setSendingTest(true);
     try {
       // Separate file attachments and links
-      const fileAttachments = attachments.filter(att => !att.is_link).map(att => ({
-        name: att.name,
-        file_data: att.file_data || '',
-        type: att.type,
-      }));
-      
-      const links = attachments.filter(att => att.is_link);
-      
+      const fileAttachments = attachments
+        .filter((att) => !att.is_link)
+        .map((att) => ({
+          name: att.name,
+          file_data: att.file_data || '',
+          type: att.type,
+        }));
+
+      const links = attachments.filter((att) => att.is_link);
+
       // Add links to email body if any - simple style like the image
       let emailBody = body;
       if (links.length > 0) {
-        const linksHtml = links.map(link => {
-          const linkName = link.file_data || link.name;
-          const linkUrl = link.name;
-          return `
+        const linksHtml = links
+          .map((link) => {
+            const linkName = link.file_data || link.name;
+            const linkUrl = link.name;
+            return `
             <div style="margin: 8px 0; padding: 12px 16px; background-color: #f0f0f0; border: 1px solid #d1d5db; border-radius: 6px; display: inline-block; max-width: 100%;">
               <span style="font-size: 18px; margin-right: 8px; vertical-align: middle;">📁</span>
               <a href="${linkUrl}" target="_blank" style="color: #374151; text-decoration: underline; font-size: 14px; vertical-align: middle;">${linkName}</a>
             </div>
           `;
-        }).join('');
+          })
+          .join('');
         emailBody = body + '<div style="margin-top: 5px;">' + linksHtml + '</div>';
       }
-      
-      console.log(`Sending test email with ${fileAttachments.length} file attachment(s) and ${links.length} link(s)...`);
-      await emailTemplatesApi.sendTest(email, formData.subject, emailBody, fileAttachments, ccEmails);
+
+      console.log(
+        `Sending test email with ${fileAttachments.length} file attachment(s) and ${links.length} link(s)...`,
+      );
+      await emailTemplatesApi.sendTest(
+        email,
+        formData.subject,
+        emailBody,
+        fileAttachments,
+        ccEmails,
+      );
       alert('Test email sent successfully');
     } catch (error: any) {
       console.error('Send test email error:', error);
       const errorMessage = error?.message || 'Failed to send test email';
       if (errorMessage.includes('timeout')) {
-        alert('Email sending timed out. The attachments may be too large. Please try with smaller files or use links instead.');
+        alert(
+          'Email sending timed out. The attachments may be too large. Please try with smaller files or use links instead.',
+        );
       } else {
         alert(errorMessage);
       }
@@ -331,17 +366,20 @@ export const EmailTemplatesView = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
+
       const reader = new FileReader();
       reader.onload = (event) => {
         const base64 = event.target?.result as string;
-        setAttachments([...attachments, {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          file_data: base64,
-          is_link: false,
-        }]);
+        setAttachments([
+          ...attachments,
+          {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            file_data: base64,
+            is_link: false,
+          },
+        ]);
       };
       reader.onerror = () => {
         alert(`Error reading file "${file.name}". Please try again.`);
@@ -361,14 +399,17 @@ export const EmailTemplatesView = () => {
       alert('Please enter a name for the link');
       return;
     }
-    
-    setAttachments([...attachments, {
-      name: attachmentLink.trim(),
-      size: 0,
-      type: 'link',
-      is_link: true,
-      file_data: attachmentLinkName.trim(),
-    }]);
+
+    setAttachments([
+      ...attachments,
+      {
+        name: attachmentLink.trim(),
+        size: 0,
+        type: 'link',
+        is_link: true,
+        file_data: attachmentLinkName.trim(),
+      },
+    ]);
     setAttachmentLink('');
     setAttachmentLinkName('');
   };
@@ -378,7 +419,9 @@ export const EmailTemplatesView = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Email Templates</h2>
+            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">
+              Email Templates
+            </h2>
             <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-semibold">
               {templates.length} {templates.length === 1 ? 'template' : 'templates'}
             </span>
@@ -401,7 +444,8 @@ export const EmailTemplatesView = () => {
           Biến có sẵn (Variables)
         </h3>
         <p className="text-xs text-blue-700 mb-2">
-          Sử dụng các biến này trong template email. Khi gửi email, hệ thống sẽ tự động thay thế bằng thông tin thực tế của lead:
+          Sử dụng các biến này trong template email. Khi gửi email, hệ thống sẽ tự động thay thế
+          bằng thông tin thực tế của lead:
         </p>
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
@@ -411,9 +455,12 @@ export const EmailTemplatesView = () => {
               { var: '{{keyPersonTitle}}', desc: 'Chức danh' },
               { var: '{{city}}', desc: 'Thành phố' },
               { var: '{{country}}', desc: 'Quốc gia' },
-              { var: '{{industry}}', desc: 'Ngành nghề' }
+              { var: '{{industry}}', desc: 'Ngành nghề' },
             ].map((item) => (
-              <div key={item.var} className="flex items-center gap-1.5 px-2 py-1 bg-blue-100 rounded">
+              <div
+                key={item.var}
+                className="flex items-center gap-1.5 px-2 py-1 bg-blue-100 rounded"
+              >
                 <code className="text-blue-800 text-xs font-mono">{item.var}</code>
                 <span className="text-blue-600 text-[10px]">({item.desc})</span>
               </div>
@@ -425,25 +472,56 @@ export const EmailTemplatesView = () => {
               <div>
                 <p className="font-semibold mb-1">Template:</p>
                 <div className="bg-white border border-blue-200 rounded p-2 space-y-1">
-                  <p><strong>Subject:</strong> <code className="bg-blue-50 px-1 rounded">{'Xin chào {{keyPersonName}} từ {{companyName}}'}</code></p>
-                  <p><strong>Body:</strong> <code className="bg-blue-50 px-1 rounded">{'Kính gửi Anh/Chị {{keyPersonName}}, {{keyPersonTitle}} tại {{companyName}}, {{city}}, {{country}}...'}</code></p>
+                  <p>
+                    <strong>Subject:</strong>{' '}
+                    <code className="bg-blue-50 px-1 rounded">
+                      {'Xin chào {{keyPersonName}} từ {{companyName}}'}
+                    </code>
+                  </p>
+                  <p>
+                    <strong>Body:</strong>{' '}
+                    <code className="bg-blue-50 px-1 rounded">
+                      {
+                        'Kính gửi Anh/Chị {{keyPersonName}}, {{keyPersonTitle}} tại {{companyName}}, {{city}}, {{country}}...'
+                      }
+                    </code>
+                  </p>
                 </div>
               </div>
               <div>
                 <p className="font-semibold mb-1">Với lead mẫu:</p>
                 <div className="bg-white border border-blue-200 rounded p-2 text-[11px] space-y-0.5">
-                  <p>• Tên công ty: <span className="font-semibold">ABC Corporation</span></p>
-                  <p>• Người liên hệ: <span className="font-semibold">Nguyễn Văn A</span></p>
-                  <p>• Chức danh: <span className="font-semibold">Giám đốc Marketing</span></p>
-                  <p>• Thành phố: <span className="font-semibold">Hà Nội</span></p>
-                  <p>• Quốc gia: <span className="font-semibold">Việt Nam</span></p>
+                  <p>
+                    • Tên công ty: <span className="font-semibold">ABC Corporation</span>
+                  </p>
+                  <p>
+                    • Người liên hệ: <span className="font-semibold">Nguyễn Văn A</span>
+                  </p>
+                  <p>
+                    • Chức danh: <span className="font-semibold">Giám đốc Marketing</span>
+                  </p>
+                  <p>
+                    • Thành phố: <span className="font-semibold">Hà Nội</span>
+                  </p>
+                  <p>
+                    • Quốc gia: <span className="font-semibold">Việt Nam</span>
+                  </p>
                 </div>
               </div>
               <div>
                 <p className="font-semibold mb-1">Kết quả sau khi thay thế:</p>
                 <div className="bg-green-50 border border-green-200 rounded p-2 space-y-1">
-                  <p><strong>Subject:</strong> <span className="text-green-800">Xin chào Nguyễn Văn A từ ABC Corporation</span></p>
-                  <p><strong>Body:</strong> <span className="text-green-800">Kính gửi Anh/Chị Nguyễn Văn A, Giám đốc Marketing tại ABC Corporation, Hà Nội, Việt Nam...</span></p>
+                  <p>
+                    <strong>Subject:</strong>{' '}
+                    <span className="text-green-800">Xin chào Nguyễn Văn A từ ABC Corporation</span>
+                  </p>
+                  <p>
+                    <strong>Body:</strong>{' '}
+                    <span className="text-green-800">
+                      Kính gửi Anh/Chị Nguyễn Văn A, Giám đốc Marketing tại ABC Corporation, Hà Nội,
+                      Việt Nam...
+                    </span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -475,9 +553,15 @@ export const EmailTemplatesView = () => {
             <table className="w-full text-left">
               <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">Name</th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">Subject</th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600 text-right">Actions</th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Subject
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600 text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -487,7 +571,9 @@ export const EmailTemplatesView = () => {
                       <div className="font-semibold text-slate-900">{template.name}</div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="text-sm text-slate-700 max-w-md truncate">{template.subject}</div>
+                      <div className="text-sm text-slate-700 max-w-md truncate">
+                        {template.subject}
+                      </div>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-end gap-2">
@@ -523,13 +609,12 @@ export const EmailTemplatesView = () => {
                   {editingTemplate ? 'Edit Template' : 'Create New Template'}
                 </h2>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  {editingTemplate ? 'Update your email template' : 'Create a new email template for lead outreach'}
+                  {editingTemplate
+                    ? 'Update your email template'
+                    : 'Create a new email template for lead outreach'}
                 </p>
               </div>
-              <button
-                onClick={handleCancel}
-                className="text-slate-400 p-2 rounded-lg"
-              >
+              <button onClick={handleCancel} className="text-slate-400 p-2 rounded-lg">
                 <X size={20} />
               </button>
             </div>
@@ -545,12 +630,11 @@ export const EmailTemplatesView = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., Introduction Email, Follow Up"
-                  className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none ${formErrors.name ? 'border-red-300' : 'border-slate-300'
-                    }`}
+                  className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none ${
+                    formErrors.name ? 'border-red-300' : 'border-slate-300'
+                  }`}
                 />
-                {formErrors.name && (
-                  <p className="text-xs text-red-600 mt-1">{formErrors.name}</p>
-                )}
+                {formErrors.name && <p className="text-xs text-red-600 mt-1">{formErrors.name}</p>}
               </div>
 
               {/* Subject */}
@@ -563,8 +647,9 @@ export const EmailTemplatesView = () => {
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   placeholder="e.g., Invitation to {{companyName}} - Host Your Next Event in Danang"
-                  className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none ${formErrors.subject ? 'border-red-300' : 'border-slate-300'
-                    }`}
+                  className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none ${
+                    formErrors.subject ? 'border-red-300' : 'border-slate-300'
+                  }`}
                 />
                 {formErrors.subject && (
                   <p className="text-xs text-red-600 mt-1">{formErrors.subject}</p>
@@ -608,7 +693,8 @@ export const EmailTemplatesView = () => {
                   <option value="LEAD2026FEB_THAIACC">LEAD2026FEB_THAIACC</option>
                 </select>
                 <p className="text-xs text-slate-500 mt-1">
-                  Select a lead type to assign this template to CORP, DMC, HPNY2026, or LEAD2026FEB_THAIACC leads. Leave empty for default templates.
+                  Select a lead type to assign this template to CORP, DMC, HPNY2026, or
+                  LEAD2026FEB_THAIACC leads. Leave empty for default templates.
                 </p>
               </div>
 
@@ -621,16 +707,11 @@ export const EmailTemplatesView = () => {
                   <div className="flex gap-2">
                     <label className="cursor-pointer text-xs text-indigo-600 flex items-center hover:text-indigo-700">
                       <Plus size={14} className="mr-1" /> Add File
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                        multiple
-                      />
+                      <input type="file" className="hidden" onChange={handleFileUpload} multiple />
                     </label>
                   </div>
                 </div>
-                
+
                 {/* Add Link Section */}
                 <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex gap-2 mb-2">
@@ -663,16 +744,28 @@ export const EmailTemplatesView = () => {
                     {attachments.map((file, idx) => {
                       if (file.is_link) {
                         return (
-                          <div key={idx} className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2"
+                          >
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-blue-900 truncate">{file.file_data}</div>
-                              <a href={file.name} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline truncate block">
+                              <div className="text-sm font-medium text-blue-900 truncate">
+                                {file.file_data}
+                              </div>
+                              <a
+                                href={file.name}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:underline truncate block"
+                              >
                                 {file.name}
                               </a>
                             </div>
                             <button
                               type="button"
-                              onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                              onClick={() =>
+                                setAttachments(attachments.filter((_, i) => i !== idx))
+                              }
                               className="ml-2 text-slate-400 hover:text-red-600 p-1"
                             >
                               <X size={16} />
@@ -681,13 +774,19 @@ export const EmailTemplatesView = () => {
                         );
                       }
                       const sizeInMB = file.size / (1024 * 1024);
-                      const sizeDisplay = sizeInMB >= 1 
-                        ? `${sizeInMB.toFixed(2)} MB` 
-                        : `${(file.size / 1024).toFixed(2)} KB`;
+                      const sizeDisplay =
+                        sizeInMB >= 1
+                          ? `${sizeInMB.toFixed(2)} MB`
+                          : `${(file.size / 1024).toFixed(2)} KB`;
                       return (
-                        <div key={idx} className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"
+                        >
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-slate-900 truncate">{file.name}</div>
+                            <div className="text-sm font-medium text-slate-900 truncate">
+                              {file.name}
+                            </div>
                             <div className="text-xs text-slate-500">
                               {sizeDisplay} • {file.type || 'Unknown type'}
                             </div>
@@ -704,7 +803,9 @@ export const EmailTemplatesView = () => {
                     })}
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400 italic py-2">No files or links attached. Add files or links above.</p>
+                  <p className="text-xs text-slate-400 italic py-2">
+                    No files or links attached. Add files or links above.
+                  </p>
                 )}
               </div>
 
@@ -725,10 +826,11 @@ export const EmailTemplatesView = () => {
                         isInternalEditRef.current = false;
                         setBodyViewMode('code');
                       }}
-                      className={`px-3 py-1 text-xs font-medium rounded ${bodyViewMode === 'code'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-100 text-slate-600'
-                        }`}
+                      className={`px-3 py-1 text-xs font-medium rounded ${
+                        bodyViewMode === 'code'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
                     >
                       HTML Code
                     </button>
@@ -738,10 +840,11 @@ export const EmailTemplatesView = () => {
                         isInternalEditRef.current = false;
                         setBodyViewMode('preview');
                       }}
-                      className={`px-3 py-1 text-xs font-medium rounded ${bodyViewMode === 'preview'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-100 text-slate-600'
-                        }`}
+                      className={`px-3 py-1 text-xs font-medium rounded ${
+                        bodyViewMode === 'preview'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
                     >
                       Preview
                     </button>
@@ -754,8 +857,9 @@ export const EmailTemplatesView = () => {
                     onChange={(e) => setFormData({ ...formData, body: e.target.value })}
                     placeholder="<html>...\n\nUse HTML format with variables like {{keyPersonName}}, {{companyName}}, etc."
                     rows={15}
-                    className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none font-mono ${formErrors.body ? 'border-red-300' : 'border-slate-300'
-                      }`}
+                    className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none font-mono ${
+                      formErrors.body ? 'border-red-300' : 'border-slate-300'
+                    }`}
                   />
                 ) : (
                   <div
@@ -780,17 +884,16 @@ export const EmailTemplatesView = () => {
                       style={{
                         fontFamily: 'Arial, sans-serif',
                         lineHeight: '1.6',
-                        color: '#333'
+                        color: '#333',
                       }}
                     />
                   </div>
                 )}
 
-                {formErrors.body && (
-                  <p className="text-xs text-red-600 mt-1">{formErrors.body}</p>
-                )}
+                {formErrors.body && <p className="text-xs text-red-600 mt-1">{formErrors.body}</p>}
                 <p className="text-xs text-slate-500 mt-1">
-                  Use HTML format. Variables like {'{{companyName}}'}, {'{{keyPersonName}}'}, etc. will be replaced with actual lead data.
+                  Use HTML format. Variables like {'{{companyName}}'}, {'{{keyPersonName}}'}, etc.
+                  will be replaced with actual lead data.
                 </p>
               </div>
 
@@ -806,9 +909,12 @@ export const EmailTemplatesView = () => {
                       </p>
                     </div>
                     <div>
-                      <span className="text-xs font-medium text-slate-500 uppercase">Body (HTML):</span>
+                      <span className="text-xs font-medium text-slate-500 uppercase">
+                        Body (HTML):
+                      </span>
                       <div className="text-xs text-slate-600 mt-1 bg-white p-3 rounded border border-slate-200 max-h-40 overflow-y-auto font-mono">
-                        {formData.body.substring(0, 500)}{formData.body.length > 500 ? '...' : ''}
+                        {formData.body.substring(0, 500)}
+                        {formData.body.length > 500 ? '...' : ''}
                       </div>
                     </div>
                   </div>
@@ -841,11 +947,18 @@ export const EmailTemplatesView = () => {
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    onClick={(e) => { e.preventDefault(); handleSendTest(); }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSendTest();
+                    }}
                     disabled={sendingTest}
                     className="px-3 py-2 text-indigo-600 border border-indigo-300 rounded-lg text-sm font-medium inline-flex items-center hover:bg-indigo-50 disabled:opacity-50"
                   >
-                    {sendingTest ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Mail size={16} className="mr-1" />}
+                    {sendingTest ? (
+                      <Loader2 size={16} className="mr-1 animate-spin" />
+                    ) : (
+                      <Mail size={16} className="mr-1" />
+                    )}
                     Send Test
                   </button>
                 </div>
@@ -872,4 +985,3 @@ export const EmailTemplatesView = () => {
     </div>
   );
 };
-

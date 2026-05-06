@@ -27,11 +27,22 @@ router.get('/:username', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
   try {
     const { id, username, role, text, timestamp } = req.body;
-    
-    console.log('📨 Received chat message request:', { id, username, role, textLength: text?.length, timestamp });
-    
+
+    console.log('📨 Received chat message request:', {
+      id,
+      username,
+      role,
+      textLength: text?.length,
+      timestamp,
+    });
+
     if (!id || !username || !role || !text) {
-      console.error('❌ Missing required fields:', { id: !!id, username: !!username, role: !!role, text: !!text });
+      console.error('❌ Missing required fields:', {
+        id: !!id,
+        username: !!username,
+        role: !!role,
+        text: !!text,
+      });
       return res.status(400).json({ error: 'Missing required fields: id, username, role, text' });
     }
 
@@ -42,8 +53,12 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     // Convert timestamp to Date if it's a string
-    const timestampDate = timestamp ? (typeof timestamp === 'string' ? new Date(timestamp) : timestamp) : new Date();
-    
+    const timestampDate = timestamp
+      ? typeof timestamp === 'string'
+        ? new Date(timestamp)
+        : timestamp
+      : new Date();
+
     console.log('💾 Creating chat message in database...');
     const message = await ChatMessageModel.create({
       id,
@@ -52,7 +67,7 @@ router.post('/', async (req: Request, res: Response) => {
       text,
       timestamp: timestampDate,
     });
-    
+
     console.log('✅ Chat message created successfully:', message.id);
     res.status(201).json(message);
   } catch (error: any) {

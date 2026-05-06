@@ -9,7 +9,10 @@ export class EmailContentBuilder {
   /**
    * Build email body for events
    */
-  static buildEventEmail(event: EventForEmail, contact: ContactInfo): { subject: string; text: string; html: string } {
+  static buildEventEmail(
+    event: EventForEmail,
+    contact: ContactInfo,
+  ): { subject: string; text: string; html: string } {
     const salutation = contact.name ? `Dear ${contact.name},` : 'Dear Event Organizer,';
     const organization = contact.organization || event.name;
 
@@ -46,7 +49,10 @@ export class EmailContentBuilder {
   /**
    * Build email body for leads (legacy - not used with templates)
    */
-  static buildLeadEmail(lead: LeadRow, contact: ContactInfo): { subject: string; text: string; html: string } {
+  static buildLeadEmail(
+    lead: LeadRow,
+    contact: ContactInfo,
+  ): { subject: string; text: string; html: string } {
     const salutation = contact.name ? `Dear ${contact.name},` : 'Dear Event Organizer,';
     const location = [lead.city, lead.country].filter(Boolean).join(', ');
     const industryLine = lead.industry
@@ -66,7 +72,9 @@ export class EmailContentBuilder {
       '',
       historyLine,
       delegatesLine,
-      location ? `We understand your community engages stakeholders across ${location} and would love to partner with you on a future edition.` : '',
+      location
+        ? `We understand your community engages stakeholders across ${location} and would love to partner with you on a future edition.`
+        : '',
       '',
       'Ariyana Convention Centre Danang is the award-winning venue that proudly hosted APEC 2017. Our experienced international team is ready to support your bidding process and tailor a proposal to your requirements.',
       '',

@@ -48,7 +48,12 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
   onSortOrderToggle,
   onClearFilters,
 }) => {
-  const hasActiveFilters = searchTerm || countryFilter !== 'all' || industryFilter !== 'all' || statusFilter !== 'all' || priorityFilter !== 'all';
+  const hasActiveFilters =
+    searchTerm ||
+    countryFilter !== 'all' ||
+    industryFilter !== 'all' ||
+    statusFilter !== 'all' ||
+    priorityFilter !== 'all';
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
@@ -76,8 +81,10 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
             className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="all">All Countries</option>
-            {availableCountries.map(country => (
-              <option key={country} value={country}>{country}</option>
+            {availableCountries.map((country) => (
+              <option key={country} value={country}>
+                {country}
+              </option>
             ))}
           </select>
 
@@ -88,8 +95,10 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
             className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="all">All Industries</option>
-            {availableIndustries.map(industry => (
-              <option key={industry} value={industry}>{industry}</option>
+            {availableIndustries.map((industry) => (
+              <option key={industry} value={industry}>
+                {industry}
+              </option>
             ))}
           </select>
 
@@ -156,15 +165,16 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
       {/* Results count */}
       <div className="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2">
         <p className="text-xs text-slate-600">
-          Showing <strong className="text-slate-900">{filteredCount}</strong> of <strong className="text-slate-900">{totalCount}</strong> events
+          Showing <strong className="text-slate-900">{filteredCount}</strong> of{' '}
+          <strong className="text-slate-900">{totalCount}</strong> events
           {analyzedCount > 0 && (
-            <span className="ml-2">• Analyzed: <strong className="text-slate-700">{analyzedCount}</strong></span>
+            <span className="ml-2">
+              • Analyzed: <strong className="text-slate-700">{analyzedCount}</strong>
+            </span>
           )}
         </p>
         {notAnalyzedCount > 0 && (
-          <p className="text-xs text-amber-600 font-medium">
-            ⚠️ {notAnalyzedCount} not analyzed
-          </p>
+          <p className="text-xs text-amber-600 font-medium">⚠️ {notAnalyzedCount} not analyzed</p>
         )}
       </div>
     </div>

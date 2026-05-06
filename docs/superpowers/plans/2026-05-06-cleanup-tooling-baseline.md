@@ -16,24 +16,24 @@
 
 ## File Map
 
-| Path | Status | Responsibility |
-|---|---|---|
-| `.gitignore` | modify | OS, editor, build output, CSV data, env locals |
-| `.prettierrc.json` | create | Prettier formatting rules (single source of formatting truth) |
-| `.prettierignore` | create | Skip generated/legacy files from Prettier |
-| `eslint.config.js` | create | Flat-config ESLint (logic rules only, no formatting) |
-| `.lintstagedrc.json` | create | Map staged file globs to lint+format commands |
-| `.husky/pre-commit` | create | Run `lint-staged` |
-| `.husky/pre-push` | create | Run `tsc --noEmit` for both root and api |
-| `package.json` | modify | Add devDeps + scripts (`lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `typecheck:api`, `prepare`) |
-| `tsconfig.json` | modify | Add full strict flags |
-| `api/tsconfig.json` | modify | Add the new strict flags missing here (already has `strict: true`) |
-| `api/src/config/env.ts` | create | Zod schema validating all env vars at boot, fail-fast on invalid |
-| `env.example` | modify | Synchronize 1:1 with the Zod schema |
-| `README.md` | modify | Document new scripts; remove dead `SECURITY_CHECK.md` link |
-| `STRICT_DEBT.md` | create (conditional) | Only if Task 7 inserts any `@ts-expect-error TODO(refactor)` markers |
-| 21 deleted files (working tree) | delete | Listed in spec §3 |
-| All consumers of `process.env.X` | modify | Replace with `import { env } from '...config/env'` then `env.X` |
+| Path                             | Status               | Responsibility                                                                                                |
+| -------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `.gitignore`                     | modify               | OS, editor, build output, CSV data, env locals                                                                |
+| `.prettierrc.json`               | create               | Prettier formatting rules (single source of formatting truth)                                                 |
+| `.prettierignore`                | create               | Skip generated/legacy files from Prettier                                                                     |
+| `eslint.config.js`               | create               | Flat-config ESLint (logic rules only, no formatting)                                                          |
+| `.lintstagedrc.json`             | create               | Map staged file globs to lint+format commands                                                                 |
+| `.husky/pre-commit`              | create               | Run `lint-staged`                                                                                             |
+| `.husky/pre-push`                | create               | Run `tsc --noEmit` for both root and api                                                                      |
+| `package.json`                   | modify               | Add devDeps + scripts (`lint`, `lint:fix`, `format`, `format:check`, `typecheck`, `typecheck:api`, `prepare`) |
+| `tsconfig.json`                  | modify               | Add full strict flags                                                                                         |
+| `api/tsconfig.json`              | modify               | Add the new strict flags missing here (already has `strict: true`)                                            |
+| `api/src/config/env.ts`          | create               | Zod schema validating all env vars at boot, fail-fast on invalid                                              |
+| `env.example`                    | modify               | Synchronize 1:1 with the Zod schema                                                                           |
+| `README.md`                      | modify               | Document new scripts; remove dead `SECURITY_CHECK.md` link                                                    |
+| `STRICT_DEBT.md`                 | create (conditional) | Only if Task 7 inserts any `@ts-expect-error TODO(refactor)` markers                                          |
+| 21 deleted files (working tree)  | delete               | Listed in spec §3                                                                                             |
+| All consumers of `process.env.X` | modify               | Replace with `import { env } from '...config/env'` then `env.X`                                               |
 
 ---
 
@@ -62,6 +62,7 @@ If missing, copy `env.example` to `.env` and fill in real values before starting
 ## Task 1: Cleanup legacy files + .gitignore
 
 **Files:**
+
 - Delete: 21 files already in deleted state (see spec §3 table). Verify via `git status`.
 - Modify: `.gitignore`
 
@@ -73,6 +74,7 @@ git status --short
 ```
 
 Expected: 21 lines starting with `D ` become `D ` in the staged column. Specifically:
+
 - `EMAIL_REPORTS_SETUP.md`
 - `Normal.csv`
 - `OPTIMIZATION_REPORT.md`
@@ -160,6 +162,7 @@ EOF
 ## Task 2: Setup Prettier
 
 **Files:**
+
 - Create: `.prettierrc.json`
 - Create: `.prettierignore`
 - Modify: `package.json` (add devDep + scripts)
@@ -269,6 +272,7 @@ EOF
 ## Task 3: Setup ESLint flat config (no fixes yet)
 
 **Files:**
+
 - Create: `eslint.config.js`
 - Modify: `package.json`
 
@@ -433,13 +437,13 @@ Two outcomes:
 
 For each remaining error, apply the smallest fix that does not change behavior:
 
-| Error rule | Standard fix |
-|---|---|
-| `@typescript-eslint/no-unused-vars` (var unused) | Delete the variable, OR prefix with `_` if it's a function arg required by signature |
-| `react-hooks/exhaustive-deps` | Add the missing dep, OR if the omission is intentional, document with a single-line comment explaining why and add an `// eslint-disable-next-line react-hooks/exhaustive-deps` immediately above |
-| `react-hooks/rules-of-hooks` | This is almost always a real bug — fix the hook call so it runs unconditionally at the top level |
-| `no-console` (frontend) | Replace with `console.warn` / `console.error` if it's an actual warning/error, otherwise delete the log |
-| `react/no-unescaped-entities` | Replace `'` with `&apos;` etc., or wrap text in `{...}` |
+| Error rule                                       | Standard fix                                                                                                                                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@typescript-eslint/no-unused-vars` (var unused) | Delete the variable, OR prefix with `_` if it's a function arg required by signature                                                                                                              |
+| `react-hooks/exhaustive-deps`                    | Add the missing dep, OR if the omission is intentional, document with a single-line comment explaining why and add an `// eslint-disable-next-line react-hooks/exhaustive-deps` immediately above |
+| `react-hooks/rules-of-hooks`                     | This is almost always a real bug — fix the hook call so it runs unconditionally at the top level                                                                                                  |
+| `no-console` (frontend)                          | Replace with `console.warn` / `console.error` if it's an actual warning/error, otherwise delete the log                                                                                           |
+| `react/no-unescaped-entities`                    | Replace `'` with `&apos;` etc., or wrap text in `{...}`                                                                                                                                           |
 
 For any error where the fix is non-obvious or might change behavior, add `// eslint-disable-next-line <rule>` with a one-line comment explaining why it's safe.
 
@@ -491,6 +495,7 @@ EOF
 ## Task 5: Zod env validation
 
 **Files:**
+
 - Create: `api/src/config/env.ts`
 - Modify: every file that reads `process.env.X` (excluding the new env.ts itself, vite config, dotenv setup)
 - Modify: `env.example` (synchronize with schema)
@@ -581,7 +586,7 @@ export type Env = z.infer<typeof EnvSchema>;
 
 For each file in the list, replace `process.env.X` with `env.X`. Two cases:
 
-**(a) Inside `api/src/**/*.ts`:**
+**(a) Inside `api/src/**/\*.ts`:\*\*
 
 ```typescript
 // Before
@@ -690,6 +695,7 @@ EOF
 ## Task 6: Enable TypeScript strict mode (config only)
 
 **Files:**
+
 - Modify: `tsconfig.json`
 - Modify: `api/tsconfig.json`
 
@@ -708,8 +714,8 @@ Merge these into `compilerOptions` (preserve all existing options):
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": true,
-    "verbatimModuleSyntax": true
-  }
+    "verbatimModuleSyntax": true,
+  },
 }
 ```
 
@@ -728,8 +734,8 @@ The api config already has `"strict": true`. Add the same additional flags:
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": true,
-    "verbatimModuleSyntax": true
-  }
+    "verbatimModuleSyntax": true,
+  },
 }
 ```
 
@@ -798,12 +804,12 @@ Skim both logs to spot patterns. Common categories follow.
 ```typescript
 // Before
 const first = items[0];
-first.id // TS2532: 'first' is possibly 'undefined'
+first.id; // TS2532: 'first' is possibly 'undefined'
 
 // After (option 1: guard)
 const first = items[0];
 if (!first) return null;
-first.id
+first.id;
 
 // After (option 2: nullish coalesce default)
 const first = items[0] ?? defaultItem;
@@ -816,11 +822,11 @@ const first = items[0]!; // safe: items.length > 0 verified above
 
 ```typescript
 // Before
-const lead = leads.find(l => l.id === id);
+const lead = leads.find((l) => l.id === id);
 return lead.name; // TS18048
 
 // After
-const lead = leads.find(l => l.id === id);
+const lead = leads.find((l) => l.id === id);
 if (!lead) throw new Error(`Lead ${id} not found`);
 return lead.name;
 ```
@@ -858,10 +864,14 @@ If `exactOptionalPropertyTypes` becomes overwhelmingly noisy on this codebase (>
 
 ```typescript
 // Before
-function handler(req, res, next) { res.send('ok'); } // 'next' unused
+function handler(req, res, next) {
+  res.send('ok');
+} // 'next' unused
 
 // After
-function handler(_req, res, _next) { res.send('ok'); }
+function handler(_req, res, _next) {
+  res.send('ok');
+}
 // Or just delete the unused param if signature allows
 ```
 
@@ -891,10 +901,10 @@ Entries are inputs for sub-project #4 (refactor god files). Each must be
 resolved when the surrounding code is restructured. Do NOT remove
 @ts-expect-error markers without a real fix.
 
-| File:Line | Reason | Sub-project |
-|---|---|---|
-| views/LeadsView.tsx:412 | Callback returns `any` from gptService — needs typed response schema | #4 |
-| ... | ... | ... |
+| File:Line               | Reason                                                               | Sub-project |
+| ----------------------- | -------------------------------------------------------------------- | ----------- |
+| views/LeadsView.tsx:412 | Callback returns `any` from gptService — needs typed response schema | #4          |
+| ...                     | ...                                                                  | ...         |
 ```
 
 - [ ] **Step 9: Re-run typecheck**
@@ -970,6 +980,7 @@ EOF
 ## Task 8: Setup husky + lint-staged
 
 **Files:**
+
 - Create: `.husky/pre-commit`
 - Create: `.husky/pre-push`
 - Create: `.lintstagedrc.json`
@@ -1082,6 +1093,7 @@ EOF
 ## Task 9: Update README
 
 **Files:**
+
 - Modify: `README.md`
 
 - [ ] **Step 1: Read current README**
@@ -1098,8 +1110,9 @@ Apply two changes:
 
 **(a) Replace the "Run the app" section** with one that reflects the new scripts:
 
-```markdown
+````markdown
 4. **Run the app:**
+
    ```bash
    # Frontend (Vite dev server with serverless API proxy)
    npm run dev
@@ -1107,8 +1120,10 @@ Apply two changes:
    # Standalone backend (alternative — runs Express directly on PORT)
    npm run dev:api
    ```
+````
 
 5. **Daily development scripts:**
+
    ```bash
    npm run lint           # ESLint check
    npm run lint:fix       # ESLint auto-fix
@@ -1123,25 +1138,30 @@ Apply two changes:
    Prettier on staged files, blocks on lint errors). Pre-push hook runs
    the full typecheck. To bypass in an emergency: `--no-verify` (do so
    sparingly).
+
 ```
 
 **(b) Remove the dead link.** In the Security Notes block, replace the line:
 
 ```
+
 - ✅ See [SECURITY_CHECK.md](SECURITY_CHECK.md) for detailed security audit
+
 ```
 
 with:
 
 ```
+
 - ✅ Environment variables validated at boot via `api/src/config/env.ts` (Zod schema). Missing/invalid keys cause fail-fast with a clear error.
-```
+
+````
 
 - [ ] **Step 3: Run prettier on README**
 
 ```bash
 npm run format
-```
+````
 
 - [ ] **Step 4: Verify the README renders sensibly**
 

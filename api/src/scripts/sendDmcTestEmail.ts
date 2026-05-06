@@ -40,7 +40,9 @@ async function sendDmcTestEmail() {
     const templates = await EmailTemplateModel.getAll();
     const dmcTemplate = templates.find((t) => t.lead_type === 'DMC');
     if (!dmcTemplate) {
-      console.error('❌ Không tìm thấy email template DMC. Tạo template với lead_type = "DMC" trong email_templates.');
+      console.error(
+        '❌ Không tìm thấy email template DMC. Tạo template với lead_type = "DMC" trong email_templates.',
+      );
       process.exit(1);
     }
     console.log(`✅ Dùng template: ${dmcTemplate.name} (lead_type: DMC)\n`);

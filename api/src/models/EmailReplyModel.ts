@@ -31,7 +31,10 @@ export class EmailReplyModel {
   }
 
   static async getByLeadId(leadId: string): Promise<EmailReply[]> {
-    const result = await query('SELECT * FROM email_replies WHERE lead_id = $1 ORDER BY reply_date DESC', [leadId]);
+    const result = await query(
+      'SELECT * FROM email_replies WHERE lead_id = $1 ORDER BY reply_date DESC',
+      [leadId],
+    );
     return result.rows;
   }
 
@@ -52,11 +55,13 @@ export class EmailReplyModel {
         emailReply.subject,
         emailReply.body,
         emailReply.html_body || null,
-        typeof emailReply.reply_date === 'string' ? new Date(emailReply.reply_date) : emailReply.reply_date,
+        typeof emailReply.reply_date === 'string'
+          ? new Date(emailReply.reply_date)
+          : emailReply.reply_date,
         emailReply.message_id || null,
         emailReply.in_reply_to || null,
         emailReply.references_header || null,
-      ]
+      ],
     );
     return result.rows[0];
   }
@@ -67,7 +72,10 @@ export class EmailReplyModel {
   }
 
   static async getByInReplyTo(inReplyTo: string): Promise<EmailReply[]> {
-    const result = await query('SELECT * FROM email_replies WHERE in_reply_to = $1 ORDER BY reply_date DESC', [inReplyTo]);
+    const result = await query(
+      'SELECT * FROM email_replies WHERE in_reply_to = $1 ORDER BY reply_date DESC',
+      [inReplyTo],
+    );
     return result.rows;
   }
 
@@ -76,4 +84,3 @@ export class EmailReplyModel {
     return (result.rowCount ?? 0) > 0;
   }
 }
-

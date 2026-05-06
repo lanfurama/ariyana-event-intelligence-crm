@@ -14,16 +14,20 @@ export function startScheduledReportsJob(): void {
   }
 
   // Run every minute to check for scheduled reports
-  cronJob = cron.schedule('* * * * *', async () => {
-    try {
-      await processScheduledReports();
-    } catch (error) {
-      console.error('❌ Error in scheduled reports job:', error);
-    }
-  }, {
-    scheduled: true,
-    timezone: 'Asia/Ho_Chi_Minh',
-  });
+  cronJob = cron.schedule(
+    '* * * * *',
+    async () => {
+      try {
+        await processScheduledReports();
+      } catch (error) {
+        console.error('❌ Error in scheduled reports job:', error);
+      }
+    },
+    {
+      scheduled: true,
+      timezone: 'Asia/Ho_Chi_Minh',
+    },
+  );
 
   console.log('✅ Scheduled reports job started (checking every minute)');
 }

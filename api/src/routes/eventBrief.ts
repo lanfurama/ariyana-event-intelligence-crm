@@ -1,10 +1,26 @@
 import { Router, Request, Response } from 'express';
-import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, WidthType, AlignmentType, HeadingLevel, BorderStyle } from 'docx';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType,
+  AlignmentType,
+  HeadingLevel,
+  BorderStyle,
+} from 'docx';
 
 const router = Router();
 
 // Helper function to create table cell with text
-const createCell = (text: string, isHeader: boolean = false, shaded: boolean = false): TableCell => {
+const createCell = (
+  text: string,
+  isHeader: boolean = false,
+  shaded: boolean = false,
+): TableCell => {
   return new TableCell({
     children: [
       new Paragraph({
@@ -18,10 +34,12 @@ const createCell = (text: string, isHeader: boolean = false, shaded: boolean = f
         alignment: AlignmentType.LEFT,
       }),
     ],
-    shading: shaded ? {
-      fill: 'F1F5F9',
-      val: 'clear',
-    } : undefined,
+    shading: shaded
+      ? {
+          fill: 'F1F5F9',
+          val: 'clear',
+        }
+      : undefined,
   });
 };
 
@@ -59,7 +77,7 @@ router.post('/export', async (req: Request, res: Response) => {
     }
 
     const aiFilledFields = lead.aiFilledFields || [];
-    
+
     // Create document sections
     const sections: (Paragraph | Table)[] = [];
 
@@ -75,7 +93,7 @@ router.post('/export', async (req: Request, res: Response) => {
           }),
         ],
         spacing: { after: 200 },
-      })
+      }),
     );
 
     // Score
@@ -89,18 +107,15 @@ router.post('/export', async (req: Request, res: Response) => {
           }),
         ],
         spacing: { after: 400 },
-      })
+      }),
     );
 
     // ===== EVENT BRIEF SECTION =====
     sections.push(createHeading('Event Brief'));
-    
+
     const eventBriefRows: TableRow[] = [
       new TableRow({
-        children: [
-          createCell('Event Name', false, true),
-          createCell(lead.companyName || 'N/A'),
-        ],
+        children: [createCell('Event Name', false, true), createCell(lead.companyName || 'N/A')],
       }),
       new TableRow({
         children: [
@@ -111,7 +126,9 @@ router.post('/export', async (req: Request, res: Response) => {
       new TableRow({
         children: [
           createCell('Average Attendance', false, true),
-          createCell(lead.numberOfDelegates ? `${lead.numberOfDelegates.toLocaleString()} pax` : 'N/A'),
+          createCell(
+            lead.numberOfDelegates ? `${lead.numberOfDelegates.toLocaleString()} pax` : 'N/A',
+          ),
         ],
       }),
       new TableRow({
@@ -141,19 +158,25 @@ router.post('/export', async (req: Request, res: Response) => {
       new TableRow({
         children: [
           createCell('Preferred Month', false, true),
-          createCell(markAI(lead.preferredMonth || lead.preferredMonths, 'preferredMonth', aiFilledFields)),
+          createCell(
+            markAI(lead.preferredMonth || lead.preferredMonths, 'preferredMonth', aiFilledFields),
+          ),
         ],
       }),
       new TableRow({
         children: [
           createCell('Preferred Venue', false, true),
-          createCell(lead.preferredVenue || 'Hotel with convention facilities or Convention Centre'),
+          createCell(
+            lead.preferredVenue || 'Hotel with convention facilities or Convention Centre',
+          ),
         ],
       }),
       new TableRow({
         children: [
           createCell('Break-Out Rooms', false, true),
-          createCell(markAI(lead.breakoutRooms || lead.breakOutRooms, 'breakoutRooms', aiFilledFields)),
+          createCell(
+            markAI(lead.breakoutRooms || lead.breakOutRooms, 'breakoutRooms', aiFilledFields),
+          ),
         ],
       }),
       new TableRow({
@@ -165,7 +188,15 @@ router.post('/export', async (req: Request, res: Response) => {
       new TableRow({
         children: [
           createCell('Info on Last / Upcoming Events', false, true),
-          createCell(markAI(lead.eventBrief?.infoOnLastUpcomingEvents || lead.upcomingEvents || lead.lastEventInfo, 'infoOnLastUpcomingEvents', aiFilledFields)),
+          createCell(
+            markAI(
+              lead.eventBrief?.infoOnLastUpcomingEvents ||
+                lead.upcomingEvents ||
+                lead.lastEventInfo,
+              'infoOnLastUpcomingEvents',
+              aiFilledFields,
+            ),
+          ),
         ],
       }),
       new TableRow({
@@ -181,13 +212,13 @@ router.post('/export', async (req: Request, res: Response) => {
         rows: eventBriefRows,
         width: { size: 100, type: WidthType.PERCENTAGE },
         columnWidths: [3000, 6000],
-      })
+      }),
     );
 
     // ===== EVENT HISTORY SECTION =====
     if (lead.editions && Array.isArray(lead.editions) && lead.editions.length > 0) {
       sections.push(createHeading('Event History'));
-      
+
       // Event History Table Header
       const eventHistoryRows: TableRow[] = [
         new TableRow({
@@ -206,21 +237,29 @@ router.post('/export', async (req: Request, res: Response) => {
         const startDate = edition.STARTDATE || edition.StartDate || edition.startDate || '';
         const editionYear = edition.EDITYEARS || edition.EditYears || edition.edityears || '';
         const date = editionYear || startDate || 'N/A';
-        
+
         const seriesName = edition.SeriesName || edition.SERIESNAME || edition.seriesName || '';
-        const seriesEdition = edition.SeriesEditions || edition.SERIESEDITIONS || edition.seriesEditions || edition.Sequence || edition.SEQUENCE || '';
+        const seriesEdition =
+          edition.SeriesEditions ||
+          edition.SERIESEDITIONS ||
+          edition.seriesEditions ||
+          edition.Sequence ||
+          edition.SEQUENCE ||
+          '';
         const congress = seriesEdition ? `${seriesEdition} ${seriesName}` : seriesName || 'N/A';
-        
+
         const city = edition.CITY || edition.City || edition.city || '';
         const country = edition.COUNTRY || edition.Country || edition.country || '';
         const venue = [city, country].filter(Boolean).join(', ') || 'N/A';
-        
+
         const chairman = edition.Chairman || edition.chairman || edition.aiChairman || 'N/A';
         const secretary = edition.Secretary || edition.secretary || edition.aiSecretary || 'N/A';
-        
-        const chairmanText = edition.aiChairman && !edition.Chairman ? `${chairman} [AI]` : chairman;
-        const secretaryText = edition.aiSecretary && !edition.Secretary ? `${secretary} [AI]` : secretary;
-        
+
+        const chairmanText =
+          edition.aiChairman && !edition.Chairman ? `${chairman} [AI]` : chairman;
+        const secretaryText =
+          edition.aiSecretary && !edition.Secretary ? `${secretary} [AI]` : secretary;
+
         eventHistoryRows.push(
           new TableRow({
             children: [
@@ -230,7 +269,7 @@ router.post('/export', async (req: Request, res: Response) => {
               createCell(chairmanText),
               createCell(secretaryText),
             ],
-          })
+          }),
         );
       });
 
@@ -238,13 +277,13 @@ router.post('/export', async (req: Request, res: Response) => {
         new Table({
           rows: eventHistoryRows,
           width: { size: 100, type: WidthType.PERCENTAGE },
-        })
+        }),
       );
     }
 
     // ===== INTERNATIONAL ORGANISATION SECTION =====
     sections.push(createHeading('International Organisation & Local Host Information'));
-    
+
     const orgRows: TableRow[] = [
       new TableRow({
         children: [
@@ -253,10 +292,7 @@ router.post('/export', async (req: Request, res: Response) => {
         ],
       }),
       new TableRow({
-        children: [
-          createCell('Event Name', false, true),
-          createCell(lead.companyName || 'N/A'),
-        ],
+        children: [createCell('Event Name', false, true), createCell(lead.companyName || 'N/A')],
       }),
       new TableRow({
         children: [
@@ -267,37 +303,69 @@ router.post('/export', async (req: Request, res: Response) => {
       new TableRow({
         children: [
           createCell('Organisation Profile', false, true),
-          createCell(markAI(lead.organizationProfile || lead.notes, 'organizationProfile', aiFilledFields)),
+          createCell(
+            markAI(lead.organizationProfile || lead.notes, 'organizationProfile', aiFilledFields),
+          ),
         ],
       }),
       new TableRow({
         children: [
           createCell('Name of Local Host / Member', false, true),
-          createCell(markAI(lead.eventBrief?.localHostName || lead.keyPersonName || lead.localHostName, 'localHostName', aiFilledFields)),
+          createCell(
+            markAI(
+              lead.eventBrief?.localHostName || lead.keyPersonName || lead.localHostName,
+              'localHostName',
+              aiFilledFields,
+            ),
+          ),
         ],
       }),
       new TableRow({
         children: [
           createCell('Title', false, true),
-          createCell(markAI(lead.eventBrief?.localHostTitle || lead.keyPersonTitle, 'localHostTitle', aiFilledFields)),
+          createCell(
+            markAI(
+              lead.eventBrief?.localHostTitle || lead.keyPersonTitle,
+              'localHostTitle',
+              aiFilledFields,
+            ),
+          ),
         ],
       }),
       new TableRow({
         children: [
           createCell('Email', false, true),
-          createCell(markAI(lead.eventBrief?.localHostEmail || lead.keyPersonEmail, 'localHostEmail', aiFilledFields)),
+          createCell(
+            markAI(
+              lead.eventBrief?.localHostEmail || lead.keyPersonEmail,
+              'localHostEmail',
+              aiFilledFields,
+            ),
+          ),
         ],
       }),
       new TableRow({
         children: [
           createCell('Phone', false, true),
-          createCell(markAI(lead.eventBrief?.localHostPhone || lead.keyPersonPhone, 'localHostPhone', aiFilledFields)),
+          createCell(
+            markAI(
+              lead.eventBrief?.localHostPhone || lead.keyPersonPhone,
+              'localHostPhone',
+              aiFilledFields,
+            ),
+          ),
         ],
       }),
       new TableRow({
         children: [
           createCell('Local Strengths & Weaknesses', false, true),
-          createCell(markAI(lead.eventBrief?.localStrengths || lead.localStrengthsWeaknesses, 'localStrengths', aiFilledFields)),
+          createCell(
+            markAI(
+              lead.eventBrief?.localStrengths || lead.localStrengthsWeaknesses,
+              'localStrengths',
+              aiFilledFields,
+            ),
+          ),
         ],
       }),
     ];
@@ -307,12 +375,12 @@ router.post('/export', async (req: Request, res: Response) => {
         rows: orgRows,
         width: { size: 100, type: WidthType.PERCENTAGE },
         columnWidths: [3000, 6000],
-      })
+      }),
     );
 
     // ===== BIDDING INFORMATION SECTION =====
     sections.push(createHeading('Bidding Information'));
-    
+
     const biddingRows: TableRow[] = [
       new TableRow({
         children: [
@@ -347,7 +415,10 @@ router.post('/export', async (req: Request, res: Response) => {
       new TableRow({
         children: [
           createCell('Host Responsibility', false, true),
-          createCell(lead.hostResponsibility || 'Organising Committee, responsible for selection of destination, venue and event plan'),
+          createCell(
+            lead.hostResponsibility ||
+              'Organising Committee, responsible for selection of destination, venue and event plan',
+          ),
         ],
       }),
     ];
@@ -357,12 +428,12 @@ router.post('/export', async (req: Request, res: Response) => {
         rows: biddingRows,
         width: { size: 100, type: WidthType.PERCENTAGE },
         columnWidths: [3000, 6000],
-      })
+      }),
     );
 
     // ===== OTHER INFORMATION SECTION =====
     sections.push(createHeading('Other Information'));
-    
+
     const otherRows: TableRow[] = [
       new TableRow({
         children: [
@@ -373,13 +444,25 @@ router.post('/export', async (req: Request, res: Response) => {
       new TableRow({
         children: [
           createCell('Layout Event', false, true),
-          createCell(markAI(lead.eventBrief?.layout || lead.layoutEvent || lead.eventLayout, 'layout', aiFilledFields)),
+          createCell(
+            markAI(
+              lead.eventBrief?.layout || lead.layoutEvent || lead.eventLayout,
+              'layout',
+              aiFilledFields,
+            ),
+          ),
         ],
       }),
       new TableRow({
         children: [
           createCell('Conference Registration', false, true),
-          createCell(markAI(lead.eventBrief?.conferenceRegistration || lead.conferenceRegistration, 'conferenceRegistration', aiFilledFields)),
+          createCell(
+            markAI(
+              lead.eventBrief?.conferenceRegistration || lead.conferenceRegistration,
+              'conferenceRegistration',
+              aiFilledFields,
+            ),
+          ),
         ],
       }),
       new TableRow({
@@ -397,7 +480,7 @@ router.post('/export', async (req: Request, res: Response) => {
             createCell('AI Research Summary', false, true),
             createCell(lead.researchSummary),
           ],
-        })
+        }),
       );
     }
 
@@ -406,7 +489,7 @@ router.post('/export', async (req: Request, res: Response) => {
         rows: otherRows,
         width: { size: 100, type: WidthType.PERCENTAGE },
         columnWidths: [3000, 6000],
-      })
+      }),
     );
 
     // AI Research Note
@@ -422,7 +505,7 @@ router.post('/export', async (req: Request, res: Response) => {
             }),
           ],
           spacing: { before: 400 },
-        })
+        }),
       );
     }
 
@@ -440,8 +523,14 @@ router.post('/export', async (req: Request, res: Response) => {
 
     // Set response headers for file download
     const fileName = `Event-Brief-${(lead.companyName || 'Event').replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().getFullYear()}.docx`;
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`);
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+    );
     res.setHeader('Content-Length', buffer.length.toString());
 
     console.log(`✅ [Export] Exporting Event Brief: ${fileName}`);

@@ -40,7 +40,7 @@ const getICCALeadsKnowledge = async (): Promise<string> => {
     const highPriorityLeads: Lead[] = [];
     const vietnamLeads: Lead[] = [];
 
-    leads.forEach(lead => {
+    leads.forEach((lead) => {
       // Group by industry
       const industry = lead.industry || 'Unknown';
       if (!byIndustry[industry]) byIndustry[industry] = [];
@@ -52,7 +52,10 @@ const getICCALeadsKnowledge = async (): Promise<string> => {
       byCountry[country].push(lead);
 
       // High priority: has Vietnam events or high delegate count
-      if (lead.vietnam_events > 0 || (lead.number_of_delegates && lead.number_of_delegates >= 300)) {
+      if (
+        lead.vietnam_events > 0 ||
+        (lead.number_of_delegates && lead.number_of_delegates >= 300)
+      ) {
         highPriorityLeads.push(lead);
       }
 
@@ -70,9 +73,11 @@ const getICCALeadsKnowledge = async (): Promise<string> => {
 
     // Industry breakdown
     knowledge += `Industry Distribution:\n`;
-    Object.entries(byIndustry).slice(0, 10).forEach(([industry, industryLeads]) => {
-      knowledge += `- ${industry}: ${industryLeads.length} leads\n`;
-    });
+    Object.entries(byIndustry)
+      .slice(0, 10)
+      .forEach(([industry, industryLeads]) => {
+        knowledge += `- ${industry}: ${industryLeads.length} leads\n`;
+      });
     knowledge += `\n`;
 
     // Country breakdown
@@ -104,7 +109,8 @@ const getICCALeadsKnowledge = async (): Promise<string> => {
       vietnamLeads.slice(0, 15).forEach((lead, idx) => {
         knowledge += `${idx + 1}. ${lead.company_name}`;
         knowledge += ` - ${lead.vietnam_events} Vietnam event(s)`;
-        if (lead.past_events_history) knowledge += ` - History: ${lead.past_events_history.substring(0, 100)}`;
+        if (lead.past_events_history)
+          knowledge += ` - History: ${lead.past_events_history.substring(0, 100)}`;
         if (lead.key_person_email) knowledge += ` - Email: ${lead.key_person_email}`;
         knowledge += `\n`;
       });
@@ -113,17 +119,18 @@ const getICCALeadsKnowledge = async (): Promise<string> => {
 
     // Key patterns and insights
     knowledge += `Key Patterns:\n`;
-    const avgDelegates = leads
-      .filter(l => l.number_of_delegates)
-      .reduce((sum, l) => sum + (l.number_of_delegates || 0), 0) / 
-      leads.filter(l => l.number_of_delegates).length || 0;
+    const avgDelegates =
+      leads
+        .filter((l) => l.number_of_delegates)
+        .reduce((sum, l) => sum + (l.number_of_delegates || 0), 0) /
+        leads.filter((l) => l.number_of_delegates).length || 0;
     if (avgDelegates > 0) {
       knowledge += `- Average delegate count: ${Math.round(avgDelegates)}\n`;
     }
     const totalVietnamEvents = leads.reduce((sum, l) => sum + l.vietnam_events, 0);
     knowledge += `- Total Vietnam events across all leads: ${totalVietnamEvents}\n`;
-    const leadsWithEmail = leads.filter(l => l.key_person_email).length;
-    knowledge += `- Leads with contact email: ${leadsWithEmail} (${Math.round(leadsWithEmail / leads.length * 100)}%)\n`;
+    const leadsWithEmail = leads.filter((l) => l.key_person_email).length;
+    knowledge += `- Leads with contact email: ${leadsWithEmail} (${Math.round((leadsWithEmail / leads.length) * 100)}%)\n`;
     knowledge += `\n`;
 
     knowledge += `=== END OF ICCA LEADS KNOWLEDGE BASE ===\n\n`;
@@ -144,7 +151,7 @@ const extractRetryDelay = (error: any): number | null => {
     if (retryMatch && retryMatch[1]) {
       return Math.ceil(parseFloat(retryMatch[1]));
     }
-    
+
     // Check error.details
     if (error.details) {
       for (const detail of error.details) {
@@ -157,7 +164,7 @@ const extractRetryDelay = (error: any): number | null => {
         }
       }
     }
-    
+
     // Check error.error.details (nested structure from Google API)
     if (error.error?.details) {
       for (const detail of error.error.details) {
@@ -170,7 +177,7 @@ const extractRetryDelay = (error: any): number | null => {
         }
       }
     }
-    
+
     // Try parsing from error.error.message
     if (error.error?.message) {
       const errorMsg = error.error.message;
@@ -189,7 +196,7 @@ const extractRetryDelay = (error: any): number | null => {
 router.post('/enrich', async (req: Request, res: Response) => {
   try {
     const { companyName, keyPerson, city } = req.body;
-    
+
     if (!companyName || companyName.trim() === '') {
       return res.status(400).json({ error: 'Company name is required' });
     }
@@ -197,7 +204,10 @@ router.post('/enrich', async (req: Request, res: Response) => {
     const ai = getAiClient();
     const modelId = 'gemini-2.5-flash-lite';
 
-    const keyPersonInfo = keyPerson && keyPerson.trim() ? `Key contact person: ${keyPerson}` : 'Key contact person: Not specified';
+    const keyPersonInfo =
+      keyPerson && keyPerson.trim()
+        ? `Key contact person: ${keyPerson}`
+        : 'Key contact person: Not specified';
     const cityInfo = city && city.trim() ? `Located in: ${city}` : 'Location: Not specified';
 
     const prompt = `DATA ENRICHMENT TASK FOR MICE ORGANIZATION
@@ -366,7 +376,10 @@ router.post('/draft-email', async (req: Request, res: Response) => {
     let result;
     try {
       const text = response.text || '';
-      const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const cleaned = text
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
       result = JSON.parse(cleaned);
     } catch (e) {
       console.error('JSON Parse Error', e);
@@ -888,7 +901,7 @@ If ANY of these fields is empty or incomplete, you MUST:
 
     console.log('🔵 [Gemini API] Strategic analysis request');
     console.log('📝 [Gemini API] Data length:', leadsData.length, 'characters');
-    
+
     const response = await ai.models.generateContent({
       model: modelId,
       contents: prompt,
@@ -912,4 +925,3 @@ If ANY of these fields is empty or incomplete, you MUST:
 });
 
 export default router;
-

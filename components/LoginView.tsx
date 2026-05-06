@@ -46,14 +46,14 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
 
   const handleLogin = async () => {
     if (!selectedUser) return;
-    
+
     try {
       const user = await usersApi.getByUsername(selectedUser);
       if (user) {
         onLogin(user);
       } else {
         // Fallback: try to find in local users array
-        const localUser = users.find(u => u.username === selectedUser);
+        const localUser = users.find((u) => u.username === selectedUser);
         if (localUser) {
           onLogin(localUser);
         } else {
@@ -63,7 +63,7 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
     } catch (err: any) {
       console.error('Error logging in:', err);
       // Fallback: try to find in local users array
-      const localUser = users.find(u => u.username === selectedUser);
+      const localUser = users.find((u) => u.username === selectedUser);
       if (localUser) {
         onLogin(localUser);
       } else {
@@ -108,15 +108,21 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
               <div className="text-xs mt-2 text-yellow-700 space-y-1">
                 {import.meta.env.DEV ? (
                   <p>
-                    Make sure the backend API is running: <code className="bg-yellow-100 px-1 rounded">npm run dev:api</code>
+                    Make sure the backend API is running:{' '}
+                    <code className="bg-yellow-100 px-1 rounded">npm run dev:api</code>
                     <br />
-                    <span className="text-yellow-600 italic">(App is using local data. You can dismiss this warning.)</span>
+                    <span className="text-yellow-600 italic">
+                      (App is using local data. You can dismiss this warning.)
+                    </span>
                   </p>
                 ) : (
                   <div className="space-y-1">
                     <p>In production, please check:</p>
                     <ul className="list-disc list-inside ml-2 space-y-0.5">
-                      <li>Backend API is deployed and accessible at <code className="bg-yellow-100 px-1 rounded">/api/v1</code></li>
+                      <li>
+                        Backend API is deployed and accessible at{' '}
+                        <code className="bg-yellow-100 px-1 rounded">/api/v1</code>
+                      </li>
                       <li>API routes are properly configured in Vercel</li>
                       <li>Database connection is working</li>
                     </ul>
@@ -132,15 +138,17 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
             </div>
           )}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Select User Role</label>
+            <label className="text-sm font-semibold text-slate-700 uppercase tracking-wide">
+              Select User Role
+            </label>
             <div className="relative">
-              <select 
+              <select
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
                 className="w-full p-3.5 pl-11 border-2 border-slate-200 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white text-slate-900 font-medium"
                 disabled={users.length === 0}
               >
-                {users.map(u => (
+                {users.map((u) => (
                   <option key={u.username} value={u.username}>
                     {u.name} — {u.role}
                   </option>
@@ -149,34 +157,20 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
               <Users className="absolute left-3.5 top-4 text-slate-400" size={18} />
             </div>
           </div>
-          
-          <button 
+
+          <button
             onClick={handleLogin}
             disabled={!selectedUser || users.length === 0}
             className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-lg shadow-blue-500/30 flex justify-center items-center"
           >
             Sign In <ChevronRight size={18} className="ml-2" />
           </button>
-          
+
           <div className="text-center text-xs text-slate-500 mt-4 font-medium">
-             🔒 Access is restricted to authorized personnel only.
+            🔒 Access is restricted to authorized personnel only.
           </div>
         </div>
       </div>
     </div>
   );
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-

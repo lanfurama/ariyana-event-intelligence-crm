@@ -62,7 +62,10 @@ export async function sendEventEmails(events: EventForEmail[]): Promise<EmailSen
     };
   }
 
-  const recipients = new Map<string, { event: EventForEmail; contact: ReturnType<typeof ContactExtractor.extractFromEvent> }>();
+  const recipients = new Map<
+    string,
+    { event: EventForEmail; contact: ReturnType<typeof ContactExtractor.extractFromEvent> }
+  >();
 
   events.forEach((event) => {
     const contact = ContactExtractor.extractFromEvent(event);
@@ -135,7 +138,7 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
     templates.map(async (template) => {
       const attachments = await EmailTemplateModel.getAttachments(template.id);
       return { ...template, attachments };
-    })
+    }),
   );
 
   for (const lead of leads) {
@@ -151,7 +154,10 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
       continue;
     }
 
-    const selectedTemplate = TemplateProcessor.selectTemplateForLead(lead, templatesWithAttachments);
+    const selectedTemplate = TemplateProcessor.selectTemplateForLead(
+      lead,
+      templatesWithAttachments,
+    );
     if (!selectedTemplate) {
       summary.failures.push({
         eventName: lead.company_name,
@@ -169,7 +175,9 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
       const html = bodyHtml + linksHtml;
       const text = EmailUtils.htmlToText(html);
 
-      const fileAttachments = AttachmentProcessor.extractFileAttachments(selectedTemplate.attachments);
+      const fileAttachments = AttachmentProcessor.extractFileAttachments(
+        selectedTemplate.attachments,
+      );
 
       const { messageId } = await MailSender.sendMail(transporter, {
         to: contact.email,
@@ -203,7 +211,7 @@ export async function sendLeadEmails(leads: LeadRow[]): Promise<EmailSendResult>
 
 export async function sendLeadEmailsWithCustomContent(
   leads: LeadRow[],
-  customEmails: CustomEmailContent[]
+  customEmails: CustomEmailContent[],
 ): Promise<EmailSendResult> {
   const summary: EmailSendResult = {
     attempted: 0,
@@ -231,7 +239,7 @@ export async function sendLeadEmailsWithCustomContent(
   }
 
   const emailMap = new Map<string, CustomEmailContent>();
-  customEmails.forEach(email => {
+  customEmails.forEach((email) => {
     emailMap.set(email.leadId, email);
   });
 
@@ -262,14 +270,17 @@ export async function sendLeadEmailsWithCustomContent(
 
     try {
       const textBody = EmailUtils.htmlToText(customEmail.body);
-      const emailAttachments = customEmail.attachments && customEmail.attachments.length > 0
-        ? AttachmentProcessor.convertToNodemailerFormat(customEmail.attachments)
-        : [];
+      const emailAttachments =
+        customEmail.attachments && customEmail.attachments.length > 0
+          ? AttachmentProcessor.convertToNodemailerFormat(customEmail.attachments)
+          : [];
 
       const ccAddresses = EmailUtils.parseCcAddresses(customEmail.cc);
       const totalSize = EmailUtils.calculateAttachmentsSize(emailAttachments);
 
-      console.log(`[sendLeadEmailsWithCustomContent] Sending email to ${contact.email} with ${emailAttachments.length} attachment(s), total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+      console.log(
+        `[sendLeadEmailsWithCustomContent] Sending email to ${contact.email} with ${emailAttachments.length} attachment(s), total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`,
+      );
 
       const { messageId } = await MailSender.sendMail(transporter, {
         to: contact.email,
@@ -307,11 +318,14 @@ export async function sendTestEmail(
   subject: string,
   body: string,
   attachments: Array<{ name: string; file_data: string; type?: string }> = [],
-  cc: string[] = []
+  cc: string[] = [],
 ): Promise<{ success: boolean; error?: string }> {
   const transporter = EmailTransporter.getInstance();
   if (!transporter) {
-    return { success: false, error: EmailTransporter.getInitError() ?? 'Email transport could not be initialized.' };
+    return {
+      success: false,
+      error: EmailTransporter.getInitError() ?? 'Email transport could not be initialized.',
+    };
   }
 
   if (!EmailUtils.isValidEmail(to)) {
@@ -323,7 +337,9 @@ export async function sendTestEmail(
     const emailAttachments = AttachmentProcessor.convertToNodemailerFormat(attachments);
     const totalSize = EmailUtils.calculateAttachmentsSize(emailAttachments);
 
-    console.log(`[sendTestEmail] Sending test email to ${to} with ${emailAttachments.length} attachment(s), total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+    console.log(
+      `[sendTestEmail] Sending test email to ${to} with ${emailAttachments.length} attachment(s), total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`,
+    );
 
     const startTime = Date.now();
     await MailSender.sendMail(transporter, {

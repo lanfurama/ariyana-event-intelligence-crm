@@ -100,7 +100,7 @@ async function loadRoutes() {
             console.error('    ❌ Failed to import:', relPath, importError.message);
             throw importError;
           }
-        })
+        }),
       );
 
       usersRouter = routes[0].default;
@@ -142,7 +142,10 @@ export function vitePluginApi(): Plugin {
 
       // CORS configuration
       const corsOptions = {
-        origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        origin: (
+          origin: string | undefined,
+          callback: (err: Error | null, allow?: boolean) => void,
+        ) => {
           if (!origin) return callback(null, true);
           const allowedOrigins = [
             'http://localhost:3000',
@@ -175,7 +178,7 @@ export function vitePluginApi(): Plugin {
           res.status(500).json({
             status: 'error',
             database: 'disconnected',
-            message: 'Database connection failed but API is running'
+            message: 'Database connection failed but API is running',
           });
         }
       });
@@ -218,12 +221,14 @@ export function vitePluginApi(): Plugin {
       });
 
       // Error handling middleware
-      app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-        console.error('API Error:', err);
-        res.status(err.status || 500).json({
-          error: err.message || 'Internal server error',
-        });
-      });
+      app.use(
+        (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+          console.error('API Error:', err);
+          res.status(err.status || 500).json({
+            error: err.message || 'Internal server error',
+          });
+        },
+      );
 
       // 404 handler for API routes (catch all unmatched routes)
       app.use((req, res) => {
@@ -272,4 +277,3 @@ export function vitePluginApi(): Plugin {
     },
   };
 }
-

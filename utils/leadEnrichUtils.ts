@@ -18,8 +18,7 @@ function isEmpty(value: string | undefined): boolean {
  */
 export function isLeadMissingPersonInfo(lead: Lead): boolean {
   const nameOk = !isEmpty(lead.keyPersonName);
-  const emailOk =
-    !isEmpty(lead.keyPersonEmail) && !isGenericEmail(lead.keyPersonEmail || '');
+  const emailOk = !isEmpty(lead.keyPersonEmail) && !isGenericEmail(lead.keyPersonEmail || '');
   const phoneOk = !isEmpty(lead.keyPersonPhone);
 
   return !nameOk || !emailOk || !phoneOk;
@@ -75,7 +74,7 @@ export function parseEnrichResponse(text: string): ParsedEnrichContact {
   if (!text || typeof text !== 'string') return result;
 
   const blockMatch = text.match(
-    /(?:###\s*)?\*\*(\d+\.\s*)?KEY PERSON CONTACT:\*\*[\s\S]*?(?=\n\n#{1,3}\s|\n\n\*\*|$)/i
+    /(?:###\s*)?\*\*(\d+\.\s*)?KEY PERSON CONTACT:\*\*[\s\S]*?(?=\n\n#{1,3}\s|\n\n\*\*|$)/i,
   );
   const block = blockMatch ? blockMatch[0] : text;
 

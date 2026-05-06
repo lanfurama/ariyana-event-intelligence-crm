@@ -29,10 +29,12 @@ export const calculateHistoryScore = (editions: any[]): number => {
 
   editions.forEach((edition: any) => {
     // ICCA format: COUNTRY, CITY are uppercase
-    const country = String(
-      edition.COUNTRY || edition.Country || edition.country || ''
-    ).toLowerCase().trim();
-    const city = String(edition.CITY || edition.City || edition.city || '').toLowerCase().trim();
+    const country = String(edition.COUNTRY || edition.Country || edition.country || '')
+      .toLowerCase()
+      .trim();
+    const city = String(edition.CITY || edition.City || edition.city || '')
+      .toLowerCase()
+      .trim();
 
     if (
       country === 'vietnam' ||
@@ -98,9 +100,9 @@ export const calculateRegionScore = (eventName: string, editions: any[]): number
     ];
 
     for (const edition of editions) {
-      const country = String(
-        edition.COUNTRY || edition.Country || edition.country || ''
-      ).toLowerCase().trim();
+      const country = String(edition.COUNTRY || edition.Country || edition.country || '')
+        .toLowerCase()
+        .trim();
       // Use exact match or check if country string equals or starts with Asian country name
       // This avoids false positives like "united kingdom" matching "kingdom"
       if (
@@ -153,10 +155,7 @@ export const isValidPhone = (phone: string): boolean => {
  * @param relatedContacts Related contacts from org_contacts sheet
  * @returns Score from 0-25
  */
-export const calculateContactScore = (
-  eventData: any,
-  relatedContacts: any[] = []
-): number => {
+export const calculateContactScore = (eventData: any, relatedContacts: any[] = []): number => {
   let hasEmail = false;
   let hasPhone = false;
   let hasName = false;
@@ -192,17 +191,10 @@ export const calculateContactScore = (
   if (!hasEmail || !hasPhone || !hasName) {
     relatedContacts.forEach((contact: any) => {
       const contactEmail =
-        contact.EMAIL ||
-        contact.Email ||
-        contact.email ||
-        contact.keyPersonEmail;
+        contact.EMAIL || contact.Email || contact.email || contact.keyPersonEmail;
       const contactPhone =
-        contact.PHONE ||
-        contact.Phone ||
-        contact.phone ||
-        contact.keyPersonPhone;
-      const contactName =
-        contact.NAME || contact.Name || contact.name || contact.keyPersonName;
+        contact.PHONE || contact.Phone || contact.phone || contact.keyPersonPhone;
+      const contactName = contact.NAME || contact.Name || contact.name || contact.keyPersonName;
 
       if (contactEmail && isValidEmail(String(contactEmail))) hasEmail = true;
       if (contactPhone && isValidPhone(String(contactPhone))) hasPhone = true;

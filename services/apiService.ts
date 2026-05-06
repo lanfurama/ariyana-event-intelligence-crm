@@ -1,4 +1,13 @@
-import type { User, Lead, EmailTemplate, EmailLog, EmailLogAttachment, EmailReply, LeadWithEmailCount, ChatMessage } from '../types';
+import type {
+  User,
+  Lead,
+  EmailTemplate,
+  EmailLog,
+  EmailLogAttachment,
+  EmailReply,
+  LeadWithEmailCount,
+  ChatMessage,
+} from '../types';
 
 // Always use relative path /api/v1 - works in both dev and production
 // In development, Vite proxy will forward /api/v1 requests to backend
@@ -27,14 +36,22 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const responseText = await response.text();
 
     // Check if response is HTML (usually means proxy failed or route not found)
-    if (contentType.includes('text/html') || responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+    if (
+      contentType.includes('text/html') ||
+      responseText.trim().startsWith('<!DOCTYPE') ||
+      responseText.trim().startsWith('<html')
+    ) {
       console.error(`❌ API returned HTML instead of JSON:`, responseText.substring(0, 200));
 
       const isDev = import.meta.env.DEV;
       if (isDev) {
-        throw new Error(`API server returned HTML. Make sure backend is running or check API configuration.`);
+        throw new Error(
+          `API server returned HTML. Make sure backend is running or check API configuration.`,
+        );
       } else {
-        throw new Error(`API server returned HTML. Please ensure the backend API is deployed and accessible.`);
+        throw new Error(
+          `API server returned HTML. Please ensure the backend API is deployed and accessible.`,
+        );
       }
     }
 
@@ -44,12 +61,19 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
       responseData = JSON.parse(responseText);
     } catch (parseError: any) {
       // If JSON parse fails, log the response
-      console.error(`❌ Failed to parse JSON response (${contentType}):`, responseText.substring(0, 200));
+      console.error(
+        `❌ Failed to parse JSON response (${contentType}):`,
+        responseText.substring(0, 200),
+      );
       const isDev = import.meta.env.DEV;
       if (isDev) {
-        throw new Error(`Cannot parse API response as JSON. Backend may not be running or returned invalid response.`);
+        throw new Error(
+          `Cannot parse API response as JSON. Backend may not be running or returned invalid response.`,
+        );
       } else {
-        throw new Error(`Cannot parse API response as JSON. Please ensure the backend API is deployed and accessible.`);
+        throw new Error(
+          `Cannot parse API response as JSON. Please ensure the backend API is deployed and accessible.`,
+        );
       }
     }
 
@@ -65,9 +89,13 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
     if (error.message && error.message.includes('JSON')) {
       const isDev = import.meta.env.DEV;
       if (isDev) {
-        throw new Error(`Cannot parse API response. API may not be configured correctly. Check console for details.`);
+        throw new Error(
+          `Cannot parse API response. API may not be configured correctly. Check console for details.`,
+        );
       } else {
-        throw new Error(`Cannot parse API response. Please ensure the backend API is deployed and accessible.`);
+        throw new Error(
+          `Cannot parse API response. Please ensure the backend API is deployed and accessible.`,
+        );
       }
     }
 
@@ -79,9 +107,13 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
       // More helpful error message
       const isDev = import.meta.env.DEV;
       if (isDev) {
-        throw new Error(`Cannot connect to API server at ${API_BASE_URL}. Check if API is properly configured in Vite dev server.`);
+        throw new Error(
+          `Cannot connect to API server at ${API_BASE_URL}. Check if API is properly configured in Vite dev server.`,
+        );
       } else {
-        throw new Error(`Cannot connect to API server at ${API_BASE_URL}. Please ensure the backend API is deployed and accessible.`);
+        throw new Error(
+          `Cannot connect to API server at ${API_BASE_URL}. Please ensure the backend API is deployed and accessible.`,
+        );
       }
     }
     // Re-throw other errors
@@ -93,17 +125,20 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
 export const usersApi = {
   getAll: () => apiCall<User[]>('/users'),
   getByUsername: (username: string) => apiCall<User>(`/users/${username}`),
-  create: (user: User) => apiCall<User>('/users', {
-    method: 'POST',
-    body: JSON.stringify(user),
-  }),
-  update: (username: string, user: Partial<User>) => apiCall<User>(`/users/${username}`, {
-    method: 'PUT',
-    body: JSON.stringify(user),
-  }),
-  delete: (username: string) => apiCall<void>(`/users/${username}`, {
-    method: 'DELETE',
-  }),
+  create: (user: User) =>
+    apiCall<User>('/users', {
+      method: 'POST',
+      body: JSON.stringify(user),
+    }),
+  update: (username: string, user: Partial<User>) =>
+    apiCall<User>(`/users/${username}`, {
+      method: 'PUT',
+      body: JSON.stringify(user),
+    }),
+  delete: (username: string) =>
+    apiCall<void>(`/users/${username}`, {
+      method: 'DELETE',
+    }),
 };
 
 // Leads API
@@ -118,29 +153,47 @@ export const leadsApi = {
     return apiCall<Lead[]>(`/leads${query ? `?${query}` : ''}`);
   },
   getById: (id: string) => apiCall<Lead>(`/leads/${id}`),
-  getStats: () => apiCall<{ total: number; byStatus: Record<string, number>; byIndustry: Record<string, number>; byCountry: Record<string, number> }>('/leads/stats'),
+  getStats: () =>
+    apiCall<{
+      total: number;
+      byStatus: Record<string, number>;
+      byIndustry: Record<string, number>;
+      byCountry: Record<string, number>;
+    }>('/leads/stats'),
   getWithEmailCount: (leadId?: string) => {
     const query = leadId ? `?leadId=${leadId}` : '';
     return apiCall<LeadWithEmailCount[]>(`/leads/with-email-count${query}`);
   },
-  create: (lead: Lead) => apiCall<Lead>('/leads', {
-    method: 'POST',
-    body: JSON.stringify(lead),
-  }),
-  update: (id: string, lead: Partial<Lead>) => apiCall<Lead>(`/leads/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(lead),
-  }),
-  delete: (id: string) => apiCall<void>(`/leads/${id}`, {
-    method: 'DELETE',
-  }),
-  sendEmails: (leadIds: string[], emails?: Array<{ leadId: string; subject: string; body: string }>) => {
+  create: (lead: Lead) =>
+    apiCall<Lead>('/leads', {
+      method: 'POST',
+      body: JSON.stringify(lead),
+    }),
+  update: (id: string, lead: Partial<Lead>) =>
+    apiCall<Lead>(`/leads/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(lead),
+    }),
+  delete: (id: string) =>
+    apiCall<void>(`/leads/${id}`, {
+      method: 'DELETE',
+    }),
+  sendEmails: (
+    leadIds: string[],
+    emails?: Array<{ leadId: string; subject: string; body: string }>,
+  ) => {
     return apiCall<{ success: boolean; summary: any; updatedLeads: Lead[] }>('/leads/send-emails', {
       method: 'POST',
       body: JSON.stringify({ leadIds, emails }),
     });
   },
-  sendEmail: (leadId: string, subject: string, body: string, cc?: string, attachments?: Array<{ name: string; file_data: string; type: string }>) => {
+  sendEmail: (
+    leadId: string,
+    subject: string,
+    body: string,
+    cc?: string,
+    attachments?: Array<{ name: string; file_data: string; type: string }>,
+  ) => {
     return apiCall<{ success: boolean; summary: any; updatedLead?: Lead }>('/leads/send-email', {
       method: 'POST',
       body: JSON.stringify({ leadId, subject, body, cc, attachments }),
@@ -153,7 +206,7 @@ export const emailTemplatesApi = {
   getAll: async () => {
     const templates = await apiCall<any[]>('/email-templates');
     // Map lead_type to leadType for frontend, keep language & attachments
-    return templates.map(t => ({
+    return templates.map((t) => ({
       ...t,
       leadType: t.lead_type,
       language: t.language || '',
@@ -206,10 +259,17 @@ export const emailTemplatesApi = {
       attachments: result.attachments || [],
     };
   },
-  delete: (id: string) => apiCall<void>(`/email-templates/${id}`, {
-    method: 'DELETE',
-  }),
-  sendTest: (to: string, subject: string, body: string, attachments?: Array<{ name: string; file_data: string; type?: string }>, cc?: string[]) =>
+  delete: (id: string) =>
+    apiCall<void>(`/email-templates/${id}`, {
+      method: 'DELETE',
+    }),
+  sendTest: (
+    to: string,
+    subject: string,
+    body: string,
+    attachments?: Array<{ name: string; file_data: string; type?: string }>,
+    cc?: string[],
+  ) =>
     apiCall<{ success: boolean }>('/email-templates/send-test', {
       method: 'POST',
       body: JSON.stringify({ to, subject, body, attachments: attachments || [], cc: cc || [] }),
@@ -223,25 +283,34 @@ export const emailLogsApi = {
     return apiCall<EmailLog[]>(`/email-logs${query}`);
   },
   getById: (id: string) => apiCall<EmailLog>(`/email-logs/${id}`),
-  create: (emailLog: EmailLog) => apiCall<EmailLog>('/email-logs', {
-    method: 'POST',
-    body: JSON.stringify(emailLog),
-  }),
-  update: (id: string, emailLog: Partial<EmailLog>) => apiCall<EmailLog>(`/email-logs/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(emailLog),
-  }),
-  delete: (id: string) => apiCall<void>(`/email-logs/${id}`, {
-    method: 'DELETE',
-  }),
-  getAttachments: (emailLogId: string) => apiCall<EmailLogAttachment[]>(`/email-logs/${emailLogId}/attachments`),
-  createAttachment: (emailLogId: string, attachment: Omit<EmailLogAttachment, 'id' | 'created_at'>) => apiCall<EmailLogAttachment>(`/email-logs/${emailLogId}/attachments`, {
-    method: 'POST',
-    body: JSON.stringify(attachment),
-  }),
-  deleteAttachment: (attachmentId: number) => apiCall<void>(`/email-logs/attachments/${attachmentId}`, {
-    method: 'DELETE',
-  }),
+  create: (emailLog: EmailLog) =>
+    apiCall<EmailLog>('/email-logs', {
+      method: 'POST',
+      body: JSON.stringify(emailLog),
+    }),
+  update: (id: string, emailLog: Partial<EmailLog>) =>
+    apiCall<EmailLog>(`/email-logs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(emailLog),
+    }),
+  delete: (id: string) =>
+    apiCall<void>(`/email-logs/${id}`, {
+      method: 'DELETE',
+    }),
+  getAttachments: (emailLogId: string) =>
+    apiCall<EmailLogAttachment[]>(`/email-logs/${emailLogId}/attachments`),
+  createAttachment: (
+    emailLogId: string,
+    attachment: Omit<EmailLogAttachment, 'id' | 'created_at'>,
+  ) =>
+    apiCall<EmailLogAttachment>(`/email-logs/${emailLogId}/attachments`, {
+      method: 'POST',
+      body: JSON.stringify(attachment),
+    }),
+  deleteAttachment: (attachmentId: number) =>
+    apiCall<void>(`/email-logs/attachments/${attachmentId}`, {
+      method: 'DELETE',
+    }),
 };
 
 // Email Replies API
@@ -254,24 +323,32 @@ export const emailRepliesApi = {
     return apiCall<EmailReply[]>(`/email-replies${query ? `?${query}` : ''}`);
   },
   getById: (id: string) => apiCall<EmailReply>(`/email-replies/${id}`),
-  create: (leadId: string) => apiCall<EmailReply>('/email-replies', {
-    method: 'POST',
-    body: JSON.stringify({ leadId }),
-  }),
-  checkInbox: (options?: { since?: string; maxEmails?: number; subjectFilter?: string }) => apiCall<{ success: boolean; processedCount: number; message: string }>('/email-replies/check-inbox', {
-    method: 'POST',
-    body: JSON.stringify(options || {}),
-  }),
+  create: (leadId: string) =>
+    apiCall<EmailReply>('/email-replies', {
+      method: 'POST',
+      body: JSON.stringify({ leadId }),
+    }),
+  checkInbox: (options?: { since?: string; maxEmails?: number; subjectFilter?: string }) =>
+    apiCall<{ success: boolean; processedCount: number; message: string }>(
+      '/email-replies/check-inbox',
+      {
+        method: 'POST',
+        body: JSON.stringify(options || {}),
+      },
+    ),
   countBySubject: (subjectFilter: string, options?: { since?: string; includeRead?: boolean }) => {
     const params = new URLSearchParams();
     params.append('subject', subjectFilter);
     if (options?.since) params.append('since', options.since);
     if (options?.includeRead) params.append('includeRead', 'true');
-    return apiCall<{ success: boolean; count: number; subjectFilter: string; message: string }>(`/email-replies/count-by-subject?${params.toString()}`);
+    return apiCall<{ success: boolean; count: number; subjectFilter: string; message: string }>(
+      `/email-replies/count-by-subject?${params.toString()}`,
+    );
   },
-  delete: (id: string) => apiCall<void>(`/email-replies/${id}`, {
-    method: 'DELETE',
-  }),
+  delete: (id: string) =>
+    apiCall<void>(`/email-replies/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // Chat Messages API
@@ -286,56 +363,63 @@ export interface ChatMessageDB {
 
 export const chatMessagesApi = {
   getByUsername: (username: string) => apiCall<ChatMessageDB[]>(`/chat-messages/${username}`),
-  create: (message: ChatMessageDB) => apiCall<ChatMessageDB>('/chat-messages', {
-    method: 'POST',
-    body: JSON.stringify(message),
-  }),
-  deleteByUsername: (username: string) => apiCall<void>(`/chat-messages/${username}`, {
-    method: 'DELETE',
-  }),
-  deleteById: (id: string) => apiCall<void>(`/chat-messages/message/${id}`, {
-    method: 'DELETE',
-  }),
+  create: (message: ChatMessageDB) =>
+    apiCall<ChatMessageDB>('/chat-messages', {
+      method: 'POST',
+      body: JSON.stringify(message),
+    }),
+  deleteByUsername: (username: string) =>
+    apiCall<void>(`/chat-messages/${username}`, {
+      method: 'DELETE',
+    }),
+  deleteById: (id: string) =>
+    apiCall<void>(`/chat-messages/message/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // Lead Scoring API
 export const leadScoringApi = {
-  calculateScore: (leadId: string) => apiCall<{
-    success: boolean;
-    leadId: string;
-    score: number;
-    factors: {
-      emailEngagement: number;
-      eventHistory: number;
-      contactQuality: number;
-      companySize: number;
-    };
-    reasoning: string;
-  }>(`/lead-scoring/${leadId}/calculate`, { method: 'POST' }),
+  calculateScore: (leadId: string) =>
+    apiCall<{
+      success: boolean;
+      leadId: string;
+      score: number;
+      factors: {
+        emailEngagement: number;
+        eventHistory: number;
+        contactQuality: number;
+        companySize: number;
+      };
+      reasoning: string;
+    }>(`/lead-scoring/${leadId}/calculate`, { method: 'POST' }),
 
-  batchCalculate: (leadIds: string[]) => apiCall<{
-    success: boolean;
-    total: number;
-    scores: Record<string, number>;
-  }>('/lead-scoring/batch', {
-    method: 'POST',
-    body: JSON.stringify({ leadIds }),
-  }),
+  batchCalculate: (leadIds: string[]) =>
+    apiCall<{
+      success: boolean;
+      total: number;
+      scores: Record<string, number>;
+    }>('/lead-scoring/batch', {
+      method: 'POST',
+      body: JSON.stringify({ leadIds }),
+    }),
 
-  getTopScored: (limit: number = 10) => apiCall<{
-    success: boolean;
-    leads: Lead[];
-  }>(`/lead-scoring/top?limit=${limit}`),
+  getTopScored: (limit: number = 10) =>
+    apiCall<{
+      success: boolean;
+      leads: Lead[];
+    }>(`/lead-scoring/top?limit=${limit}`),
 
-  getDistribution: () => apiCall<{
-    success: boolean;
-    distribution: {
-      high: number;
-      medium: number;
-      low: number;
-      unscored: number;
-    };
-  }>('/lead-scoring/distribution'),
+  getDistribution: () =>
+    apiCall<{
+      success: boolean;
+      distribution: {
+        high: number;
+        medium: number;
+        low: number;
+        unscored: number;
+      };
+    }>('/lead-scoring/distribution'),
 };
 
 // Email Reports API
@@ -374,9 +458,8 @@ export interface EmailReportsLog {
 }
 
 export const emailReportsApi = {
-  getAll: (enabledOnly?: boolean) => apiCall<EmailReportsConfig[]>(
-    `/email-reports/config${enabledOnly ? '?enabled=true' : ''}`
-  ),
+  getAll: (enabledOnly?: boolean) =>
+    apiCall<EmailReportsConfig[]>(`/email-reports/config${enabledOnly ? '?enabled=true' : ''}`),
   getById: (id: string) => apiCall<EmailReportsConfig>(`/email-reports/config/${id}`),
   create: (config: Omit<EmailReportsConfig, 'id' | 'created_at' | 'updated_at' | 'last_sent_at'>) =>
     apiCall<EmailReportsConfig>('/email-reports/config', {
@@ -402,7 +485,6 @@ export const emailReportsApi = {
     }),
   getLogs: (configId?: string, limit?: number) =>
     apiCall<EmailReportsLog[]>(
-      `/email-reports/logs${configId ? `?config_id=${configId}` : ''}${limit ? `${configId ? '&' : '?'}limit=${limit}` : ''}`
+      `/email-reports/logs${configId ? `?config_id=${configId}` : ''}${limit ? `${configId ? '&' : '?'}limit=${limit}` : ''}`,
     ),
 };
-

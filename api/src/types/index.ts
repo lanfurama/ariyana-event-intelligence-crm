@@ -150,4 +150,3 @@ export interface EventBrief {
   opportunityScore?: number;
   iccaQualified?: string;
 }
-

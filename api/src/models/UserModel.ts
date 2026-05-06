@@ -17,7 +17,7 @@ export class UserModel {
       `INSERT INTO users (username, name, role, avatar) 
        VALUES ($1, $2, $3, $4) 
        RETURNING *`,
-      [user.username, user.name, user.role, user.avatar || null]
+      [user.username, user.name, user.role, user.avatar || null],
     );
     return result.rows[0];
   }
@@ -47,7 +47,7 @@ export class UserModel {
     values.push(username);
     const result = await query(
       `UPDATE users SET ${fields.join(', ')} WHERE username = $${paramCount} RETURNING *`,
-      values
+      values,
     );
     return result.rows[0] || null;
   }
@@ -57,4 +57,3 @@ export class UserModel {
     return (result.rowCount ?? 0) > 0;
   }
 }
-

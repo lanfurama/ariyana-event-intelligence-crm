@@ -27,25 +27,29 @@ export const ScoringCriteriaPanel: React.FC<ScoringCriteriaPanelProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => onCriteriaChange({
-              history: true,
-              region: true,
-              contact: true,
-              delegates: true,
-              iccaQualification: true
-            })}
+            onClick={() =>
+              onCriteriaChange({
+                history: true,
+                region: true,
+                contact: true,
+                delegates: true,
+                iccaQualification: true,
+              })
+            }
             className="px-2.5 py-1 text-xs font-medium text-white bg-indigo-600 rounded"
           >
             All On
           </button>
           <button
-            onClick={() => onCriteriaChange({
-              history: false,
-              region: false,
-              contact: false,
-              delegates: false,
-              iccaQualification: false
-            })}
+            onClick={() =>
+              onCriteriaChange({
+                history: false,
+                region: false,
+                contact: false,
+                delegates: false,
+                iccaQualification: false,
+              })
+            }
             className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded"
           >
             All Off
@@ -93,7 +97,9 @@ export const ScoringCriteriaPanel: React.FC<ScoringCriteriaPanelProps> = ({
           <input
             type="checkbox"
             checked={scoringCriteria.iccaQualification}
-            onChange={(e) => onCriteriaChange({ ...scoringCriteria, iccaQualification: e.target.checked })}
+            onChange={(e) =>
+              onCriteriaChange({ ...scoringCriteria, iccaQualification: e.target.checked })
+            }
             className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
           />
           <span className="text-xs font-medium text-slate-700">ICCA Qual</span>

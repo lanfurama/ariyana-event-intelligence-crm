@@ -26,23 +26,16 @@ export interface UseLeadsNeedingEnrichOptions {
   onUpdateLead?: (updated: Lead) => Promise<void>;
 }
 
-export function useLeadsNeedingEnrich(
-  leads: Lead[],
-  _options: UseLeadsNeedingEnrichOptions = {}
-) {
+export function useLeadsNeedingEnrich(leads: Lead[], _options: UseLeadsNeedingEnrichOptions = {}) {
   const [enrichingIds, setEnrichingIds] = useState<Set<string>>(new Set());
   const [enrichError, setEnrichError] = useState<string | null>(null);
 
-  const leadsNeedingEnrich = useMemo(
-    () => {
-      return leads.filter((lead) => {
-        const emailOk =
-          !isEmpty(lead.keyPersonEmail) && !isGenericEmail(lead.keyPersonEmail || '');
-        return !emailOk; // Only show leads without email
-      });
-    },
-    [leads]
-  );
+  const leadsNeedingEnrich = useMemo(() => {
+    return leads.filter((lead) => {
+      const emailOk = !isEmpty(lead.keyPersonEmail) && !isGenericEmail(lead.keyPersonEmail || '');
+      return !emailOk; // Only show leads without email
+    });
+  }, [leads]);
 
   /** Only fetches and parses; does NOT write to database. Sync happens on user confirm. */
   const enrichLead = useCallback(async (lead: Lead): Promise<EnrichResult> => {

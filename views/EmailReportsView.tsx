@@ -145,7 +145,10 @@ export const EmailReportsView = () => {
       return;
     }
 
-    if (formData.frequency === 'monthly' && (formData.day_of_month < 1 || formData.day_of_month > 28)) {
+    if (
+      formData.frequency === 'monthly' &&
+      (formData.day_of_month < 1 || formData.day_of_month > 28)
+    ) {
       alert('Ngày trong tháng phải từ 1 đến 28');
       return;
     }
@@ -162,8 +165,12 @@ export const EmailReportsView = () => {
     }
 
     // Validate at least one include option
-    if (!formData.include_stats && !formData.include_new_leads && 
-        !formData.include_email_activity && !formData.include_top_leads) {
+    if (
+      !formData.include_stats &&
+      !formData.include_new_leads &&
+      !formData.include_email_activity &&
+      !formData.include_top_leads
+    ) {
       alert('Vui lòng chọn ít nhất một phần để bao gồm trong báo cáo');
       return;
     }
@@ -244,10 +251,14 @@ export const EmailReportsView = () => {
 
   const getFrequencyLabel = (freq: string) => {
     switch (freq) {
-      case 'daily': return 'Hàng Ngày';
-      case 'weekly': return 'Hàng Tuần';
-      case 'monthly': return 'Hàng Tháng';
-      default: return freq;
+      case 'daily':
+        return 'Hàng Ngày';
+      case 'weekly':
+        return 'Hàng Tuần';
+      case 'monthly':
+        return 'Hàng Tháng';
+      default:
+        return freq;
     }
   };
 
@@ -286,8 +297,12 @@ export const EmailReportsView = () => {
     <div className="p-6 min-h-screen flex flex-col space-y-5">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Cấu hình Email Reports</h2>
-          <p className="text-sm text-slate-600 mt-1">Quản lý cấu hình tự động gửi báo cáo email cho manager</p>
+          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">
+            Cấu hình Email Reports
+          </h2>
+          <p className="text-sm text-slate-600 mt-1">
+            Quản lý cấu hình tự động gửi báo cáo email cho manager
+          </p>
         </div>
         <button
           onClick={handleCreate}
@@ -301,7 +316,9 @@ export const EmailReportsView = () => {
         <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
           <Mail className="text-slate-300 mx-auto mb-3" size={48} />
           <p className="text-slate-700 font-medium">Chưa có cấu hình email reports</p>
-          <p className="text-slate-500 text-sm mt-1">Tạo cấu hình đầu tiên để bắt đầu nhận báo cáo tự động</p>
+          <p className="text-slate-500 text-sm mt-1">
+            Tạo cấu hình đầu tiên để bắt đầu nhận báo cáo tự động
+          </p>
           <button
             onClick={handleCreate}
             className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center hover:bg-indigo-700"
@@ -316,7 +333,9 @@ export const EmailReportsView = () => {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-bold text-slate-900">{config.recipient_name || config.recipient_email}</h3>
+                    <h3 className="text-lg font-bold text-slate-900">
+                      {config.recipient_name || config.recipient_email}
+                    </h3>
                     {config.enabled ? (
                       <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold flex items-center">
                         <CheckCircle size={12} className="mr-1" /> Enabled
@@ -328,16 +347,20 @@ export const EmailReportsView = () => {
                     )}
                   </div>
                   <p className="text-sm text-slate-600 mb-3">{config.recipient_email}</p>
-                  
+
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="text-slate-500">Frequency:</span>
-                      <p className="font-semibold text-slate-900">{getFrequencyLabel(config.frequency)}</p>
+                      <p className="font-semibold text-slate-900">
+                        {getFrequencyLabel(config.frequency)}
+                      </p>
                     </div>
                     {config.frequency === 'weekly' && (
                       <div>
                         <span className="text-slate-500">Day:</span>
-                        <p className="font-semibold text-slate-900">{getDayOfWeekLabel(config.day_of_week || 0)}</p>
+                        <p className="font-semibold text-slate-900">
+                          {getDayOfWeekLabel(config.day_of_week || 0)}
+                        </p>
                       </div>
                     )}
                     {config.frequency === 'monthly' && (
@@ -349,14 +372,17 @@ export const EmailReportsView = () => {
                     <div>
                       <span className="text-slate-500">Time:</span>
                       <p className="font-semibold text-slate-900">
-                        {String(config.time_hour).padStart(2, '0')}:{String(config.time_minute).padStart(2, '0')}
+                        {String(config.time_hour).padStart(2, '0')}:
+                        {String(config.time_minute).padStart(2, '0')}
                       </p>
                     </div>
                     {config.last_sent_at && (
                       <div>
                         <span className="text-slate-500">Last Sent:</span>
                         <p className="font-semibold text-slate-900">
-                          {config.last_sent_at ? new Date(config.last_sent_at).toLocaleDateString('vi-VN') : 'Never'}
+                          {config.last_sent_at
+                            ? new Date(config.last_sent_at).toLocaleDateString('vi-VN')
+                            : 'Never'}
                         </p>
                       </div>
                     )}
@@ -364,13 +390,19 @@ export const EmailReportsView = () => {
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     {config.include_stats && (
-                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">Stats</span>
+                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                        Stats
+                      </span>
                     )}
                     {config.include_new_leads && (
-                      <span className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium">New Leads</span>
+                      <span className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium">
+                        New Leads
+                      </span>
                     )}
                     {config.include_email_activity && (
-                      <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium">Email Activity</span>
+                      <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium">
+                        Email Activity
+                      </span>
                     )}
                     {config.include_top_leads && (
                       <span className="px-2 py-1 bg-orange-50 text-orange-700 rounded text-xs font-medium">
@@ -380,13 +412,13 @@ export const EmailReportsView = () => {
                   </div>
                 </div>
 
-                  <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 ml-4">
                   <button
                     onClick={() => handleToggleEnabled(config)}
                     disabled={toggling === config.id}
                     className={`p-2 rounded-lg disabled:opacity-50 ${
-                      config.enabled 
-                        ? 'bg-green-50 text-green-600 hover:bg-green-100' 
+                      config.enabled
+                        ? 'bg-green-50 text-green-600 hover:bg-green-100'
                         : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                     }`}
                     title={config.enabled ? 'Tắt cấu hình' : 'Bật cấu hình'}
@@ -444,7 +476,7 @@ export const EmailReportsView = () => {
                       Làm mới
                     </button>
                   </div>
-                  {!logs || logs.filter(log => log.config_id === config.id).length === 0 ? (
+                  {!logs || logs.filter((log) => log.config_id === config.id).length === 0 ? (
                     <div className="text-center py-6">
                       <Clock className="text-slate-300 mx-auto mb-2" size={24} />
                       <p className="text-sm text-slate-500">Chưa có logs</p>
@@ -452,10 +484,13 @@ export const EmailReportsView = () => {
                   ) : (
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                       {logs
-                        .filter(log => log && log.config_id === config.id)
+                        .filter((log) => log && log.config_id === config.id)
                         .slice(0, 20)
                         .map((log) => (
-                          <div key={log.id} className="flex items-start justify-between p-3 bg-slate-50 rounded-lg text-sm border border-slate-200">
+                          <div
+                            key={log.id}
+                            className="flex items-start justify-between p-3 bg-slate-50 rounded-lg text-sm border border-slate-200"
+                          >
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 {log.status === 'sent' ? (
@@ -464,23 +499,30 @@ export const EmailReportsView = () => {
                                   <XCircle size={16} className="text-red-600" />
                                 )}
                                 <span className="font-semibold text-slate-900">
-                                  {log.sent_at ? new Date(log.sent_at).toLocaleString('vi-VN', {
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  }) : 'N/A'}
+                                  {log.sent_at
+                                    ? new Date(log.sent_at).toLocaleString('vi-VN', {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })
+                                    : 'N/A'}
                                 </span>
                                 <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
-                                  {log.report_type === 'daily' ? 'Hàng ngày' : 
-                                   log.report_type === 'weekly' ? 'Hàng tuần' : 
-                                   log.report_type === 'monthly' ? 'Hàng tháng' : 'N/A'}
+                                  {log.report_type === 'daily'
+                                    ? 'Hàng ngày'
+                                    : log.report_type === 'weekly'
+                                      ? 'Hàng tuần'
+                                      : log.report_type === 'monthly'
+                                        ? 'Hàng tháng'
+                                        : 'N/A'}
                                 </span>
                               </div>
                               {log.period_start && log.period_end && (
                                 <p className="text-xs text-slate-500 ml-6 mb-1">
-                                  Kỳ: {new Date(log.period_start).toLocaleDateString('vi-VN')} - {new Date(log.period_end).toLocaleDateString('vi-VN')}
+                                  Kỳ: {new Date(log.period_start).toLocaleDateString('vi-VN')} -{' '}
+                                  {new Date(log.period_end).toLocaleDateString('vi-VN')}
                                 </p>
                               )}
                               {log.error_message && (
@@ -570,7 +612,9 @@ export const EmailReportsView = () => {
                   </label>
                   <select
                     value={formData.day_of_week}
-                    onChange={(e) => setFormData({ ...formData, day_of_week: parseInt(e.target.value) })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, day_of_week: parseInt(e.target.value) })
+                    }
                     className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="0">Chủ Nhật</option>
@@ -594,7 +638,9 @@ export const EmailReportsView = () => {
                     min="1"
                     max="28"
                     value={formData.day_of_month}
-                    onChange={(e) => setFormData({ ...formData, day_of_month: parseInt(e.target.value) || 1 })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, day_of_month: parseInt(e.target.value) || 1 })
+                    }
                     className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                   <p className="text-xs text-slate-500 mt-1">Chọn ngày từ 1 đến 28</p>
@@ -611,7 +657,9 @@ export const EmailReportsView = () => {
                     min="0"
                     max="23"
                     value={formData.time_hour}
-                    onChange={(e) => setFormData({ ...formData, time_hour: parseInt(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, time_hour: parseInt(e.target.value) || 0 })
+                    }
                     className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
@@ -624,7 +672,9 @@ export const EmailReportsView = () => {
                     min="0"
                     max="59"
                     value={formData.time_minute}
-                    onChange={(e) => setFormData({ ...formData, time_minute: parseInt(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, time_minute: parseInt(e.target.value) || 0 })
+                    }
                     className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
@@ -656,7 +706,9 @@ export const EmailReportsView = () => {
                     <input
                       type="checkbox"
                       checked={formData.include_stats}
-                      onChange={(e) => setFormData({ ...formData, include_stats: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, include_stats: e.target.checked })
+                      }
                       className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                     />
                     <span className="text-sm text-slate-700">Thống kê tổng quan</span>
@@ -665,7 +717,9 @@ export const EmailReportsView = () => {
                     <input
                       type="checkbox"
                       checked={formData.include_new_leads}
-                      onChange={(e) => setFormData({ ...formData, include_new_leads: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, include_new_leads: e.target.checked })
+                      }
                       className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                     />
                     <span className="text-sm text-slate-700">Tóm tắt Leads mới</span>
@@ -674,7 +728,9 @@ export const EmailReportsView = () => {
                     <input
                       type="checkbox"
                       checked={formData.include_email_activity}
-                      onChange={(e) => setFormData({ ...formData, include_email_activity: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, include_email_activity: e.target.checked })
+                      }
                       className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                     />
                     <span className="text-sm text-slate-700">Hoạt động Email</span>
@@ -683,7 +739,9 @@ export const EmailReportsView = () => {
                     <input
                       type="checkbox"
                       checked={formData.include_top_leads}
-                      onChange={(e) => setFormData({ ...formData, include_top_leads: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, include_top_leads: e.target.checked })
+                      }
                       className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                     />
                     <span className="text-sm text-slate-700">Top Leads</span>
@@ -701,7 +759,9 @@ export const EmailReportsView = () => {
                     min="1"
                     max="50"
                     value={formData.top_leads_count}
-                    onChange={(e) => setFormData({ ...formData, top_leads_count: parseInt(e.target.value) || 10 })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, top_leads_count: parseInt(e.target.value) || 10 })
+                    }
                     className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                   <p className="text-xs text-slate-500 mt-1">Từ 1 đến 50 leads</p>
@@ -716,7 +776,9 @@ export const EmailReportsView = () => {
                     onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
                     className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <span className="text-sm font-semibold text-slate-700">Kích hoạt cấu hình này</span>
+                  <span className="text-sm font-semibold text-slate-700">
+                    Kích hoạt cấu hình này
+                  </span>
                 </label>
               </div>
             </div>

@@ -11,7 +11,7 @@ export class ContactExtractor {
    */
   private static extractFirstMatchingValue(
     rawData: Record<string, any> | undefined,
-    keywords: string[]
+    keywords: string[],
   ): string | null {
     if (!rawData) return null;
 
@@ -26,7 +26,9 @@ export class ContactExtractor {
       }
 
       if (Array.isArray(value)) {
-        const firstString = value.find((item) => typeof item === 'string' && item.trim().length > 0);
+        const firstString = value.find(
+          (item) => typeof item === 'string' && item.trim().length > 0,
+        );
         if (firstString) {
           return firstString.trim();
         }
@@ -69,7 +71,13 @@ export class ContactExtractor {
 
     const organizationCandidate =
       event.organizationName ||
-      this.extractFirstMatchingValue(rawData, ['organization', 'organisation', 'association', 'company', 'host']);
+      this.extractFirstMatchingValue(rawData, [
+        'organization',
+        'organisation',
+        'association',
+        'company',
+        'host',
+      ]);
 
     return {
       email,

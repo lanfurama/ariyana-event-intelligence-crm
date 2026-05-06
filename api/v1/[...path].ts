@@ -29,7 +29,7 @@ const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     // Allow requests with no origin (like server-side requests)
     if (!origin) return callback(null, true);
-    
+
     const allowedOrigins = [
       'http://localhost:5173',
       'http://localhost:3000',
@@ -39,7 +39,7 @@ const corsOptions = {
       process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
       process.env.VERCEL ? `https://${process.env.VERCEL_URL}` : undefined,
     ].filter(Boolean);
-    
+
     // In production, allow same-origin requests
     if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
       callback(null, true);
@@ -64,10 +64,10 @@ app.get('/health', async (req, res) => {
     res.json({ status: 'ok', database: 'connected' });
   } catch (error) {
     console.error('Database health check failed:', error);
-    res.status(500).json({ 
-      status: 'error', 
+    res.status(500).json({
+      status: 'error',
       database: 'disconnected',
-      message: 'Database connection failed but API is running'
+      message: 'Database connection failed but API is running',
     });
   }
 });

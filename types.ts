@@ -77,7 +77,7 @@ export interface Lead {
   keyPersonEmail: string;
   keyPersonPhone: string;
   keyPersonLinkedIn: string;
-  
+
   // New enriched fields
   pastEventsHistory?: string;
   secondaryPersonName?: string;
@@ -91,12 +91,12 @@ export interface Lead {
   notes: string;
   status: 'New' | 'Contacted' | 'Qualified' | 'Won' | 'Lost';
   lastContacted?: string;
-  
+
   emailHistory?: EmailLog[];
-  
+
   // Event Brief - comprehensive event information
   eventBrief?: EventBrief;
-  
+
   // Analysis scores
   totalScore?: number;
   historyScore?: number;
@@ -107,11 +107,11 @@ export interface Lead {
   nextStepStrategy?: string;
   draftedEmail?: { subject: string; body: string };
   emailDrafted?: boolean;
-  
+
   // Lead Scoring
   leadScore?: number; // 0-100 AI-powered lead quality score
   lastScoreUpdate?: string; // ISO timestamp of last scoring
-  
+
   // Lead Type
   type?: string; // 'CORP' for Corporate partner leads, 'DMC' for Destination Management Company partner leads
 }

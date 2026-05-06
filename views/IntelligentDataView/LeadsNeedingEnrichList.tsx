@@ -18,9 +18,7 @@ export const LeadsNeedingEnrichList: React.FC<LeadsNeedingEnrichListProps> = ({
     return (
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-10 text-center">
         <Users size={48} className="mx-auto mb-3 text-slate-300" />
-        <h3 className="text-lg font-semibold text-slate-800 mb-1">
-          No leads need enrichment
-        </h3>
+        <h3 className="text-lg font-semibold text-slate-800 mb-1">No leads need enrichment</h3>
         <p className="text-sm text-slate-600 max-w-sm mx-auto">
           All leads have email filled. Add new leads without email in ICCA Leads to see them here.
         </p>
