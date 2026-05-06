@@ -3,8 +3,8 @@
 // sub-project #4. See STRICT_DEBT.md.
 import type React from 'react';
 import { useMemo } from 'react';
-import { X } from 'lucide-react';
 import { extractEventModalData } from './EventModal/eventModalData';
+import { ModalHeader } from './EventModal/ModalHeader';
 
 interface EventModalProps {
   event: {
@@ -30,34 +30,11 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 animate-fade-in">
-        {/* Modal Header */}
-        <div className="px-5 py-4 border-b border-slate-200 flex justify-between items-center bg-white">
-          <div className="flex-1">
-            <h2 className="text-xl font-semibold text-slate-900 mb-1">{event.name}</h2>
-            {event.dataQualityScore !== undefined && (
-              <div className="flex items-center space-x-2 mt-1">
-                <span className="text-xs text-slate-500">Data Quality:</span>
-                <span
-                  className={`text-xs font-medium px-2 py-0.5 rounded ${
-                    event.dataQualityScore >= 80
-                      ? 'bg-green-50 text-green-700 border border-green-200'
-                      : event.dataQualityScore >= 60
-                        ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
-                        : 'bg-red-50 text-red-700 border border-red-200'
-                  }`}
-                >
-                  {event.dataQualityScore}%
-                </span>
-              </div>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded hover:bg-slate-100 transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        <ModalHeader
+          eventName={event.name}
+          dataQualityScore={event.dataQualityScore}
+          onClose={onClose}
+        />
 
         {/* Modal Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
