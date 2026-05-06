@@ -69,15 +69,28 @@ View your app in AI Studio: https://ai.studio/apps/drive/1Yfs1wMDaCWebViQbPgpx_r
    npm run typecheck      # tsc --noEmit (root)
    npm run typecheck:api  # tsc --noEmit (api/)
    npm run build          # Production build
+   npm test               # Run all tests once
+   npm run test:watch     # Re-run tests on file changes
+   npm run test:coverage  # Run tests with coverage report
    ```
 
    The pre-commit hook runs `lint-staged` automatically (ESLint --fix +
    Prettier on staged files; blocks on lint errors). The pre-push hook
-   runs the full typecheck — this compensates for the absence of CI.
-   To bypass in an emergency: `--no-verify` (use sparingly).
+   runs `typecheck` + `typecheck:api` + `test` — this compensates for the
+   absence of CI. To bypass in an emergency: `--no-verify` (use sparingly).
 
    Some pre-existing tech debt is documented in `STRICT_DEBT.md`. Each
    entry is scheduled for a specific future sub-project.
+
+### Testing conventions
+
+- Co-located `*.test.ts` files next to the source they cover.
+- Mock at the module boundary (`vi.mock('pg')`, `vi.mock('@google/generative-ai')`, etc.).
+  Reusable mocks live in `tests/mocks/`; helpers in `tests/helpers/`.
+- Tests must run with no real DB, no real AI provider calls, no real SMTP/IMAP.
+  The pre-push hook runs `npm test` after typecheck — broken tests block push.
+- Component tests (React Testing Library) are deferred until sub-project #4
+  splits the god files.
 
 ### Security Notes:
 
