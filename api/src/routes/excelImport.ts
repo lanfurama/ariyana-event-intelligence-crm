@@ -504,6 +504,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
 
           eventsMap.set(nameKey, {
             name: organizationName,
+            // @ts-expect-error TODO(refactor): eventsMap value type inferred too narrowly; organizationName isn't part of the inferred shape. Fix when extracting types in sub-project #4 (excelImport is a god file).
             organizationName: organizationName,
             editions: allEditions, // Include linked editions from Editions sheet
             rawData: row, // Keep org row as primary rawData
@@ -536,6 +537,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
           : '';
       return {
         name: eventData.name,
+        // @ts-expect-error TODO(refactor): see eventsMap typing note above. Sub-project #4.
         organizationName: eventData.organizationName, // Organization name (different from event name)
         rawData: eventData.rawData,
         issues: eventData.issues,

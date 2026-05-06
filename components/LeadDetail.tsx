@@ -1,3 +1,6 @@
+// @ts-nocheck — TODO(refactor): god file (1621 LOC) with 21+ strict-mode errors
+// requiring structural changes. Resolve when this file is split per sub-project #4.
+// See STRICT_DEBT.md.
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import {

@@ -1,3 +1,9 @@
+export interface EmailLogAttachment {
+  name: string;
+  size: number;
+  type: string;
+}
+
 export interface EmailLog {
   id: string;
   lead_id?: string;
@@ -5,7 +11,11 @@ export interface EmailLog {
   subject: string;
   status: 'sent' | 'draft';
   message_id?: string;
-  attachments?: { name: string; size: number; type: string }[];
+  attachments?: EmailLogAttachment[];
+}
+
+export interface LeadWithEmailCount extends Lead {
+  emailCount?: number;
 }
 
 export interface EmailReply {

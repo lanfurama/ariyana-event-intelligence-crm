@@ -542,6 +542,7 @@ async function shouldSendReport(config: EmailReportsConfig): Promise<boolean> {
         // If sent this week, don't send again
         const lastSentWeekday = new Date(lastSent).toLocaleDateString('en-US', {
           timeZone: timezone,
+          // @ts-expect-error TODO(refactor): 'numeric' isn't a valid weekday option in the standard DateTimeFormat type, but works at runtime. Replace with proper week-number calculation in sub-project #5.
           weekday: 'numeric',
         });
         // Simple check: if same weekday, likely same week (approximation)

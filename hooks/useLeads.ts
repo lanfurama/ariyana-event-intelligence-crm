@@ -59,8 +59,11 @@ export const useLeads = (user: User | null) => {
       console.log('💾 Starting to save', newLeads.length, 'leads to database...');
       const existingLeads = await leadsApi.getAll();
       const existingLeadsMap = new Map<string, any>();
+      // Backend may return either camelCase (Lead type) or legacy snake_case rows.
+      // Cast to bridge both shapes — proper fix is unifying response shape (sub-project #5).
       existingLeads.forEach((l) => {
-        const key = l.company_name?.toLowerCase().trim();
+        const lAny = l as any;
+        const key = (lAny.companyName ?? lAny.company_name)?.toLowerCase().trim();
         if (key) existingLeadsMap.set(key, l);
       });
 
@@ -82,7 +85,7 @@ export const useLeads = (user: User | null) => {
             if (!existingKeyPersonEmail.trim() && importKeyPersonEmail.trim()) {
               console.log(`🔄 Updating key_person_email for existing lead: ${lead.companyName}`);
               await leadsApi.update(existingLead.id, {
-                key_person_email: importKeyPersonEmail.trim(),
+                keyPersonEmail: importKeyPersonEmail.trim(),
               });
               updatedCount++;
             } else {

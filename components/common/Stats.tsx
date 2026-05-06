@@ -192,7 +192,7 @@ export const CountryPieChart = ({ data }: { data: { name: string; count: number 
                 strokeWidth={strokeWidth}
                 className="hover:opacity-80 transition-opacity cursor-pointer"
               />
-              {segment.percentage > 3 && (
+              {parseFloat(segment.percentage) > 3 && (
                 <text
                   x={centerX + radius * 0.6 * Math.cos((segment.midAngle * Math.PI) / 180)}
                   y={centerY + radius * 0.6 * Math.sin((segment.midAngle * Math.PI) / 180)}

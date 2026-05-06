@@ -55,12 +55,12 @@ async function sendDmcTestEmail() {
       industry: 'MICE / DMC',
       country: 'Vietnam',
       city: 'Da Nang',
-      website: null,
+      website: undefined,
       key_person_name: 'Lan',
       key_person_title: 'Test Recipient',
       key_person_email: TEST_EMAIL,
-      key_person_phone: null,
-      key_person_linkedin: null,
+      key_person_phone: undefined,
+      key_person_linkedin: undefined,
       total_events: 0,
       vietnam_events: 0,
       notes: 'Temp lead for DMC test email - có thể xóa',
@@ -97,7 +97,7 @@ async function sendDmcTestEmail() {
         date: new Date(timestamp),
         subject: sent.subject,
         status: 'sent',
-        message_id: sent.messageId ?? null,
+        message_id: sent.messageId ?? undefined,
       });
     }
 

@@ -99,6 +99,7 @@ router.post('/', async (req: Request, res: Response) => {
       references_header: null,
     };
 
+    // @ts-expect-error TODO(refactor): emailReply object built ad-hoc with null fields where EmailReply expects undefined. Fix when normalising email types in sub-project #5.
     const createdReply = await EmailReplyModel.create(emailReply);
     res.status(201).json(createdReply);
   } catch (error: any) {

@@ -1,5 +1,4 @@
-import type { Plugin } from 'vite';
-import type { Connect } from 'vite/dist/node';
+import type { Connect, Plugin } from 'vite';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';

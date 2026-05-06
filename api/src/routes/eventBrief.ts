@@ -38,6 +38,7 @@ const createCell = (
     shading: shaded
       ? {
           fill: 'F1F5F9',
+          // @ts-expect-error TODO(refactor): docx IShadingAttributesProperties expects an enum/type for `val`, but we pass a string literal. Fix when typing docx output properly in sub-project #5.
           val: 'clear',
         }
       : undefined,

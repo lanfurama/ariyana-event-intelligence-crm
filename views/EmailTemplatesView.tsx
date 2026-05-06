@@ -14,8 +14,7 @@ import {
   Mail,
   Loader2,
 } from 'lucide-react';
-import type { EmailTemplate, Attachment } from '../types';
-import { EmailTemplateAttachment } from '../types';
+import type { EmailTemplate, Attachment, EmailTemplateAttachment } from '../types';
 import { emailTemplatesApi } from '../services/apiService';
 
 export const EmailTemplatesView = () => {
@@ -231,6 +230,7 @@ export const EmailTemplatesView = () => {
           body: formData.body.trim(),
           leadType: formData.leadType ? formData.leadType : undefined,
           language: formData.language ? formData.language.trim() : undefined,
+          // @ts-expect-error TODO(refactor): attachmentsData lacks template_id required by EmailTemplateAttachment; the API fills it server-side. Type the create payload as Omit<...,'template_id'> in sub-project #5.
           attachments: attachmentsData,
         });
       } else {
@@ -242,6 +242,7 @@ export const EmailTemplatesView = () => {
           body: formData.body.trim(),
           leadType: formData.leadType ? formData.leadType : undefined,
           language: formData.language ? formData.language.trim() : undefined,
+          // @ts-expect-error TODO(refactor): see attachments note above. Sub-project #5.
           attachments: attachmentsData,
         };
         await emailTemplatesApi.create(newTemplate);

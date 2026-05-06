@@ -64,7 +64,7 @@ export const formatInlineMarkdown = (text: string): React.ReactNode => {
     }
 
     // Add formatted content
-    const Tag = match.type as keyof JSX.IntrinsicElements;
+    const Tag = match.type as keyof React.JSX.IntrinsicElements;
     parts.push(
       <Tag key={idx} className={match.className}>
         {match.content}
@@ -117,7 +117,7 @@ export const formatMarkdown = (text: string): React.ReactNode => {
           if (headingMatch) {
             const level = headingMatch[1].length;
             const content = formatInlineMarkdown(headingMatch[2]);
-            const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+            const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
             const className =
               level === 1
                 ? 'text-lg font-bold mt-4 mb-2'

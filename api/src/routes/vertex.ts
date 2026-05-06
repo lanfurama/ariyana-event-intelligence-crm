@@ -80,7 +80,7 @@ router.post('/enrich', async (req: Request, res: Response) => {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json().catch(() => ({}));
+    const data = (await response.json().catch(() => ({}))) as any;
 
     if (!response.ok) {
       const message =

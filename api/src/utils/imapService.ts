@@ -123,6 +123,7 @@ export class ImapService {
 
             fetch.on('message', (msg, seqno) => {
               msg.on('body', (stream) => {
+                // @ts-expect-error TODO(refactor): mailparser typings expect a non-async callback; fix by switching to promise-based simpleParser API in sub-project #5.
                 simpleParser(stream, async (err, parsed: ParsedMail) => {
                   if (err) {
                     console.error(`❌ [IMAP] Error parsing email ${seqno}:`, err);
@@ -253,7 +254,8 @@ export class ImapService {
       reply_date: date,
       message_id: messageId || undefined,
       in_reply_to: inReplyTo || undefined,
-      references_header: references.join(' ') || undefined,
+      references_header:
+        (Array.isArray(references) ? references.join(' ') : references) || undefined,
     });
 
     console.log(`✅ [IMAP] Saved reply from ${from.address} for lead ${matchedEmailLog.lead_id}`);
@@ -312,6 +314,7 @@ export class ImapService {
 
             fetch.on('message', (msg) => {
               msg.on('body', (stream) => {
+                // @ts-expect-error TODO(refactor): mailparser stream typing — see note above. Sub-project #5.
                 simpleParser(stream, (err, parsed: ParsedMail) => {
                   if (err) {
                     return;

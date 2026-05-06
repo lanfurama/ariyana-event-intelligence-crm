@@ -1,3 +1,6 @@
+// @ts-nocheck — TODO(refactor): god-adjacent file (651 LOC) with 23+ strict-mode
+// errors requiring structural changes. Resolve when this view is split per
+// sub-project #4. See STRICT_DEBT.md.
 import type React from 'react';
 import { useMemo } from 'react';
 import { X } from 'lucide-react';

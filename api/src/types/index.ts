@@ -2,6 +2,9 @@ export type UserRole = 'Director' | 'Sales' | 'Viewer';
 export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Won' | 'Lost';
 export type EmailLogStatus = 'sent' | 'draft' | 'failed';
 
+// Alias for clarity in places where Lead represents a database row
+export type LeadRow = Lead;
+
 export interface User {
   username: string;
   name: string;

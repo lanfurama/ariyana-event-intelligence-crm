@@ -1,7 +1,7 @@
-import cron from 'node-cron';
+import cron, { type ScheduledTask } from 'node-cron';
 import { processScheduledReports } from './managerReportService.js';
 
-let cronJob: cron.ScheduledTask | null = null;
+let cronJob: ScheduledTask | null = null;
 
 /**
  * Start the scheduled reports job
@@ -24,6 +24,7 @@ export function startScheduledReportsJob(): void {
       }
     },
     {
+      // @ts-expect-error TODO(refactor): node-cron v4 changed TaskOptions; `scheduled` was removed. Migrate to current API (cron.schedule + .start()) in sub-project #6.
       scheduled: true,
       timezone: 'Asia/Ho_Chi_Minh',
     },

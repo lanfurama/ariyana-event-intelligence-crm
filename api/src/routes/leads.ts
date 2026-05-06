@@ -157,7 +157,7 @@ router.post('/send-email', async (req: Request, res: Response) => {
           date: new Date(timestamp),
           subject: sent.subject,
           status: 'sent',
-          message_id: sent.messageId ?? null,
+          message_id: sent.messageId ?? undefined,
         });
       }
     }
@@ -244,7 +244,7 @@ router.post('/send-emails', async (req: Request, res: Response) => {
                   date: new Date(timestamp),
                   subject: subject,
                   status: 'sent',
-                  message_id: messageId || null,
+                  message_id: messageId || undefined,
                 });
                 console.log(
                   `✅ Email log created for lead ${leadId}: ${subject}${messageId ? ` (Message-ID: ${messageId})` : ''}`,
