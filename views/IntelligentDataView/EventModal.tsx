@@ -1,8 +1,6 @@
-// @ts-nocheck — TODO(refactor): god-adjacent file (651 LOC) with 23+ strict-mode
-// errors requiring structural changes. Resolve when this view is split per
-// sub-project #4. See STRICT_DEBT.md.
 import type React from 'react';
 import { useMemo } from 'react';
+import type { DataIssue } from '../../api/src/utils/dataQuality';
 import { extractEventModalData } from './EventModal/eventModalData';
 import { ModalHeader } from './EventModal/ModalHeader';
 import { SummaryStatistics } from './EventModal/SummaryStatistics';
@@ -18,8 +16,8 @@ interface EventModalProps {
     data: string;
     id?: string;
     dataQualityScore?: number;
-    issues?: any[];
-    rawData?: any;
+    issues?: DataIssue[];
+    rawData?: Record<string, unknown>;
   } | null;
   allExcelData: string;
   onClose: () => void;
