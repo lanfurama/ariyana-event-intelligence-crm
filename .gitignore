@@ -33,3 +33,11 @@ dist-ssr
 # Large archive files
 *.zip
 ariyana-event-intelligence-crm.zip
+
+# Build / cache
+coverage/
+.turbo/
+*.tsbuildinfo
+
+# Data files (CSV must never be committed; lead data is private)
+*.csv
