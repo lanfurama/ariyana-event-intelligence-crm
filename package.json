@@ -14,6 +14,7 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "typecheck:api": "tsc --noEmit -p api/tsconfig.json",
+    "prepare": "husky",
     "verify:send-mail": "npm run verify:send-mail --prefix api",
     "send:dmc-test": "npm run send:dmc-test --prefix api"
   },
@@ -58,6 +59,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
     "prettier": "3.8.3",
     "tsx": "^4.7.0",
     "typescript": "~5.8.2",

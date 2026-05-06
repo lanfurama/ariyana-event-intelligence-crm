@@ -1,0 +1,2 @@
+echo "Running typecheck before push (compensates for missing CI)..."
+npm run typecheck && npm run typecheck:api
