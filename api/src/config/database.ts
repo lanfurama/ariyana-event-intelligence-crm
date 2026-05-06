@@ -1,29 +1,15 @@
 import pg from 'pg';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Load .env from project root
-// In Vercel, environment variables are loaded automatically, but we still try to load .env for local dev
-try {
-  dotenv.config({ path: resolve(__dirname, '../../../.env') });
-} catch (e) {
-  // In Vercel, .env file might not exist, but env vars are set in dashboard
-  dotenv.config();
-}
+import { env } from './env';
 
 const { Pool } = pg;
 
 // Create connection pool
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'ariyana_crm',
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  host: env.DB_HOST,
+  port: env.DB_PORT,
+  database: env.DB_NAME,
+  user: env.DB_USER,
+  password: env.DB_PASSWORD,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000, // Increased timeout
@@ -31,10 +17,10 @@ const pool = new Pool({
 
 // Log database configuration (without password)
 console.log('📦 Database config:', {
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || '5432',
-  database: process.env.DB_NAME || 'ariyana_crm',
-  user: process.env.DB_USER || 'not set',
+  host: env.DB_HOST,
+  port: env.DB_PORT,
+  database: env.DB_NAME,
+  user: env.DB_USER,
 });
 
 // Test connection

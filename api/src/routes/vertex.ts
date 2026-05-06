@@ -1,23 +1,16 @@
 import type { Request, Response } from 'express';
 import { Router } from 'express';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
-import dotenv from 'dotenv';
+import { env } from '../config/env.js';
 import { buildEnrichPrompt, type EnrichContext } from '../config/vertexEnrichPrompt.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 const router = Router();
 
-const VERTEX_MODEL = process.env.VERTEX_AI_MODEL ?? 'gemini-2.5-pro';
+const VERTEX_MODEL = env.VERTEX_AI_MODEL;
 
 function getVertexConfig() {
-  const apiKey = process.env.VERTEX_AI_API_KEY;
-  const projectId = process.env.VERTEX_AI_PROJECT_ID;
-  const location = process.env.VERTEX_AI_LOCATION ?? 'europe-west4';
+  const apiKey = env.VERTEX_AI_API_KEY;
+  const projectId = env.VERTEX_AI_PROJECT_ID;
+  const location = env.VERTEX_AI_LOCATION;
 
   if (!apiKey || !projectId) {
     throw new Error('VERTEX_AI_API_KEY and VERTEX_AI_PROJECT_ID are required. Set them in .env.');

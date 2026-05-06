@@ -1,22 +1,15 @@
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
-
-// Load .env from project root (3 levels up from api/src/utils/emailSender)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-dotenv.config({ path: resolve(__dirname, '../../../../.env') });
+import { env } from '../../config/env.js';
 
 // ============================================================================
 // Constants & Configuration
 // ============================================================================
 
 export const EMAIL_CONFIG = {
-  HOST: process.env.EMAIL_HOST,
-  PORT: Number(process.env.EMAIL_PORT || 587),
-  USER: process.env.EMAIL_HOST_USER,
-  PASSWORD: process.env.EMAIL_HOST_PASSWORD,
-  FROM_EMAIL: process.env.DEFAULT_FROM_EMAIL || process.env.EMAIL_HOST_USER || '',
+  HOST: env.EMAIL_HOST,
+  PORT: env.EMAIL_PORT,
+  USER: env.EMAIL_HOST_USER,
+  PASSWORD: env.EMAIL_HOST_PASSWORD,
+  FROM_EMAIL: env.DEFAULT_FROM_EMAIL,
   FROM_NAME: 'Ariyana Convention Centre',
   DEFAULT_FROM: 'marketing@furamavietnam.com',
 } as const;

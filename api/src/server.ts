@@ -1,8 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { env } from './config/env.js';
 import usersRouter from './routes/users.js';
 import emailTemplatesRouter from './routes/emailTemplates.js';
 import leadsRouter from './routes/leads.js';
@@ -18,14 +16,8 @@ import vertexRouter from './routes/vertex.js';
 import { query } from './config/database.js';
 import { startScheduledReportsJob } from './services/scheduledReportsJob.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Load .env from project root (2 levels up from api/src)
-dotenv.config({ path: resolve(__dirname, '../../.env') });
-
 const app = express();
-const PORT = parseInt(process.env.PORT || '3001', 10);
+const PORT = env.PORT;
 
 // Middleware
 // CORS configuration - allow all origins in development for easier debugging
@@ -39,10 +31,10 @@ const corsOptions = {
       'http://localhost:3000',
       'http://127.0.0.1:5173',
       'http://127.0.0.1:3000',
-      process.env.CORS_ORIGIN,
+      env.CORS_ORIGIN,
     ].filter(Boolean);
 
-    if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
+    if (env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -135,8 +127,8 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`📚 API docs: http://localhost:${PORT}/`);
-  console.log(`🌐 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 CORS enabled for: ${env.CORS_ORIGIN || 'http://localhost:5173'}`);
+  console.log(`📝 Environment: ${env.NODE_ENV}`);
 
   // Start scheduled reports job
   try {

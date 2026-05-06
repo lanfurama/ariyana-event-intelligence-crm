@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import { env } from '../src/config/env.js';
 // Import from src - Vercel will bundle these files automatically
 import usersRouter from '../src/routes/users.js';
 import emailTemplatesRouter from '../src/routes/emailTemplates.js';
@@ -19,9 +19,6 @@ import emailReportsRouter from '../src/routes/emailReports.js';
 import vertexRouter from '../src/routes/vertex.js';
 import { query } from '../src/config/database.js';
 
-// Load environment variables for Vercel
-dotenv.config();
-
 const app = express();
 
 // CORS configuration - allow all origins in production (same domain)
@@ -35,15 +32,15 @@ const corsOptions = {
       'http://localhost:3000',
       'http://127.0.0.1:5173',
       'http://127.0.0.1:3000',
-      process.env.CORS_ORIGIN,
-      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
-      process.env.VERCEL ? `https://${process.env.VERCEL_URL}` : undefined,
+      env.CORS_ORIGIN,
+      env.VERCEL_URL ? `https://${env.VERCEL_URL}` : undefined,
+      env.VERCEL ? `https://${env.VERCEL_URL}` : undefined,
     ].filter(Boolean);
 
     // In production, allow same-origin requests
-    if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    if (env.NODE_ENV === 'production' || env.VERCEL) {
       callback(null, true);
-    } else if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
+    } else if (env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

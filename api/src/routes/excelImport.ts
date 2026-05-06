@@ -3,9 +3,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import { GoogleGenAI } from '@google/genai';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { env } from '../config/env.js';
 import {
   detectDataIssues,
   calculateDataQualityScore,
@@ -13,12 +11,6 @@ import {
   extractEventName,
   type OrganizationData,
 } from '../utils/dataQuality.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Load .env from project root
-dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 const router = Router();
 
@@ -48,11 +40,7 @@ const upload = multer({
 
 // Helper to get Gemini client
 const getAiClient = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY not found in environment variables');
-  }
-  return new GoogleGenAI({ apiKey });
+  return new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 };
 
 // Helper function to clean and normalize a single value

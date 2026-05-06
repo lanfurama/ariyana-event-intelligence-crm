@@ -1,10 +1,11 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { env } from '../config/env.js';
 import { LeadModel } from '../models/LeadModel.js';
 import { EmailLogModel } from '../models/EmailLogModel.js';
 import { EmailReplyModel } from '../models/EmailReplyModel.js';
 import type { Lead } from '../types/index.js';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
 interface LeadScoringFactors {

@@ -1,27 +1,15 @@
 import type { Request, Response } from 'express';
 import { Router } from 'express';
-import { dirname, resolve } from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 import OpenAI from 'openai';
+import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 import type { Lead } from '../types/index.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Load .env from project root
-dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 const router = Router();
 
 // Helper to get OpenAI client
 const getAiClient = () => {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY not found in environment variables');
-  }
-  return new OpenAI({ apiKey });
+  return new OpenAI({ apiKey: env.OPENAI_API_KEY });
 };
 
 // Helper: Load ICCA Leads data from database and format as knowledge base

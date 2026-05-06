@@ -1,27 +1,15 @@
 import type { Request, Response } from 'express';
 import { Router } from 'express';
 import { GoogleGenAI, Type } from '@google/genai';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 import type { Lead } from '../types/index.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Load .env from project root
-dotenv.config({ path: resolve(__dirname, '../../../.env') });
 
 const router = Router();
 
 // Helper to get Gemini client
 const getAiClient = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY not found in environment variables');
-  }
-  return new GoogleGenAI({ apiKey });
+  return new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 };
 
 // Helper: Load ICCA Leads data from database and format as knowledge base

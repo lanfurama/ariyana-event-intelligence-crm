@@ -1,23 +1,16 @@
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 import type { ParsedMail } from 'mailparser';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { env } from '../config/env.js';
 import { EmailLogModel } from '../models/EmailLogModel.js';
 import { EmailReplyModel } from '../models/EmailReplyModel.js';
 
-// Load .env from project root
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-dotenv.config({ path: resolve(__dirname, '../../../.env') });
-
 // IMAP Configuration - supports Gmail, Outlook, and other providers
-const emailImapHost = process.env.EMAIL_IMAP_HOST; // Optional: separate IMAP host (for Outlook, etc.)
-const emailHost = process.env.EMAIL_HOST || 'smtp.gmail.com'; // SMTP host (used as fallback)
-const emailUser = process.env.EMAIL_HOST_USER;
-const emailPassword = process.env.EMAIL_HOST_PASSWORD;
-const emailPort = Number(process.env.EMAIL_IMAP_PORT || 993);
+const emailImapHost = env.EMAIL_IMAP_HOST; // Optional: separate IMAP host (for Outlook, etc.)
+const emailHost = env.EMAIL_HOST; // SMTP host (used as fallback)
+const emailUser = env.EMAIL_HOST_USER;
+const emailPassword = env.EMAIL_HOST_PASSWORD;
+const emailPort = env.EMAIL_IMAP_PORT;
 
 // Auto-detect IMAP host based on email domain if not explicitly set
 const getImapHost = (): string => {
