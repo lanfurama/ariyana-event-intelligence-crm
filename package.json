@@ -12,6 +12,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "typecheck:api": "tsc --noEmit -p api/tsconfig.json",
     "verify:send-mail": "npm run verify:send-mail --prefix api",
     "send:dmc-test": "npm run send:dmc-test --prefix api"
   },
