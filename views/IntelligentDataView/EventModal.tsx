@@ -7,6 +7,8 @@ import { extractEventModalData } from './EventModal/eventModalData';
 import { ModalHeader } from './EventModal/ModalHeader';
 import { SummaryStatistics } from './EventModal/SummaryStatistics';
 import { DataQualityIssues } from './EventModal/DataQualityIssues';
+import { RelatedOrganizations } from './EventModal/RelatedOrganizations';
+import { RelatedContacts } from './EventModal/RelatedContacts';
 
 interface EventModalProps {
   event: {
@@ -43,128 +45,8 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
           <div className="space-y-3">
             <SummaryStatistics statistics={statistics} sequence={dataObj.SEQUENCE} />
 
-            {/* Related Organizations */}
-            {relatedData.organizations.length > 0 && (
-              <div className="bg-white rounded border border-slate-200 px-4 py-3">
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">Thông tin tổ chức</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {relatedData.organizations[0] &&
-                    Object.entries(relatedData.organizations[0]).map(
-                      ([key, value]) =>
-                        value &&
-                        value !== 'N/A' && (
-                          <div key={key} className="pb-2 border-b border-slate-100 last:border-0">
-                            <div className="text-xs text-slate-500 mb-0.5">
-                              {key.replace(/([A-Z])/g, ' $1').trim()}
-                            </div>
-                            <div className="text-sm text-slate-800 break-words">
-                              {typeof value === 'string' &&
-                              (value.toLowerCase().includes('http') ||
-                                value.toLowerCase().startsWith('www')) ? (
-                                <a
-                                  href={value.startsWith('http') ? value : `https://${value}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:underline break-all"
-                                >
-                                  {value}
-                                </a>
-                              ) : (
-                                String(value)
-                              )}
-                            </div>
-                          </div>
-                        ),
-                    )}
-                </div>
-              </div>
-            )}
-
-            {/* Related Contacts */}
-            {relatedData.contacts.length > 0 && (
-              <div className="bg-white rounded border border-slate-200 px-4 py-3">
-                <h3 className="text-sm font-semibold text-slate-700 mb-2">
-                  Thông tin liên hệ (từ sheet Contacts)
-                </h3>
-                <div className="space-y-3">
-                  {relatedData.contacts.map((contact: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="bg-slate-50 rounded border border-slate-200 px-3 py-2"
-                    >
-                      <div className="text-xs font-medium text-slate-600 mb-2">
-                        Contact #{idx + 1}
-                      </div>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <tbody className="divide-y divide-slate-200">
-                            {Object.entries(contact)
-                              .filter(
-                                ([_, value]) =>
-                                  value && String(value).trim() && String(value).trim() !== 'N/A',
-                              )
-                              .map(([key, value]) => {
-                                const formattedKey = key
-                                  .replace(/([A-Z])/g, ' $1')
-                                  .replace(/^./, (str) => str.toUpperCase())
-                                  .trim();
-                                const valueStr = String(value).trim();
-                                let displayValue: any = valueStr;
-
-                                if (valueStr.includes('@')) {
-                                  displayValue = (
-                                    <a
-                                      href={`mailto:${valueStr}`}
-                                      className="text-blue-600 hover:underline"
-                                    >
-                                      {valueStr}
-                                    </a>
-                                  );
-                                } else if (
-                                  valueStr.toLowerCase().includes('http') ||
-                                  valueStr.toLowerCase().startsWith('www')
-                                ) {
-                                  displayValue = (
-                                    <a
-                                      href={
-                                        valueStr.startsWith('http')
-                                          ? valueStr
-                                          : `https://${valueStr}`
-                                      }
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 hover:underline break-all"
-                                    >
-                                      {valueStr}
-                                    </a>
-                                  );
-                                }
-
-                                return (
-                                  <tr key={key} className="bg-white">
-                                    <td className="py-1 pr-4 align-top w-1/3">
-                                      <span className="font-medium text-slate-700 text-xs">
-                                        {formattedKey}
-                                      </span>
-                                    </td>
-                                    <td className="py-1 align-top">
-                                      <span className="text-slate-800 break-words">
-                                        {typeof displayValue === 'string'
-                                          ? displayValue
-                                          : displayValue}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <RelatedOrganizations organizations={relatedData.organizations} />
+            <RelatedContacts contacts={relatedData.contacts} />
 
             {/* Other Editions (Event History) */}
             {relatedData.otherEditions.length > 0 && (
