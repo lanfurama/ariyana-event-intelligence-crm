@@ -18,6 +18,16 @@ import {
   buildOpenaiStrategicAnalysisPrompt,
   OPENAI_STRATEGIC_ANALYSIS_SYSTEM_MESSAGE,
 } from '../services/ai/prompts/strategicAnalysis.js';
+import {
+  buildOpenaiExtractOrganizationsPrompt,
+  parseExtractOrganizationsResponse,
+  OPENAI_EXTRACT_ORGANIZATIONS_SYSTEM_MESSAGE,
+} from '../services/ai/prompts/extractOrganizations.js';
+import {
+  buildOpenaiCheckEventEligibilityPrompt,
+  parseCheckEventEligibilityResponse,
+  OPENAI_CHECK_EVENT_ELIGIBILITY_SYSTEM_MESSAGE,
+} from '../services/ai/prompts/checkEventEligibility.js';
 
 const router = Router();
 
@@ -173,36 +183,21 @@ router.post('/extract-organizations', async (req: Request, res: Response) => {
     }
 
     const openai = getAiClient();
-
-    const systemPrompt = `Extract organization names only. Not events, venues, or contacts. One per org.`;
-
-    const userPrompt = `Extract organizations from: ${data}${summary ? `\nSummary: ${JSON.stringify(summary)}` : ''}
-
-Return: {"organizations": [{"name": "Org Name", "rowIndex": 1, "sourceField": "Field"}]}`;
+    const userPrompt = buildOpenaiExtractOrganizationsPrompt({ data, summary });
 
     console.log('🟢 [GPT API] Extract organizations request');
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: OPENAI_EXTRACT_ORGANIZATIONS_SYSTEM_MESSAGE },
         { role: 'user', content: userPrompt },
       ],
       response_format: { type: 'json_object' },
       temperature: 0, // Zero temperature for maximum accuracy - no hallucination
-      // Note: GPT-4o mini supports function calling but doesn't have built-in web search
-      // For production, integrate with web search API (Tavily, Serper, etc.) for research capabilities
-      // The model will use its extensive training data knowledge
     });
 
-    let result;
-    try {
-      const content = response.choices[0]?.message?.content || '{}';
-      result = JSON.parse(content);
-    } catch (e) {
-      console.error('JSON Parse Error in extract-organizations:', e);
-      result = { organizations: [] };
-    }
+    const result = parseExtractOrganizationsResponse(response.choices[0]?.message?.content || '{}');
 
     res.json(result);
   } catch (error: any) {
@@ -405,68 +400,20 @@ router.post('/check-event-eligibility', async (req: Request, res: Response) => {
     const currentYear = new Date().getFullYear();
     const fiveYearsAgo = currentYear - 5;
 
-    const prompt = `EVENT ELIGIBILITY CHECK FOR ARIYANA CONVENTION CENTRE
-==================================================
-
-EVENT TO CHECK:
-- Event Name: ${eventName}
-${eventData ? `- Event Data: ${eventData.substring(0, 1000)}` : ''}
-${pastEventsHistory ? `- Past Events History: ${pastEventsHistory}` : ''}
-
-TASK: Check 3 critical eligibility criteria for this event:
-
-1. VIETNAM HISTORY CHECK:
-   - Has this event been held in Vietnam before?
-   - Check past events history for Vietnam locations (Ho Chi Minh City, Hanoi, Danang, etc.)
-   - Return: true if event has been held in Vietnam, false otherwise
-
-2. ICCA QUALIFIED CHECK:
-   - Is this event ICCA (International Congress and Convention Association) qualified?
-   - ICCA qualified events are typically:
-     * International association meetings
-     * Rotating conferences with international participation
-     * Events with significant international delegate attendance
-     * Events listed in ICCA database
-   - Return: true if ICCA qualified, false otherwise
-
-3. RECENT ACTIVITY CHECK (Last 5 Years):
-   - Has this event occurred within the last 5 years (${fiveYearsAgo}-${currentYear})?
-   - Check the most recent event year from pastEventsHistory
-   - If no history provided, infer from event name/pattern
-   - Return: true if event occurred in last 5 years, false if older or unknown
-
-OUTPUT FORMAT:
-Return valid JSON object:
-{
-  "eventName": "${eventName}",
-  "hasVietnamHistory": true/false,
-  "vietnamHistoryDetails": "Brief description of Vietnam events if any",
-  "isICCAQualified": true/false,
-  "iccaQualifiedReason": "Brief explanation why qualified or not",
-  "hasRecentActivity": true/false,
-  "mostRecentYear": [year number or null],
-  "yearsSinceLastEvent": [number or null],
-  "isEligible": true/false,
-  "eligibilityReason": "Overall eligibility assessment and reason",
-  "recommendation": "proceed" or "skip" or "review"
-}
-
-CRITICAL:
-- Be factual and conservative - only return true if you have clear evidence
-- If uncertain, return false and explain in reason fields
-- Use your knowledge base to check ICCA qualification standards
-- Check event history carefully for Vietnam locations`;
+    const prompt = buildOpenaiCheckEventEligibilityPrompt({
+      eventName,
+      eventData,
+      pastEventsHistory,
+      currentYear,
+      fiveYearsAgo,
+    });
 
     console.log('🟢 [GPT API] Checking event eligibility:', eventName);
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        {
-          role: 'system',
-          content:
-            'You are an expert MICE industry analyst specializing in ICCA-qualified events and Vietnam market analysis. Provide factual, conservative assessments based on event data and industry knowledge.',
-        },
+        { role: 'system', content: OPENAI_CHECK_EVENT_ELIGIBILITY_SYSTEM_MESSAGE },
         { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },
@@ -474,28 +421,10 @@ CRITICAL:
       max_completion_tokens: 500,
     });
 
-    const content = response.choices[0]?.message?.content || '{}';
-    let eligibilityData = {};
-
-    try {
-      eligibilityData = JSON.parse(content);
-    } catch (e) {
-      console.error('Failed to parse GPT eligibility response as JSON:', e);
-      // Return default conservative response
-      eligibilityData = {
-        eventName: eventName,
-        hasVietnamHistory: false,
-        vietnamHistoryDetails: 'Unable to verify',
-        isICCAQualified: false,
-        iccaQualifiedReason: 'Unable to verify ICCA qualification',
-        hasRecentActivity: false,
-        mostRecentYear: null,
-        yearsSinceLastEvent: null,
-        isEligible: false,
-        eligibilityReason: 'Unable to verify eligibility criteria',
-        recommendation: 'review',
-      };
-    }
+    const eligibilityData = parseCheckEventEligibilityResponse(
+      response.choices[0]?.message?.content || '{}',
+      eventName,
+    );
 
     res.json({
       success: true,
