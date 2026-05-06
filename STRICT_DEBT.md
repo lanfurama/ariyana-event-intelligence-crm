@@ -18,10 +18,13 @@ outweighed the benefit at this stage:
 
 ## Files with `@ts-nocheck`
 
-| File                                                 | Reason                                                                           | Resolve in                                                                                     |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `components/LeadDetail.tsx` (1621 LOC)               | God file with 21+ strict-mode errors requiring structural changes to fix safely. | Sub-project #4 (refactor god files). Split into smaller components, then remove `@ts-nocheck`. |
-| `views/IntelligentDataView/EventModal.tsx` (651 LOC) | God-adjacent file with 23+ strict-mode errors.                                   | Sub-project #4.                                                                                |
+| File                                   | Reason                                                                           | Resolve in                                                                                      |
+| -------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `components/LeadDetail.tsx` (1998 LOC) | God file with 21+ strict-mode errors requiring structural changes to fix safely. | Sub-project #4b (refactor god files). Split into smaller components, then remove `@ts-nocheck`. |
+
+**Resolved:**
+
+- ~~`views/IntelligentDataView/EventModal.tsx`~~ — resolved in sub-project #4c (commits `b868dfc..2ec016b`). Split into 7 sub-components + a tested `extractEventModalData` pure function; `@ts-nocheck` removed.
 
 ## Per-line `@ts-expect-error TODO(refactor)`
 
