@@ -92,6 +92,27 @@ View your app in AI Studio: https://ai.studio/apps/drive/1Yfs1wMDaCWebViQbPgpx_r
 - Component tests (React Testing Library) are deferred until sub-project #4
   splits the god files.
 
+### Source layout: AI provider abstraction
+
+Backend AI calls live under `api/src/services/ai/`:
+
+- `providers/{gemini,openai}.ts` — thin SDK wrappers (provider-agnostic
+  `complete()` interface). Currently scaffolded; route handlers still call
+  the SDKs directly because each endpoint has provider-specific config
+  (Google Search tools, json_object mode, system messages). The wrappers are
+  ready for future use when those concerns are normalized.
+- `prompts/<operation>.ts` — one module per business operation. Exports prompt
+  builders (often one per provider) and parsers / system message constants.
+  Examples: `enrich`, `draftEmail`, `chat`, `strategicAnalysis`,
+  `extractOrganizations`, `checkEventEligibility`, `analyzeVideo`.
+- `errors.ts`, `knowledge.ts`, `types.ts` — shared infrastructure
+  (`AiProviderError`, `extractRetryDelay`, `getICCALeadsKnowledge`, request
+  shapes).
+
+Route handlers in `api/src/routes/{gpt,gemini}.ts` are thin HTTP wrappers.
+To add a new AI endpoint, create the prompt module + test, then wire it in
+the appropriate route file.
+
 ### Security Notes:
 
 - ✅ All API keys are stored in `.env` file (not committed to Git)
