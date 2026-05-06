@@ -5,6 +5,10 @@ import { env } from '../config/env.js';
 import { query } from '../config/database.js';
 import type { Lead } from '../types/index.js';
 import { buildGeminiEnrichPrompt } from '../services/ai/prompts/enrich.js';
+import {
+  buildGeminiDraftEmailPrompt,
+  parseGeminiDraftEmailResponse,
+} from '../services/ai/prompts/draftEmail.js';
 
 const router = Router();
 
@@ -229,24 +233,11 @@ router.post('/draft-email', async (req: Request, res: Response) => {
     }
 
     const ai = getAiClient();
-    const modelId = 'gemini-2.5-flash-lite';
-
-    const prompt = `Write a personalized, professional sales email to ${leadName}, ${leadTitle} at ${leadCompany}.
-  
-  Context: I am representing 'Ariyana Convention Centre' in Danang, Vietnam.
-  We want to host their next event: ${eventContext}.
-  
-  Highlight:
-  - Oceanfront location
-  - Large capacity (APEC venue)
-  - Proximity to heritage sites
-  
-  Tone: Professional, warm, inviting.
-  Format: JSON with 'subject' and 'body' fields.`;
+    const prompt = buildGeminiDraftEmailPrompt({ leadName, leadCompany, leadTitle, eventContext });
 
     console.log('🔵 [Gemini API] Draft email request for:', leadName);
     const response = await ai.models.generateContent({
-      model: modelId,
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -260,19 +251,7 @@ router.post('/draft-email', async (req: Request, res: Response) => {
       },
     });
 
-    let result;
-    try {
-      const text = response.text || '';
-      const cleaned = text
-        .replace(/```json/g, '')
-        .replace(/```/g, '')
-        .trim();
-      result = JSON.parse(cleaned);
-    } catch (e) {
-      console.error('JSON Parse Error', e);
-      result = { subject: 'Error generating subject', body: response.text || '' };
-    }
-
+    const result = parseGeminiDraftEmailResponse(response.text || '');
     res.json(result);
   } catch (error: any) {
     console.error('Error in draft-email:', error);

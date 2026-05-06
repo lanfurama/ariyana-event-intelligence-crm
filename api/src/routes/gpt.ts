@@ -9,6 +9,10 @@ import {
   parseOpenaiEnrichResponse,
   OPENAI_ENRICH_SYSTEM_MESSAGE,
 } from '../services/ai/prompts/enrich.js';
+import {
+  buildOpenaiDraftEmailPrompt,
+  OPENAI_DRAFT_EMAIL_SYSTEM_MESSAGE,
+} from '../services/ai/prompts/draftEmail.js';
 
 const router = Router();
 
@@ -652,29 +656,12 @@ router.post('/draft-email', async (req: Request, res: Response) => {
     }
 
     const openai = getAiClient();
-
-    const prompt = `
-Draft a professional sales email for:
-- Lead Name: ${leadName}
-- Company: ${leadCompany}
-- Title: ${leadTitle || 'Not provided'}
-- Event Context: ${eventContext || 'Not provided'}
-
-The email should:
-1. Be professional and personalized
-2. Highlight Ariyana Convention Centre Danang's advantages (hosted APEC 2017, modern facilities, beautiful location)
-3. Propose hosting their next conference in Danang (2026-2027)
-4. Include a clear call-to-action
-
-Return a JSON object with "subject" and "body" fields.`;
+    const prompt = buildOpenaiDraftEmailPrompt({ leadName, leadCompany, leadTitle, eventContext });
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        {
-          role: 'system',
-          content: 'You are an expert sales email writer specializing in MICE industry outreach.',
-        },
+        { role: 'system', content: OPENAI_DRAFT_EMAIL_SYSTEM_MESSAGE },
         { role: 'user', content: prompt },
       ],
       response_format: { type: 'json_object' },
