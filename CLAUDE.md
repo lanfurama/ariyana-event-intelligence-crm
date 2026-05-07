@@ -26,21 +26,21 @@ Event-intelligence CRM with React 19 + TS strict frontend (Vite), Express + Post
 
 ## Refactor roadmap status (as of 2026-05-07)
 
-| Sub-project                                           | Status         | Notes                                                                     |
-| ----------------------------------------------------- | -------------- | ------------------------------------------------------------------------- |
-| #1 Cleanup + tooling baseline                         | ✅ done        | Prettier, ESLint flat, TS strict, Zod env, husky                          |
-| #2 Test infra                                         | ✅ done        | Vitest, 183 tests across 20 files                                         |
-| #3 Structured logger / observability                  | pending        |                                                                           |
-| #4b Refactor `components/LeadDetail.tsx`              | 🔄 in progress | 1998 LOC `@ts-nocheck`. Plan in 10 commits / ~5 sessions. Task 1/10 done. |
-| #4c Refactor `views/.../EventModal.tsx`               | ✅ done        | Template for #4b. 7 sub-components + tested pure data fn.                 |
-| #4d Refactor `views/LeadsView.tsx` (1914 LOC)         | pending        | Same playbook as #4b.                                                     |
-| #4 Refactor `api/src/routes/excelImport.ts` (973 LOC) | pending        | God file with 2 markers.                                                  |
-| #5 API layer-ization + type normalization             | pending        | 5 markers remain (imap×2, excelImport×2 — also #4, managerReport).        |
-| #6 node-cron v4 migration                             | pending        | 1 marker (`scheduledReportsJob.ts`).                                      |
-| #7 GitHub Actions CI                                  | pending        | Replaces pre-push hook.                                                   |
-| #9 Bundle splitting / lazy loading                    | pending        |                                                                           |
-| #10 Documentation polish                              | pending        |                                                                           |
-| AI provider abstraction (out-of-band)                 | ✅ done        | Prompts extracted to `services/ai/prompts/`. Providers scaffolded.        |
+| Sub-project                                           | Status         | Notes                                                                                   |
+| ----------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------- |
+| #1 Cleanup + tooling baseline                         | ✅ done        | Prettier, ESLint flat, TS strict, Zod env, husky                                        |
+| #2 Test infra                                         | ✅ done        | Vitest, 183 tests across 20 files                                                       |
+| #3 Structured logger / observability                  | pending        |                                                                                         |
+| #4b Refactor `components/LeadDetail.tsx`              | 🔄 in progress | 1605 LOC `@ts-nocheck` (was 1998). Plan in 10 commits / ~5 sessions. Tasks 1–3/10 done. |
+| #4c Refactor `views/.../EventModal.tsx`               | ✅ done        | Template for #4b. 7 sub-components + tested pure data fn.                               |
+| #4d Refactor `views/LeadsView.tsx` (1914 LOC)         | pending        | Same playbook as #4b.                                                                   |
+| #4 Refactor `api/src/routes/excelImport.ts` (973 LOC) | pending        | God file with 2 markers.                                                                |
+| #5 API layer-ization + type normalization             | pending        | 5 markers remain (imap×2, excelImport×2 — also #4, managerReport).                      |
+| #6 node-cron v4 migration                             | pending        | 1 marker (`scheduledReportsJob.ts`).                                                    |
+| #7 GitHub Actions CI                                  | pending        | Replaces pre-push hook.                                                                 |
+| #9 Bundle splitting / lazy loading                    | pending        |                                                                                         |
+| #10 Documentation polish                              | pending        |                                                                                         |
+| AI provider abstraction (out-of-band)                 | ✅ done        | Prompts extracted to `services/ai/prompts/`. Providers scaffolded.                      |
 
 ## Currently active: #4b LeadDetail refactor
 
@@ -51,17 +51,18 @@ Event-intelligence CRM with React 19 + TS strict frontend (Vite), Express + Post
 
 ### Done
 
-| Task   | Commit    | Notes                                                                           |
-| ------ | --------- | ------------------------------------------------------------------------------- |
-| Task 1 | `188bcfb` | Extract pure helpers + 27 tests. `LeadDetail.tsx` itself untouched (next step). |
+| Task   | Commit    | Notes                                                                                                                                                                                                             |
+| ------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Task 1 | `188bcfb` | Extract pure helpers + 27 tests. `LeadDetail.tsx` itself untouched.                                                                                                                                               |
+| Task 2 | `311e164` | Swap inline helpers → imports. Removed inline `extractDomain`/`verifyEmail`/`parseResearchResult` (~310 LOC) + 16-call placeholder loop. -394 +9. Smoke pass on Info/Enrich/Email.                                |
+| Task 3 | `aefd434` | Extract `useLeadEdit` hook. Owns `isEditing`/`editedLead` + prop-sync effect + handlers. Container destructures incl. `setEditedLead` (4 enrich-flow call sites still write to it). Smoke pass on Info edit flow. |
 
 ### Next session
 
-1. **Browser smoke** to confirm baseline — Task 1 didn't touch `LeadDetail.tsx`, so this is pre-Task-2 sanity.
-2. **Task 2:** swap inline helpers in `LeadDetail.tsx` for imports + replace inline placeholder substitution with `applyTemplatePlaceholders`. Then browser smoke (Info + Enrich + Email tabs).
-3. **Task 3:** extract `useLeadEdit` hook. Smoke info-tab edit flow.
+1. **Task 4: extract `useLeadEnrichment` hook.** Largest of the three hooks. Owns `enrichLoading`, `enrichResult`, `rateLimitCountdown`, `enrichCompanyName`, `enrichKeyPerson`, `enrichCity`, `researchResults`, the rate-limit countdown effect, the prop-sync effect for the 3 enrich fields, and `handleEnrich`. Hook needs `setEditedLead` injected (for the 4 auto-update call sites at the old line numbers ~291/340/360/558). Smoke: Enrich tab end-to-end — click Enrich → AI returns → fields populate → if domain matches, lead updates in list.
+2. **Task 5: extract `useLeadEmail` hook.** Owns 14 email-related useStates (templates, drafted email, attachments, replies, send/check-inbox flows, rate-limit countdown). Smoke: Email tab — load template, edit body, send (or simulate if Gmail not connected), check inbox.
 
-After Task 3, the riskier hook extractions (Task 4 `useLeadEnrichment`, Task 5 `useLeadEmail` — large) and JSX extractions (Tasks 6–8) follow. Task 9 is the highest-risk: restoring TS strict on the file. Task 10 closes with `STRICT_DEBT.md` update.
+After Tasks 4–5, JSX extractions (Tasks 6–8) are mechanical and low-risk. Task 9 is the highest-risk: restore TS strict on `LeadDetail.tsx` (remove `@ts-nocheck`, fix all reported errors — by then the file is small enough this should be tractable). Task 10 closes with `STRICT_DEBT.md` update.
 
 ## Important decisions log
 
@@ -71,6 +72,10 @@ After Task 3, the riskier hook extractions (Task 4 `useLeadEnrichment`, Task 5 `
 - **`parseResearchResult` adds `fallbackKeyPerson` param.** The original closed over component state `enrichKeyPerson`. Pure version makes the dependency explicit. Plan said "verbatim copy" — adapted during execution because verbatim wouldn't compile. Commit `188bcfb`.
 - **`verifyEmail` signature simplified.** Original's `|| editedLead.website` fallback inside the function was dead code — the only caller already passed `editedLead.website` explicitly. Removed.
 - **Buggy parser behavior characterized as tests, not fixed.** Two tests assert that the 5-pattern fallback can override the structured-block name/title with adjacent title-keyword text. Improvements deferred per spec §6 R5; this refactor is structural, not behavioral.
+- **Task 2: `parseResearchResult` call site updated to pass `enrichKeyPerson` explicitly** (commit `311e164`). The plan said "no changes at use sites" but verbatim deletion would have silently broken the keyPerson-fallback path because the inline closure captured `enrichKeyPerson` and the extracted helper takes it as a param. Decision logged here (see also the Task 1 decision above) — plan-vs-execution divergence is acceptable when the plan is provably wrong.
+- **Task 2: `{{...}}` literals in JSX placeholder/help text are kept** (2 hits remain). They are user-facing hints inside `<textarea placeholder="...">` and an empty-state `<div>`, not substitution code. Plan's grep check was meant to catch leftover replacement loops, not docstring text.
+- **Task 3: `setEditedLead` is exposed from `useLeadEdit`** (commit `aefd434`). Plan listed it in the hook's return but didn't include it in the destructure example. 4 enrich-flow call sites (`setEditedLead(updatedLead)` at the old lines ~291/340/360/558) still need to write the AI-found data back. Removing them now would change behavior; they collapse into `useLeadEnrichment` in Task 4 via dependency injection. Until then, the hook is the single owner and the container holds a destructured pass-through.
+- **Task 3: enrich-fields prop-sync effect kept in container, not moved into `useLeadEdit`.** The original `useEffect` did 4 things — sync `editedLead` + 3 enrich fields. The plan suggested splitting it. Done: the `editedLead` sync now lives inside `useLeadEdit`; the 3 enrich-field syncs stay in the container until Task 4 moves them into `useLeadEnrichment`. Comment in code reflects this transitional state.
 
 ### Strict-debt cleanup (2026-05-07)
 
