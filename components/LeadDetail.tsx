@@ -29,6 +29,7 @@ import {
   parseResearchResult,
   applyTemplatePlaceholders,
 } from './LeadDetail/leadDetailHelpers';
+import { useLeadEdit } from './LeadDetail/useLeadEdit';
 
 export const LeadDetail = ({
   lead,
@@ -42,8 +43,15 @@ export const LeadDetail = ({
   user: User;
 }) => {
   const [activeTab, setActiveTab] = useState<'info' | 'enrich' | 'email'>('info');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedLead, setEditedLead] = useState<Lead>(lead);
+
+  const {
+    isEditing,
+    setIsEditing,
+    editedLead,
+    setEditedLead,
+    handleInputChange,
+    handleSaveChanges,
+  } = useLeadEdit(lead, onSave);
 
   // Enrichment States
   const [enrichLoading, setEnrichLoading] = useState(false);
@@ -79,9 +87,8 @@ export const LeadDetail = ({
 
   const canEdit = user.role === 'Director' || user.role === 'Sales';
 
-  // Sync when prop lead changes
+  // Sync enrich fields when prop lead changes (edit state synced inside useLeadEdit)
   useEffect(() => {
-    setEditedLead(lead);
     setEnrichCompanyName(lead.companyName || '');
     setEnrichKeyPerson(lead.keyPersonName || '');
     setEnrichCity(lead.city || '');
@@ -193,15 +200,6 @@ export const LeadDetail = ({
     } finally {
       setCheckingInbox(false);
     }
-  };
-
-  const handleInputChange = (field: keyof Lead, value: any) => {
-    setEditedLead((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveChanges = () => {
-    onSave(editedLead);
-    setIsEditing(false);
   };
 
   // Countdown effect for rate limit (enrichment)
