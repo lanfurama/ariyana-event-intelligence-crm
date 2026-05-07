@@ -1,0 +1,811 @@
+- generic [ref=e26]:
+    - generic [ref=e27]:
+        - generic [ref=e28]:
+            - generic [ref=e29]:
+                - heading "Ariyana CRM" [level=1] [ref=e30]
+                - paragraph [ref=e31]: Event Intelligence System
+            - button "Close sidebar" [ref=e32] [cursor=pointer]:
+                - img [ref=e33]
+        - generic [ref=e35]:
+            - img "avatar" [ref=e37]
+            - generic [ref=e38]:
+                - paragraph [ref=e39]: Mike Sales
+                - paragraph [ref=e40]: Sales
+        - navigation [ref=e41]:
+            - button "Dashboard" [ref=e42] [cursor=pointer]:
+                - img [ref=e43]
+                - generic [ref=e48]: Dashboard
+            - button "ICCA Leads" [ref=e49] [cursor=pointer]:
+                - img [ref=e50]
+                - generic [ref=e55]: ICCA Leads
+            - button "Video Analysis" [ref=e56] [cursor=pointer]:
+                - img [ref=e57]
+                - generic [ref=e59]: Video Analysis
+            - button "AI Assistant" [ref=e60] [cursor=pointer]:
+                - img [ref=e61]
+                - generic [ref=e63]: AI Assistant
+            - button "Email" [ref=e64] [cursor=pointer]:
+                - img [ref=e65]
+                - generic [ref=e68]: Email
+            - button "My Profile" [ref=e69] [cursor=pointer]:
+                - img [ref=e70]
+                - generic [ref=e73]: My Profile
+        - generic [ref=e74]:
+            - button "Sign Out" [ref=e75] [cursor=pointer]:
+                - img [ref=e76]
+                - generic [ref=e79]: Sign Out
+            - paragraph [ref=e80]: Powered by OpenAI & Gemini
+    - main [ref=e81]:
+        - generic [ref=e437]:
+            - generic [ref=e438]:
+                - generic [ref=e439]:
+                    - heading "Leads" [level=2] [ref=e440]
+                    - paragraph [ref=e441]: Manage and track your event leads
+                - generic [ref=e442]:
+                    - button "Export" [ref=e443] [cursor=pointer]:
+                        - img [ref=e444]
+                        - text: Export
+                    - button "Send Mail" [ref=e447] [cursor=pointer]:
+                        - img [ref=e448]
+                        - text: Send Mail
+                    - button "Add Lead" [ref=e451] [cursor=pointer]:
+                        - img [ref=e452]
+                        - text: Add Lead
+            - generic [ref=e454]:
+                - generic [ref=e455]:
+                    - generic [ref=e456]: 'Total:'
+                    - generic [ref=e457]: '939'
+                - generic [ref=e458]:
+                    - generic [ref=e460]: 'Sent:'
+                    - generic [ref=e461]: '742'
+                - generic [ref=e462]:
+                    - generic [ref=e464]: 'Not Sent:'
+                    - generic [ref=e465]: '197'
+                - generic [ref=e466]:
+                    - generic [ref=e468]: 'With Info:'
+                    - generic [ref=e469]: '750'
+                - generic [ref=e470]:
+                    - generic [ref=e472]: 'Without Info:'
+                    - generic [ref=e473]: '189'
+            - generic [ref=e475]:
+                - generic [ref=e476]:
+                    - textbox "Search company, city, person, industry..." [ref=e477]
+                    - img
+                - generic [ref=e478]:
+                    - generic [ref=e479]:
+                        - combobox [ref=e480] [cursor=pointer]:
+                            - option "All Countries" [selected]
+                            - option "AUSTRALIA"
+                            - option "Argentina"
+                            - option "Australia"
+                            - option "BELGIUM"
+                            - option "Bangladesh"
+                            - option "Belgium"
+                            - option "CHINA-P.R."
+                            - option "Cambodia"
+                            - option "Canada"
+                            - option "China"
+                            - option "China-P.R."
+                            - option "Chinese Taipei"
+                            - option "Denmark"
+                            - option "FRANCE"
+                            - option "France"
+                            - option "GERMANY"
+                            - option "Germany"
+                            - option "Hong Kong"
+                            - option "Hong Kong, China-P.R."
+                            - option "INDIA"
+                            - option "IRELAND"
+                            - option "India"
+                            - option "Indonesia"
+                            - option "International"
+                            - option "Iran"
+                            - option "Ireland"
+                            - option "Italy"
+                            - option "JAPAN"
+                            - option "Japan"
+                            - option "Kazakhstan"
+                            - option "MALAYSIA"
+                            - option "Malaysia"
+                            - option "NETHERLANDS"
+                            - option "Netherlands"
+                            - option "PHILIPPINES"
+                            - option "Philippines"
+                            - option "Republic of Korea"
+                            - option "SINGAPORE"
+                            - option "SRI LANKA"
+                            - option "Singapore"
+                            - option "Singapore / Regional"
+                            - option "South Korea"
+                            - option "Spain"
+                            - option "Sweden"
+                            - option "Switzerland"
+                            - option "THAILAND"
+                            - option "Taiwan"
+                            - option "Thailand"
+                            - option "U.S.A."
+                            - option "UAE"
+                            - option "UK"
+                            - option "UNITED KINGDOM"
+                            - option "UNKNOWN"
+                            - option "USA"
+                            - option "United Kingdom"
+                            - option "Unknown"
+                            - option "Uzbekistan"
+                            - option "Vietnam"
+                        - img
+                    - generic [ref=e481]:
+                        - combobox [ref=e482] [cursor=pointer]:
+                            - option "All Industries" [selected]
+                            - option "."
+                            - option "Agriculture"
+                            - option "Agriculture/Energy"
+                            - option "Architecture"
+                            - option "Aviation"
+                            - option "Aviation / Safety"
+                            - option "Banking"
+                            - option "Banking / Financial Services"
+                            - option "Conglomerate / Industrial"
+                            - option "Construction"
+                            - option "Corporate Travel Management (CTM)"
+                            - option "Corporate travel + MICE"
+                            - option "Corporate travel management (TMC) + MICE"
+                            - option "Corporate travel management / TMC"
+                            - option "Destination Management Company (Global)"
+                            - option "Dinner"
+                            - option "Domestic Association"
+                            - option "Domestic Corp"
+                            - option "Domestic TA"
+                            - option "Domestic Wedding"
+                            - option "Education"
+                            - option "Electronics / Manufacturing"
+                            - option "Energy / Industrial"
+                            - option "Finance"
+                            - option "Forest products"
+                            - option "General / Unknown"
+                            - option "Healthy ageing"
+                            - option "Higher‑ed Tech"
+                            - option "ICT / Internet"
+                            - option "Incentive / MICE agency"
+                            - option "International Association"
+                            - option "International Corp"
+                            - option "International TA"
+                            - option "Legal"
+                            - option "Lifestyle / Food"
+                            - option "Local corporate event organiser"
+                            - option "MICE travel wholesaler / B2B"
+                            - option "Media"
+                            - option "Medical"
+                            - option "Medical / Endocrinology"
+                            - option "Medical / Gastroenterology"
+                            - option "Medical / Oncology"
+                            - option "Medical / Optometry"
+                            - option "Medical / Transplant"
+                            - option "Meeting + Lunch"
+                            - option "Meetings & Events"
+                            - option "Meetings & Events agency"
+                            - option "Meetings & Events agency / TMC"
+                            - option "Outbound MICE organiser / DMC"
+                            - option "Outbound corporate/MICE travel"
+                            - option "Physics / Electromagnetics"
+                            - option "Real Estate"
+                            - option "Real estate / Hospitality"
+                            - option "Religious / Social"
+                            - option "Retail trade"
+                            - option "Technology"
+                            - option "Telco"
+                            - option "Unknown"
+                            - option "Vietnam DMC (Incentives)"
+                            - option "Water & sanitation"
+                            - option "Women’s Health"
+                        - img
+                    - generic [ref=e483]:
+                        - combobox [ref=e484] [cursor=pointer]:
+                            - option "All" [selected]
+                            - option "New"
+                            - option "Contacted"
+                        - img
+                    - generic [ref=e485]:
+                        - combobox [ref=e486] [cursor=pointer]:
+                            - option "All Types" [selected]
+                            - option "Normal"
+                            - option "DMC"
+                            - option "CORP"
+                            - option "HPNY2026"
+                            - option "LEAD2026FEB_THAIACC"
+                            - option "SUMMER_BEACH_2026"
+                        - img
+                    - generic [ref=e487]:
+                        - combobox [ref=e488] [cursor=pointer]:
+                            - option "All" [selected]
+                            - option "Has key_person_email & key_person_name"
+                            - option "No key_person_email & key_person_name"
+                        - img
+                    - generic [ref=e490]: 939 results
+            - generic [ref=e491]:
+                - generic [ref=e493] [cursor=pointer]:
+                    - img [ref=e495]
+                    - generic [ref=e499]:
+                        - generic [ref=e500]:
+                            - heading "SuZhou Lonwin Medical System" [level=3] [ref=e501]
+                            - generic [ref=e502]: General / Unknown
+                            - generic [ref=e503]: SUMMER_BEACH_2026
+                        - generic [ref=e505]:
+                            - img [ref=e506]
+                            - text: Da Nang, China
+                    - generic [ref=e510]:
+                        - img [ref=e512]
+                        - generic [ref=e515]:
+                            - generic [ref=e516]: Joan Tian
+                            - generic [ref=e517]: N/A
+                            - generic "Email" [ref=e519]
+                    - generic [ref=e521]:
+                        - generic [ref=e522]: '--'
+                        - generic [ref=e523]: Contacted
+                    - generic [ref=e524]:
+                        - generic "Sent 1 times" [ref=e525]:
+                            - img [ref=e526]
+                        - button "Mark Reply" [ref=e529]:
+                            - img [ref=e530]
+                        - button [ref=e533]:
+                            - img [ref=e534]
+                - generic [ref=e537] [cursor=pointer]:
+                    - img [ref=e539]
+                    - generic [ref=e543]:
+                        - generic [ref=e544]:
+                            - heading "Chosunii" [level=3] [ref=e545]
+                            - generic [ref=e546]: General / Unknown
+                            - generic [ref=e547]: SUMMER_BEACH_2026
+                        - generic [ref=e549]:
+                            - img [ref=e550]
+                            - text: Da Nang, Taiwan
+                    - generic [ref=e554]:
+                        - img [ref=e556]
+                        - generic [ref=e559]:
+                            - generic [ref=e560]: Erica H.Chang
+                            - generic [ref=e561]: N/A
+                            - generic "Email" [ref=e563]
+                    - generic [ref=e565]:
+                        - generic [ref=e566]: '--'
+                        - generic [ref=e567]: Contacted
+                    - generic [ref=e568]:
+                        - generic "Sent 1 times" [ref=e569]:
+                            - img [ref=e570]
+                        - button "Mark Reply" [ref=e573]:
+                            - img [ref=e574]
+                        - button [ref=e577]:
+                            - img [ref=e578]
+                - generic [ref=e581] [cursor=pointer]:
+                    - img [ref=e583]
+                    - generic [ref=e587]:
+                        - generic [ref=e588]:
+                            - heading "Anke Insight Into Life" [level=3] [ref=e589]
+                            - generic [ref=e590]: General / Unknown
+                            - generic [ref=e591]: SUMMER_BEACH_2026
+                        - generic [ref=e593]:
+                            - img [ref=e594]
+                            - text: Da Nang, China
+                    - generic [ref=e598]:
+                        - img [ref=e600]
+                        - generic [ref=e603]:
+                            - generic [ref=e604]: Adam Wang
+                            - generic [ref=e605]: N/A
+                            - generic "Email" [ref=e607]
+                    - generic [ref=e609]:
+                        - generic [ref=e610]: '--'
+                        - generic [ref=e611]: Contacted
+                    - generic [ref=e612]:
+                        - generic "Sent 1 times" [ref=e613]:
+                            - img [ref=e614]
+                        - button "Mark Reply" [ref=e617]:
+                            - img [ref=e618]
+                        - button [ref=e621]:
+                            - img [ref=e622]
+                - generic [ref=e625] [cursor=pointer]:
+                    - img [ref=e627]
+                    - generic [ref=e631]:
+                        - generic [ref=e632]:
+                            - heading "U.S Soybean Export Council" [level=3] [ref=e633]
+                            - generic [ref=e634]: General / Unknown
+                            - generic [ref=e635]: SUMMER_BEACH_2026
+                        - generic [ref=e637]:
+                            - img [ref=e638]
+                            - text: Da Nang, USA
+                    - generic [ref=e642]:
+                        - img [ref=e644]
+                        - generic [ref=e647]:
+                            - generic [ref=e648]: Ms. Nguyeễn Ngân Hạnh
+                            - generic [ref=e649]: N/A
+                            - generic "Email" [ref=e651]
+                    - generic [ref=e653]:
+                        - generic [ref=e654]: '--'
+                        - generic [ref=e655]: Contacted
+                    - generic [ref=e656]:
+                        - generic "Sent 1 times" [ref=e657]:
+                            - img [ref=e658]
+                        - button "Mark Reply" [ref=e661]:
+                            - img [ref=e662]
+                        - button [ref=e665]:
+                            - img [ref=e666]
+                - generic [ref=e669] [cursor=pointer]:
+                    - img [ref=e671]
+                    - generic [ref=e675]:
+                        - generic [ref=e676]:
+                            - heading "Vinaconex 25" [level=3] [ref=e677]
+                            - generic [ref=e678]: General / Unknown
+                            - generic [ref=e679]: SUMMER_BEACH_2026
+                        - generic [ref=e681]:
+                            - img [ref=e682]
+                            - text: Da Nang, Vietnam
+                    - generic [ref=e686]:
+                        - img [ref=e688]
+                        - generic [ref=e691]:
+                            - generic [ref=e692]: Ms. Xuan
+                            - generic [ref=e693]: N/A
+                            - generic "Email" [ref=e695]
+                    - generic [ref=e697]:
+                        - generic [ref=e698]: '--'
+                        - generic [ref=e699]: Contacted
+                    - generic [ref=e700]:
+                        - generic "Sent 1 times" [ref=e701]:
+                            - img [ref=e702]
+                        - button "Mark Reply" [ref=e705]:
+                            - img [ref=e706]
+                        - button [ref=e709]:
+                            - img [ref=e710]
+                - generic [ref=e713] [cursor=pointer]:
+                    - img [ref=e715]
+                    - generic [ref=e719]:
+                        - generic [ref=e720]:
+                            - heading "DAI ICHI LIFE" [level=3] [ref=e721]
+                            - generic [ref=e722]: General / Unknown
+                            - generic [ref=e723]: SUMMER_BEACH_2026
+                        - generic [ref=e725]:
+                            - img [ref=e726]
+                            - text: Da Nang, Japan
+                    - generic [ref=e730]:
+                        - img [ref=e732]
+                        - generic [ref=e735]:
+                            - generic [ref=e736]: Ms Tiên
+                            - generic [ref=e737]: N/A
+                            - generic "Email" [ref=e739]
+                    - generic [ref=e741]:
+                        - generic [ref=e742]: '--'
+                        - generic [ref=e743]: New
+                    - generic [ref=e744]:
+                        - generic "Not sent" [ref=e745]:
+                            - img [ref=e746]
+                        - button "Mark Reply" [ref=e749]:
+                            - img [ref=e750]
+                        - button [ref=e753]:
+                            - img [ref=e754]
+                - generic [ref=e757] [cursor=pointer]:
+                    - img [ref=e759]
+                    - generic [ref=e763]:
+                        - generic [ref=e764]:
+                            - heading "Chubb life" [level=3] [ref=e765]
+                            - generic [ref=e766]: General / Unknown
+                            - generic [ref=e767]: SUMMER_BEACH_2026
+                        - generic [ref=e769]:
+                            - img [ref=e770]
+                            - text: Da Nang, USA
+                    - generic [ref=e774]:
+                        - img [ref=e776]
+                        - generic [ref=e779]:
+                            - generic [ref=e780]: Ms Lan
+                            - generic [ref=e781]: N/A
+                    - generic [ref=e783]:
+                        - generic [ref=e784]: '--'
+                        - generic [ref=e785]: New
+                    - generic [ref=e786]:
+                        - generic "Not sent" [ref=e787]:
+                            - img [ref=e788]
+                        - button "Mark Reply" [ref=e791]:
+                            - img [ref=e792]
+                        - button [ref=e795]:
+                            - img [ref=e796]
+                - generic [ref=e799] [cursor=pointer]:
+                    - img [ref=e801]
+                    - generic [ref=e805]:
+                        - generic [ref=e806]:
+                            - heading "Cathay Life" [level=3] [ref=e807]
+                            - generic [ref=e808]: General / Unknown
+                            - generic [ref=e809]: SUMMER_BEACH_2026
+                        - generic [ref=e811]:
+                            - img [ref=e812]
+                            - text: Da Nang, Taiwan
+                    - generic [ref=e816]:
+                        - img [ref=e818]
+                        - generic [ref=e821]:
+                            - generic [ref=e822]: Ms Chiêu
+                            - generic [ref=e823]: N/A
+                    - generic [ref=e825]:
+                        - generic [ref=e826]: '--'
+                        - generic [ref=e827]: New
+                    - generic [ref=e828]:
+                        - generic "Not sent" [ref=e829]:
+                            - img [ref=e830]
+                        - button "Mark Reply" [ref=e833]:
+                            - img [ref=e834]
+                        - button [ref=e837]:
+                            - img [ref=e838]
+                - generic [ref=e841] [cursor=pointer]:
+                    - img [ref=e843]
+                    - generic [ref=e847]:
+                        - generic [ref=e848]:
+                            - heading "Prudential - VP tổng" [level=3] [ref=e849]
+                            - generic [ref=e850]: General / Unknown
+                            - generic [ref=e851]: SUMMER_BEACH_2026
+                        - generic [ref=e853]:
+                            - img [ref=e854]
+                            - text: Da Nang, UK
+                    - generic [ref=e858]:
+                        - img [ref=e860]
+                        - generic [ref=e863]:
+                            - generic [ref=e864]: Ms Phương
+                            - generic [ref=e865]: N/A
+                    - generic [ref=e867]:
+                        - generic [ref=e868]: '--'
+                        - generic [ref=e869]: New
+                    - generic [ref=e870]:
+                        - generic "Not sent" [ref=e871]:
+                            - img [ref=e872]
+                        - button "Mark Reply" [ref=e875]:
+                            - img [ref=e876]
+                        - button [ref=e879]:
+                            - img [ref=e880]
+                - generic [ref=e883] [cursor=pointer]:
+                    - img [ref=e885]
+                    - generic [ref=e889]:
+                        - generic [ref=e890]:
+                            - heading "FWD" [level=3] [ref=e891]
+                            - generic [ref=e892]: General / Unknown
+                            - generic [ref=e893]: SUMMER_BEACH_2026
+                        - generic [ref=e895]:
+                            - img [ref=e896]
+                            - text: Da Nang, Hong Kong
+                    - generic [ref=e900]:
+                        - img [ref=e902]
+                        - generic [ref=e905]:
+                            - generic [ref=e906]: Ms Trang
+                            - generic [ref=e907]: N/A
+                    - generic [ref=e909]:
+                        - generic [ref=e910]: '--'
+                        - generic [ref=e911]: New
+                    - generic [ref=e912]:
+                        - generic "Not sent" [ref=e913]:
+                            - img [ref=e914]
+                        - button "Mark Reply" [ref=e917]:
+                            - img [ref=e918]
+                        - button [ref=e921]:
+                            - img [ref=e922]
+                - generic [ref=e925] [cursor=pointer]:
+                    - img [ref=e927]
+                    - generic [ref=e931]:
+                        - generic [ref=e932]:
+                            - heading "Hanwha life" [level=3] [ref=e933]
+                            - generic [ref=e934]: General / Unknown
+                            - generic [ref=e935]: SUMMER_BEACH_2026
+                        - generic [ref=e937]:
+                            - img [ref=e938]
+                            - text: Da Nang, South Korea
+                    - generic [ref=e942]:
+                        - img [ref=e944]
+                        - generic [ref=e947]:
+                            - generic [ref=e948]: Hanwha life
+                            - generic [ref=e949]: N/A
+                    - generic [ref=e951]:
+                        - generic [ref=e952]: '--'
+                        - generic [ref=e953]: New
+                    - generic [ref=e954]:
+                        - generic "Not sent" [ref=e955]:
+                            - img [ref=e956]
+                        - button "Mark Reply" [ref=e959]:
+                            - img [ref=e960]
+                        - button [ref=e963]:
+                            - img [ref=e964]
+                - generic [ref=e967] [cursor=pointer]:
+                    - img [ref=e969]
+                    - generic [ref=e973]:
+                        - generic [ref=e974]:
+                            - heading "Mirae Asset" [level=3] [ref=e975]
+                            - generic [ref=e976]: General / Unknown
+                            - generic [ref=e977]: SUMMER_BEACH_2026
+                        - generic [ref=e979]:
+                            - img [ref=e980]
+                            - text: Da Nang, South Korea
+                    - generic [ref=e984]:
+                        - img [ref=e986]
+                        - generic [ref=e989]:
+                            - generic [ref=e990]: Mirae Asset
+                            - generic [ref=e991]: N/A
+                    - generic [ref=e993]:
+                        - generic [ref=e994]: '--'
+                        - generic [ref=e995]: New
+                    - generic [ref=e996]:
+                        - generic "Not sent" [ref=e997]:
+                            - img [ref=e998]
+                        - button "Mark Reply" [ref=e1001]:
+                            - img [ref=e1002]
+                        - button [ref=e1005]:
+                            - img [ref=e1006]
+                - generic [ref=e1009] [cursor=pointer]:
+                    - img [ref=e1011]
+                    - generic [ref=e1015]:
+                        - generic [ref=e1016]:
+                            - heading "AIA" [level=3] [ref=e1017]
+                            - generic [ref=e1018]: General / Unknown
+                            - generic [ref=e1019]: SUMMER_BEACH_2026
+                        - generic [ref=e1021]:
+                            - img [ref=e1022]
+                            - text: Da Nang, Hong Kong
+                    - generic [ref=e1026]:
+                        - img [ref=e1028]
+                        - generic [ref=e1031]:
+                            - generic [ref=e1032]: Ms Huyền
+                            - generic [ref=e1033]: N/A
+                    - generic [ref=e1035]:
+                        - generic [ref=e1036]: '--'
+                        - generic [ref=e1037]: New
+                    - generic [ref=e1038]:
+                        - generic "Not sent" [ref=e1039]:
+                            - img [ref=e1040]
+                        - button "Mark Reply" [ref=e1043]:
+                            - img [ref=e1044]
+                        - button [ref=e1047]:
+                            - img [ref=e1048]
+                - generic [ref=e1051] [cursor=pointer]:
+                    - img [ref=e1053]
+                    - generic [ref=e1057]:
+                        - generic [ref=e1058]:
+                            - heading "Construction Designing and Consulting Joint Stock Company" [level=3] [ref=e1059]
+                            - generic [ref=e1060]: General / Unknown
+                            - generic [ref=e1061]: SUMMER_BEACH_2026
+                        - generic [ref=e1063]:
+                            - img [ref=e1064]
+                            - text: Da Nang, Vietnam
+                    - generic [ref=e1068]:
+                        - img [ref=e1070]
+                        - generic [ref=e1073]:
+                            - generic [ref=e1074]: Pham Phu Binh
+                            - generic [ref=e1075]: N/A
+                            - generic "Email" [ref=e1077]
+                    - generic [ref=e1079]:
+                        - generic [ref=e1080]: '--'
+                        - generic [ref=e1081]: Contacted
+                    - generic [ref=e1082]:
+                        - generic "Sent 1 times" [ref=e1083]:
+                            - img [ref=e1084]
+                        - button "Mark Reply" [ref=e1087]:
+                            - img [ref=e1088]
+                        - button [ref=e1091]:
+                            - img [ref=e1092]
+                - generic [ref=e1095] [cursor=pointer]:
+                    - img [ref=e1097]
+                    - generic [ref=e1101]:
+                        - generic [ref=e1102]:
+                            - heading "DINCO" [level=3] [ref=e1103]
+                            - generic [ref=e1104]: General / Unknown
+                            - generic [ref=e1105]: SUMMER_BEACH_2026
+                        - generic [ref=e1107]:
+                            - img [ref=e1108]
+                            - text: Da Nang, Vietnam
+                    - generic [ref=e1112]:
+                        - img [ref=e1114]
+                        - generic [ref=e1117]:
+                            - generic [ref=e1118]: Le Truong Ky
+                            - generic [ref=e1119]: N/A
+                            - generic "Email" [ref=e1121]
+                    - generic [ref=e1123]:
+                        - generic [ref=e1124]: '--'
+                        - generic [ref=e1125]: Contacted
+                    - generic [ref=e1126]:
+                        - generic "Sent 1 times" [ref=e1127]:
+                            - img [ref=e1128]
+                        - button "Mark Reply" [ref=e1131]:
+                            - img [ref=e1132]
+                        - button [ref=e1135]:
+                            - img [ref=e1136]
+                - generic [ref=e1139] [cursor=pointer]:
+                    - img [ref=e1141]
+                    - generic [ref=e1145]:
+                        - generic [ref=e1146]:
+                            - heading "Center of Construction Designing and Consulting" [level=3] [ref=e1147]
+                            - generic [ref=e1148]: General / Unknown
+                            - generic [ref=e1149]: SUMMER_BEACH_2026
+                        - generic [ref=e1151]:
+                            - img [ref=e1152]
+                            - text: Da Nang, Vietnam
+                    - generic [ref=e1156]:
+                        - img [ref=e1158]
+                        - generic [ref=e1161]:
+                            - generic [ref=e1162]: Bui Trong Nhan
+                            - generic [ref=e1163]: N/A
+                    - generic [ref=e1165]:
+                        - generic [ref=e1166]: '--'
+                        - generic [ref=e1167]: New
+                    - generic [ref=e1168]:
+                        - generic "Not sent" [ref=e1169]:
+                            - img [ref=e1170]
+                        - button "Mark Reply" [ref=e1173]:
+                            - img [ref=e1174]
+                        - button [ref=e1177]:
+                            - img [ref=e1178]
+                - generic [ref=e1181] [cursor=pointer]:
+                    - img [ref=e1183]
+                    - generic [ref=e1187]:
+                        - generic [ref=e1188]:
+                            - heading "QUANG NAM-DA NANG DEVELOPMENT URBAN & INDUSTRIAL ZONE JS Co." [level=3] [ref=e1189]
+                            - generic [ref=e1190]: General / Unknown
+                            - generic [ref=e1191]: SUMMER_BEACH_2026
+                        - generic [ref=e1193]:
+                            - img [ref=e1194]
+                            - text: Da Nang, Vietnam
+                    - generic [ref=e1198]:
+                        - img [ref=e1200]
+                        - generic [ref=e1203]:
+                            - generic [ref=e1204]: Nguyen Duc Lanh
+                            - generic [ref=e1205]: N/A
+                            - generic "Email" [ref=e1207]
+                    - generic [ref=e1209]:
+                        - generic [ref=e1210]: '--'
+                        - generic [ref=e1211]: Contacted
+                    - generic [ref=e1212]:
+                        - generic "Sent 1 times" [ref=e1213]:
+                            - img [ref=e1214]
+                        - button "Mark Reply" [ref=e1217]:
+                            - img [ref=e1218]
+                        - button [ref=e1221]:
+                            - img [ref=e1222]
+                - generic [ref=e1225] [cursor=pointer]:
+                    - img [ref=e1227]
+                    - generic [ref=e1231]:
+                        - generic [ref=e1232]:
+                            - heading "SAO VANG CONSTRUCTION JSC" [level=3] [ref=e1233]
+                            - generic [ref=e1234]: General / Unknown
+                            - generic [ref=e1235]: SUMMER_BEACH_2026
+                        - generic [ref=e1237]:
+                            - img [ref=e1238]
+                            - text: Da Nang, Vietnam
+                    - generic [ref=e1242]:
+                        - img [ref=e1244]
+                        - generic [ref=e1247]:
+                            - generic [ref=e1248]: Vu Khanh Hung
+                            - generic [ref=e1249]: N/A
+                            - generic "Email" [ref=e1251]
+                    - generic [ref=e1253]:
+                        - generic [ref=e1254]: '--'
+                        - generic [ref=e1255]: Contacted
+                    - generic [ref=e1256]:
+                        - generic "Sent 1 times" [ref=e1257]:
+                            - img [ref=e1258]
+                        - button "Mark Reply" [ref=e1261]:
+                            - img [ref=e1262]
+                        - button [ref=e1265]:
+                            - img [ref=e1266]
+                - generic [ref=e1269] [cursor=pointer]:
+                    - img [ref=e1271]
+                    - generic [ref=e1275]:
+                        - generic [ref=e1276]:
+                            - heading "EUROWINDOW" [level=3] [ref=e1277]
+                            - generic [ref=e1278]: General / Unknown
+                            - generic [ref=e1279]: SUMMER_BEACH_2026
+                        - generic [ref=e1281]:
+                            - img [ref=e1282]
+                            - text: Da Nang, Vietnam
+                    - generic [ref=e1286]:
+                        - img [ref=e1288]
+                        - generic [ref=e1291]:
+                            - generic [ref=e1292]: Le Ly
+                            - generic [ref=e1293]: N/A
+                            - generic "Email" [ref=e1295]
+                    - generic [ref=e1297]:
+                        - generic [ref=e1298]: '--'
+                        - generic [ref=e1299]: Contacted
+                    - generic [ref=e1300]:
+                        - generic "Sent 1 times" [ref=e1301]:
+                            - img [ref=e1302]
+                        - button "Mark Reply" [ref=e1305]:
+                            - img [ref=e1306]
+                        - button [ref=e1309]:
+                            - img [ref=e1310]
+                - generic [ref=e1313] [cursor=pointer]:
+                    - img [ref=e1315]
+                    - generic [ref=e1319]:
+                        - generic [ref=e1320]:
+                            - heading "TANMAI PAPER JSC" [level=3] [ref=e1321]
+                            - generic [ref=e1322]: General / Unknown
+                            - generic [ref=e1323]: SUMMER_BEACH_2026
+                        - generic [ref=e1325]:
+                            - img [ref=e1326]
+                            - text: Da Nang, Vietnam
+                    - generic [ref=e1330]:
+                        - img [ref=e1332]
+                        - generic [ref=e1335]:
+                            - generic [ref=e1336]: Thai Van Thao
+                            - generic [ref=e1337]: N/A
+                            - generic "Email" [ref=e1339]
+                    - generic [ref=e1341]:
+                        - generic [ref=e1342]: '--'
+                        - generic [ref=e1343]: Contacted
+                    - generic [ref=e1344]:
+                        - generic "Sent 1 times" [ref=e1345]:
+                            - img [ref=e1346]
+                        - button "Mark Reply" [ref=e1349]:
+                            - img [ref=e1350]
+                        - button [ref=e1353]:
+                            - img [ref=e1354]
+            - generic [ref=e1356]:
+                - generic [ref=e1357]: Showing 1 to 20 of 939 leads
+                - generic [ref=e1358]:
+                    - button "Previous" [disabled] [ref=e1359]
+                    - generic [ref=e1360]:
+                        - button "1" [ref=e1361] [cursor=pointer]
+                        - button "2" [ref=e1362] [cursor=pointer]
+                        - button "3" [ref=e1363] [cursor=pointer]
+                        - button "4" [ref=e1364] [cursor=pointer]
+                        - button "5" [ref=e1365] [cursor=pointer]
+                    - button "Next" [ref=e1366] [cursor=pointer]
+    - generic [ref=e1368]:
+        - generic [ref=e1369]:
+            - generic [ref=e1370]:
+                - heading "SuZhou Lonwin Medical System" [level=2] [ref=e1371]
+                - paragraph [ref=e1372]: General / Unknown • China
+            - button [ref=e1373] [cursor=pointer]:
+                - img [ref=e1374]
+        - generic [ref=e1377]:
+            - button "Contact Info" [ref=e1378] [cursor=pointer]:
+                - generic [ref=e1379]: Contact Info
+            - button "Google Enrich" [ref=e1380] [cursor=pointer]:
+                - img [ref=e1381]
+                - generic [ref=e1384]: Google Enrich
+            - button "Send Mail" [ref=e1385] [cursor=pointer]:
+                - img [ref=e1386]
+                - generic [ref=e1389]: Send Mail
+        - generic [ref=e1391]:
+            - generic [ref=e1392]:
+                - heading "Lead Details" [level=3] [ref=e1393]
+                - button "Edit Info" [ref=e1394] [cursor=pointer]:
+                    - img [ref=e1395]
+                    - text: Edit Info
+            - generic [ref=e1397]:
+                - generic [ref=e1398]:
+                    - generic [ref=e1399]: Status
+                    - generic [ref=e1402]: Contacted
+                - generic [ref=e1403]:
+                    - generic [ref=e1404]: Est. Delegates
+                    - text: N/A
+            - generic [ref=e1405]:
+                - generic [ref=e1406]:
+                    - generic [ref=e1407]: Key Person
+                    - text: Joan Tian
+                - generic [ref=e1409]: Title
+                - generic [ref=e1410]:
+                    - generic [ref=e1411]: Email
+                    - link "joan.tian@lonwin.org" [ref=e1412] [cursor=pointer]:
+                        - /url: https://joan.tian@lonwin.org
+                - generic [ref=e1413]:
+                    - generic [ref=e1414]: Phone
+                    - text: N/A
+                - generic [ref=e1415]:
+                    - generic [ref=e1416]: Website
+                    - text: N/A
+                - generic [ref=e1417]:
+                    - generic [ref=e1418]: City
+                    - text: Da Nang
+                - generic [ref=e1419]:
+                    - generic [ref=e1420]: Lead Type
+                    - text: SUMMER_BEACH_2026
+            - generic [ref=e1421]:
+                - heading "Past Events History" [level=4] [ref=e1422]
+                - paragraph [ref=e1423]: No history recorded
+            - generic [ref=e1424]:
+                - text: General Notes
+                - generic [ref=e1425]: Portfolio summer beach 2026 lead
+            - generic [ref=e1426]:
+                - generic [ref=e1427]:
+                    - generic [ref=e1428]: Email Replies
+                    - button "Check Inbox" [ref=e1429] [cursor=pointer]:
+                        - img [ref=e1430]
+                        - text: Check Inbox
+                - generic [ref=e1433]: No replies yet
