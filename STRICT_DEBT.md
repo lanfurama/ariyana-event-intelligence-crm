@@ -28,16 +28,19 @@ outweighed the benefit at this stage:
 
 ## Per-line `@ts-expect-error TODO(refactor)`
 
-| File:Line                                                              | Reason                                                                                                     | Resolve in                                                                               |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `api/src/routes/emailReplies.ts:~102`                                  | `emailReply` object built ad-hoc with `null` fields where `EmailReply` expects `undefined`.                | Sub-project #5 — normalize email types.                                                  |
-| `api/src/routes/eventBrief.ts:~42` (`val: 'clear'`)                    | docx `IShadingAttributesProperties` expects an enum/type, but a string literal works at runtime.           | Sub-project #5 — type docx output properly.                                              |
-| `api/src/routes/excelImport.ts:~507` and `~539` (`organizationName`)   | `eventsMap` value type is inferred too narrowly; `organizationName` isn't part of the inferred shape.      | Sub-project #4 — `excelImport.ts` is a god file (810 LOC); extract types when splitting. |
-| `api/src/services/managerReportService.ts:~546` (`weekday: 'numeric'`) | `'numeric'` isn't a valid weekday option in standard `DateTimeFormat`, but works at runtime.               | Sub-project #5 — replace with proper week-number calculation.                            |
-| `api/src/services/scheduledReportsJob.ts:~28` (`scheduled: true`)      | node-cron v4 changed `TaskOptions`; `scheduled` was removed.                                               | Sub-project #6 — migrate to current node-cron API (`cron.schedule` + `.start()`).        |
-| `api/src/utils/imapService.ts:~126` and `~315` (mailparser callback)   | mailparser typings reject async callbacks; switching to its promise-based API would be cleaner.            | Sub-project #5 — migrate to promise-based simpleParser.                                  |
-| `views/EmailTemplatesView.tsx:~233` and `~244` (`attachments`)         | `attachmentsData` lacks `template_id` required by `EmailTemplateAttachment`; the API fills it server-side. | Sub-project #5 — type create payload as `Omit<…, 'template_id'>`.                        |
-| `vite.config.ts:~5` (`defineConfig`)                                   | `defineConfig` narrowing rejects async functions; vite still accepts them at runtime.                      | Either upgrade vite types or extract the body into a sync wrapper.                       |
+| File:Line                                                              | Reason                                                                                                | Resolve in                                                                               |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `api/src/routes/excelImport.ts:~507` and `~539` (`organizationName`)   | `eventsMap` value type is inferred too narrowly; `organizationName` isn't part of the inferred shape. | Sub-project #4 — `excelImport.ts` is a god file (810 LOC); extract types when splitting. |
+| `api/src/services/managerReportService.ts:~546` (`weekday: 'numeric'`) | `'numeric'` isn't a valid weekday option in standard `DateTimeFormat`, but works at runtime.          | Sub-project #5 — replace with proper week-number calculation.                            |
+| `api/src/services/scheduledReportsJob.ts:~28` (`scheduled: true`)      | node-cron v4 changed `TaskOptions`; `scheduled` was removed.                                          | Sub-project #6 — migrate to current node-cron API (`cron.schedule` + `.start()`).        |
+| `api/src/utils/imapService.ts:~126` and `~315` (mailparser callback)   | mailparser typings reject async callbacks; switching to its promise-based API would be cleaner.       | Sub-project #5 — migrate to promise-based simpleParser.                                  |
+
+**Resolved:**
+
+- ~~`api/src/routes/emailReplies.ts:~102`~~ — typed payload as `EmailReply`; replaced `null` fields with `undefined` / omission.
+- ~~`api/src/routes/eventBrief.ts:~42` (`val: 'clear'`)~~ — switched to `type: ShadingType.CLEAR` (the property `val` was being silently ignored at runtime; `type` is the documented docx field).
+- ~~`views/EmailTemplatesView.tsx:~233` and `~244` (`attachments`)~~ — made `EmailTemplateAttachment.template_id` optional in frontend `types.ts` (server fills on create/update; frontend never reads it).
+- ~~`vite.config.ts:~5` (`defineConfig`)~~ — extracted async config to a `UserConfigFnPromise`-typed const so the correct `defineConfig` overload is selected.
 
 ## Manual castings to flag for review
 

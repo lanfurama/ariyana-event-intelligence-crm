@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { EmailReplyModel } from '../models/EmailReplyModel.js';
 import { ImapService } from '../utils/imapService.js';
 import { EmailLogModel } from '../models/EmailLogModel.js';
+import type { EmailReply } from '../types/index.js';
 
 const router = Router();
 
@@ -84,7 +85,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     // Create a manual email reply record
-    const emailReply = {
+    const emailReply: EmailReply = {
       id: `reply-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       email_log_id: latestEmailLog.id,
       lead_id: leadId,
@@ -92,14 +93,10 @@ router.post('/', async (req: Request, res: Response) => {
       from_name: '', // Will be empty for manual entries
       subject: latestEmailLog.subject ? `Re: ${latestEmailLog.subject}` : 'Re: Email Reply',
       body: 'Manually marked as replied',
-      html_body: null,
       reply_date: new Date(),
-      message_id: null,
-      in_reply_to: latestEmailLog.message_id || null,
-      references_header: null,
+      in_reply_to: latestEmailLog.message_id || undefined,
     };
 
-    // @ts-expect-error TODO(refactor): emailReply object built ad-hoc with null fields where EmailReply expects undefined. Fix when normalising email types in sub-project #5.
     const createdReply = await EmailReplyModel.create(emailReply);
     res.status(201).json(createdReply);
   } catch (error: any) {

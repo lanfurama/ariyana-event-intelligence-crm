@@ -1,9 +1,8 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type UserConfigFnPromise } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// @ts-expect-error TODO(refactor): defineConfig narrowing rejects async functions; vite still accepts them at runtime. Fix by extracting the body into a sync wrapper or upgrading to a vite version with relaxed types.
-export default defineConfig(async ({ mode, command }) => {
+const config: UserConfigFnPromise = async ({ mode, command }) => {
   const env = loadEnv(mode, '.', '');
   const isBuild = command === 'build';
 
@@ -100,4 +99,6 @@ export default defineConfig(async ({ mode, command }) => {
       },
     },
   };
-});
+};
+
+export default defineConfig(config);

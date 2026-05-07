@@ -151,7 +151,7 @@ export interface EmailTemplate {
 
 export interface EmailTemplateAttachment {
   id?: number;
-  template_id: string;
+  template_id?: string; // Server fills on create/update; absent on input payload
   name: string;
   size: number;
   type: string;
