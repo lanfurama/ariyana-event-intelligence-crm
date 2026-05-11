@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { EmailTemplate, Attachment, EmailTemplateAttachment } from '../types';
 import { emailTemplatesApi } from '../services/apiService';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 export const EmailTemplatesView = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -42,6 +43,12 @@ export const EmailTemplatesView = () => {
   const [attachmentLinkName, setAttachmentLinkName] = useState('');
   const contentEditableRef = useRef<HTMLDivElement>(null);
   const isInternalEditRef = useRef(false);
+
+  useEscapeKey(showModal, () => {
+    setShowModal(false);
+    setEditingTemplate(null);
+  });
+  useEscapeKey(deleteConfirm !== null, () => setDeleteConfirm(null));
 
   useEffect(() => {
     loadTemplates();

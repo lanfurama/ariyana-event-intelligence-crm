@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useMemo } from 'react';
 import type { DataIssue } from '../../api/src/utils/dataQuality';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { extractEventModalData } from './EventModal/eventModalData';
 import { ModalHeader } from './EventModal/ModalHeader';
 import { SummaryStatistics } from './EventModal/SummaryStatistics';
@@ -29,10 +30,17 @@ export const EventModal: React.FC<EventModalProps> = ({ event, allExcelData, onC
     [event, allExcelData],
   );
 
+  useEscapeKey(event !== null, onClose);
+
   if (!event) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 animate-fade-in">
         <ModalHeader
           eventName={event.name}

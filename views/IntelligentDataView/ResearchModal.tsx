@@ -1,6 +1,7 @@
 import type React from 'react';
 import { X, Loader2, CheckCircle, AlertCircle, Database } from 'lucide-react';
 import type { ParsedEnrichContact } from '../../utils/leadEnrichUtils';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 export type ResearchModalStatus = 'loading' | 'success' | 'no_result' | 'error';
 
@@ -39,6 +40,9 @@ export const ResearchModal: React.FC<ResearchModalProps> = ({
       parsedContact.keyPersonTitle ||
       parsedContact.keyPersonEmail ||
       parsedContact.keyPersonPhone);
+
+  useEscapeKey(open && !syncing, onClose);
+
   if (!open) return null;
 
   return (

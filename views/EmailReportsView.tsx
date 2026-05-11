@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { EmailReportsConfig, EmailReportsLog } from '../services/apiService';
 import { emailReportsApi } from '../services/apiService';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 // Common timezones
 const TIMEZONES = [
@@ -55,6 +56,12 @@ export const EmailReportsView = () => {
   const [showLogs, setShowLogs] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
+
+  useEscapeKey(showModal && !saving, () => {
+    setShowModal(false);
+    setEditingConfig(null);
+  });
+  useEscapeKey(showLogs !== null, () => setShowLogs(null));
 
   useEffect(() => {
     loadConfigs();

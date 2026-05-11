@@ -26,6 +26,7 @@ import { emailLogsApi, emailRepliesApi, emailTemplatesApi, leadsApi } from '../s
 import { mapLeadFromDB, mapLeadToDB } from '../utils/leadUtils';
 import * as XLSX from 'xlsx';
 import { LeadsSkeleton } from '../components/common/LeadsSkeleton';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 const TestEmailInput = React.memo<{
   value: string;
@@ -229,6 +230,13 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
       loadEmailTemplates();
     }
   }, [showEmailModal]);
+
+  useEscapeKey(showEmailModal, () => {
+    setShowEmailModal(false);
+    setSelectedTemplateId('');
+    setTestEmail('');
+  });
+  useEscapeKey(showAddLeadModal, () => setShowAddLeadModal(false));
 
   useEffect(() => {
     setTemplateTargetLeadType('auto');
@@ -823,9 +831,13 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
             <>
               <button
                 onClick={() => setShowEmailModal(true)}
-                className="bg-white border border-indigo-200 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center shadow-sm"
+                title={`Bulk send to ${filteredLeads.length} filtered leads`}
+                className="bg-white border border-indigo-200 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center gap-1.5 shadow-sm"
               >
-                <Mail size={14} className="mr-1.5" /> Send Mail
+                <Mail size={14} /> Bulk Send
+                <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums">
+                  {filteredLeads.length}
+                </span>
               </button>
               <button
                 onClick={() => setShowAddLeadModal(true)}
@@ -887,96 +899,126 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           </div>
 
           {/* Filters */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <select
-                value={countryFilter}
-                onChange={(e) => setCountryFilter(e.target.value)}
-                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
-              >
-                <option value="all">All Countries</option>
-                {availableCountries.map((country) => (
-                  <option key={country} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                size={12}
-              />
-            </div>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="flex flex-col gap-0.5">
+              <span className="text-[10px] uppercase tracking-wide font-semibold text-slate-500">
+                Country
+              </span>
+              <div className="relative">
+                <select
+                  value={countryFilter}
+                  onChange={(e) => setCountryFilter(e.target.value)}
+                  aria-label="Filter by country"
+                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors ${countryFilter !== 'all' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}
+                >
+                  <option value="all">All Countries</option>
+                  {availableCountries.map((country) => (
+                    <option key={country} value={country}>
+                      {country}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  size={12}
+                />
+              </div>
+            </label>
 
-            <div className="relative">
-              <select
-                value={industryFilter}
-                onChange={(e) => setIndustryFilter(e.target.value)}
-                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
-              >
-                <option value="all">All Industries</option>
-                {availableIndustries.map((industry) => (
-                  <option key={industry} value={industry}>
-                    {industry}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                size={12}
-              />
-            </div>
+            <label className="flex flex-col gap-0.5">
+              <span className="text-[10px] uppercase tracking-wide font-semibold text-slate-500">
+                Industry
+              </span>
+              <div className="relative">
+                <select
+                  value={industryFilter}
+                  onChange={(e) => setIndustryFilter(e.target.value)}
+                  aria-label="Filter by industry"
+                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors ${industryFilter !== 'all' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}
+                >
+                  <option value="all">All Industries</option>
+                  {availableIndustries.map((industry) => (
+                    <option key={industry} value={industry}>
+                      {industry}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  size={12}
+                />
+              </div>
+            </label>
 
-            <div className="relative">
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
-              >
-                <option value="all">All</option>
-                <option value="New">New</option>
-                <option value="Contacted">Contacted</option>
-              </select>
-              <ChevronDown
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                size={12}
-              />
-            </div>
+            <label className="flex flex-col gap-0.5">
+              <span className="text-[10px] uppercase tracking-wide font-semibold text-slate-500">
+                Status
+              </span>
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  aria-label="Filter by status"
+                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors ${statusFilter !== 'all' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="New">New</option>
+                  <option value="Contacted">Contacted</option>
+                </select>
+                <ChevronDown
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  size={12}
+                />
+              </div>
+            </label>
 
-            <div className="relative">
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
-              >
-                <option value="all">All Types</option>
-                <option value="normal">Normal</option>
-                <option value="DMC">DMC</option>
-                <option value="CORP">CORP</option>
-                <option value="HPNY2026">HPNY2026</option>
-                <option value="LEAD2026FEB_THAIACC">LEAD2026FEB_THAIACC</option>
-                <option value="SUMMER_BEACH_2026">SUMMER_BEACH_2026</option>
-              </select>
-              <ChevronDown
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                size={12}
-              />
-            </div>
+            <label className="flex flex-col gap-0.5">
+              <span className="text-[10px] uppercase tracking-wide font-semibold text-slate-500">
+                Lead Type
+              </span>
+              <div className="relative">
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  aria-label="Filter by lead type"
+                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors ${typeFilter !== 'all' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}
+                >
+                  <option value="all">All Types</option>
+                  <option value="normal">Normal</option>
+                  <option value="DMC">DMC</option>
+                  <option value="CORP">CORP</option>
+                  <option value="HPNY2026">HPNY2026</option>
+                  <option value="LEAD2026FEB_THAIACC">LEAD2026FEB_THAIACC</option>
+                  <option value="SUMMER_BEACH_2026">SUMMER_BEACH_2026</option>
+                </select>
+                <ChevronDown
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  size={12}
+                />
+              </div>
+            </label>
 
-            <div className="relative">
-              <select
-                value={emailFilter}
-                onChange={(e) => setEmailFilter(e.target.value as typeof emailFilter)}
-                className="appearance-none bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
-              >
-                <option value="all">All</option>
-                <option value="has-key-person">Has key_person_email & key_person_name</option>
-                <option value="no-key-person">No key_person_email & key_person_name</option>
-              </select>
-              <ChevronDown
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                size={12}
-              />
-            </div>
+            <label className="flex flex-col gap-0.5">
+              <span className="text-[10px] uppercase tracking-wide font-semibold text-slate-500">
+                Contact Info
+              </span>
+              <div className="relative">
+                <select
+                  value={emailFilter}
+                  onChange={(e) => setEmailFilter(e.target.value as typeof emailFilter)}
+                  aria-label="Filter by contact info"
+                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors ${emailFilter !== 'all' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}
+                >
+                  <option value="all">All Contacts</option>
+                  <option value="has-key-person">Has key person email</option>
+                  <option value="no-key-person">Missing key person email</option>
+                </select>
+                <ChevronDown
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  size={12}
+                />
+              </div>
+            </label>
 
             <div className="flex items-center gap-2 ml-auto">
               <span className="text-xs font-medium text-slate-500">
@@ -1048,18 +1090,16 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
 
                   {/* Company Info - 35% */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-sm font-bold text-slate-900 truncate">
-                        {lead.companyName}
-                      </h3>
-                      {lead.industry &&
-                        lead.industry !== 'Unknown' &&
-                        lead.industry.toUpperCase() !== 'UNKNOWN' && (
-                          <span className="text-[10px] uppercase font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
-                            {lead.industry}
-                          </span>
-                        )}
-                      {lead.type && (
+                    <h3 className="text-sm font-bold text-slate-900 truncate mb-1">
+                      {lead.companyName}
+                    </h3>
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                      {lead.industry && !lead.industry.toLowerCase().includes('unknown') && (
+                        <span className="text-[10px] uppercase font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">
+                          {lead.industry}
+                        </span>
+                      )}
+                      {lead.type && lead.type !== 'Normal' && (
                         <span
                           className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${
                             lead.type === 'CORP'
@@ -1132,7 +1172,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                   </div>
 
                   {/* Score - 15% */}
-                  <div className="flex items-center gap-3 min-w-[80px]">
+                  <div className="hidden sm:flex items-center gap-3 min-w-[80px]">
                     <div className="flex flex-col items-center gap-1 w-full">
                       {lead.leadScore !== null && lead.leadScore !== undefined ? (
                         <>
@@ -1173,9 +1213,9 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                   </div>
 
                   {/* Status Icons & Actions - 15% */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     <div
-                      className={`relative flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                      className={`relative flex items-center justify-center w-11 h-11 rounded-lg transition-colors ${
                         emailStatus.hasEmail
                           ? 'bg-green-50 text-green-600 border border-green-200'
                           : 'bg-slate-50 text-slate-300'
@@ -1183,7 +1223,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                       title={emailStatus.hasEmail ? `Sent ${emailStatus.count} times` : 'Not sent'}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Mail size={14} />
+                      <Mail size={16} />
                       {emailStatus.hasEmail && emailStatus.count > 1 && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                           {emailStatus.count}
@@ -1197,19 +1237,20 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                         handleMarkReply(lead.id);
                       }}
                       disabled={replied || isMarking}
-                      className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                      className={`flex items-center justify-center w-11 h-11 rounded-lg transition-colors ${
                         replied
                           ? 'bg-blue-50 text-blue-600 border border-blue-200'
                           : isMarking
                             ? 'bg-slate-100 text-slate-400'
-                            : 'bg-slate-50 text-slate-300'
+                            : 'bg-slate-50 text-slate-300 hover:bg-slate-100'
                       }`}
                       title={replied ? 'Replied' : 'Mark Reply'}
+                      aria-label={replied ? 'Replied' : 'Mark as replied'}
                     >
                       {isMarking ? (
-                        <Loader2 size={14} className="animate-spin" />
+                        <Loader2 size={16} className="animate-spin" />
                       ) : (
-                        <CheckCircle size={14} />
+                        <CheckCircle size={16} />
                       )}
                     </button>
 
@@ -1218,9 +1259,10 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                         e.stopPropagation();
                         onSelectLead(lead);
                       }}
-                      className="w-8 h-8 flex items-center justify-center text-slate-400 rounded-lg"
+                      className="w-11 h-11 flex items-center justify-center text-slate-400 rounded-lg hover:bg-slate-50 hover:text-slate-600"
+                      aria-label="Open lead details"
                     >
-                      <ChevronRight size={16} />
+                      <ChevronRight size={18} />
                     </button>
                   </div>
                 </div>
@@ -1318,9 +1360,12 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
             <div className="p-6 border-b border-slate-200 flex justify-between items-center">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">Send Mail to All Leads</h2>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Bulk Send to {filteredLeads.length} Leads
+                </h2>
                 <p className="text-sm text-slate-600 mt-1">
-                  Select an email template and preview prepared emails (not sending yet)
+                  Select a template and preview before sending. Emails are not sent until you
+                  confirm.
                 </p>
               </div>
               <button

@@ -22,6 +22,7 @@ import { StatusBadge, InfoItem, EditField, EditTextArea } from './common';
 import { useLeadEdit } from './LeadDetail/useLeadEdit';
 import { useLeadEnrichment } from './LeadDetail/useLeadEnrichment';
 import { useLeadEmail } from './LeadDetail/useLeadEmail';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 export const LeadDetail = ({
   lead,
@@ -90,8 +91,15 @@ export const LeadDetail = ({
 
   const canEdit = user.role === 'Director' || user.role === 'Sales';
 
+  useEscapeKey(true, onClose);
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-end">
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-end"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col overflow-hidden animate-slide-in-right border-l border-slate-200">
         <div className="px-3 py-2 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
           <div>

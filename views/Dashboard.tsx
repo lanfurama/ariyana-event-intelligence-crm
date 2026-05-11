@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { Lead, EmailLog } from '../types';
 import { emailLogsApi, emailRepliesApi, emailTemplatesApi } from '../services/apiService';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import {
   PipelineBars,
   StatCard,
@@ -43,6 +44,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
   const [emailTemplates, setEmailTemplates] = useState<
     Array<{ subject: string; language?: string }>
   >([]);
+
+  useEscapeKey(selectedTemplate !== null, () => setSelectedTemplate(null));
 
   useEffect(() => {
     loadEmailLogs();

@@ -138,7 +138,7 @@ const App = () => {
       <main
         className={`flex-1 relative transition-all duration-300 ease-in-out overflow-hidden h-full ${sidebarOpen ? 'md:ml-52' : 'ml-0'}`}
       >
-        <div className="h-full w-full overflow-auto">
+        <div className={`h-full w-full overflow-auto ${sidebarOpen ? '' : 'pl-12 md:pl-0'}`}>
           <Suspense fallback={<LoadingSpinner />}>{renderContent()}</Suspense>
         </div>
       </main>
