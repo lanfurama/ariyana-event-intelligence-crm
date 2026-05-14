@@ -1,0 +1,185 @@
+{
+  "count": 20,
+  "items": [
+    {
+      "org_name": "Asia Pacific Quality Organization -APQO-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=12348",
+      "org_id": "12348",
+      "series_name": "Conference of the Asia Pacific Quality Organization -APQC -",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=5271",
+      "series_id": "5271",
+      "attendance": "603"
+    },
+    {
+      "org_name": "Wharton Alumni Relations",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=8057",
+      "org_id": "8057",
+      "series_name": "Wharton Global Forum",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=19968",
+      "series_id": "19968",
+      "attendance": "452"
+    },
+    {
+      "org_name": "League of ASEAN Dermatological Societies -LADS-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=14607",
+      "org_id": "14607",
+      "series_name": "Regional Conference of Dermatology -RCD-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=5601",
+      "series_id": "5601",
+      "attendance": "1080"
+    },
+    {
+      "org_name": "World Oyster Society -WOS-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=2115",
+      "org_id": "2115",
+      "series_name": "International Oyster Symposium -IOS-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=23256",
+      "series_id": "23256",
+      "attendance": "300"
+    },
+    {
+      "org_name": "International Life Saving Federation -ILSF-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=2476",
+      "org_id": "2476",
+      "series_name": "World Conference on Drowning Prevention -WCDP-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=23649",
+      "series_id": "23649",
+      "attendance": "700"
+    },
+    {
+      "org_name": "Asia Association of Teaching English as Foreign Language -ASIA TEFL-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=1546",
+      "org_id": "1546",
+      "series_name": "Asia Teaching English as Foreign Language International Conference -ASIA TEFL-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=23767",
+      "series_id": "23767",
+      "attendance": "957"
+    },
+    {
+      "org_name": "International Federation for Information Processing -IFIP-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=5783",
+      "org_id": "5783",
+      "series_name": "World Information Technology Forum -WITFOR -",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=23809",
+      "series_id": "23809",
+      "attendance": "1052"
+    },
+    {
+      "org_name": "Asian Concrete Federation -ACF-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=477",
+      "org_id": "477",
+      "series_name": "Asian Concrete Federation -ACF- International Conference",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=23901",
+      "series_id": "23901",
+      "attendance": "400"
+    },
+    {
+      "org_name": "Asian Spinal Cord Network -ASCoN-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=4537",
+      "org_id": "4537",
+      "series_name": "Asian Spinal Cord Network Conference -ASCoN-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=27193",
+      "series_id": "27193",
+      "attendance": "533"
+    },
+    {
+      "org_name": "Factors Chain International -FCI-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=360",
+      "org_id": "360",
+      "series_name": "Annual Meeting of Factors Chain International -FCI-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=8388",
+      "series_id": "8388",
+      "attendance": "300"
+    },
+    {
+      "org_name": "International Committee on MCH Handbook",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=115",
+      "org_id": "115",
+      "series_name": "International Conference on the Maternal and Child Health -MCH- Handbook",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=27898",
+      "series_id": "27898",
+      "attendance": "400"
+    },
+    {
+      "org_name": "International Co-operative Alliance -ICA-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=1609",
+      "org_id": "1609",
+      "series_name": "ICA-AP Regional Assembly and  Asia-Pacific  Co-operative Forum",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=28251",
+      "series_id": "28251",
+      "attendance": "550"
+    },
+    {
+      "org_name": "Asian Society of Veterinary Pathology -ASVP-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=2449",
+      "org_id": "2449",
+      "series_name": "Asian Society of Veterinary Pathology -ASVP- Conference",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=36131",
+      "series_id": "36131",
+      "attendance": "325"
+    },
+    {
+      "org_name": "World Association for Personality Psychology",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=18791",
+      "org_id": "18791",
+      "series_name": "World Conference on Personality -WAPP -",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=29690",
+      "series_id": "29690",
+      "attendance": "300"
+    },
+    {
+      "org_name": "Asia Pacific Occupational Safety & Health Organization -APOSHO-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=4692",
+      "org_id": "4692",
+      "series_name": "Annual Conference of the Asia Pacific Occupational Safety and Health Organisation -APOSHO -",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=10491",
+      "series_id": "10491",
+      "attendance": "473"
+    },
+    {
+      "org_name": "Eurasia Foundation",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=9039",
+      "org_id": "9039",
+      "series_name": "Eurasia Convention",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=30902",
+      "series_id": "30902",
+      "attendance": "625"
+    },
+    {
+      "org_name": "Worldwide Network for Blood and Marrow Transplantation -WBMT-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=11391",
+      "org_id": "11391",
+      "series_name": "Worldwide Network for Blood and Marrow Transplantation -WBMT- Workshop and Symposium",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=35489",
+      "series_id": "35489",
+      "attendance": "484"
+    },
+    {
+      "org_name": "International Fertilizer Industry Association -IFA-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=11826",
+      "org_id": "11826",
+      "series_name": "IFA Crossroads Asia-Pacific",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=8504",
+      "series_id": "8504",
+      "attendance": "400"
+    },
+    {
+      "org_name": "Asia and Pacific Seed Association -APSA-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=9868",
+      "org_id": "9868",
+      "series_name": "Asian Seed Congress -APSA-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=10235",
+      "series_id": "10235",
+      "attendance": "1220"
+    },
+    {
+      "org_name": "",
+      "org_url": "",
+      "org_id": "",
+      "series_name": "ASEAN Sleep Congress",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=60191",
+      "series_id": "60191",
+      "attendance": "700"
+    }
+  ]
+}

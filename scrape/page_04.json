@@ -1,0 +1,185 @@
+{
+  "count": 20,
+  "items": [
+    {
+      "org_name": "International Telecommunication Union -ITU-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=19344",
+      "org_id": "19344",
+      "series_name": "Meeting of ITU-R Working Party 5D",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=57351",
+      "series_id": "57351",
+      "attendance": "601"
+    },
+    {
+      "org_name": "International Federation of Surveyors -FIG-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=12768",
+      "org_id": "12768",
+      "series_name": "Working Week &  General Assembly of the International Federation of Surveyors -FIG-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=1475",
+      "series_id": "1475",
+      "attendance": "1419"
+    },
+    {
+      "org_name": "International Association of Buddhist Women -Sakyadhita-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=1010",
+      "org_id": "1010",
+      "series_name": "Sakyadhita International Conference on Buddhist Women",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=8057",
+      "series_id": "8057",
+      "attendance": "1418"
+    },
+    {
+      "org_name": "International Conference on Low Carbon Asia and Beyond -ICLCA-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=3872",
+      "org_id": "3872",
+      "series_name": "International Conference on Low Carbon Asia -ICLCA -",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=35317",
+      "series_id": "35317",
+      "attendance": "359"
+    },
+    {
+      "org_name": "International Federation of Consulting Engineers -FIDIC-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=8289",
+      "org_id": "8289",
+      "series_name": "FIDIC Asia Pacific Contract Users’ Conference",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=31845",
+      "series_id": "31845",
+      "attendance": "501"
+    },
+    {
+      "org_name": "International Airlines Technical Pool -IATP-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=10447",
+      "org_id": "10447",
+      "series_name": "Conference of the International Airlines Technical Pool -IATP-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=13835",
+      "series_id": "13835",
+      "attendance": "601"
+    },
+    {
+      "org_name": "Developing Country Vaccine Manufacturer's Network -DCVMN-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=12273",
+      "org_id": "12273",
+      "series_name": "Annual General Meeting of the Developing Countries Vaccine Manufacturers Network -DCVMN-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=24164",
+      "series_id": "24164",
+      "attendance": "421"
+    },
+    {
+      "org_name": "ASEAN Orthopaedic Association -AOA-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=5831",
+      "org_id": "5831",
+      "series_name": "ASEAN Orthopaedic Association Congress -AOA-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=11599",
+      "series_id": "11599",
+      "attendance": "1001"
+    },
+    {
+      "org_name": "",
+      "org_url": "",
+      "org_id": "",
+      "series_name": "International Conference on “Physics and Mechanics of New Materials and Their Applications” -PHENMA-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=61137",
+      "series_id": "61137",
+      "attendance": "690"
+    },
+    {
+      "org_name": "Korean Society for Precision Engineering -KSPE-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=10164",
+      "org_id": "10164",
+      "series_name": "International Symposium of Precision Engineering and Sustainable Manufacturing -PRESM-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=30775",
+      "series_id": "30775",
+      "attendance": "503"
+    },
+    {
+      "org_name": "Asian Australasian Federation of Interventional and Therapeutic Neuroradiology -AAFITN-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=10449",
+      "org_id": "10449",
+      "series_name": "Meeting of the Asian Australasian Federation of Interventional and Therapeutic Neuroradiology -AAFITN-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=14217",
+      "series_id": "14217",
+      "attendance": "476"
+    },
+    {
+      "org_name": "South East Asian Zoos Association -SEAZA-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=13263",
+      "org_id": "13263",
+      "series_name": "Conference of the South East Asian Zoos Association -SEAZA-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=13656",
+      "series_id": "13656",
+      "attendance": "456"
+    },
+    {
+      "org_name": "ASEAN Society of Pediatric Surgeons -ASPS-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=11816",
+      "org_id": "11816",
+      "series_name": "ASEAN Society of Pediatric Surgeons Congress -ASPS-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=33248",
+      "series_id": "33248",
+      "attendance": "301"
+    },
+    {
+      "org_name": "Pacific Asia Knowledge Discovery and Data Mining -PAKDD-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=795",
+      "org_id": "795",
+      "series_name": "Pacific-Asia Conference on Knowledge Discovery and Data Mining -PAKDD-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=18382",
+      "series_id": "18382",
+      "attendance": "300"
+    },
+    {
+      "org_name": "International Baccalaureate -IB- Asia Pacific",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=12289",
+      "org_id": "12289",
+      "series_name": "IB Global Conference Asia Pacific",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=12954",
+      "series_id": "12954",
+      "attendance": "1150"
+    },
+    {
+      "org_name": "ASEAN Valuers Association -AVA-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=17240",
+      "org_id": "17240",
+      "series_name": "Congress of the ASEAN Valuers Association -AVA-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=7073",
+      "series_id": "7073",
+      "attendance": "451"
+    },
+    {
+      "org_name": "Asian Mycological Association -AMA-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=5812",
+      "org_id": "5812",
+      "series_name": "Asian Mycological Congress -AMC-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=9941",
+      "series_id": "9941",
+      "attendance": "401"
+    },
+    {
+      "org_name": "International Military Sports Council -CISM-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=159",
+      "org_id": "159",
+      "series_name": "General Assembly of the International Military Sports Council -CISM-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=1651",
+      "series_id": "1651",
+      "attendance": "767"
+    },
+    {
+      "org_name": "",
+      "org_url": "",
+      "org_id": "",
+      "series_name": "Asian Vaccine Conference -ASVAC-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=57501",
+      "series_id": "57501",
+      "attendance": "501"
+    },
+    {
+      "org_name": "Cervical Spine Research Society Asia Pacific Section -CSRS-AP-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=6394",
+      "org_id": "6394",
+      "series_name": "Annual Meeting of the Cervical Spine Research Society Asia Pacific Section -CSRS-AP-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=30035",
+      "series_id": "30035",
+      "attendance": "301"
+    }
+  ]
+}

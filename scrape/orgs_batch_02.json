@@ -1,0 +1,710 @@
+{
+  "6432": {
+    "orgId": "6432",
+    "acode": "1061060",
+    "name": "Asia Pacific Association of Cataract and Refractive Surgeons -APACRS-",
+    "address": "c/o Singapore National Eye Centre\n11 Third Hospital Avenue\nSingapore 168751\nSingapore",
+    "phone": "65-6322 7469",
+    "fax": "65-6327 8630",
+    "website": "http://www.apacrs.org",
+    "email": "apacrs@apacrs.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Kathy Chen",
+        "title": "Executive Director",
+        "email": "kathy.chen@apacrs.org",
+        "phone": "",
+        "id": "11818",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "6629": {
+    "orgId": "6629",
+    "acode": "1072296",
+    "name": "International Pepper Community -IPC-",
+    "address": "8th Floor, BAPPEBTI Building\nJl. Kramat Raya\nJakarta 10430\nIndonesia",
+    "phone": "62-21-3101023",
+    "fax": "62-21-3100986",
+    "website": "http://www.ipcnet.org",
+    "email": "mail@ipcnet.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "ed@ipcnet.org",
+    "contacts": [
+      {
+        "name": "S. Kannan",
+        "title": "Executive Director",
+        "email": "",
+        "phone": "",
+        "id": "6222",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "6871": {
+    "orgId": "6871",
+    "acode": "1103500",
+    "name": "International Association for the Study of Sexuality, Culture and Society -IASSCS-",
+    "address": "Unknown",
+    "phone": "",
+    "fax": "",
+    "website": "",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": []
+  },
+  "6889": {
+    "orgId": "6889",
+    "acode": "20208",
+    "name": "Cooperation for Urban Mobility in the Developing World -CODATU-",
+    "address": "21 boulevard Vivier-Merle\nLyon 69003\nFrance",
+    "phone": "33-478-622309",
+    "fax": "33-478-623299",
+    "website": "http://www.codatu.org/",
+    "email": "contact@codatu.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "codatu@wanadoo.fr",
+    "contacts": [
+      {
+        "name": "Jean Claude Ziv",
+        "title": "General Secretary",
+        "email": "",
+        "phone": "",
+        "id": "6465",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "6911": {
+    "orgId": "6911",
+    "acode": "1079702",
+    "name": "Asian Forum on Enterprise for Society -AFES-",
+    "address": "c/o Asian Institute of Management\nEugenio Lopez Foundation Building\nMakati City\nPhilippines",
+    "phone": "63 2892-4011 ext. 5303",
+    "fax": "",
+    "website": "http://asianforum.aim.edu/",
+    "email": "shaun.hoon@asiaincforum.com",
+    "social": {
+      "twitter": "https://twitter.com/Theasianforum",
+      "facebook": "",
+      "linkedin": "https://www.linkedin.com/company/theasianforum/",
+      "instagram": "https://www.instagram.com/theasianforum/"
+    },
+    "notes": "Contact form available on IO website.",
+    "contacts": []
+  },
+  "7198": {
+    "orgId": "7198",
+    "acode": "41071",
+    "name": "Architects Regional Council Asia -ARCASIA-",
+    "address": "c/o Singapore Institute of Architects\n79 Neil Road\nSingapore\nSingapore",
+    "phone": "65-6226-2668",
+    "fax": "",
+    "website": "http://www.arcasia.org",
+    "email": "info@arcasia.net",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contact form available on IO website.",
+    "contacts": [
+      {
+        "name": "Ar. Jahangir Khan",
+        "title": "Immediate Past President",
+        "email": "cite.jks@gmail.com",
+        "phone": "",
+        "id": "12062",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Rita Soh",
+        "title": "President",
+        "email": "ritz.so@gmail.com",
+        "phone": "",
+        "id": "13389",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "7394": {
+    "orgId": "7394",
+    "acode": "R109712",
+    "name": "FAO Regional Office for Asia and the Pacific",
+    "address": "Maliwan Mansion\nPhra Atit Road\nBangkok\nThailand",
+    "phone": "66-2-6974000",
+    "fax": "66-2-6974445",
+    "website": "http://www.fao.org/asiapacific/en/",
+    "email": "FAO-RAP@fao.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": []
+  },
+  "7457": {
+    "orgId": "7457",
+    "acode": "1018686",
+    "name": "World Aquaculture Society -WAS-",
+    "address": "ึNo. 79/74 , Putthamonthon Sai 3 Road\nThaweewathana , Salathammasop\nBangkok, LA\nThailand",
+    "phone": "1-225-347-5408",
+    "fax": "1-225-347-5408",
+    "website": "http://www.was.org",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Home Office Director: Carol Mendoza | carolm@was.org\nContact form available on website.",
+    "contacts": [
+      {
+        "name": "Lorenzo Juarez",
+        "title": "Regional President",
+        "email": "lorenzojuarez@yahoo.com",
+        "phone": "",
+        "id": "1768",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Carolina Amezquita",
+        "title": "Executive Officer LACC",
+        "email": "Carolina@was.org",
+        "phone": "",
+        "id": "3741",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "John Cooksey",
+        "title": "Director Conferences",
+        "email": "johnc@was.org",
+        "phone": "",
+        "id": "7543",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Julie Delabbio",
+        "title": "Secretary",
+        "email": "",
+        "phone": "",
+        "id": "11796",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "7831": {
+    "orgId": "7831",
+    "acode": "1084036",
+    "name": "Asia-Europe Meeting -ASEM- InfoBoard",
+    "address": "c/o Asia-Europe Foundation -ASEF-\n31 Heng Mui Keng Terrace\nSingapore\nSingapore",
+    "phone": "65-6874 9718",
+    "fax": "65-6872 1206",
+    "website": "http://www.aseminfoboard.org/",
+    "email": "admin@aseminfoboard.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "KC includes ASEM Partners",
+    "contacts": []
+  },
+  "8057": {
+    "orgId": "8057",
+    "acode": "1096348",
+    "name": "Wharton Alumni Relations",
+    "address": "The Wharton School\nUniversity of Pennsylvania\nPhiladelphia, PA 19104\nU.S.A.",
+    "phone": "1-215-898 8478",
+    "fax": "",
+    "website": "http://alumni.wharton.upenn.edu/",
+    "email": "alumni.relations@wharton.upenn.edu",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Lizann Rode",
+        "title": "Executive Director",
+        "email": "lrode@wharton.upenn.edu",
+        "phone": "",
+        "id": "4194",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Hatef Alavi",
+        "title": "Senior Assoc. Director, Wharton Clubs",
+        "email": "alavih@wharton.upenn.edu",
+        "phone": "+1.215.573.8527",
+        "id": "20895",
+        "last_updated": ""
+      }
+    ]
+  },
+  "8266": {
+    "orgId": "8266",
+    "acode": "91001913",
+    "name": "World Buddhist Sangha Council -WBSC-",
+    "address": "No. 6, Shaoxing North Street\nZhong Zheng District\nTaipei\nChinese Taipei",
+    "phone": "886-2-23965564",
+    "fax": "886-2-23913770",
+    "website": "https://www.wbsc886.org/en/",
+    "email": "wbsc5564@ms64.hinet.net",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": []
+  },
+  "8289": {
+    "orgId": "8289",
+    "acode": "11896",
+    "name": "International Federation of Consulting Engineers -FIDIC-",
+    "address": "World Trade Center II - Geneva Airport\nP. O. Box 311\nGeneva 1215 - 15\nSwitzerland",
+    "phone": "41 22 568 0500",
+    "fax": "41-22-799 4901",
+    "website": "http://www.fidic.org/",
+    "email": "fidic@fidic.org",
+    "social": {
+      "twitter": "https://twitter.com/FIDIC",
+      "facebook": "https://www.facebook.com/FIDIC.Page",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contact form available on website.",
+    "contacts": [
+      {
+        "name": "Silvia Fossati",
+        "title": "Training Manager",
+        "email": "sfossati@fidic.org",
+        "phone": "",
+        "id": "5118",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Barbara Chabloz",
+        "title": "Head of Conferences & Events",
+        "email": "bchabloz@fidic.org",
+        "phone": "",
+        "id": "8679",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Alfredo Ingletti",
+        "title": "President",
+        "email": "a.ingletti@3tiprogetti.it",
+        "phone": "",
+        "id": "300007741",
+        "last_updated": "05 Aug 2026"
+      },
+      {
+        "name": "Beatriz Bertomeu",
+        "title": "Events Manager",
+        "email": "bbertomeu@fidic.org",
+        "phone": "",
+        "id": "300007742",
+        "last_updated": "05 Aug 2026"
+      }
+    ]
+  },
+  "8359": {
+    "orgId": "8359",
+    "acode": "11898",
+    "name": "International Textile Manufacturers Federation -ITMF-",
+    "address": "Wiedingstrasse 9\nZurich 8055\nSwitzerland",
+    "phone": "41-1-283 6380",
+    "fax": "41-1-283 6389",
+    "website": "http://www.itmf.org/",
+    "email": "secretariat@itmf.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Christian Schindler",
+        "title": "Director General",
+        "email": "",
+        "phone": "",
+        "id": "2248",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "8461": {
+    "orgId": "8461",
+    "acode": "1137019",
+    "name": "Global Seafood Alliance -GSA",
+    "address": "2 International Drive\nSuite 105\nPortsmouth, NH\nU.S.A.",
+    "phone": "1-603-317 5000",
+    "fax": "",
+    "website": "https://www.aquaculturealliance.org/",
+    "email": "sally.krueger@aquaculturealliance.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Sally Krueger",
+        "title": "",
+        "email": "sally.krueger@aquaculturealliance.org",
+        "phone": "1-314-492 5057",
+        "id": "3490",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Wally Stevens",
+        "title": "Executive Director",
+        "email": "wally.stevens@gaalliance.org",
+        "phone": "1-603-317 5000",
+        "id": "5223",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "8722": {
+    "orgId": "8722",
+    "acode": "11912",
+    "name": "International Federation of Film Archives -FIAF-",
+    "address": "Rue Blanche 42\nBrussels 1060\nBelgium",
+    "phone": "32-2-538 3065",
+    "fax": "32-2-534 4774",
+    "website": "http://www.fiafnet.org/",
+    "email": "info@fiafnet.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Secretary-General: Michael LoebensteinMichael Loebenstein@nfsa.gov.au",
+    "contacts": [
+      {
+        "name": "Michael Loebensten",
+        "title": "Secretary General",
+        "email": "Michael.Loebenstein@nfsa.gov.au",
+        "phone": "",
+        "id": "15767",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Christophe Dupin",
+        "title": "Senior Administrator",
+        "email": "c.dupin@fiafnet.org",
+        "phone": "",
+        "id": "17416",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "8757": {
+    "orgId": "8757",
+    "acode": "1135571",
+    "name": "SEA-EU-NET",
+    "address": "-\n\nUnknown",
+    "phone": "",
+    "fax": "",
+    "website": "https://sea-eu.net/",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": []
+  },
+  "8798": {
+    "orgId": "8798",
+    "acode": "1083705",
+    "name": "Academy of Human Resource Development Asia Chapter -AHRD-",
+    "address": "1000 Westgate Drive, Suite 252\nSt. Paul, MN\nU.S.A.",
+    "phone": "1-651-290 7466",
+    "fax": "1-651-290 2266",
+    "website": "http://www.ahrd.org",
+    "email": "office@ahrd.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Kathie Pugaczewski",
+        "title": "Executive Director",
+        "email": "kathiep@ewald.com",
+        "phone": "1-651-265-7859",
+        "id": "13116",
+        "last_updated": "10 Mar 2025"
+      }
+    ]
+  },
+  "9035": {
+    "orgId": "9035",
+    "acode": "40321",
+    "name": "Asian-Australasian Association of Animal Production Societies -AAAP-",
+    "address": "Editorial Office\nRoom 708 Sammo Sporex\nSeoul\nRepublic of Korea",
+    "phone": "82-2-888-6558",
+    "fax": "82-2-888-6559",
+    "website": "http://www.ajas.info/aaap/about.php",
+    "email": "jongkha@hotmail.com",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Jong Kyu Ha",
+        "title": "Administrator",
+        "email": "jongkha@hotmail.com",
+        "phone": "",
+        "id": "3593",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Sang Jip Ohh",
+        "title": "Secretary General",
+        "email": "sjohh@kangwon.ac.kr",
+        "phone": "",
+        "id": "3810",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "9039": {
+    "orgId": "9039",
+    "acode": "1131477",
+    "name": "Eurasia Foundation",
+    "address": "405 Station Plaza Tower 2-22-1\nNishi-Nippori Arakawa-ku\nTokyo 116-0013\nJapan",
+    "phone": "81-3-5615-5500",
+    "fax": "81-3-5615-5501",
+    "website": "http://www.eurasia.or.jp/en/",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Previously known as One Asia Foundation (OAF)",
+    "contacts": [
+      {
+        "name": "Yoji Sato",
+        "title": "Chairman",
+        "email": "",
+        "phone": "",
+        "id": "3322",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "9091": {
+    "orgId": "9091",
+    "acode": "1106524",
+    "name": "Open Education Consortium -OEC-",
+    "address": "60 Thoreau St\nSuite 238\nConcord, MA\nU.S.A.",
+    "phone": "",
+    "fax": "",
+    "website": "https://www.oeglobal.org/",
+    "email": "conference@oegloal.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Previously known as OpenCourseWare Consortium -OCWC-",
+    "contacts": [
+      {
+        "name": "Paul Stacey",
+        "title": "Executive Director",
+        "email": "paulstacey@oeconsortium.org",
+        "phone": "",
+        "id": "9145",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Igor Lesko",
+        "title": "Director of Operations",
+        "email": "igorlesko@oeconsortium.org",
+        "phone": "",
+        "id": "14113",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "9181": {
+    "orgId": "9181",
+    "acode": "11344",
+    "name": "International Association of Seismology and Physics of the Earth's Interior -IASPEI-",
+    "address": "c/o NORSAR\nGunnar Randers vei 15\nKjeller 2007\nNorway",
+    "phone": "47-41 61 49 46",
+    "fax": "39-63 80 59 00",
+    "website": "http://www.iaspei.org",
+    "email": "iaspei@norsar.no",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Johannes Schweitzer",
+        "title": "Secretary-General",
+        "email": "",
+        "phone": "",
+        "id": "9377",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "9238": {
+    "orgId": "9238",
+    "acode": "13399",
+    "name": "Universal Esperanto Association -UEA-",
+    "address": "Nieuwe Binnenweg 176\nRotterdam 3015 BJ\nNetherlands",
+    "phone": "31-10-436 10 44",
+    "fax": "+49 30 364 280 169",
+    "website": "http://www.uea.org",
+    "email": "info@uea.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "kongresoj@co.uea.org",
+    "contacts": [
+      {
+        "name": "Martin Schäffer",
+        "title": "General Director",
+        "email": "direktoro@co.uea.org",
+        "phone": "31-10-436 10 44",
+        "id": "19967",
+        "last_updated": "07 Nov 2024"
+      }
+    ]
+  },
+  "9241": {
+    "orgId": "9241",
+    "acode": "20470",
+    "name": "Asia-Pacific Institute for Broadcasting Development -AIBD-",
+    "address": "Angkasapuri\nJalan Pantai Dalam\nKuala Lumpur 50614\nMalaysia",
+    "phone": "60-3-2282 4618 / -3719",
+    "fax": "60-3-2282 2761",
+    "website": "http://aibd.org.my",
+    "email": "info@aibd.org.my",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Chang Jin",
+        "title": "Director",
+        "email": "changjin@aibd.org.my",
+        "phone": "",
+        "id": "17929",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "9446": {
+    "orgId": "9446",
+    "acode": "1106311",
+    "name": "Asian Pig Veterinary Society -APVS-",
+    "address": "Unknown",
+    "phone": "",
+    "fax": "",
+    "website": "",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": []
+  },
+  "9460": {
+    "orgId": "9460",
+    "acode": "12532",
+    "name": "International Society of Blood Transfusion -ISBT-",
+    "address": "ISBT Central Office\nMarnixstraat 317\nAmsterdam 1016 TB\nNetherlands",
+    "phone": "",
+    "fax": "",
+    "website": "http://www.isbtweb.org",
+    "email": "office@isbtweb.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contact form available in the ISBT webpage",
+    "contacts": [
+      {
+        "name": "Jenny White",
+        "title": "Executive Director",
+        "email": "ed@isbtweb.org",
+        "phone": "",
+        "id": "8758",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  }
+}

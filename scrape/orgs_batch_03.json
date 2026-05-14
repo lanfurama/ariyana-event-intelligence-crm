@@ -1,0 +1,722 @@
+{
+  "9868": {
+    "orgId": "9868",
+    "acode": "1035580",
+    "name": "Asia and Pacific Seed Association -APSA-",
+    "address": "P.O. Box 1030\nKasetsart Post Office\nBangkok\nThailand",
+    "phone": "66-2-940 5464",
+    "fax": "66-2-940 5467",
+    "website": "http://www.apsaseed.org/",
+    "email": "apsa@apsaseed.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Mike Kingpayom",
+        "title": "Events Manager",
+        "email": "mike@apsaseed.org",
+        "phone": "",
+        "id": "1765",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Kanokwan \"May\" Chodchoey",
+        "title": "Executive Director",
+        "email": "may@apsaseed.org",
+        "phone": "",
+        "id": "9186",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "10050": {
+    "orgId": "10050",
+    "acode": "1072640",
+    "name": "Asian Pacific Organization for Cancer Prevention -APOCP-",
+    "address": "Unknown",
+    "phone": "",
+    "fax": "",
+    "website": "http://apocp.info/",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Aesun Shin",
+        "title": "Secretary General",
+        "email": "",
+        "phone": "",
+        "id": "10095",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "10164": {
+    "orgId": "10164",
+    "acode": "1146918",
+    "name": "Korean Society for Precision Engineering -KSPE-",
+    "address": "SKY1004 bldg. 12F\n50-1 Junglim-ro\nSeoul\nRepublic of Korea",
+    "phone": "82-2-518-0722 ext.6",
+    "fax": "82-2-518-2937",
+    "website": "http://www.kspe.or.kr/",
+    "email": "kspe@kspe.or.kr",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Seong-Wook Hong",
+        "title": "President",
+        "email": "",
+        "phone": "",
+        "id": "10232",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "10199": {
+    "orgId": "10199",
+    "acode": "1137325",
+    "name": "Asian Society of International Law -AsianSIL-",
+    "address": "c/o Faculty of Law, National University of Singapore\nEu Tong Sen Building\nSingapore\nSingapore",
+    "phone": "65-6601 2693",
+    "fax": "65-6779 0979",
+    "website": "http://www.asiansil.org",
+    "email": "asiansil-admin@nus.edu.sg",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contact form available in the AsianSIL webpage\nasiansil-conferences@nus.edu.sg",
+    "contacts": [
+      {
+        "name": "Anghie Antony",
+        "title": "Secretary General",
+        "email": "lawanto@nus.edu.sg",
+        "phone": "",
+        "id": "10260",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "10276": {
+    "orgId": "10276",
+    "acode": "1079133",
+    "name": "GNOME Foundation",
+    "address": "#117\n21 Orinda Way\nOrinda, CA\nU.S.A.",
+    "phone": "",
+    "fax": "",
+    "website": "http://www.gnome.org",
+    "email": "info@gnome.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Neil McGovern",
+        "title": "Executive Director",
+        "email": "neil@gnome.org",
+        "phone": "",
+        "id": "1292",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "10447": {
+    "orgId": "10447",
+    "acode": "1072364",
+    "name": "International Airlines Technical Pool -IATP-",
+    "address": "IATP Corporate Office\nOffice 6B\nLuxembourg 1466\nLuxembourg",
+    "phone": "352-2668 4184",
+    "fax": "352-2668 4185",
+    "website": "http://www.iatp.com/",
+    "email": "info@iatp.com",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "San Lucktong",
+        "title": "Chairperson",
+        "email": "",
+        "phone": "",
+        "id": "10466",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "10449": {
+    "orgId": "10449",
+    "acode": "1073875",
+    "name": "Asian Australasian Federation of Interventional and Therapeutic Neuroradiology -AAFITN-",
+    "address": "-\n\nUnknown",
+    "phone": "",
+    "fax": "",
+    "website": "http://www.aafitn.com/",
+    "email": "secretary@aafitn.com",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contact form available in the association website",
+    "contacts": [
+      {
+        "name": "Shigeru Miyachi",
+        "title": "President",
+        "email": "miyachi.shigeru.752@mail.aichi-med-u.ac.jp",
+        "phone": "",
+        "id": "5038",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Hongqi Zhang",
+        "title": "Treasurer",
+        "email": "hqzh@vip.163.com",
+        "phone": "",
+        "id": "10468",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Jeyaledchumy Mahadevan",
+        "title": "President",
+        "email": "",
+        "phone": "",
+        "id": "20696",
+        "last_updated": ""
+      },
+      {
+        "name": "Anchalee Churojana",
+        "title": "Vice President",
+        "email": "",
+        "phone": "",
+        "id": "20697",
+        "last_updated": ""
+      },
+      {
+        "name": "Winston Chong",
+        "title": "Treasurer",
+        "email": "",
+        "phone": "",
+        "id": "20698",
+        "last_updated": ""
+      }
+    ]
+  },
+  "10471": {
+    "orgId": "10471",
+    "acode": "1095130",
+    "name": "Asia Oceania Tax Consultants Association -AOTCA-",
+    "address": "8th Floor, 1-11-8 Ohsaki\nShingagawa-ku\nTokyo 141-0032\nJapan",
+    "phone": "",
+    "fax": "",
+    "website": "http://www.aotca.org/",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "KC includes standard and associate members",
+    "contacts": [
+      {
+        "name": "Yoshimasa Tajiri",
+        "title": "Secretary General",
+        "email": "",
+        "phone": "",
+        "id": "736",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Euney Marie J. Mata-Perez",
+        "title": "President",
+        "email": "euney.mata-perez@mtfcounsel.com",
+        "phone": "",
+        "id": "18494",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "10974": {
+    "orgId": "10974",
+    "acode": "1066420",
+    "name": "Asian Science Park Association -ASPA-",
+    "address": "2F Daegu Knowledge Service Center\n481, Dongdaegu-ro\nDaegu 41256\nRepublic of Korea",
+    "phone": "82-53-218 4103",
+    "fax": "82-53-218 4108",
+    "website": "https://cyberaspa.org/",
+    "email": "aspa@cyberaspa.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Young-Ho Nam",
+        "title": "Secretariat",
+        "email": "yhnam@aspa.or.kr",
+        "phone": "",
+        "id": "11674",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "11077": {
+    "orgId": "11077",
+    "acode": "11977",
+    "name": "International Federation of Photographic Art -FIAP-",
+    "address": "70 Kolokotroni street\nPiraeus 18531\nGreece",
+    "phone": "30-210-4221781",
+    "fax": "",
+    "website": "http://www.fiap.net/",
+    "email": "fiap@fiap.net",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Ioannis Lykouris",
+        "title": "Secretary General",
+        "email": "i.lykouris@fiap.net",
+        "phone": "",
+        "id": "3662",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "11391": {
+    "orgId": "11391",
+    "acode": "91001875",
+    "name": "Worldwide Network for Blood and Marrow Transplantation -WBMT-",
+    "address": "c/o Blutspende SRK Schweiz AG\nLaupenstrasse 37\nBerne 3001\nSwitzerland",
+    "phone": "+41 31 380 8181",
+    "fax": "",
+    "website": "https://www.wbmt.org/",
+    "email": "mail@wbmt.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Hildegard Greinix",
+        "title": "President",
+        "email": "hildegard.greinix@meduniwien.ac.at",
+        "phone": "",
+        "id": "849",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "11402": {
+    "orgId": "11402",
+    "acode": "1118479",
+    "name": "Humanitarian Affairs",
+    "address": "Unknown",
+    "phone": "",
+    "fax": "",
+    "website": "http://www.humanitarianaffairs.org/",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": []
+  },
+  "11459": {
+    "orgId": "11459",
+    "acode": "14599",
+    "name": "Asian Patent Attorneys Association -APAA-",
+    "address": "c/o sayagata ip\nMinamiyama Building, 2nd Floor\nTokyo 102-0093\nJapan",
+    "phone": "",
+    "fax": "81-6-6363 0151",
+    "website": "http://www.apaaonline.org/",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Kozo Takeuchi",
+        "title": "Secretary General",
+        "email": "",
+        "phone": "",
+        "id": "4063",
+        "last_updated": ""
+      },
+      {
+        "name": "Shigeru Inaba",
+        "title": "Secretary General",
+        "email": "",
+        "phone": "",
+        "id": "20354",
+        "last_updated": ""
+      }
+    ]
+  },
+  "11488": {
+    "orgId": "11488",
+    "acode": "1135914",
+    "name": "International Tax and Investment Center -ITIC-",
+    "address": "1634 I Street, NW\nWashington, DC 20006\nU.S.A.",
+    "phone": "1202530979 9",
+    "fax": "+1-202-530-7987",
+    "website": "https://www.iticnet.org/",
+    "email": "info@iticnet.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contacts in the ITIC webpage",
+    "contacts": [
+      {
+        "name": "Daniel Witt",
+        "title": "President",
+        "email": "",
+        "phone": "",
+        "id": "11394",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "11566": {
+    "orgId": "11566",
+    "acode": "1068518",
+    "name": "Committee of Asia-Pacific Societies of Microscopy -CAPSM-",
+    "address": "The University of Melbourne\nGrattan Street, Parkville\nMelbourne, VIC 3010\nAustralia",
+    "phone": "+61383442449",
+    "fax": "60-3-8921 3249",
+    "website": "https://www.capsm.org/",
+    "email": "ehanssen@unimelb.edu.au",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Eric Hanssen",
+        "title": "Secretary",
+        "email": "ehanssen@unimelb.edu.au",
+        "phone": "+61383442449",
+        "id": "19655",
+        "last_updated": "10 Dec 2023"
+      }
+    ]
+  },
+  "11599": {
+    "orgId": "11599",
+    "acode": "91004802",
+    "name": "People & Global Business Association -P&GBA-",
+    "address": "#611, College of Hotel and Tourism Department611, Kyungheedae-ro 26\nKyunghee-ro 26, Dongdaemun-gu\nSeoul\nRepublic of Korea",
+    "phone": "82-2-962-0719",
+    "fax": "82-2-3295-0719",
+    "website": "http://www.pngba.org/index.asp",
+    "email": "pngba@pngba.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Jeong-gil Choi",
+        "title": "President",
+        "email": "pngba@pngba.org",
+        "phone": "82-2-962-0719",
+        "id": "300007320",
+        "last_updated": ""
+      }
+    ]
+  },
+  "11778": {
+    "orgId": "11778",
+    "acode": "1074499",
+    "name": "Asia-Pacific Society on Thrombosis and Hemostasis -APSTH-",
+    "address": "Principal Office of APSTH\nDepartment of Laboratory Medicine, School of Medicine\nChuo 409-3898\nJapan",
+    "phone": "",
+    "fax": "0166-65-2744",
+    "website": "https://www.apsth.org/index.html",
+    "email": "yozaki@yamanashi.ac.jp",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contact form available on website.\n\nStatutes: https://www.apsth.org/lows.html\nMembers of APSTH Council: https://www.apsth.org/organization.html",
+    "contacts": [
+      {
+        "name": "Satoshi Fujii",
+        "title": "Secretary General",
+        "email": "sfujii@asahikawa-med.ac.jp",
+        "phone": "",
+        "id": "11753",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Heng Joo Ng",
+        "title": "Secretary General",
+        "email": "ng.heng.joo@singhealth.sg",
+        "phone": "",
+        "id": "20137",
+        "last_updated": ""
+      }
+    ]
+  },
+  "11816": {
+    "orgId": "11816",
+    "acode": "1142997",
+    "name": "ASEAN Society of Pediatric Surgeons -ASPS-",
+    "address": "Unknown",
+    "phone": "",
+    "fax": "",
+    "website": "",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": []
+  },
+  "11826": {
+    "orgId": "11826",
+    "acode": "12609",
+    "name": "International Fertilizer Industry Association -IFA-",
+    "address": "49, avenue d'Iéna\nParis 75116\nFrance",
+    "phone": "33-1-5393 0500",
+    "fax": "",
+    "website": "http://www.fertilizer.org",
+    "email": "ifa@fertilizer.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "conference@fertilizer.org",
+    "contacts": [
+      {
+        "name": "Stéphane Leleu",
+        "title": "Director Conference Service",
+        "email": "",
+        "phone": "",
+        "id": "7697",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Patrick Heffer",
+        "title": "Interim Executive Director",
+        "email": "pheffer@fertilizer.org",
+        "phone": "33-1-5393 0500",
+        "id": "12576",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "12164": {
+    "orgId": "12164",
+    "acode": "11292",
+    "name": "International Association of Geomagnetism and Aeronomy -IAGA-",
+    "address": "c/o GFZ German Research Centre for Geosciences\nTelegrafenberg\nPotsdam 14473 \nGermany",
+    "phone": "3314476794 8",
+    "fax": "",
+    "website": "https://iaga-aiga.org/",
+    "email": "iaga_sg@gfz-potsdam.de",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "IAGA, the International Association of Geomagnetism and Aeronomy (AIGA - Association Internationale de Géomagnétisme et d’Aéronomie) is one of the eight Associations of the International Union of Geodesy and Geophysics (IUGG). \nYouTube: https://www.youtube.com/@iaga-aiga",
+    "contacts": [
+      {
+        "name": "Monika Korte",
+        "title": "Secretary General",
+        "email": "sg@iaga-aiga.org",
+        "phone": "4933128812 68",
+        "id": "19596",
+        "last_updated": ""
+      }
+    ]
+  },
+  "12273": {
+    "orgId": "12273",
+    "acode": "1110668",
+    "name": "Developing Country Vaccine Manufacturer's Network -DCVMN-",
+    "address": "Route de Crassier, 7\nNyon 1262\nSwitzerland",
+    "phone": "41-22-595 1393",
+    "fax": "41-22-595 67 00",
+    "website": "http://www.dcvmn.com/",
+    "email": "executivesecretary@dcvmn.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Liaison Office\n4th Floor, Gumidelli Commercial Complex, 1-10-39 to 44,\nOld Airport road, Begumpet,\nHyderabad, 500016,\nIndia\n\nPhone: +91 40 67043947\nFax: +91 40 67043999\nEmail: admin@dcvmn.org",
+    "contacts": [
+      {
+        "name": "Sonia R. Pagliusi",
+        "title": "Executive Secretary",
+        "email": "",
+        "phone": "",
+        "id": "12229",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "12289": {
+    "orgId": "12289",
+    "acode": "1062411",
+    "name": "International Baccalaureate -IB- Asia Pacific",
+    "address": "600 North Bridge Road\n#21-01 Parkview Square\nSingapore 188778\nSingapore",
+    "phone": "",
+    "fax": "65-6579 5003",
+    "website": "https://www.ibo.org/about-the-ib/the-ib-by-region/ib-asia-pacific/",
+    "email": "support@ibo.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": []
+  },
+  "12348": {
+    "orgId": "12348",
+    "acode": "40800",
+    "name": "Asia Pacific Quality Organization -APQO-",
+    "address": "APQO GPEA Secretariat\n#25-3/1, Suncity Towers  34/14\nColombo 10400\nSri Lanka",
+    "phone": "94 71 22 67 430",
+    "fax": "",
+    "website": "http://www.apqo.global/",
+    "email": "info@apqo.global",
+    "social": {
+      "twitter": "https://twitter.com/APQOGlobal",
+      "facebook": "https://www.facebook.com/APQOGLOBAL/",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contact form on website.",
+    "contacts": [
+      {
+        "name": "Pathmani Mangalika de Silva",
+        "title": "Secretary",
+        "email": "",
+        "phone": "",
+        "id": "11829",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "12396": {
+    "orgId": "12396",
+    "acode": "1089560",
+    "name": "Asia Pacific Section of the International Congress of Oral Implantologists -ICOI AP-",
+    "address": "55 Lane Road Suite 305\nFairfield, NJ\nU.S.A.",
+    "phone": "1-973-783 6300",
+    "fax": "1-973-783 1175",
+    "website": "http://icoiap.org/",
+    "email": "drkenjudy@aol.com",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contact form available on website (19/01/2018)",
+    "contacts": [
+      {
+        "name": "Kenneth W.M. Judy",
+        "title": "Chairman & CEO",
+        "email": "drkenjudy@aol.com",
+        "phone": "",
+        "id": "12346",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "12659": {
+    "orgId": "12659",
+    "acode": "1014997",
+    "name": "Association of Asia Pacific Physical Societies -AAPPS-",
+    "address": "c/o Asia Pacific Center for Theoretical Physics\nHogil Kim Memorial Building #501 POSTECH\nPohang 790-784\nRepublic of Korea",
+    "phone": "8254279128 0",
+    "fax": "82-54-279-8679",
+    "website": "http://www.aapps.org/",
+    "email": "aapps@apctp.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Eunjeong Lee",
+        "title": "Secretariat",
+        "email": "ejlee@apctp.org",
+        "phone": "",
+        "id": "7213",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  }
+}

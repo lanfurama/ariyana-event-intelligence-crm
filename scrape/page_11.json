@@ -1,0 +1,41 @@
+{
+  "count": 4,
+  "items": [
+    {
+      "org_name": "",
+      "org_url": "",
+      "org_id": "",
+      "series_name": "Asian Conference of Oral Health Promotion for School Children -ACOHPSC-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=51449",
+      "series_id": "51449",
+      "attendance": "1000"
+    },
+    {
+      "org_name": "",
+      "org_url": "",
+      "org_id": "",
+      "series_name": "International Conference on Rice Bran Oil -ICRBO-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=59502",
+      "series_id": "59502",
+      "attendance": "310"
+    },
+    {
+      "org_name": "",
+      "org_url": "",
+      "org_id": "",
+      "series_name": "International Conference on Science, Technology and Innovation for Sustainable Wellbeing -STISWB  -",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=59044",
+      "series_id": "59044",
+      "attendance": "300"
+    },
+    {
+      "org_name": "Hydropower & Dams",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=16263",
+      "org_id": "16263",
+      "series_name": "International Symposium on Water Resources and Renewable Development Asia -ASIA -",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=20754",
+      "series_id": "20754",
+      "attendance": "418"
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "count": 20,
+  "items": [
+    {
+      "org_name": "World Aquaculture Society -WAS-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=7457",
+      "org_id": "7457",
+      "series_name": "Asia Pacific Aquaculture Conference -WAS-APC-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=22793",
+      "series_id": "22793",
+      "attendance": "650"
+    },
+    {
+      "org_name": "Asian Society of International Law -AsianSIL-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=10199",
+      "org_id": "10199",
+      "series_name": "Intersessional Conference of the Asian Society of International Law",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=64231",
+      "series_id": "64231",
+      "attendance": "500"
+    },
+    {
+      "org_name": "IASPEI Asian Seismological Commission -ASC-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=14496",
+      "org_id": "14496",
+      "series_name": "General Assembly of the Asian Seismological Commission -ASC-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=35814",
+      "series_id": "35814",
+      "attendance": "300"
+    },
+    {
+      "org_name": "International Criminal Police Organization -INTERPOL-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=4072",
+      "org_id": "4072",
+      "series_name": "International Law Enforcement IP Crime Conference",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=21208",
+      "series_id": "21208",
+      "attendance": "416"
+    },
+    {
+      "org_name": "Asian Forum on Enterprise for Society -AFES-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=6911",
+      "org_id": "6911",
+      "series_name": "Asian Forum on Enterprise for Society -AFES-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=15847",
+      "series_id": "15847",
+      "attendance": "423"
+    },
+    {
+      "org_name": "World Poultry Science Association -WPSA-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=14331",
+      "org_id": "14331",
+      "series_name": "World Waterfowl Conference -WWC-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=12222",
+      "series_id": "12222",
+      "attendance": "379"
+    },
+    {
+      "org_name": "Asian Pacific Society of Respirology -APSR-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=14294",
+      "org_id": "14294",
+      "series_name": "Congress of the Asian Pacific Society of Respirology -APSR-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=7748",
+      "series_id": "7748",
+      "attendance": "2181"
+    },
+    {
+      "org_name": "International Network for Water and Ecosystem in Paddy Fields -INWEPF-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=4132",
+      "org_id": "4132",
+      "series_name": "Steering Meeting and Symposium of the International Network for Water and Ecosystem in Paddy Field -INWEPF-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=17541",
+      "series_id": "17541",
+      "attendance": "312"
+    },
+    {
+      "org_name": "Asia-Pacific Society on Thrombosis and Hemostasis -APSTH-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=11778",
+      "org_id": "11778",
+      "series_name": "Congress of the Asia-Pacific Society on Thrombosis and Haemostasis -APSTH-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=13257",
+      "series_id": "13257",
+      "attendance": "1000"
+    },
+    {
+      "org_name": "Open Education Consortium -OEC-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=9091",
+      "org_id": "9091",
+      "series_name": "Open Education Global Conference -OE Global-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=23215",
+      "series_id": "23215",
+      "attendance": "319"
+    },
+    {
+      "org_name": "Asia Pacific Conference of German Business -APK-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=1780",
+      "org_id": "1780",
+      "series_name": "Asia Pacific Conference of German Business -APK-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=25041",
+      "series_id": "25041",
+      "attendance": "850"
+    },
+    {
+      "org_name": "Asia Pacific Roundtable for Sustainable Consumption and Production  Foundation -APRSCP-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=2840",
+      "org_id": "2840",
+      "series_name": "Asia-Pacific Roundtable for Sustainable Consumption and Production -APRSCP",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=11671",
+      "series_id": "11671",
+      "attendance": "300"
+    },
+    {
+      "org_name": "Asian Association of Learning, Innovation, and Co-evolution Studies -ASIALICS-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=16896",
+      "org_id": "16896",
+      "series_name": "Asialics International Conference Asian Association of Learning, Innovation, and Co-evolution Studies",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=23460",
+      "series_id": "23460",
+      "attendance": "351"
+    },
+    {
+      "org_name": "People & Global Business Association -P&GBA-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=11599",
+      "org_id": "11599",
+      "series_name": "World Conference on Business and Management -WCBM-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=37254",
+      "series_id": "37254",
+      "attendance": "300"
+    },
+    {
+      "org_name": "",
+      "org_url": "",
+      "org_id": "",
+      "series_name": "ASEAN Traditional Textiles Symposium -ATTS-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=62654",
+      "series_id": "62654",
+      "attendance": "300"
+    },
+    {
+      "org_name": "Academy of Human Resource Development Asia Chapter -AHRD-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=8798",
+      "org_id": "8798",
+      "series_name": "International Research Conference in Asia -AHRD-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=16860",
+      "series_id": "16860",
+      "attendance": "300"
+    },
+    {
+      "org_name": "International Federation of Surveyors -FIG-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=12768",
+      "org_id": "12768",
+      "series_name": "FIG Regional Conference",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=14219",
+      "series_id": "14219",
+      "attendance": "386"
+    },
+    {
+      "org_name": "International Association of Parkinsonism and Related Disorders -IAPRD-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=18138",
+      "org_id": "18138",
+      "series_name": "WFN World Congress on Parkinson's Disease and Related Disorders",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=5756",
+      "series_id": "5756",
+      "attendance": "920"
+    },
+    {
+      "org_name": "International Rice Research Institute -IRRI-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=928",
+      "org_id": "928",
+      "series_name": "International Rice Congress -IRC-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=30163",
+      "series_id": "30163",
+      "attendance": "1500"
+    },
+    {
+      "org_name": "Asian Pig Veterinary Society -APVS-",
+      "org_url": "https://icca.amd.simpleviewinc.com/ViewOrganization.aspx?ID=9446",
+      "org_id": "9446",
+      "series_name": "Congress of Asian Pig Veterinary Society -APVS-",
+      "series_url": "https://icca.amd.simpleviewinc.com/ViewMeeting.aspx?ID=23059",
+      "series_id": "23059",
+      "attendance": "1425"
+    }
+  ]
+}

@@ -1,0 +1,746 @@
+{
+  "12706": {
+    "orgId": "12706",
+    "acode": "1032740",
+    "name": "Asia Pacific Section of the Institute of Brewing and Distilling -IBD-",
+    "address": "P.O. Box 119\nMelbourne\nAustralia",
+    "phone": "61-402 088 303",
+    "fax": "",
+    "website": "http://www.ibdasiapac.com.au/",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contact form available in IO website.",
+    "contacts": [
+      {
+        "name": "Kerstin Wahlqvist",
+        "title": "Executive Manager",
+        "email": "kerstin.wahlqvist@ibdasiapac.com.au",
+        "phone": "",
+        "id": "17647",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "12768": {
+    "orgId": "12768",
+    "acode": "12020",
+    "name": "International Federation of Surveyors -FIG-",
+    "address": "Kalvebod Brygge 31-33\nCopenhagen DK-1780\nDenmark",
+    "phone": "45-3886-1081",
+    "fax": "",
+    "website": "http://www.fig.net",
+    "email": "FIG@fig.net",
+    "social": {
+      "twitter": "https://twitter.com/FIG_NEWS",
+      "facebook": "https://www.facebook.com/internationalfederationofsurveyors",
+      "linkedin": "https://www.linkedin.com/groups/2669121/profile",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Claudia Stormoen Pedersen",
+        "title": "Support & Event Manager",
+        "email": "claudia.stormoen@fig.net",
+        "phone": "",
+        "id": "12117",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Louise Friis-Hansen",
+        "title": "Director",
+        "email": "louise.friis-hansen@fig.net",
+        "phone": "45 9391 0810",
+        "id": "12498",
+        "last_updated": ""
+      }
+    ]
+  },
+  "12983": {
+    "orgId": "12983",
+    "acode": "1022334",
+    "name": "EASEC International Steering Committee",
+    "address": "Unknown",
+    "phone": "",
+    "fax": "",
+    "website": "mailto:%20toshiroh@eng.hokudai.ac.jp",
+    "email": "toshiroh@eng.hokudai.ac.jp",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "L. J. Leu",
+        "title": "General Secretary",
+        "email": "",
+        "phone": "",
+        "id": "8850",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Toshiro Hayashikawa",
+        "title": "Co-Chair",
+        "email": "toshiroh@eng.hokudai.ac.jp",
+        "phone": "",
+        "id": "10902",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "W. Kanok-Nukulchai",
+        "title": "General Secretary",
+        "email": "",
+        "phone": "66",
+        "id": "12890",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "13263": {
+    "orgId": "13263",
+    "acode": "1070893",
+    "name": "South East Asian Zoos Association -SEAZA-",
+    "address": "c/o Avilon Wildlife Conservation Foundation, Inc. (Avilon Zoo)\n9003 GP Sitio Gulod, San Isidro\nRizal\nPhilippines",
+    "phone": "63-977-691-3178",
+    "fax": "",
+    "website": "http://seaza.net/",
+    "email": "info@seaza.net",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "SEAZA is a member of the World Association of Zoos and Aquariums (www.waza.org).",
+    "contacts": [
+      {
+        "name": "Phan Viet Lam",
+        "title": "President",
+        "email": "",
+        "phone": "",
+        "id": "10934",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "13494": {
+    "orgId": "13494",
+    "acode": "1028764",
+    "name": "Asian Bankers Association -ABA-",
+    "address": "7F-2, No. 760, Sec. 4, Bade Rd.\nSongshan Dist.\nTaipei 10567\nChinese Taipei",
+    "phone": "+886 2 27260 1139",
+    "fax": "+886 2 2760 7569",
+    "website": "http://www.aba.org.tw",
+    "email": "aba@aba.org.tw",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Daniel I. Wu",
+        "title": "President & CEO",
+        "email": "",
+        "phone": "",
+        "id": "9389",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "13526": {
+    "orgId": "13526",
+    "acode": "1140224",
+    "name": "International Forum on Strategic Technology -IFOST-",
+    "address": "3-303, Ulsan Univ., 93, Daehak-ro\nNam-gu\nUlsan\nRepublic of Korea",
+    "phone": "82-522-59-2122 ~ 2124",
+    "fax": "82-522-77-3522",
+    "website": "http://www.ifost.org/",
+    "email": "kbciel@ulsan.ac.kr",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": []
+  },
+  "13898": {
+    "orgId": "13898",
+    "acode": "40830",
+    "name": "Federation of Asian Chemical Societies -FACS-",
+    "address": "Unknown",
+    "phone": "",
+    "fax": "",
+    "website": "https://facs.website",
+    "email": "roger.stapleford@raci.org.au",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Roger Stapleford",
+        "title": "Secretary General",
+        "email": "roger.stapleford@raci.org.au",
+        "phone": "",
+        "id": "5319",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Ling-Kang Liu",
+        "title": "Secretary General Elect",
+        "email": "liuu@chem.sinica.edu.tw",
+        "phone": "",
+        "id": "18665",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "13912": {
+    "orgId": "13912",
+    "acode": "1002774",
+    "name": "Pan Pacific Business Association -PPBA-",
+    "address": "Unknown",
+    "phone": "",
+    "fax": "",
+    "website": "http://www.panpacificbusiness.org/",
+    "email": "panpac@panpacificbusiness.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": []
+  },
+  "14293": {
+    "orgId": "14293",
+    "acode": "10101",
+    "name": "International Association for Official Statistics -IAOS-",
+    "address": "c/o Statistics Poland\nAleja Niepodległości 208\nWarsaw 00-925\nPoland",
+    "phone": "",
+    "fax": "",
+    "website": "https://iaos-isi.org/",
+    "email": "contactiaos@gmail.com",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Ola Awad",
+        "title": "President",
+        "email": "",
+        "phone": "",
+        "id": "11545",
+        "last_updated": ""
+      }
+    ]
+  },
+  "14294": {
+    "orgId": "14294",
+    "acode": "1012269",
+    "name": "Asian Pacific Society of Respirology -APSR-",
+    "address": "2F, UK’s Bldg.2-29-3 Hongo\nBunkyo-ku\nTokyo 113-0033\nJapan",
+    "phone": "8135684337 0",
+    "fax": "81-3-5684 3382",
+    "website": "http://www.apsresp.org",
+    "email": "info@apsr.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "APSR Congress: congress@apsr.org",
+    "contacts": [
+      {
+        "name": "Yoichi Nakanishi",
+        "title": "Chairperson, Nomination Committee",
+        "email": "",
+        "phone": "",
+        "id": "6187",
+        "last_updated": ""
+      },
+      {
+        "name": "Chul-Gyu Yoo",
+        "title": "President",
+        "email": "cgyoo@snu.ac.kr",
+        "phone": "",
+        "id": "20151",
+        "last_updated": ""
+      }
+    ]
+  },
+  "14331": {
+    "orgId": "14331",
+    "acode": "13613",
+    "name": "World Poultry Science Association -WPSA-",
+    "address": "P.O. Box 31\nBeekbergen 7360 AA\nNetherlands",
+    "phone": "31-6-515 19584",
+    "fax": "31-207-508 941",
+    "website": "http://www.wpsa.com",
+    "email": "wpsa@xs4all.nl",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "KCs are Branches of WPSA",
+    "contacts": [
+      {
+        "name": "Carlos Garcés Narro",
+        "title": "1st Vice President",
+        "email": "cgarces@uchceu.es",
+        "phone": "+34600752684",
+        "id": "10191",
+        "last_updated": "04 Aug 2026"
+      },
+      {
+        "name": "Roel Mulder",
+        "title": "Secretary General",
+        "email": "",
+        "phone": "",
+        "id": "16926",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Peter van Horne",
+        "title": "Secretary & Assistant Treasurer",
+        "email": "peter.vanhorne@wur.nl",
+        "phone": "3163002418 7",
+        "id": "20199",
+        "last_updated": "09 Feb 2024"
+      }
+    ]
+  },
+  "14496": {
+    "orgId": "14496",
+    "acode": "91002187",
+    "name": "IASPEI Asian Seismological Commission -ASC-",
+    "address": "-\n\nUnknown",
+    "phone": "",
+    "fax": "",
+    "website": "http://asc-iaspei.org/",
+    "email": "lilygrace@cea-igp.ac.cn",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Paramesh Banerjee",
+        "title": "President",
+        "email": "parameshb@hotmail.com",
+        "phone": "",
+        "id": "14388",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Li Li",
+        "title": "Secretary General",
+        "email": "lilygrace@cea-igp.ac.cn",
+        "phone": "8613811286 306",
+        "id": "20324",
+        "last_updated": ""
+      }
+    ]
+  },
+  "14607": {
+    "orgId": "14607",
+    "acode": "1011758",
+    "name": "League of ASEAN Dermatological Societies -LADS-",
+    "address": "c/o Dermatological Society of Malaysia\nUnit 1-6, Level 1, Enterprise 3B  Technology Park Malaysia Jalan Innovasi 1\nKuala Lumpur 57000\nMalaysia",
+    "phone": "",
+    "fax": "",
+    "website": "https://www.dermatology.org.sg/league-of-asean-dermatological-societies/",
+    "email": "secretariatLADS@gmail.com",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Ma. Purita Paz-Lao",
+        "title": "President",
+        "email": "",
+        "phone": "",
+        "id": "5254",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "14721": {
+    "orgId": "14721",
+    "acode": "1111691",
+    "name": "World Cultural Tourism Association -WCTA-",
+    "address": "512-1205, 710 Gil\n20 Hanam-daero, Seo-gu\nGwangju 506-714\nRepublic of Korea",
+    "phone": "8262961895 8",
+    "fax": "",
+    "website": "http://www.worldculturaltourismassociation.org/",
+    "email": "scjung50@hanmail.net",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "scjung1950@naver.com",
+    "contacts": [
+      {
+        "name": "Sungchae Jung",
+        "title": "President",
+        "email": "scjung50@hanmail.net",
+        "phone": "",
+        "id": "396",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "14729": {
+    "orgId": "14729",
+    "acode": "1072436",
+    "name": "ASEAN Neurosurgical Society -ANS-",
+    "address": "c/o Department of Neurosurgery\nNational Neuroscience Institute -NNI\nSingapore\nSingapore",
+    "phone": "",
+    "fax": "65-357 7137",
+    "website": "http://www.asean-ns.org/",
+    "email": "ps.aseanns@gmail.com",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Wan Tew Seow",
+        "title": "Secretary General",
+        "email": "",
+        "phone": "",
+        "id": "6139",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "14974": {
+    "orgId": "14974",
+    "acode": "1006711",
+    "name": "World Federation of Acupuncture- Moxibustion Societies -WFAS-",
+    "address": "7th Floor, Block B\nDongpu Building, Xizhaosi street\nBeijing\nChina-P.R.",
+    "phone": "86-10-8719 4956",
+    "fax": "",
+    "website": "http://www.wfas.org.cn/",
+    "email": "admin@wfas.org.cn",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Alt: wfas1987@foxmail.com",
+    "contacts": [
+      {
+        "name": "Ma Ying",
+        "title": "Secretary General",
+        "email": "",
+        "phone": "",
+        "id": "9787",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "15196": {
+    "orgId": "15196",
+    "acode": "1132176",
+    "name": "Asia Pacific Society of Human Genetics -APSHG-",
+    "address": "Unknown",
+    "phone": "",
+    "fax": "",
+    "website": "https://www.apshg.info/",
+    "email": "",
+    "social": {
+      "twitter": "https://twitter.com/PSGCinAsia",
+      "facebook": "https://www.facebook.com/PSGCinAsia/",
+      "linkedin": "",
+      "instagram": "https://www.instagram.com/psgcinasia/"
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Mercy Laurino",
+        "title": "Secretary",
+        "email": "mercy@uw.edu",
+        "phone": "",
+        "id": "15002",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "15321": {
+    "orgId": "15321",
+    "acode": "1084523",
+    "name": "Asia Pacific Industrial Engineering & Management Society -APIEMS-",
+    "address": "",
+    "phone": "",
+    "fax": "",
+    "website": "http://apiems.asia/",
+    "email": "apiems.webmin@gmail.com",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Hirokazu Kono",
+        "title": "President",
+        "email": "kono@kbs.keio.ac.jp",
+        "phone": "",
+        "id": "7040",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "15460": {
+    "orgId": "15460",
+    "acode": "1048788",
+    "name": "Global Environment Facility -GEF-",
+    "address": "Global Environment Facility\n1818 H Street, NW\nWashington, DC\nU.S.A.",
+    "phone": "+1-202-473-0508",
+    "fax": "+1-202-522-3240/3245",
+    "website": "http://www.thegef.org",
+    "email": "communications@thegef.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Alt: secretariat@thegef.org",
+    "contacts": [
+      {
+        "name": "Claude Gascon",
+        "title": "Interim CEO",
+        "email": "cgascon@thegef.org",
+        "phone": "",
+        "id": "14960",
+        "last_updated": ""
+      }
+    ]
+  },
+  "15511": {
+    "orgId": "15511",
+    "acode": "1113948",
+    "name": "Micronutrient Initiative",
+    "address": "1201 Eye St. NW, 10th Floor\nWashington, DC 20005-3915\nU.S.A.",
+    "phone": "",
+    "fax": "1-613-782-6838",
+    "website": "https://micronutrientforum.org/",
+    "email": "info@micronutrientforum.org",
+    "social": {
+      "twitter": "",
+      "facebook": "https://www.facebook.com/micronutrientforum/",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Homero Martinez",
+        "title": "Senior Advisor",
+        "email": "hmartinez@nutritionintl.org",
+        "phone": "",
+        "id": "7083",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  },
+  "15551": {
+    "orgId": "15551",
+    "acode": "1056926",
+    "name": "Research Institute of Construction and Economy -RICE-",
+    "address": "Nishi-Shinbashi, Minato-ku\nTokyo 105-0003\nJapan",
+    "phone": "81-3-3433 5011",
+    "fax": "81-3-3433 5239",
+    "website": "http://www.rice.or.jp",
+    "email": "",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Contact form on website.\nAsiaConstruct Conference Website http://www.asiaconst.com/",
+    "contacts": []
+  },
+  "16014": {
+    "orgId": "16014",
+    "acode": "1043671",
+    "name": "International Association for Cryptologic Research -IACR-",
+    "address": "Unknown",
+    "phone": "32-479 778 631",
+    "fax": "",
+    "website": "http://www.iacr.org",
+    "email": "secretary@iacr.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Joppe Bos",
+        "title": "Secretary",
+        "email": "joppe.bos@nxp.com",
+        "phone": "",
+        "id": "11555",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Michel Abdalla",
+        "title": "President",
+        "email": "president@iacr.org",
+        "phone": "32-479 778 631",
+        "id": "20021",
+        "last_updated": "08 May 2024"
+      },
+      {
+        "name": "Benjamin Wesolowski",
+        "title": "Secretary",
+        "email": "secretary@iacr.org",
+        "phone": "32-479 778 631",
+        "id": "20022",
+        "last_updated": "08 May 2024"
+      }
+    ]
+  },
+  "16019": {
+    "orgId": "16019",
+    "acode": "1044851",
+    "name": "Asia Pacific Burn Association -APBA-",
+    "address": "Jalan Sekarsari 63, Batursari,\nKesiman Kertalangu, Denpasar Timur\nBali\nIndonesia",
+    "phone": "",
+    "fax": "",
+    "website": "https://www.apburn.org/",
+    "email": "secretary@apburn.org",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "The Asia Pacific Burn Association (APBA) is a non-profit organization which aims for improvement in burn care in the Asia Pacific Region which is defined to include, but not limited to, the following countries; Afghanistan, Australia, Bangladesh, Bhutan, Cambodia, China, Hong Kong (China), India, Indonesia, Iran, Iraq, Israel, Japan, Laos, Malaysia, Myanmar, New Zealand, Nepal, Pakistan, Philippines, Russia, Singapore, South Korea, Sri Lanka, Thailand, Taiwan, Turkey and Vietnam.\nhttps://www.apburn.org/about",
+    "contacts": [
+      {
+        "name": "Rajeev B. Ahuja",
+        "title": "Executive Director",
+        "email": "executive.director@apburn.org",
+        "phone": "",
+        "id": "300006776",
+        "last_updated": ""
+      },
+      {
+        "name": "Huifu Huang",
+        "title": "Secretary",
+        "email": "secretary@apburn.org",
+        "phone": "",
+        "id": "300006777",
+        "last_updated": ""
+      }
+    ]
+  },
+  "16096": {
+    "orgId": "16096",
+    "acode": "11149",
+    "name": "International Air Transport Association -IATA-",
+    "address": "Geneva Executive Offices\n33, Route de l'Aeroport\nGeneva 1215\nSwitzerland",
+    "phone": "",
+    "fax": "",
+    "website": "https://www.iata.org/",
+    "email": "",
+    "social": {
+      "twitter": "https://twitter.com/iata",
+      "facebook": "https://web.facebook.com/iata.org",
+      "linkedin": "https://www.linkedin.com/company/international-air-transport-association-iata/",
+      "instagram": "https://www.instagram.com/iata_official/"
+    },
+    "notes": "",
+    "contacts": [
+      {
+        "name": "Karen Clayton",
+        "title": "Corporate Secretary",
+        "email": "corpsec@iata.org",
+        "phone": "",
+        "id": "13655",
+        "last_updated": "12 Nov 2025"
+      },
+      {
+        "name": "Willie Walsh",
+        "title": "Director General",
+        "email": "willie.walsh@iata.org",
+        "phone": "",
+        "id": "19563",
+        "last_updated": ""
+      }
+    ]
+  },
+  "16232": {
+    "orgId": "16232",
+    "acode": "1090852",
+    "name": "Association for Public Economic Theory -APET-",
+    "address": "Level 3\n10 Pulteney Street\nAdelaide\nAustralia",
+    "phone": "61-8-8313 5540",
+    "fax": "61-8-8223 1460",
+    "website": "http://www.apet-jpet.org/",
+    "email": "myrna.wooders@gmail.com",
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "linkedin": "",
+      "instagram": ""
+    },
+    "notes": "Alt: economics@adelaide.edu.au\ncc. Alisa Cameron economics_uoa@adelaide.edu.au",
+    "contacts": [
+      {
+        "name": "Myrna Wooders",
+        "title": "Director",
+        "email": "myrna.wooders@gmail.com",
+        "phone": "61-8-8313 5540",
+        "id": "1216",
+        "last_updated": "12 Nov 2025"
+      }
+    ]
+  }
+}

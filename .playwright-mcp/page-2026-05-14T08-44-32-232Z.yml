@@ -1,0 +1,328 @@
+- generic [active] [ref=e1]:
+    - generic [ref=e4]:
+        - link [ref=e6] [cursor=pointer]:
+            - /url: /
+        - generic [ref=e12]:
+            - textbox "Search for an Organization Name, Series Name, Specific Contact, or by Record ID/Code" [ref=e14]
+            - button "Search" [ref=e16] [cursor=pointer]
+        - button "account_circle" [ref=e19] [cursor=pointer]:
+            - generic [ref=e20]: account_circle
+    - generic [ref=e23]:
+        - list [ref=e25]:
+            - listitem [ref=e26]:
+                - link "home Home" [ref=e27] [cursor=pointer]:
+                    - /url: /
+                    - generic [ref=e28]: home
+                    - text: Home
+            - listitem [ref=e29]:
+                - link "add ICCA-BI " [expanded] [ref=e30] [cursor=pointer]:
+                    - /url: '#submenu-mint'
+                    - generic [ref=e31]: add
+                    - text: ICCA-BI 
+            - list [ref=e33]:
+                - listitem [ref=e34]:
+                    - link "search Search" [ref=e35] [cursor=pointer]:
+                        - /url: /Search/
+                        - generic [ref=e36]: search
+                        - text: Search
+                - listitem [ref=e37]:
+                    - link "bookmarks My Saved Searches" [ref=e38] [cursor=pointer]:
+                        - /url: /Reports.aspx
+                        - generic [ref=e39]: bookmarks
+                        - text: My Saved Searches
+                - listitem [ref=e40]:
+                    - link "warning RFPs (83)" [ref=e41] [cursor=pointer]:
+                        - /url: /Search?ReportType=RFP
+                        - generic [ref=e42]: warning
+                        - text: RFPs (83)
+                - listitem [ref=e43]:
+                    - link "account_balance Governmental" [ref=e44] [cursor=pointer]:
+                        - /url: /Search?ReportType=Governmental
+                        - generic [ref=e45]: account_balance
+                        - text: Governmental
+                - listitem [ref=e46]:
+                    - link "sports_tennis Sports" [ref=e47] [cursor=pointer]:
+                        - /url: /Search?ReportType=Sports
+                        - generic [ref=e48]: sports_tennis
+                        - text: Sports
+                - listitem [ref=e49]:
+                    - link "assistant Recommended Series" [ref=e50] [cursor=pointer]:
+                        - /url: /RecommendationMeetings.aspx
+                        - generic [ref=e51]: assistant
+                        - text: Recommended Series
+                - listitem [ref=e52]:
+                    - link "star_outline Flagged Organizations" [ref=e53] [cursor=pointer]:
+                        - /url: /FlaggedOrganizations.aspx
+                        - generic [ref=e54]: star_outline
+                        - text: Flagged Organizations
+                - listitem [ref=e55]:
+                    - link "star_outline Flagged Series" [ref=e56] [cursor=pointer]:
+                        - /url: /FlaggedMeetings.aspx
+                        - generic [ref=e57]: star_outline
+                        - text: Flagged Series
+                - listitem [ref=e58]:
+                    - link "star_outline Flagged Editions" [ref=e59] [cursor=pointer]:
+                        - /url: /FlaggedOccurrences.aspx
+                        - generic [ref=e60]: star_outline
+                        - text: Flagged Editions
+                - listitem [ref=e61]:
+                    - link "list_alt Organizations" [ref=e62] [cursor=pointer]:
+                        - /url: /Organizations.aspx
+                        - generic [ref=e63]: list_alt
+                        - text: Organizations
+                - listitem [ref=e64]:
+                    - link "people_alt Series List" [ref=e65] [cursor=pointer]:
+                        - /url: /Meetings.aspx
+                        - generic [ref=e66]: people_alt
+                        - text: Series List
+            - listitem [ref=e67]:
+                - link "mail Contact Us" [ref=e68] [cursor=pointer]:
+                    - /url: '#'
+                    - generic [ref=e69]: mail
+                    - text: Contact Us
+        - generic [ref=e70]:
+            - heading "Organization Profile" [level=1] [ref=e74]
+            - text:                                                           
+            - generic [ref=e75]:
+                - generic [ref=e76]:
+                    - heading "Association of Southeast Asian Nations -ASEAN-" [level=2] [ref=e78]
+                    - button "Submit" [ref=e83] [cursor=pointer]
+                - generic [ref=e85]:
+                    - generic [ref=e86]: 'ID: 19188'
+                    - generic [ref=e87]: 'ACODE: 41064'
+                - generic [ref=e88]:
+                    - generic [ref=e91]:
+                        - text: The ASEAN Secretariat
+                        - text: 70A Jalan Sisingamangaraja
+                        - text: Jakarta
+                        - text: Indonesia
+                    - generic [ref=e92]:
+                        - generic [ref=e93]:
+                            - generic [ref=e94]: phone
+                            - text: 6221 7262991, 7243372
+                        - generic [ref=e95]:
+                            - generic [ref=e96]: dialpad
+                            - text: 6221 7398234, 7243504
+                        - generic [ref=e97]:
+                            - generic [ref=e98]: public
+                            - link "https://asean.org/" [ref=e99] [cursor=pointer]:
+                                - /url: https://asean.org/
+                        - link "https://twitter.com/ASEAN" [ref=e102] [cursor=pointer]:
+                            - /url: https://twitter.com/ASEAN
+                        - link "https://web.facebook.com/aseansecretariat" [ref=e105] [cursor=pointer]:
+                            - /url: https://web.facebook.com/aseansecretariat
+                        - link "https://www.linkedin.com/company/the-asean-secretariat/" [ref=e108] [cursor=pointer]:
+                            - /url: https://www.linkedin.com/company/the-asean-secretariat/
+                        - link "https://www.instagram.com/asean/" [ref=e111] [cursor=pointer]:
+                            - /url: https://www.instagram.com/asean/
+                        - generic [ref=e112]:
+                            - generic [ref=e113]: mail
+                            - link "public@asean.org" [ref=e114] [cursor=pointer]:
+                                - /url: mailto:%20public@asean.org
+                - generic [ref=e116]:
+                    - strong [ref=e118]: 'Notes:'
+                    - generic [ref=e119]: meetings initiated by the member governments
+                - generic [ref=e120]:
+                    - generic [ref=e121]:
+                        - strong [ref=e122]: 'Created On :'
+                        - generic [ref=e123]: 25 Aug 1993
+                    - generic [ref=e124]:
+                        - strong [ref=e125]: 'Last Update:'
+                        - generic [ref=e126]: 15 Jan 2021
+                - table [ref=e129]:
+                    - rowgroup [ref=e130]:
+                        - row "Your Notes" [ref=e131]:
+                            - cell "Your Notes" [ref=e132]
+                            - cell [ref=e133]:
+                                - img [ref=e138] [cursor=pointer]
+            - heading "Contacts" [level=2] [ref=e142]
+            - generic [ref=e144]:
+                - heading "Series" [level=2] [ref=e147]
+                - table [ref=e153]:
+                    - rowgroup [ref=e158]:
+                        - row "Series Name Attendance Last Updated" [ref=e159]:
+                            - columnheader "Series Name" [ref=e160]:
+                                - link "Series Name" [ref=e161] [cursor=pointer]:
+                                    - /url: javascript:__doPostBack('ctl00$Main1$MtgsGrid$ctl00$ctl02$ctl01$ctl00','')
+                            - columnheader "Attendance" [ref=e162]:
+                                - link "Attendance" [ref=e163] [cursor=pointer]:
+                                    - /url: javascript:__doPostBack('ctl00$Main1$MtgsGrid$ctl00$ctl02$ctl01$ctl01','')
+                            - columnheader "Last Updated" [ref=e164]:
+                                - link "Last Updated" [ref=e165] [cursor=pointer]:
+                                    - /url: javascript:__doPostBack('ctl00$Main1$MtgsGrid$ctl00$ctl02$ctl01$ctl03','')
+                    - rowgroup [ref=e166]:
+                        - row "Data pager" [ref=e167]:
+                            - cell "Data pager" [ref=e168]:
+                                - table "Data pager" [ref=e169]:
+                                    - rowgroup [ref=e170]:
+                                        - 'row "First Page Previous Page 1 2 Next Page Last Page Page size: PageSizeComboBox 37 items in 2 pages" [ref=e171]':
+                                            - 'cell "First Page Previous Page 1 2 Next Page Last Page Page size: PageSizeComboBox 37 items in 2 pages" [ref=e172]':
+                                                - generic [ref=e173]:
+                                                    - button "First Page" [ref=e174] [cursor=pointer]
+                                                    - button "Previous Page" [ref=e175] [cursor=pointer]
+                                                - generic [ref=e176]:
+                                                    - link "1" [ref=e177]:
+                                                        - /url: javascript:__doPostBack('ctl00$Main1$MtgsGrid$ctl00$ctl03$ctl01$ctl05','')
+                                                        - generic [ref=e178]: '1'
+                                                    - link "2" [ref=e179] [cursor=pointer]:
+                                                        - /url: javascript:__doPostBack('ctl00$Main1$MtgsGrid$ctl00$ctl03$ctl01$ctl07','')
+                                                        - generic [ref=e180]: '2'
+                                                - generic [ref=e181]:
+                                                    - button "Next Page" [ref=e182] [cursor=pointer]
+                                                    - button "Last Page" [ref=e183] [cursor=pointer]
+                                                - generic [ref=e184]:
+                                                    - generic [ref=e185]: 'Page size:'
+                                                    - table "PageSizeComboBox" [ref=e187]:
+                                                        - rowgroup [ref=e188]:
+                                                            - row "20 select" [ref=e189]:
+                                                                - cell "20" [ref=e190]:
+                                                                    - textbox [ref=e191]: '20'
+                                                                - cell "select" [ref=e192]:
+                                                                    - generic [ref=e193]: select
+                                                - generic [ref=e194]:
+                                                    - strong [ref=e195]: '37'
+                                                    - text: items in
+                                                    - strong [ref=e196]: '2'
+                                                    - text: pages
+                    - rowgroup [ref=e197]:
+                        - row "ASEAN Foreign Ministerial Meeting -AMM- and Post-Ministerial Conference -PMC- 2868 06 May 2026" [ref=e198]:
+                            - cell "ASEAN Foreign Ministerial Meeting -AMM- and Post-Ministerial Conference -PMC-" [ref=e199]:
+                                - link "ASEAN Foreign Ministerial Meeting -AMM- and Post-Ministerial Conference -PMC-" [ref=e200] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=49349
+                            - cell "2868" [ref=e201]
+                            - cell "06 May 2026" [ref=e202]
+                        - row "ASEAN Summit 1650 06 May 2026" [ref=e203]:
+                            - cell "ASEAN Summit" [ref=e204]:
+                                - link "ASEAN Summit" [ref=e205] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=49399
+                            - cell "1650" [ref=e206]
+                            - cell "06 May 2026" [ref=e207]
+                        - row "Asean Tourism Forum -ATF - 883 06 May 2026" [ref=e208]:
+                            - cell "Asean Tourism Forum -ATF -" [ref=e209]:
+                                - link "Asean Tourism Forum -ATF -" [ref=e210] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=50238
+                            - cell "883" [ref=e211]
+                            - cell "06 May 2026" [ref=e212]
+                        - row "ASEAN Finance Ministers Meeting -AFMM- 70 06 May 2026" [ref=e213]:
+                            - cell "ASEAN Finance Ministers Meeting -AFMM-" [ref=e214]:
+                                - link "ASEAN Finance Ministers Meeting -AFMM-" [ref=e215] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=50951
+                            - cell "70" [ref=e216]
+                            - cell "06 May 2026" [ref=e217]
+                        - row "Meeting of Governors and Mayors of ASEAN Capitals -MGMAC- 07 Jan 2026" [ref=e218]:
+                            - cell "Meeting of Governors and Mayors of ASEAN Capitals -MGMAC-" [ref=e219]:
+                                - link "Meeting of Governors and Mayors of ASEAN Capitals -MGMAC-" [ref=e220] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=101121
+                            - cell [ref=e221]
+                            - cell "07 Jan 2026" [ref=e222]
+                        - row "ASEAN Sustainable Urbanisation Forum 07 Jan 2026" [ref=e223]:
+                            - cell "ASEAN Sustainable Urbanisation Forum" [ref=e224]:
+                                - link "ASEAN Sustainable Urbanisation Forum" [ref=e225] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=101120
+                            - cell [ref=e226]
+                            - cell "07 Jan 2026" [ref=e227]
+                        - row "ASEAN Railway CEOs’ Conference 115 07 Jan 2026" [ref=e228]:
+                            - cell "ASEAN Railway CEOs’ Conference" [ref=e229]:
+                                - link "ASEAN Railway CEOs’ Conference" [ref=e230] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=53215
+                            - cell "115" [ref=e231]
+                            - cell "07 Jan 2026" [ref=e232]
+                        - row "ASEAN Committee on Culture and Information Sub-Committee on Culture -ASEAN COCI-SCC- Meeting 07 Dec 2025" [ref=e233]:
+                            - cell "ASEAN Committee on Culture and Information Sub-Committee on Culture -ASEAN COCI-SCC- Meeting" [ref=e234]:
+                                - link "ASEAN Committee on Culture and Information Sub-Committee on Culture -ASEAN COCI-SCC- Meeting" [ref=e235] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65621
+                            - cell [ref=e236]
+                            - cell "07 Dec 2025" [ref=e237]
+                        - row "ASEAN-China Joint Working Group on the Implementation of the Declaration on the Conduct of Parties on the South China Sea -JWG DOC- 05 Dec 2025" [ref=e238]:
+                            - cell "ASEAN-China Joint Working Group on the Implementation of the Declaration on the Conduct of Parties on the South China Sea -JWG DOC-" [ref=e239]:
+                                - link "ASEAN-China Joint Working Group on the Implementation of the Declaration on the Conduct of Parties on the South China Sea -JWG DOC-" [ref=e240] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65575
+                            - cell [ref=e241]
+                            - cell "05 Dec 2025" [ref=e242]
+                        - row "ASEAN-Australia Immigration Training Committee -ITC- Meeting 05 Dec 2025" [ref=e243]:
+                            - cell "ASEAN-Australia Immigration Training Committee -ITC- Meeting" [ref=e244]:
+                                - link "ASEAN-Australia Immigration Training Committee -ITC- Meeting" [ref=e245] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65573
+                            - cell [ref=e246]
+                            - cell "05 Dec 2025" [ref=e247]
+                        - row "ASEAN Competition Conference -ACC- 200 03 Dec 2025" [ref=e248]:
+                            - cell "ASEAN Competition Conference -ACC-" [ref=e249]:
+                                - link "ASEAN Competition Conference -ACC-" [ref=e250] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=57560
+                            - cell "200" [ref=e251]
+                            - cell "03 Dec 2025" [ref=e252]
+                        - row "Sports Arbitration Forum 26 Nov 2025" [ref=e253]:
+                            - cell "Sports Arbitration Forum" [ref=e254]:
+                                - link "Sports Arbitration Forum" [ref=e255] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65381
+                            - cell [ref=e256]
+                            - cell "26 Nov 2025" [ref=e257]
+                        - row "ASEAN Law Forum 26 Nov 2025" [ref=e258]:
+                            - cell "ASEAN Law Forum" [ref=e259]:
+                                - link "ASEAN Law Forum" [ref=e260] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65243
+                            - cell [ref=e261]
+                            - cell "26 Nov 2025" [ref=e262]
+                        - row "ASEAN Ministers on Energy Meeting -AMEM- 24 Nov 2025" [ref=e263]:
+                            - cell "ASEAN Ministers on Energy Meeting -AMEM-" [ref=e264]:
+                                - link "ASEAN Ministers on Energy Meeting -AMEM-" [ref=e265] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65362
+                            - cell [ref=e266]
+                            - cell "24 Nov 2025" [ref=e267]
+                        - row "ASEAN Political-Security Community Council Meeting -APSC- 24 Nov 2025" [ref=e268]:
+                            - cell "ASEAN Political-Security Community Council Meeting -APSC-" [ref=e269]:
+                                - link "ASEAN Political-Security Community Council Meeting -APSC-" [ref=e270] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65358
+                            - cell [ref=e271]
+                            - cell "24 Nov 2025" [ref=e272]
+                        - row "ASEAN-GCC-China Summit 24 Nov 2025" [ref=e273]:
+                            - cell "ASEAN-GCC-China Summit" [ref=e274]:
+                                - link "ASEAN-GCC-China Summit" [ref=e275] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65355
+                            - cell [ref=e276]
+                            - cell "24 Nov 2025" [ref=e277]
+                        - row "ASEAN-Gulf Cooperation Council Summit -GCC- 24 Nov 2025" [ref=e278]:
+                            - cell "ASEAN-Gulf Cooperation Council Summit -GCC-" [ref=e279]:
+                                - link "ASEAN-Gulf Cooperation Council Summit -GCC-" [ref=e280] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65354
+                            - cell [ref=e281]
+                            - cell "24 Nov 2025" [ref=e282]
+                        - row "ASEAN Economy Community Council -AECC- 100 24 Nov 2025" [ref=e283]:
+                            - cell "ASEAN Economy Community Council -AECC-" [ref=e284]:
+                                - link "ASEAN Economy Community Council -AECC-" [ref=e285] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65353
+                            - cell "100" [ref=e286]
+                            - cell "24 Nov 2025" [ref=e287]
+                        - row "Japan-ASEAN Vice-Ministerial Defense Forum 80 13 Oct 2025" [ref=e288]:
+                            - cell "Japan-ASEAN Vice-Ministerial Defense Forum" [ref=e289]:
+                                - link "Japan-ASEAN Vice-Ministerial Defense Forum" [ref=e290] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=65165
+                            - cell "80" [ref=e291]
+                            - cell "13 Oct 2025" [ref=e292]
+                        - row "ASEAN Senior Labour Officials Meeting -SLOM- / ASEAN Senior Labour Officials Meeting Plus Three -SLOM+3- / ASEAN Labour Ministers’ Meeting -ALMM- & ALMM Plus Three 80 28 Jul 2025" [ref=e293]:
+                            - cell "ASEAN Senior Labour Officials Meeting -SLOM- / ASEAN Senior Labour Officials Meeting Plus Three -SLOM+3- / ASEAN Labour Ministers’ Meeting -ALMM- & ALMM Plus Three" [ref=e294]:
+                                - link "ASEAN Senior Labour Officials Meeting -SLOM- / ASEAN Senior Labour Officials Meeting Plus Three -SLOM+3- / ASEAN Labour Ministers’ Meeting -ALMM- & ALMM Plus Three" [ref=e295] [cursor=pointer]:
+                                    - /url: ViewMeeting.aspx?ID=53313
+                            - cell "80" [ref=e296]
+                            - cell "28 Jul 2025" [ref=e297]
+    - generic [ref=e299]:
+        - generic [ref=e300]:
+            - link "International Congress and Convention Association (ICCA)" [ref=e301] [cursor=pointer]:
+                - /url: https://www.iccaworld.org/
+                - img "International Congress and Convention Association (ICCA)" [ref=e302]
+            - strong
+        - generic [ref=e303]:
+            - paragraph [ref=e304]:
+                - generic [ref=e305]: phone
+                - link "+31 203981919" [ref=e306] [cursor=pointer]:
+                    - /url: tel:+31203981819
+                - text: (ICCA Head Office)
+            - paragraph [ref=e307]:
+                - generic [ref=e308]: mail
+                - link "Research@iccaworld.org" [ref=e309] [cursor=pointer]:
+                    - /url: mailto:Research@iccaworld.org
+            - paragraph [ref=e310]: © 2026 ICCA - International Congress and Convention Association - All rights reserved
+        - link [ref=e313] [cursor=pointer]:
+            - /url: https://www.simpleviewinc.com/
+            - img [ref=e314]
+    - generic [ref=e316] [cursor=pointer]: We welcome your feedback on this page!
