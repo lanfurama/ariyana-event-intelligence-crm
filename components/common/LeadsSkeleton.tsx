@@ -7,7 +7,7 @@ export const LeadsSkeleton: React.FC = () => {
       {[...Array(6)].map((_, i) => (
         <div
           key={i}
-          className="group relative glass-card p-5 rounded-2xl border border-white/20 shadow-sm"
+          className="group relative bg-white p-5 rounded-2xl border border-slate-200 shadow-sm"
         >
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Company Section Skeleton */}

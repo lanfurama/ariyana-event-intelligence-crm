@@ -24,7 +24,9 @@ export function startScheduledReportsJob(): void {
       }
     },
     {
-      // @ts-expect-error TODO(refactor): node-cron v4 changed TaskOptions; `scheduled` was removed. Migrate to current API (cron.schedule + .start()) in sub-project #6.
+      // node-cron resolves to v3 from api/node_modules (api/package.json pins ^3.0.3),
+      // where `scheduled` is a valid option. Root package.json declares v4 — version
+      // unification is sub-project #6 (see STRICT_DEBT.md).
       scheduled: true,
       timezone: 'Asia/Ho_Chi_Minh',
     },

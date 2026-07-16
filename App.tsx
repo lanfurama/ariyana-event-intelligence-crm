@@ -124,8 +124,7 @@ const App = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-200 font-sans text-slate-900 overflow-hidden relative">
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+    <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden relative">
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}

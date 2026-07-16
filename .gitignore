@@ -41,3 +41,6 @@ coverage/
 
 # Data files (CSV must never be committed; lead data is private)
 *.csv
+
+# Playwright MCP smoke-test artifacts (screenshots/snapshots)
+.playwright-mcp/

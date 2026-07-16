@@ -261,7 +261,7 @@ export const StatCard = ({
   };
 
   return (
-    <div className="glass-card p-3 rounded-lg">
+    <div className="bg-white border border-slate-200 shadow-sm p-3 rounded-lg">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">{title}</p>
