@@ -46,13 +46,13 @@ manager reports). The UI does not match reality:
 
 ## 3. New information architecture
 
-| Nav item (label)  | Tab id (unchanged) | View                          | Roles          |
-| ----------------- | ------------------ | ----------------------------- | -------------- |
-| Dashboard         | `dashboard`        | Dashboard (command center)    | all            |
-| Audience          | `leads`            | LeadsView (leads + bulk send) | all            |
-| Enrichment        | `intelligent`      | IntelligentDataView           | Director       |
-| Email Studio      | `email`            | EmailView (Templates/Reports) | Director/Sales |
-| — (user block) →  | `profile`          | UserProfileView               | all            |
+| Nav item (label) | Tab id (unchanged) | View                          | Roles          |
+| ---------------- | ------------------ | ----------------------------- | -------------- |
+| Dashboard        | `dashboard`        | Dashboard (command center)    | all            |
+| Audience         | `leads`            | LeadsView (leads + bulk send) | all            |
+| Enrichment       | `intelligent`      | IntelligentDataView           | Director       |
+| Email Studio     | `email`            | EmailView (Templates/Reports) | Director/Sales |
+| — (user block) → | `profile`          | UserProfileView               | all            |
 
 Removed from nav + codebase: `analysis` (VideoAnalysisView), `chat` (ChatAssistant).
 `App.tsx` migrates stale saved tabs (`analysis`/`chat` → `dashboard`). Tab ids,
@@ -140,13 +140,13 @@ Backend untouched. `chat_messages` data untouched.
 
 ## 7. Risks & mitigations
 
-| Risk                                                | Mitigation                                                                 |
-| --------------------------------------------------- | -------------------------------------------------------------------------- |
-| Purge misses runtime-built class names              | Pre-migration grep for `` className={` `` + `${`; literal maps + safelist |
-| Tailwind version drift CDN→3.4                      | Same major; visual smoke per view at 1280/375                              |
-| Deleting a "dead" file that something imports       | typecheck + `npm test` + grep each file before delete                      |
-| LeadDetail is `@ts-nocheck` (no compiler net)       | className-only edits; Playwright smoke on all 3 tabs                       |
-| Saved tab `analysis`/`chat` in users' localStorage  | migration effect in `App.tsx`                                              |
+| Risk                                               | Mitigation                                                                |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
+| Purge misses runtime-built class names             | Pre-migration grep for `` className={` `` + `${`; literal maps + safelist |
+| Tailwind version drift CDN→3.4                     | Same major; visual smoke per view at 1280/375                             |
+| Deleting a "dead" file that something imports      | typecheck + `npm test` + grep each file before delete                     |
+| LeadDetail is `@ts-nocheck` (no compiler net)      | className-only edits; Playwright smoke on all 3 tabs                      |
+| Saved tab `analysis`/`chat` in users' localStorage | migration effect in `App.tsx`                                             |
 
 ## 8. Verification per milestone
 

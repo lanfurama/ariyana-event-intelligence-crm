@@ -435,7 +435,11 @@ export const EmailTemplatesView = () => {
           <Badge tone="slate">{templates.length}</Badge>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setShowVariablesHelp(!showVariablesHelp)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowVariablesHelp(!showVariablesHelp)}
+          >
             <Sparkles size={14} className="text-brand-600" />
             Variables guide
             <ChevronDown
@@ -491,7 +495,9 @@ export const EmailTemplatesView = () => {
               </p>
             </div>
             <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-1">
-              <p className="font-semibold text-emerald-800 mb-1">Kết quả (lead: Nguyễn Văn A, ABC Corporation)</p>
+              <p className="font-semibold text-emerald-800 mb-1">
+                Kết quả (lead: Nguyễn Văn A, ABC Corporation)
+              </p>
               <p className="text-emerald-800">
                 <strong>Subject:</strong> Xin chào Nguyễn Văn A từ ABC Corporation
               </p>

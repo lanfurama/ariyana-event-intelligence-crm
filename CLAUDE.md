@@ -1,10 +1,10 @@
-# Claude Project Context — Ariyana Event Intelligence CRM
+# Claude Project Context — Ariyana Mail (email-marketing CRM)
 
 > Loaded automatically by Claude Code at session start. Keep tight (~200 lines). For full architecture details see README.md; for refactor specs see `docs/superpowers/`.
 
 ## Project
 
-Event-intelligence CRM with React 19 + TS strict frontend (Vite), Express + Postgres backend (`api/`), and AI integrations (Gemini + Vertex + OpenAI). Solo dev. Active codebase optimization (sub-projects #1–#10) — see roadmap below.
+**"Ariyana Mail — Email Marketing Suite"** (refocused 2026-07-16 from "Event Intelligence CRM"; spec `docs/superpowers/specs/2026-07-16-email-marketing-ui-refactor-design.md`). React 19 + TS strict frontend (Vite + build-time Tailwind 3.4), Express + Postgres backend (`api/`), AI integrations (Gemini + Vertex + OpenAI). Solo dev. Nav IA: Dashboard / Audience (`leads`) / Email Studio (`email`) / Enrichment (`intelligent`, Director) / Profile via sidebar user block. Active codebase optimization (sub-projects #1–#10) — see roadmap below.
 
 ## Conventions
 
@@ -22,17 +22,18 @@ Event-intelligence CRM with React 19 + TS strict frontend (Vite), Express + Post
 - `docs/superpowers/specs/YYYY-MM-DD-<name>-design.md` — design specs (immutable once written).
 - `docs/superpowers/plans/YYYY-MM-DD-<name>.md` — step-by-step implementation plans.
 - `api/src/services/ai/` — AI provider abstraction (prompts in `prompts/`, scaffolded providers in `providers/`).
-- `views/IntelligentDataView/EventModal/` — exemplar of refactor pattern (sub-project #4c done).
+- `tailwind.config.js` — design tokens: `brand` gold scale (500=#C5A059 UI, `brand.chart`=#B08A2E data marks), legacy `primary/secondary/accent` aliases.
+- `components/ui/` — shared primitives (Button, Card, Badge, PageHeader, EmptyState, field classes).
 
-## Refactor roadmap status (as of 2026-05-07)
+## Refactor roadmap status (as of 2026-07-16)
 
 | Sub-project                                           | Status         | Notes                                                                                   |
 | ----------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------- |
 | #1 Cleanup + tooling baseline                         | ✅ done        | Prettier, ESLint flat, TS strict, Zod env, husky                                        |
-| #2 Test infra                                         | ✅ done        | Vitest, 183 tests across 20 files                                                       |
+| #2 Test infra                                         | ✅ done        | Vitest, 227 tests across 20 files (2026-07-16 count)                                    |
 | #3 Structured logger / observability                  | pending        |                                                                                         |
 | #4b Refactor `components/LeadDetail.tsx`              | 🔄 in progress | 1130 LOC `@ts-nocheck` (was 1998). Plan in 10 commits / ~5 sessions. Tasks 1–5/10 done. |
-| #4c Refactor `views/.../EventModal.tsx`               | ✅ done        | Template for #4b. 7 sub-components + tested pure data fn.                               |
+| #4c Refactor `views/.../EventModal.tsx`               | ✅ done        | Was the #4b template; EventModal tree later deleted as orphaned UI (2026-07-16 refocus) — pattern reference lives in git history. |
 | #4d Refactor `views/LeadsView.tsx` (1914 LOC)         | pending        | Same playbook as #4b.                                                                   |
 | #4 Refactor `api/src/routes/excelImport.ts` (973 LOC) | pending        | God file with 2 markers.                                                                |
 | #5 API layer-ization + type normalization             | pending        | 5 markers remain (imap×2, excelImport×2 — also #4, managerReport).                      |
@@ -41,6 +42,7 @@ Event-intelligence CRM with React 19 + TS strict frontend (Vite), Express + Post
 | #9 Bundle splitting / lazy loading                    | pending        |                                                                                         |
 | #10 Documentation polish                              | pending        |                                                                                         |
 | AI provider abstraction (out-of-band)                 | ✅ done        | Prompts extracted to `services/ai/prompts/`. Providers scaffolded.                      |
+| Email-marketing refocus + full UI refactor (out-of-band) | ✅ done     | 2026-07-16, commits `36e848a..`: build-time Tailwind + tokens + `components/ui/`, new shell/IA, Dashboard/Email Studio/Audience redesign, dead event-intelligence UI removed. Spec in `docs/superpowers/specs/2026-07-16-…`. |
 
 ## Currently active: #4b LeadDetail refactor
 
@@ -70,6 +72,17 @@ JSX extractions (Tasks 6–8) — mechanical and low-risk now that all state is 
 Task 9 is the highest-risk: restore TS strict on `LeadDetail.tsx` (remove `@ts-nocheck`, fix all reported errors — by then the file should be a thin orchestrator). Task 10 closes with `STRICT_DEBT.md` update.
 
 ## Important decisions log
+
+### Email-marketing refocus + UI refactor (2026-07-16)
+
+- **Product identity pivot is UI-level only.** Audit (3 parallel code sweeps) showed the email-marketing core is real & solid (templates+attachments, single/bulk send via SMTP, IMAP reply matching, scheduled VN manager reports, Vertex enrichment) while the "event intelligence" half was dead: excel/csv-import parse-but-never-persist with unreachable UI, event-brief docx no caller, lead-scoring API no view. Backend left 100% untouched — dead routers documented for a later sub-project.
+- **Deleted (git preserves):** VideoAnalysisView, ChatAssistant (+ gptService, chatMessagesApi), the orphaned `views/IntelligentDataView/` subtree incl. #4c's EventModal (dead since the view became the enrichment dashboard), scoringUtils, leadScoringApi, unused geminiService fns, `EMAIL_TEMPLATES` seed. Saved tabs `analysis`/`chat` migrate → `dashboard` in App.tsx; tab ids & role gates unchanged.
+- **Tailwind CDN → build-time 3.4** (same major as the CDN → zero class-rename risk). Purge audit first: no dynamic `bg-${x}` class construction existed. Tokens in `tailwind.config.js`; `brand.chart` #B08A2E exists because UI golds fail the dataviz palette validator (chroma floor) on white — do not use `brand-500` for chart marks.
+- **Charts follow the dataviz method:** single-hue marks for single-measure charts, no index-cycled rainbows, pie → ranked bars with "Other" fold, direct labels, hover tooltips. `PipelineBars` takes an optional shared `max` — per-row instances previously rendered every bar at 100%.
+- **EmailReportsView keeps Vietnamese chrome** (spec §5 said normalize to EN — divergence logged): Director-only surface, and the report emails it configures are themselves Vietnamese. Full UI-language standardization deferred.
+- **node-cron `@ts-expect-error` removed without the v4 migration:** `api/` actually resolves node-cron **v3** from `api/node_modules` (api/package.json pins `^3.0.3`), so `scheduled: true` is valid and tsc flagged the directive unused (blocking typecheck). STRICT_DEBT #6 is now "unify node-cron on v4 in both package.json trees, then migrate the API."
+- **`.playwright-mcp/` gitignored + untracked** — smoke artifacts were polluting commits (528-line snapshots in `e4b0be9`).
+- **#4b is NOT superseded:** LeadDetail got className-only retone; Tasks 6–10 (JSX tab extraction + strict mode) remain the next structural work.
 
 ### LeadDetail refactor (2026-05-07)
 

@@ -30,12 +30,20 @@ export const EmailView: React.FC<EmailViewProps> = ({ user }) => {
           Templates, test sends & scheduled manager reports
         </p>
         <div className="flex gap-6">
-          <button type="button" onClick={() => setSubTab('templates')} className={tabClass(subTab === 'templates')}>
+          <button
+            type="button"
+            onClick={() => setSubTab('templates')}
+            className={tabClass(subTab === 'templates')}
+          >
             <Mail size={16} />
             Templates
           </button>
           {isDirector && (
-            <button type="button" onClick={() => setSubTab('reports')} className={tabClass(subTab === 'reports')}>
+            <button
+              type="button"
+              onClick={() => setSubTab('reports')}
+              className={tabClass(subTab === 'reports')}
+            >
               <FileText size={16} />
               Scheduled Reports
             </button>

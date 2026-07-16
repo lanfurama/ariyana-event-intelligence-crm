@@ -1,15 +1,6 @@
 import type React from 'react';
 import { useState, useEffect, useMemo } from 'react';
-import {
-  Loader2,
-  Mail,
-  Send,
-  Users,
-  TrendingUp,
-  MessageSquare,
-  BarChart3,
-  X,
-} from 'lucide-react';
+import { Loader2, Mail, Send, Users, TrendingUp, MessageSquare, BarChart3, X } from 'lucide-react';
 import type { Lead, EmailLog } from '../types';
 import { emailLogsApi, emailRepliesApi, emailTemplatesApi } from '../services/apiService';
 import { useEscapeKey } from '../hooks/useEscapeKey';

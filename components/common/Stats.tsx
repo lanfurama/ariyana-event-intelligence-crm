@@ -174,7 +174,10 @@ export const CountryBars = ({ data }: { data: { name: string; count: number }[] 
         const pct = Math.round((row.count / max) * 100);
         const share = ((row.count / total) * 100).toFixed(1);
         return (
-          <div key={row.name} className="grid grid-cols-[minmax(0,11rem)_1fr_auto] items-center gap-3">
+          <div
+            key={row.name}
+            className="grid grid-cols-[minmax(0,11rem)_1fr_auto] items-center gap-3"
+          >
             <div className="text-xs font-medium text-slate-700 truncate" title={row.name}>
               {row.name}
             </div>

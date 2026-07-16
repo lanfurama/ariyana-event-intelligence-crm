@@ -1,13 +1,5 @@
 import type React from 'react';
-import {
-  LayoutDashboard,
-  Users,
-  Mail,
-  Sparkles,
-  LogOut,
-  ChevronLeft,
-  Menu,
-} from 'lucide-react';
+import { LayoutDashboard, Users, Mail, Sparkles, LogOut, ChevronLeft, Menu } from 'lucide-react';
 import type { User } from '../types';
 import { NavItem } from './common/NavItem';
 
