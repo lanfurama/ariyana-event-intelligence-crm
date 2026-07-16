@@ -159,23 +159,7 @@ const cleanJson = (text: string) => {
     .trim();
 };
 
-// --- 1. Data Enrichment via Google Search ---
-export const enrichLeadData = async (companyName: string, keyPerson: string, city: string) => {
-  // Validate inputs
-  if (!companyName || companyName.trim() === '') {
-    throw new Error('Company name is required for data enrichment');
-  }
-
-  console.log('🔵 [Gemini Service] enrichLeadData - Calling backend API');
-
-  return geminiApiCall<{ text: string; grounding: any }>('/enrich', {
-    companyName: companyName.trim(),
-    keyPerson: keyPerson.trim() || '',
-    city: city.trim() || '',
-  });
-};
-
-// --- 2. Email Drafting ---
+// --- Email Drafting ---
 export const draftSalesEmail = async (
   leadName: string,
   leadCompany: string,
@@ -192,98 +176,6 @@ export const draftSalesEmail = async (
   });
 };
 
-// --- 3. Chat Assistant ---
-export const sendChatMessage = async (
-  history: { role: string; parts: { text: string }[] }[],
-  message: string,
-) => {
-  console.log('🔵 [Gemini Service] sendChatMessage - Calling backend API');
-
-  const result = await geminiApiCall<{ text: string }>('/chat', {
-    history,
-    message,
-  });
-
-  return result.text;
-};
-
-// --- 4. Video Analysis ---
-export const analyzeVideoContent = async (base64Data: string, mimeType: string) => {
-  console.log('🔵 [Gemini Service] analyzeVideoContent - Calling backend API');
-
-  const result = await geminiApiCall<{ text: string }>('/analyze-video', {
-    base64Data,
-    mimeType,
-  });
-
-  return result.text;
-};
-
-// --- 5. Veo Video Generation ---
-// Note: Veo video generation is not currently implemented in backend
-// This feature requires special API access and is not commonly used
-// If needed, can be added to backend API later
-
-export const generatePromoVideo = async (prompt: string, aspectRatio: '16:9' | '9:16' = '16:9') => {
-  throw new Error(
-    'Video generation is not currently available. This feature requires backend implementation.',
-  );
-};
-
-export const pollVideoOperation = async (operation: any) => {
-  throw new Error(
-    'Video generation is not currently available. This feature requires backend implementation.',
-  );
-};
-
-// --- 6. Strategic Analysis (Intelligent Data) ---
-export const generateStrategicAnalysis = async (leadsData: string) => {
-  console.log('🔵 [Gemini Service] generateStrategicAnalysis - Calling backend API');
-  console.log('📝 [Gemini Service] Data length:', leadsData.length, 'characters');
-  console.log('⏱️  [Gemini Service] Start time:', new Date().toISOString());
-
-  const apiStartTime = Date.now();
-
-  try {
-    const result = await geminiApiCall<{ text: string }>('/strategic-analysis', {
-      leadsData,
-    });
-
-    const apiTime = Date.now() - apiStartTime;
-    console.log(`✅ [Gemini Service] API call completed in ${(apiTime / 1000).toFixed(2)}s`);
-    console.log('📄 [Gemini Service] Response received, length:', result.text?.length || 0);
-
-    return result.text;
-  } catch (error: any) {
-    const apiTime = Date.now() - apiStartTime;
-    console.error(`❌ [Gemini Service] API call failed after ${(apiTime / 1000).toFixed(2)}s`);
-    console.error('❌ [Gemini Service] Error:', error);
-    console.error('❌ [Gemini Service] Error details:', JSON.stringify(error, null, 2));
-
-    // Check if error has retryDelay from backend response
-    if (error.retryDelay) {
-      const retryError: any = new Error(error.message || 'Rate limit exceeded');
-      retryError.retryDelay = error.retryDelay;
-      retryError.isRateLimit = true;
-      throw retryError;
-    }
-
-    // Also check if it's a rate limit error from status code
-    if (
-      error.message?.includes('429') ||
-      error.message?.includes('RESOURCE_EXHAUSTED') ||
-      error.message?.includes('quota')
-    ) {
-      const retryError: any = new Error(error.message || 'Rate limit exceeded');
-      retryError.isRateLimit = true;
-      // Try to extract retry delay from error message
-      const retryMatch = error.message?.match(/Please retry in ([\d.]+)s/i);
-      if (retryMatch && retryMatch[1]) {
-        retryError.retryDelay = Math.ceil(parseFloat(retryMatch[1]));
-      }
-      throw retryError;
-    }
-
-    throw error;
-  }
-};
+// Chat / video-analysis / strategic-analysis wrappers were removed 2026-07-16
+// with the email-marketing refocus (their views are gone). The backend routes
+// still exist; restore a thin wrapper here if a feature returns.

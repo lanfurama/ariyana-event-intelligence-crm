@@ -352,75 +352,9 @@ export const emailRepliesApi = {
 };
 
 // Chat Messages API
-export interface ChatMessageDB {
-  id: string;
-  username: string;
-  role: 'user' | 'model' | 'assistant'; // 'model' for backward compatibility, 'assistant' for GPT
-  text: string;
-  timestamp: Date | string;
-  created_at?: Date;
-}
-
-export const chatMessagesApi = {
-  getByUsername: (username: string) => apiCall<ChatMessageDB[]>(`/chat-messages/${username}`),
-  create: (message: ChatMessageDB) =>
-    apiCall<ChatMessageDB>('/chat-messages', {
-      method: 'POST',
-      body: JSON.stringify(message),
-    }),
-  deleteByUsername: (username: string) =>
-    apiCall<void>(`/chat-messages/${username}`, {
-      method: 'DELETE',
-    }),
-  deleteById: (id: string) =>
-    apiCall<void>(`/chat-messages/message/${id}`, {
-      method: 'DELETE',
-    }),
-};
-
-// Lead Scoring API
-export const leadScoringApi = {
-  calculateScore: (leadId: string) =>
-    apiCall<{
-      success: boolean;
-      leadId: string;
-      score: number;
-      factors: {
-        emailEngagement: number;
-        eventHistory: number;
-        contactQuality: number;
-        companySize: number;
-      };
-      reasoning: string;
-    }>(`/lead-scoring/${leadId}/calculate`, { method: 'POST' }),
-
-  batchCalculate: (leadIds: string[]) =>
-    apiCall<{
-      success: boolean;
-      total: number;
-      scores: Record<string, number>;
-    }>('/lead-scoring/batch', {
-      method: 'POST',
-      body: JSON.stringify({ leadIds }),
-    }),
-
-  getTopScored: (limit: number = 10) =>
-    apiCall<{
-      success: boolean;
-      leads: Lead[];
-    }>(`/lead-scoring/top?limit=${limit}`),
-
-  getDistribution: () =>
-    apiCall<{
-      success: boolean;
-      distribution: {
-        high: number;
-        medium: number;
-        low: number;
-        unscored: number;
-      };
-    }>('/lead-scoring/distribution'),
-};
+// chatMessagesApi and leadScoringApi were removed 2026-07-16 with the
+// email-marketing refocus: the chat view is gone and no view ever consumed
+// lead scoring. Backend routes remain; re-add typed wrappers if needed.
 
 // Email Reports API
 export interface EmailReportsConfig {

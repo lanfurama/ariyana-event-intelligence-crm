@@ -18,17 +18,11 @@ const LeadDetail = React.lazy(() =>
 const IntelligentDataView = React.lazy(() =>
   import('./views/IntelligentDataView').then((module) => ({ default: module.IntelligentDataView })),
 );
-const ChatAssistant = React.lazy(() =>
-  import('./components/ChatAssistant').then((module) => ({ default: module.ChatAssistant })),
-);
 const EmailView = React.lazy(() =>
   import('./views/EmailView').then((module) => ({ default: module.EmailView })),
 );
 const UserProfileView = React.lazy(() =>
   import('./views/UserProfileView').then((module) => ({ default: module.UserProfileView })),
-);
-const VideoAnalysisView = React.lazy(() =>
-  import('./views/VideoAnalysisView').then((module) => ({ default: module.VideoAnalysisView })),
 );
 
 const App = () => {
@@ -56,10 +50,13 @@ const App = () => {
     }
   });
 
-  // Migrate legacy email tabs to single "email" tab
+  // Migrate legacy tabs: old email tabs → "email"; removed features → dashboard
   useEffect(() => {
-    if ((activeTab === 'email-templates' || activeTab === 'email-reports') && user) {
+    if (!user) return;
+    if (activeTab === 'email-templates' || activeTab === 'email-reports') {
       setActiveTab('email');
+    } else if (activeTab === 'analysis' || activeTab === 'chat') {
+      setActiveTab('dashboard');
     }
   }, [activeTab, user]);
 
@@ -109,10 +106,6 @@ const App = () => {
             loading={leadsLoading}
           />
         );
-      case 'analysis':
-        return <VideoAnalysisView />;
-      case 'chat':
-        return <ChatAssistant user={user} />;
       case 'email':
         if (user.role !== 'Director' && user.role !== 'Sales') return <Dashboard leads={leads} />;
         return <EmailView user={user} />;
@@ -135,7 +128,7 @@ const App = () => {
       />
 
       <main
-        className={`flex-1 relative transition-all duration-300 ease-in-out overflow-hidden h-full ${sidebarOpen ? 'md:ml-52' : 'ml-0'}`}
+        className={`flex-1 relative transition-all duration-300 ease-in-out overflow-hidden h-full ${sidebarOpen ? 'md:ml-56' : 'ml-0'}`}
       >
         <div className={`h-full w-full overflow-auto ${sidebarOpen ? '' : 'pl-12 md:pl-0'}`}>
           <Suspense fallback={<LoadingSpinner />}>{renderContent()}</Suspense>

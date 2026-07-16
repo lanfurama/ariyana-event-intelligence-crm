@@ -1,15 +1,5 @@
-// Export all sub-components for IntelligentDataView
-export { ScoringCriteriaPanel } from './ScoringCriteriaPanel';
-export { FileUploadSection } from './FileUploadSection';
-export { EventFilters } from './EventFilters';
-export { EventList } from './EventList';
-export { BatchAnalysisControls } from './BatchAnalysisControls';
-export { EmptyState } from './EmptyState';
-export { EventModal } from './EventModal';
+// Sub-components for IntelligentDataView (lead-enrichment dashboard)
 export { EnrichRow } from './EnrichRow';
 export { LeadsNeedingEnrichList } from './LeadsNeedingEnrichList';
 export { ResearchModal } from './ResearchModal';
 export type { ResearchModalProps, ResearchModalStatus } from './ResearchModal';
-
-// Export scoring utilities
-export * from './scoringUtils';

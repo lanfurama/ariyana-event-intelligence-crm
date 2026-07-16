@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, ChevronRight, Loader2, X } from 'lucide-react';
+import { Users, ChevronRight, Loader2, X, Mail } from 'lucide-react';
 import type { User } from '../types';
 import { usersApi } from '../services/apiService';
 import { USERS } from '../constants';
@@ -75,8 +75,8 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden p-8 text-center">
-          <Loader2 className="animate-spin mx-auto mb-4 text-blue-600" size={32} />
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden p-8 text-center">
+          <Loader2 className="animate-spin mx-auto mb-4 text-brand-500" size={32} />
           <p className="text-slate-600">Loading users...</p>
         </div>
       </div>
@@ -85,12 +85,20 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border border-slate-200">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10">
-            <h1 className="text-3xl font-bold text-white mb-1.5 tracking-tight">Ariyana CRM</h1>
-            <p className="text-blue-50 text-sm font-medium">Event Intelligence System</p>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in border border-slate-200">
+        <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
+          <div
+            className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-brand-500/20 blur-2xl"
+            aria-hidden="true"
+          ></div>
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg mb-3">
+              <Mail size={26} className="text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
+              Ariyana <span className="text-brand-400">Mail</span>
+            </h1>
+            <p className="text-slate-400 text-sm font-medium">Email Marketing Suite</p>
           </div>
         </div>
         <div className="p-6 space-y-5 bg-white">
@@ -145,7 +153,7 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
               <select
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
-                className="w-full p-3.5 pl-11 border-2 border-slate-200 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white text-slate-900 font-medium"
+                className="w-full p-3.5 pl-11 border-2 border-slate-200 rounded-lg appearance-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none bg-white text-slate-900 font-medium"
                 disabled={users.length === 0}
               >
                 {users.map((u) => (
@@ -161,7 +169,7 @@ export const LoginView = ({ onLogin }: { onLogin: (user: User) => void }) => {
           <button
             onClick={handleLogin}
             disabled={!selectedUser || users.length === 0}
-            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-lg shadow-blue-500/30 flex justify-center items-center"
+            className="w-full py-3.5 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 disabled:from-slate-400 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg shadow-lg shadow-brand-500/30 flex justify-center items-center transition-colors"
           >
             Sign In <ChevronRight size={18} className="ml-2" />
           </button>

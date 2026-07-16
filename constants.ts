@@ -1,54 +1,7 @@
 import type { Lead, User } from './types';
 
-export const EMAIL_TEMPLATES = [
-  {
-    id: 'intro',
-    name: 'Introduction',
-    subject: 'Proposal to host [Company Name] event at Ariyana Convention Centre',
-    body: `Dear [Key Person Name],
-
-I hope this email finds you well.
-
-My name is [Your Name], representing Ariyana Convention Centre in Danang, Vietnam. We are Vietnam's premier oceanfront convention venue and had the honor of hosting the APEC 2017 Economic Leaders' Week.
-
-I am writing to express our keen interest in hosting [Company Name]'s upcoming events. With our versatile ballrooms and stunning location, we believe we can offer an exceptional experience for your delegates.
-
-Would you be open to a brief call to discuss how we can support your future events?
-
-Best regards,`,
-  },
-  {
-    id: 'followup',
-    name: 'Follow Up',
-    subject: 'Following up: [Company Name] Event Proposal',
-    body: `Dear [Key Person Name],
-
-I'm writing to follow up on my previous note regarding the possibility of hosting [Company Name] at Ariyana Convention Centre.
-
-Danang is rapidly becoming a top destination for MICE in Asia, offering excellent connectivity and world-class infrastructure. We would love the opportunity to showcase what we can offer for your next conference.
-
-Looking forward to hearing from you.
-
-Best regards,`,
-  },
-  {
-    id: 'promo',
-    name: 'Special Offer',
-    subject: 'Exclusive MICE Package for [Company Name]',
-    body: `Dear [Key Person Name],
-
-We are currently offering exclusive packages for international associations looking to host events in Danang for 2026/2027.
-
-We see a great alignment with [Company Name]'s values and event requirements. Our venue offers:
-- Largest ballroom in Central Vietnam
-- Direct beach access
-- Comprehensive event support services
-
-Let's make your next event unforgettable.
-
-Best regards,`,
-  },
-];
+// EMAIL_TEMPLATES seed constant removed 2026-07-16 — templates are DB-backed
+// (email_templates table) and nothing imported the frontend seed.
 
 export const USERS: User[] = [
   {
