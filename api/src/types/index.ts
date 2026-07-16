@@ -1,6 +1,10 @@
 export type UserRole = 'Director' | 'Sales' | 'Viewer';
 export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Won' | 'Lost';
 export type EmailLogStatus = 'sent' | 'draft' | 'failed';
+export type BookingStatus = 'inquiry' | 'hold' | 'quoted' | 'confirmed' | 'completed' | 'cancelled';
+export type BookingSource = 'manual' | 'portal' | 'email_ai';
+export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+export type QuoteItemKind = 'venue' | 'fnb' | 'av' | 'service' | 'other';
 
 // Alias for clarity in places where Lead represents a database row
 export type LeadRow = Lead;
