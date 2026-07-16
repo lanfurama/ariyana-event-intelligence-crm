@@ -45,6 +45,8 @@ let eventBriefRouter: any;
 let leadScoringRouter: any;
 let emailReportsRouter: any;
 let vertexRouter: any;
+let venuesRouter: any;
+let bookingsRouter: any;
 let query: any;
 
 async function loadRoutes() {
@@ -81,6 +83,8 @@ async function loadRoutes() {
         './api/src/routes/leadScoring.js',
         './api/src/routes/emailReports.js',
         './api/src/routes/vertex.js',
+        './api/src/routes/venues.js',
+        './api/src/routes/bookings.js',
         './api/src/config/database.js',
       ];
 
@@ -116,7 +120,9 @@ async function loadRoutes() {
       leadScoringRouter = routes[11].default;
       emailReportsRouter = routes[12].default;
       vertexRouter = routes[13].default;
-      query = routes[14].query;
+      venuesRouter = routes[14].default;
+      bookingsRouter = routes[15].default;
+      query = routes[16].query;
 
       console.log('✅ Routes loaded successfully');
     } catch (error: any) {
@@ -198,6 +204,8 @@ export function vitePluginApi(): Plugin {
       app.use('/lead-scoring', leadScoringRouter);
       app.use('/email-reports', emailReportsRouter);
       app.use('/vertex', vertexRouter);
+      app.use('/venues', venuesRouter);
+      app.use('/bookings', bookingsRouter);
 
       // Root endpoint (relative to /api/v1)
       app.get('/', (req, res) => {
@@ -214,6 +222,8 @@ export function vitePluginApi(): Plugin {
             gemini: '/api/v1/gemini',
             leadScoring: '/api/v1/lead-scoring',
             emailReports: '/api/v1/email-reports',
+            venues: '/api/v1/venues',
+            bookings: '/api/v1/bookings',
             health: '/api/v1/health',
           },
         });

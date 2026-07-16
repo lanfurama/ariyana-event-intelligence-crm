@@ -13,6 +13,8 @@ import eventBriefRouter from './routes/eventBrief.js';
 import leadScoringRouter from './routes/leadScoring.js';
 import emailReportsRouter from './routes/emailReports.js';
 import vertexRouter from './routes/vertex.js';
+import venuesRouter from './routes/venues.js';
+import bookingsRouter from './routes/bookings.js';
 import { query } from './config/database.js';
 import { startScheduledReportsJob } from './services/scheduledReportsJob.js';
 
@@ -85,6 +87,8 @@ app.use('/api/event-brief', eventBriefRouter);
 app.use('/api/lead-scoring', leadScoringRouter);
 app.use('/api/email-reports', emailReportsRouter);
 app.use('/api/vertex', vertexRouter);
+app.use('/api/venues', venuesRouter);
+app.use('/api/bookings', bookingsRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -104,6 +108,8 @@ app.get('/', (req, res) => {
       leadScoring: '/api/lead-scoring',
       emailReports: '/api/email-reports',
       vertex: '/api/vertex',
+      venues: '/api/venues',
+      bookings: '/api/bookings',
       health: '/health',
     },
   });

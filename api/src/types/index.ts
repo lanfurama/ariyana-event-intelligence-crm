@@ -157,3 +157,98 @@ export interface EventBrief {
   opportunityScore?: number;
   iccaQualified?: string;
 }
+
+export interface VenueCapacities {
+  theatre?: number;
+  classroom?: number;
+  banquet?: number;
+  cocktail?: number;
+  ushape?: number;
+  boardroom?: number;
+}
+
+export interface VenueRates {
+  hourly?: number;
+  half_day?: number;
+  full_day?: number;
+}
+
+export interface Venue {
+  id: string;
+  name: string;
+  slug: string;
+  floor?: string;
+  area_sqm?: number;
+  ceiling_height_m?: number;
+  capacities: VenueCapacities;
+  description?: string;
+  images: string[];
+  base_rates: VenueRates;
+  amenities: string[];
+  is_active: boolean;
+  display_order: number;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface Booking {
+  id: string;
+  code: string;
+  lead_id?: string;
+  title: string;
+  event_type?: string;
+  status: BookingStatus;
+  expected_guests?: number;
+  layout?: string;
+  notes?: string;
+  source: BookingSource;
+  created_by?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface BookingSpace {
+  id?: number;
+  booking_id: string;
+  venue_id: string;
+  start_at: Date | string;
+  end_at: Date | string;
+  setup_minutes: number;
+  teardown_minutes: number;
+  block_start_at?: Date | string;
+  block_end_at?: Date | string;
+  booking_status?: BookingStatus;
+  created_at?: Date;
+}
+
+export interface BookingWithSpaces extends Booking {
+  spaces: BookingSpace[];
+}
+
+export interface Quote {
+  id: string;
+  booking_id: string;
+  version: number;
+  status: QuoteStatus;
+  currency: string;
+  subtotal: number;
+  discount_pct: number;
+  vat_pct: number;
+  total: number;
+  valid_until?: Date | string;
+  sent_at?: Date | string;
+  notes?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+export interface QuoteItem {
+  id?: number;
+  quote_id: string;
+  kind: QuoteItemKind;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+  sort_order: number;
+}

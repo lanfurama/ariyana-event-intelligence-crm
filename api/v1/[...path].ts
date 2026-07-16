@@ -17,6 +17,8 @@ import eventBriefRouter from '../src/routes/eventBrief.js';
 import leadScoringRouter from '../src/routes/leadScoring.js';
 import emailReportsRouter from '../src/routes/emailReports.js';
 import vertexRouter from '../src/routes/vertex.js';
+import venuesRouter from '../src/routes/venues.js';
+import bookingsRouter from '../src/routes/bookings.js';
 import { query } from '../src/config/database.js';
 
 const app = express();
@@ -84,6 +86,8 @@ app.use('/event-brief', eventBriefRouter);
 app.use('/lead-scoring', leadScoringRouter);
 app.use('/email-reports', emailReportsRouter);
 app.use('/vertex', vertexRouter);
+app.use('/venues', venuesRouter);
+app.use('/bookings', bookingsRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -103,6 +107,8 @@ app.get('/', (req, res) => {
       leadScoring: '/api/v1/lead-scoring',
       emailReports: '/api/v1/email-reports',
       vertex: '/api/v1/vertex',
+      venues: '/api/v1/venues',
+      bookings: '/api/v1/bookings',
       health: '/api/v1/health',
     },
   });
