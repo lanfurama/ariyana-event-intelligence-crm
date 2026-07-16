@@ -107,7 +107,7 @@ export const UserProfileView = ({
                   value={formData.avatar}
                   onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
                   placeholder="https://example.com/avatar.jpg"
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
                 />
                 <p className="text-xs text-slate-500 mt-1">Enter a URL for your profile picture</p>
               </div>
@@ -136,7 +136,7 @@ export const UserProfileView = ({
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Enter your full name"
-              className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none ${
+              className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none ${
                 formErrors.name ? 'border-red-300' : 'border-slate-300'
               }`}
             />
@@ -168,7 +168,7 @@ export const UserProfileView = ({
           <button
             onClick={handleSave}
             disabled={loading}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (
               <>

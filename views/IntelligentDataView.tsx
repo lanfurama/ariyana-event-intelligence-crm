@@ -153,10 +153,10 @@ export const IntelligentDataView: React.FC<IntelligentDataViewProps> = ({
         <div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <BrainCircuit size={28} />
-            Event Intelligence Dashboard
+            Enrichment
           </h2>
           <p className="text-sm text-slate-600 mt-1">
-            Leads missing email — use AI to research and fill contact details.
+            Leads missing an email — use AI research to fill in contact details before campaigns.
           </p>
         </div>
       </div>

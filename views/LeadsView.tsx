@@ -12,7 +12,6 @@ import {
   Circle,
   FileSpreadsheet,
   ChevronDown,
-  Building2,
   MapPin,
   User as UserIcon,
   Globe,
@@ -815,8 +814,8 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
       {/* Header - Compact */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shrink-0">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Leads</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Manage and track your event leads</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Audience</h2>
+          <p className="text-xs text-slate-500 mt-0.5">Your leads — filter, segment & reach out</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -832,10 +831,10 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
               <button
                 onClick={() => setShowEmailModal(true)}
                 title={`Bulk send to ${filteredLeads.length} filtered leads`}
-                className="bg-white border border-indigo-200 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center gap-1.5 shadow-sm"
+                className="bg-white border border-brand-300 text-brand-700 px-3 py-1.5 rounded-lg text-xs font-semibold shrink-0 inline-flex items-center gap-1.5 shadow-sm hover:bg-brand-50 transition-colors"
               >
                 <Mail size={14} /> Bulk Send
-                <span className="bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums">
+                <span className="bg-brand-100 text-brand-800 px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums">
                   {filteredLeads.length}
                 </span>
               </button>
@@ -868,9 +867,9 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
             <span className="text-sm font-bold text-orange-700">{emailStats.notSent}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+            <span className="w-2 h-2 rounded-full bg-brand-500"></span>
             <span className="text-xs font-medium text-slate-500">With Info:</span>
-            <span className="text-sm font-bold text-indigo-700">{keyPersonStats.withInfo}</span>
+            <span className="text-sm font-bold text-brand-700">{keyPersonStats.withInfo}</span>
           </div>
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-slate-300"></span>
@@ -883,19 +882,29 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
       {/* Search & Filters - Compact */}
       <div className="bg-white border border-slate-200 rounded-lg p-3 shrink-0 shadow-sm">
         <div className="flex flex-col lg:flex-row gap-3">
-          {/* Search Input */}
-          <div className="relative flex-1 min-w-[200px]">
-            <input
-              type="text"
-              placeholder="Search company, city, person, industry..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors"
-            />
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-              size={14}
-            />
+          {/* Search Input — label matches the filter columns so heights align
+              and the icon anchors to the input, not a stretched wrapper */}
+          <div className="flex-1 min-w-[200px]">
+            <label
+              htmlFor="leads-search"
+              className="block text-[10px] font-semibold uppercase tracking-wide text-slate-500 mb-1"
+            >
+              Search
+            </label>
+            <div className="relative">
+              <input
+                id="leads-search"
+                type="text"
+                placeholder="Search company, city, person, industry..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:bg-white transition-colors"
+              />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                size={14}
+              />
+            </div>
           </div>
 
           {/* Filters */}
@@ -909,7 +918,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                   value={countryFilter}
                   onChange={(e) => setCountryFilter(e.target.value)}
                   aria-label="Filter by country"
-                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors ${countryFilter !== 'all' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}
+                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:bg-white transition-colors ${countryFilter !== 'all' ? 'bg-brand-50 border-brand-300' : 'bg-slate-50 border-slate-200'}`}
                 >
                   <option value="all">All Countries</option>
                   {availableCountries.map((country) => (
@@ -934,7 +943,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                   value={industryFilter}
                   onChange={(e) => setIndustryFilter(e.target.value)}
                   aria-label="Filter by industry"
-                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors ${industryFilter !== 'all' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}
+                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:bg-white transition-colors ${industryFilter !== 'all' ? 'bg-brand-50 border-brand-300' : 'bg-slate-50 border-slate-200'}`}
                 >
                   <option value="all">All Industries</option>
                   {availableIndustries.map((industry) => (
@@ -959,7 +968,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   aria-label="Filter by status"
-                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors ${statusFilter !== 'all' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}
+                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:bg-white transition-colors ${statusFilter !== 'all' ? 'bg-brand-50 border-brand-300' : 'bg-slate-50 border-slate-200'}`}
                 >
                   <option value="all">All Statuses</option>
                   <option value="New">New</option>
@@ -981,7 +990,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
                   aria-label="Filter by lead type"
-                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors ${typeFilter !== 'all' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}
+                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:bg-white transition-colors ${typeFilter !== 'all' ? 'bg-brand-50 border-brand-300' : 'bg-slate-50 border-slate-200'}`}
                 >
                   <option value="all">All Types</option>
                   <option value="normal">Normal</option>
@@ -1007,7 +1016,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                   value={emailFilter}
                   onChange={(e) => setEmailFilter(e.target.value as typeof emailFilter)}
                   aria-label="Filter by contact info"
-                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-colors ${emailFilter !== 'all' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200'}`}
+                  className={`appearance-none border rounded-lg px-3 py-2 pr-8 text-xs font-medium text-slate-700 cursor-pointer focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 focus:bg-white transition-colors ${emailFilter !== 'all' ? 'bg-brand-50 border-brand-300' : 'bg-slate-50 border-slate-200'}`}
                 >
                   <option value="all">All Contacts</option>
                   <option value="has-key-person">Has key person email</option>
@@ -1058,12 +1067,12 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
             // Generate a consistent color for the company avatar based on the name
             const getAvatarColor = (name: string) => {
               const colors = [
-                'from-blue-500 to-indigo-600',
-                'from-emerald-500 to-teal-600',
-                'from-orange-500 to-red-600',
-                'from-purple-500 to-violet-600',
-                'from-pink-500 to-rose-600',
-                'from-cyan-500 to-blue-600',
+                'from-slate-600 to-slate-800',
+                'from-brand-400 to-brand-600',
+                'from-slate-500 to-slate-700',
+                'from-brand-500 to-brand-700',
+                'from-slate-700 to-slate-900',
+                'from-brand-600 to-brand-800',
               ];
               const index = name.length % colors.length;
               return colors[index];
@@ -1083,9 +1092,9 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                 <div className="flex items-center gap-3">
                   {/* Company Avatar */}
                   <div
-                    className={`w-10 h-10 rounded-lg bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white shadow-sm shrink-0`}
+                    className={`w-10 h-10 rounded-lg bg-gradient-to-br ${avatarColor} flex items-center justify-center text-white shadow-sm shrink-0 text-sm font-bold`}
                   >
-                    <Building2 size={18} />
+                    {(lead.companyName || '?').charAt(0).toUpperCase()}
                   </div>
 
                   {/* Company Info - 35% */}
@@ -1131,7 +1140,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="flex items-center text-xs text-indigo-600"
+                          className="flex items-center text-xs text-brand-700 hover:underline"
                         >
                           <Globe size={10} className="mr-1" />
                           Website
@@ -1335,7 +1344,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                     onClick={() => setCurrentPage(pageNum)}
                     className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                       currentPage === pageNum
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-slate-900 text-white'
                         : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
                     }`}
                   >
@@ -1383,7 +1392,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
             <div className="flex-1 overflow-y-auto p-6">
               {loadingTemplates ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="animate-spin text-indigo-600" size={32} />
+                  <Loader2 className="animate-spin text-brand-500" size={32} />
                   <span className="ml-3 text-slate-600">Loading email templates...</span>
                 </div>
               ) : emailTemplates.length === 0 ? (
@@ -1403,7 +1412,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                     <select
                       value={selectedTemplateId}
                       onChange={(e) => setSelectedTemplateId(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
                     >
                       {emailTemplates.map((template) => (
                         <option key={template.id} value={template.id}>
@@ -1422,7 +1431,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                       onChange={(e) =>
                         setTemplateTargetLeadType(e.target.value as typeof templateTargetLeadType)
                       }
-                      className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
                     >
                       <option value="auto">Auto (dùng leadType của template)</option>
                       <option value="all">All lead types (có email, chưa gửi)</option>
@@ -1536,12 +1545,12 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                           return (
                             <div
                               key={prepared.lead.id}
-                              className={`bg-white border rounded-lg p-4 ${status === 'sending' ? 'border-indigo-300 ring-1 ring-indigo-200' : status === 'sent' ? 'border-green-200' : status === 'failed' ? 'border-red-200' : 'border-slate-200'}`}
+                              className={`bg-white border rounded-lg p-4 ${status === 'sending' ? 'border-brand-300 ring-1 ring-brand-200' : status === 'sent' ? 'border-emerald-200' : status === 'failed' ? 'border-rose-200' : 'border-slate-200'}`}
                             >
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
-                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-100 text-brand-800 font-bold text-xs">
                                       {idx + 1}
                                     </span>
                                     <span className="font-semibold text-slate-900">
@@ -1558,7 +1567,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
                                           <>
                                             <Loader2
                                               size={14}
-                                              className="text-indigo-600 animate-spin"
+                                              className="text-brand-600 animate-spin"
                                             />{' '}
                                             Sending...
                                           </>
@@ -1678,7 +1687,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
               {preparedEmails.length > 0 && (
                 <button
                   onClick={handleSendEmails}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   disabled={sendingEmails}
                 >
                   {sendingEmails ? (

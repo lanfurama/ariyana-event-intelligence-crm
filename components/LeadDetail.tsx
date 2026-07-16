@@ -118,7 +118,7 @@ export const LeadDetail = ({
             onClick={() => setActiveTab('info')}
             className={`flex-1 py-2 font-semibold text-xs flex justify-center items-center gap-1.5 ${
               activeTab === 'info'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                ? 'text-brand-700 border-b-2 border-brand-500 bg-brand-50/50'
                 : 'text-slate-500'
             }`}
           >
@@ -129,7 +129,7 @@ export const LeadDetail = ({
             onClick={() => setActiveTab('enrich')}
             className={`flex-1 py-2 font-semibold text-xs flex justify-center items-center gap-1.5 ${
               activeTab === 'enrich'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                ? 'text-brand-700 border-b-2 border-brand-500 bg-brand-50/50'
                 : 'text-slate-500'
             }`}
           >
@@ -141,7 +141,7 @@ export const LeadDetail = ({
               onClick={() => setActiveTab('email')}
               className={`flex-1 py-2 font-semibold text-xs flex justify-center items-center gap-1.5 ${
                 activeTab === 'email'
-                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                  ? 'text-brand-700 border-b-2 border-brand-500 bg-brand-50/50'
                   : 'text-slate-500'
               }`}
             >
@@ -244,7 +244,7 @@ export const LeadDetail = ({
                       <select
                         value={editedLead.type || ''}
                         onChange={(e) => handleInputChange('type', e.target.value || undefined)}
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                       >
                         <option value="">Regular Lead</option>
                         <option value="CORP">CORP (Corporate Partner)</option>
@@ -573,7 +573,7 @@ export const LeadDetail = ({
                       (rateLimitCountdown !== null && rateLimitCountdown > 0) ||
                       !enrichCompanyName.trim()
                     }
-                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold text-sm flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-semibold text-sm flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {enrichLoading ? (
                       <>
@@ -687,8 +687,8 @@ export const LeadDetail = ({
                   {/* Key Person Research Results */}
                   {researchResults &&
                     (researchResults.name || researchResults.title || researchResults.email) && (
-                      <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded p-3 space-y-3">
-                        <h4 className="font-bold text-indigo-900 text-sm flex items-center">
+                      <div className="bg-brand-50/60 border border-brand-200 rounded-lg p-3 space-y-3">
+                        <h4 className="font-bold text-brand-800 text-sm flex items-center">
                           <UserIcon size={16} className="mr-1.5" />
                           Key Person Research Results
                         </h4>
@@ -797,8 +797,8 @@ export const LeadDetail = ({
 
           {activeTab === 'email' && canEdit && (
             <div className="space-y-4">
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
-                <p className="text-sm text-purple-800">
+              <div className="bg-brand-50/70 p-4 rounded-lg border border-brand-200">
+                <p className="text-sm text-brand-800">
                   Generate a personalized sales pitch using Gemini AI or use a template, then send
                   via your mail client.
                 </p>
@@ -836,7 +836,7 @@ export const LeadDetail = ({
                   </div>
                 ) : (
                   <select
-                    className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none cursor-pointer"
+                    className="w-full p-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none cursor-pointer"
                     value={selectedTemplate}
                     onChange={handleTemplateChange}
                   >
@@ -858,7 +858,7 @@ export const LeadDetail = ({
                       emailLoading ||
                       (emailRateLimitCountdown !== null && emailRateLimitCountdown > 0)
                     }
-                    className="w-full py-3 bg-purple-600 text-white rounded-lg font-medium flex justify-center items-center shadow-sm disabled:opacity-50"
+                    className="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white rounded-lg font-medium flex justify-center items-center shadow-sm disabled:opacity-50 transition-colors"
                   >
                     {emailLoading ? (
                       <Loader2 className="animate-spin mr-2" />
@@ -886,7 +886,7 @@ export const LeadDetail = ({
                         value={emailCC}
                         onChange={(e) => setEmailCC(e.target.value)}
                         placeholder="Nhập địa chỉ email CC, cách bởi dấu ,"
-                        className="flex-1 text-xs text-slate-900 bg-white border border-slate-300 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="flex-1 text-xs text-slate-900 bg-white border border-slate-300 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                       />
                     </div>
                     <input
@@ -894,7 +894,7 @@ export const LeadDetail = ({
                       onChange={(e) =>
                         setDraftedEmail({ ...draftedEmail, subject: e.target.value })
                       }
-                      className="text-sm font-bold text-slate-900 bg-transparent outline-none border-b border-transparent focus:border-purple-300"
+                      className="text-sm font-bold text-slate-900 bg-transparent outline-none border-b border-transparent focus:border-brand-300"
                     />
                   </div>
                   <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -906,7 +906,7 @@ export const LeadDetail = ({
                           onClick={() => setEmailBodyViewMode('code')}
                           className={`px-2 py-1 text-xs font-medium rounded ${
                             emailBodyViewMode === 'code'
-                              ? 'bg-purple-600 text-white'
+                              ? 'bg-slate-900 text-white'
                               : 'bg-slate-100 text-slate-600'
                           }`}
                         >
@@ -917,7 +917,7 @@ export const LeadDetail = ({
                           onClick={() => setEmailBodyViewMode('preview')}
                           className={`px-2 py-1 text-xs font-medium rounded ${
                             emailBodyViewMode === 'preview'
-                              ? 'bg-purple-600 text-white'
+                              ? 'bg-slate-900 text-white'
                               : 'bg-slate-100 text-slate-600'
                           }`}
                         >
@@ -928,7 +928,7 @@ export const LeadDetail = ({
 
                     {emailBodyViewMode === 'code' ? (
                       <textarea
-                        className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none mb-2 font-mono min-h-0 overflow-auto"
+                        className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none resize-none mb-2 font-mono min-h-0 overflow-auto"
                         value={draftedEmail.body}
                         onChange={(e) => setDraftedEmail({ ...draftedEmail, body: e.target.value })}
                         placeholder="<html>...\n\nUse HTML format with variables like {{keyPersonName}}, {{companyName}}, etc."
@@ -951,7 +951,7 @@ export const LeadDetail = ({
                               draftedEmail.body ||
                               '<div style="padding: 20px; color: #666; text-align: center;">Click here to start editing your email. Use variables like {{keyPersonName}}, {{companyName}}, etc.</div>',
                           }}
-                          className="p-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset"
+                          className="p-3 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:ring-inset"
                           style={{
                             fontFamily: 'Arial, sans-serif',
                             lineHeight: '1.6',
@@ -980,7 +980,7 @@ export const LeadDetail = ({
                                 key={idx}
                                 className={`px-2 py-1 rounded text-xs flex items-center ${
                                   fromTemplate
-                                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                                    ? 'bg-brand-50 text-brand-700 border border-brand-200'
                                     : 'bg-slate-100 text-slate-600'
                                 }`}
                               >
@@ -999,7 +999,7 @@ export const LeadDetail = ({
                                   <>
                                     {file.name}
                                     {fromTemplate && (
-                                      <span className="ml-1 text-[10px] text-purple-500">
+                                      <span className="ml-1 text-[10px] text-brand-600">
                                         (Template)
                                       </span>
                                     )}
@@ -1032,7 +1032,7 @@ export const LeadDetail = ({
                     <button
                       onClick={handleSendEmail}
                       disabled={emailLoading}
-                      className="text-sm bg-blue-600 text-white px-4 py-2 rounded font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-sm bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {emailLoading ? (
                         <>
