@@ -2,112 +2,139 @@ import type React from 'react';
 import { useMemo } from 'react';
 import type { EmailLog } from '../../types';
 
+/**
+ * Chart color notes (dataviz method):
+ * - Every chart here plots ONE measure, so marks use a single hue —
+ *   brand.chart (#B08A2E), validated for chroma + 3:1 contrast on white.
+ * - Identity comes from the row/axis label, never from cycled hues.
+ * - Values are direct-labeled, so a contrast WARN never hides data.
+ */
+
+/** Sent-emails-per-day vertical bar chart (last 14 days) with hover tooltips. */
 export const EmailActivityChart = ({ emailLogs }: { emailLogs: EmailLog[] }) => {
   const dailyActivity = useMemo(() => {
     const now = new Date();
-    const days = [];
+    const days: { dateKey: string; label: string; longLabel: string; count: number }[] = [];
     const activityMap = new Map<string, number>();
 
-    // Initialize last 7 days
-    for (let i = 6; i >= 0; i--) {
+    for (let i = 13; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       const dateKey = date.toISOString().split('T')[0];
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-      const dayNumber = date.getDate();
-      days.push({ dateKey, label: `${dayName} ${dayNumber}`, count: 0 });
+      days.push({
+        dateKey,
+        label: `${date.getDate()}/${date.getMonth() + 1}`,
+        longLabel: date.toLocaleDateString('en-GB', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        }),
+        count: 0,
+      });
       activityMap.set(dateKey, 0);
     }
 
-    // Count emails per day
     emailLogs.forEach((log) => {
       if (log.status === 'sent' && log.date) {
-        const logDate = new Date(log.date);
-        const dateKey = logDate.toISOString().split('T')[0];
-        const existing = activityMap.get(dateKey) || 0;
-        activityMap.set(dateKey, existing + 1);
+        const dateKey = new Date(log.date).toISOString().split('T')[0];
+        if (activityMap.has(dateKey)) {
+          activityMap.set(dateKey, (activityMap.get(dateKey) || 0) + 1);
+        }
       }
     });
 
-    // Update days with counts
-    return days.map((day) => ({
-      ...day,
-      count: activityMap.get(day.dateKey) || 0,
-    }));
+    return days.map((day) => ({ ...day, count: activityMap.get(day.dateKey) || 0 }));
   }, [emailLogs]);
 
-  const max = Math.max(...dailyActivity.map((d) => d.count)) || 1;
+  const max = Math.max(...dailyActivity.map((d) => d.count));
+
+  if (max === 0) {
+    return (
+      <div className="h-40 flex items-center justify-center text-sm text-slate-500">
+        No emails sent in the last 14 days
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-3">
-      {dailyActivity.map((d) => {
-        const pct = max > 0 ? Math.round((d.count / max) * 100) : 0;
-        return (
-          <div key={d.dateKey} className="grid grid-cols-[80px_1fr_44px] items-center gap-3">
-            <div className="text-xs font-medium text-slate-700">{d.label}</div>
-            <div className="h-2.5 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+    <div role="img" aria-label={`Emails sent per day over the last 14 days, peak ${max}`}>
+      <div className="flex items-end gap-1.5 h-36 border-b border-slate-200">
+        {dailyActivity.map((d) => {
+          const pct = Math.round((d.count / max) * 100);
+          const isPeak = d.count === max;
+          return (
+            <div key={d.dateKey} className="relative group flex-1 h-full flex flex-col justify-end">
+              {/* Selective direct label: peak day only */}
+              {isPeak && (
+                <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-slate-700 tabular-nums">
+                  {d.count}
+                </span>
+              )}
               <div
-                className="h-full bg-slate-900 rounded-full transition-all"
-                style={{ width: `${pct}%` }}
+                className="w-full rounded-t bg-brand-chart group-hover:bg-brand-700 transition-colors"
+                style={{ height: `${Math.max(pct, d.count > 0 ? 3 : 0)}%` }}
+                aria-label={`${d.longLabel}: ${d.count} emails`}
               />
+              {/* Hover tooltip */}
+              <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[11px] font-medium text-white shadow-lg">
+                {d.count} email{d.count === 1 ? '' : 's'} · {d.longLabel}
+              </div>
             </div>
-            <div className="text-xs font-semibold text-slate-900 text-right tabular-nums">
-              {d.count}
-            </div>
+          );
+        })}
+      </div>
+      <div className="flex gap-1.5 mt-1">
+        {dailyActivity.map((d) => (
+          <div
+            key={d.dateKey}
+            className="flex-1 text-center text-[10px] text-slate-400 tabular-nums truncate"
+          >
+            {d.label}
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 };
 
+/**
+ * Labeled horizontal magnitude bars — one measure, one hue, direct-labeled.
+ * Pass `max` when rows are rendered as separate instances (e.g. clickable
+ * wrappers) so all bars share one scale — otherwise every bar is 100%.
+ */
 export const PipelineBars = ({
   data,
   compact,
+  max: sharedMax,
 }: {
   data: { name: string; count: number }[];
   compact?: boolean;
+  max?: number;
 }) => {
-  const max = Math.max(...data.map((d) => d.count)) || 1;
-
-  const colors = [
-    { bg: 'bg-purple-500', dot: 'bg-purple-500' },
-    { bg: 'bg-pink-500', dot: 'bg-pink-500' },
-    { bg: 'bg-indigo-500', dot: 'bg-indigo-500' },
-    { bg: 'bg-blue-500', dot: 'bg-blue-500' },
-    { bg: 'bg-cyan-500', dot: 'bg-cyan-500' },
-    { bg: 'bg-teal-500', dot: 'bg-teal-500' },
-    { bg: 'bg-emerald-500', dot: 'bg-emerald-500' },
-  ];
+  const max = sharedMax || Math.max(...data.map((d) => d.count)) || 1;
 
   const space = compact ? 'space-y-1.5' : 'space-y-3';
-  const barHeight = compact ? 'h-2' : 'h-3';
-  const dotSize = compact ? 'h-1.5 w-1.5' : 'h-2.5 w-2.5';
+  const barHeight = compact ? 'h-2' : 'h-2.5';
   const textSize = compact ? 'text-xs' : 'text-sm';
   const marginBar = compact ? 'mb-1' : 'mb-1.5';
 
   return (
     <div className={space}>
-      {data.map((d, index) => {
+      {data.map((d) => {
         const pct = Math.round((d.count / max) * 100);
-        const color = colors[index % colors.length];
-
         return (
           <div key={d.name}>
-            <div className={`flex items-center justify-between ${marginBar}`}>
-              <div className="flex items-center gap-1.5">
-                <div className={`${dotSize} rounded-full ${color.dot}`}></div>
-                <div className={`${textSize} font-medium text-slate-700`}>{d.name}</div>
+            <div className={`flex items-center justify-between gap-3 ${marginBar}`}>
+              <div className={`${textSize} font-medium text-slate-700 truncate`} title={d.name}>
+                {d.name}
               </div>
-              <div className={`${textSize} font-semibold text-slate-900 tabular-nums`}>
+              <div className={`${textSize} font-semibold text-slate-900 tabular-nums shrink-0`}>
                 {d.count}
               </div>
             </div>
-            <div
-              className={`${barHeight} rounded-full bg-slate-100 border border-slate-200 overflow-hidden`}
-            >
+            <div className={`${barHeight} rounded-full bg-slate-100 overflow-hidden`}>
               <div
-                className={`h-full ${color.bg} rounded-full transition-all duration-500 ease-out`}
+                className="h-full bg-brand-chart rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${pct}%` }}
                 aria-label={`${d.name} ${d.count}`}
               />
@@ -119,118 +146,52 @@ export const PipelineBars = ({
   );
 };
 
-export const CountryPieChart = ({ data }: { data: { name: string; count: number }[] }) => {
+/**
+ * Country distribution as ranked horizontal bars (replaces the old 12-hue pie):
+ * top 10 shown, the tail folded into "Other", counts + shares direct-labeled.
+ */
+export const CountryBars = ({ data }: { data: { name: string; count: number }[] }) => {
   const total = data.reduce((sum, item) => sum + item.count, 0);
-  const colors = [
-    '#8b5cf6', // purple
-    '#ec4899', // pink
-    '#6366f1', // indigo
-    '#3b82f6', // blue
-    '#06b6d4', // cyan
-    '#14b8a6', // teal
-    '#10b981', // emerald
-    '#f59e0b', // amber
-    '#ef4444', // red
-    '#84cc16', // lime
-    '#06b6d4', // sky
-    '#a855f7', // violet
-  ];
+  if (total === 0) {
+    return <div className="py-6 text-center text-sm text-slate-500">No data</div>;
+  }
 
-  let currentAngle = -90; // Start from top
-  const radius = 80;
-  const centerX = 100;
-  const centerY = 100;
-  const strokeWidth = 2;
-
-  const segments = data.map((item, index) => {
-    const percentage = (item.count / total) * 100;
-    const angle = (item.count / total) * 360;
-    const startAngle = currentAngle;
-    const endAngle = currentAngle + angle;
-    currentAngle = endAngle;
-
-    // Calculate path for pie slice
-    const startAngleRad = (startAngle * Math.PI) / 180;
-    const endAngleRad = (endAngle * Math.PI) / 180;
-
-    const x1 = centerX + radius * Math.cos(startAngleRad);
-    const y1 = centerY + radius * Math.sin(startAngleRad);
-    const x2 = centerX + radius * Math.cos(endAngleRad);
-    const y2 = centerY + radius * Math.sin(endAngleRad);
-
-    const largeArcFlag = angle > 180 ? 1 : 0;
-
-    const pathData = [
-      `M ${centerX} ${centerY}`,
-      `L ${x1} ${y1}`,
-      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-      'Z',
-    ].join(' ');
-
-    return {
-      ...item,
-      pathData,
-      color: colors[index % colors.length],
-      percentage: percentage.toFixed(1),
-      startAngle,
-      endAngle,
-      midAngle: (startAngle + endAngle) / 2,
-    };
-  });
+  const TOP = 10;
+  const top = data.slice(0, TOP);
+  const rest = data.slice(TOP);
+  const rows = [...top];
+  if (rest.length > 0) {
+    rows.push({
+      name: `Other (${rest.length} countries)`,
+      count: rest.reduce((s, r) => s + r.count, 0),
+    });
+  }
+  const max = Math.max(...rows.map((r) => r.count)) || 1;
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-6">
-      {/* SVG Pie Chart */}
-      <div className="flex-shrink-0">
-        <svg width="200" height="200" viewBox="0 0 200 200" className="drop-shadow-sm">
-          {segments.map((segment, index) => (
-            <g key={segment.name}>
-              <path
-                d={segment.pathData}
-                fill={segment.color}
-                stroke="white"
-                strokeWidth={strokeWidth}
-                className="hover:opacity-80 transition-opacity cursor-pointer"
-              />
-              {parseFloat(segment.percentage) > 3 && (
-                <text
-                  x={centerX + radius * 0.6 * Math.cos((segment.midAngle * Math.PI) / 180)}
-                  y={centerY + radius * 0.6 * Math.sin((segment.midAngle * Math.PI) / 180)}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  className="text-xs font-semibold fill-white pointer-events-none"
-                  style={{ fontSize: '10px' }}
-                >
-                  {segment.percentage}%
-                </text>
-              )}
-            </g>
-          ))}
-        </svg>
-      </div>
-
-      {/* Legend */}
-      <div className="flex-1 space-y-2 max-h-[300px] overflow-y-auto">
-        {segments.map((segment, index) => (
-          <div key={segment.name} className="flex items-center justify-between gap-3 text-sm">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: segment.color }}
-              />
-              <span className="font-medium text-slate-700 truncate" title={segment.name}>
-                {segment.name}
-              </span>
+    <div className="space-y-2.5">
+      {rows.map((row) => {
+        const pct = Math.round((row.count / max) * 100);
+        const share = ((row.count / total) * 100).toFixed(1);
+        return (
+          <div key={row.name} className="grid grid-cols-[minmax(0,11rem)_1fr_auto] items-center gap-3">
+            <div className="text-xs font-medium text-slate-700 truncate" title={row.name}>
+              {row.name}
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-slate-600 tabular-nums">{segment.count}</span>
-              <span className="text-xs text-slate-400 w-12 text-right">
-                ({segment.percentage}%)
-              </span>
+            <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
+              <div
+                className="h-full bg-brand-chart rounded-full"
+                style={{ width: `${pct}%` }}
+                aria-label={`${row.name}: ${row.count}`}
+              />
+            </div>
+            <div className="text-xs text-slate-600 tabular-nums whitespace-nowrap">
+              <span className="font-semibold text-slate-900">{row.count}</span>
+              <span className="text-slate-400"> · {share}%</span>
             </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 };
@@ -246,17 +207,30 @@ export const StatCard = ({
   value: number | string;
   icon: React.ReactNode;
   subtitle?: string;
-  color?: 'blue' | 'green' | 'orange' | 'purple' | 'indigo' | 'cyan' | 'teal' | 'emerald' | 'slate';
+  color?:
+    | 'gold'
+    | 'blue'
+    | 'green'
+    | 'orange'
+    | 'purple'
+    | 'indigo'
+    | 'cyan'
+    | 'teal'
+    | 'emerald'
+    | 'sky'
+    | 'slate';
 }) => {
   const colorClasses = {
-    blue: 'bg-blue-50 border-blue-200 text-blue-600',
-    green: 'bg-green-50 border-green-200 text-green-600',
-    orange: 'bg-orange-50 border-orange-200 text-orange-600',
-    purple: 'bg-purple-50 border-purple-200 text-purple-600',
+    gold: 'bg-brand-50 border-brand-200 text-brand-700',
+    blue: 'bg-sky-50 border-sky-200 text-sky-600',
+    green: 'bg-emerald-50 border-emerald-200 text-emerald-600',
+    orange: 'bg-amber-50 border-amber-200 text-amber-600',
+    purple: 'bg-violet-50 border-violet-200 text-violet-600',
     indigo: 'bg-indigo-50 border-indigo-200 text-indigo-600',
     cyan: 'bg-cyan-50 border-cyan-200 text-cyan-600',
     teal: 'bg-teal-50 border-teal-200 text-teal-600',
     emerald: 'bg-emerald-50 border-emerald-200 text-emerald-600',
+    sky: 'bg-sky-50 border-sky-200 text-sky-600',
     slate: 'bg-slate-100 border-slate-200 text-slate-700',
   };
 

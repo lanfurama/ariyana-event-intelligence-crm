@@ -22,6 +22,9 @@ export default {
           700: '#86682F',
           800: '#634C22',
           900: '#423214',
+          // Data-mark gold: passes the dataviz palette validator on white
+          // (chroma floor + 3:1 contrast), unlike the softer UI golds above.
+          chart: '#B08A2E',
         },
         // Legacy aliases kept so existing classNames keep working
         primary: '#C5A059', // Ariyana Gold

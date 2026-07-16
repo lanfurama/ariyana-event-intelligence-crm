@@ -8,11 +8,7 @@ import {
   TrendingUp,
   MessageSquare,
   BarChart3,
-  PieChart,
   X,
-  Calendar,
-  Clock,
-  CheckCircle2,
 } from 'lucide-react';
 import type { Lead, EmailLog } from '../types';
 import { emailLogsApi, emailRepliesApi, emailTemplatesApi } from '../services/apiService';
@@ -21,7 +17,7 @@ import {
   PipelineBars,
   StatCard,
   EmailActivityChart,
-  CountryPieChart,
+  CountryBars,
 } from '../components/common/Stats';
 
 interface DashboardProps {
@@ -645,10 +641,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
     <div className="p-4 space-y-4 animate-fade-in max-w-7xl mx-auto">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Email Marketing Dashboard
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">Campaign performance & analytics</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">Email marketing performance & analytics</p>
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
           {filterButtons.map(({ key, label }) => (
@@ -657,7 +651,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
               onClick={() => setTimeFilter(key)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 timeFilter === key
-                  ? 'bg-indigo-600 text-white shadow-md'
+                  ? 'bg-slate-900 text-white shadow-md'
                   : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
               }`}
             >
@@ -668,30 +662,59 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
       </div>
 
       {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Leads"
+          title="Total Audience"
           value={stats.total}
           icon={<Users size={20} />}
-          color="indigo"
+          color="slate"
         />
         <StatCard
           title="Emails Sent"
           value={totalEmailsSent}
           icon={<Send size={20} />}
           subtitle={`${sentEmailsCount} leads contacted`}
-          color="blue"
+          color="gold"
         />
+        <StatCard
+          title="Replies"
+          value={emailRepliesStats.total}
+          icon={<MessageSquare size={20} />}
+          subtitle={`${emailRepliesStats.uniqueLeads} unique leads`}
+          color="sky"
+        />
+        <StatCard
+          title="Reply Rate"
+          value={`${emailRepliesStats.replyRate}%`}
+          icon={<TrendingUp size={20} />}
+          subtitle="of emails sent"
+          color="emerald"
+        />
+      </div>
+
+      {/* Email activity over time */}
+      <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
+          <BarChart3 size={18} className="text-brand-600" />
+          <h2 className="text-base font-semibold text-slate-900">Email Activity</h2>
+          <span className="text-xs text-slate-400 font-medium ml-1">
+            sent per day · last 14 days
+          </span>
+        </div>
+        <div className="p-4 pt-6">
+          <EmailActivityChart emailLogs={emailActivityData} />
+        </div>
       </div>
 
       {/* Template Performance - Split Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Template Chart */}
         <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="px-4 py-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <PieChart size={18} className="text-indigo-600" />
+              <Mail size={18} className="text-brand-600" />
               <h2 className="text-base font-semibold text-slate-900">Top Email Templates</h2>
+              <span className="text-xs text-slate-400 font-medium ml-1">click for insights</span>
             </div>
           </div>
           <div className="p-4">
@@ -704,13 +727,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                     return shortName === item.name;
                   });
                   if (!fullTemplate) return null;
+                  const chartMax = Math.max(...templateChartData.map((t) => t.count)) || 1;
                   return (
                     <div
                       key={idx}
                       onClick={() => setSelectedTemplate(fullTemplate.template)}
-                      className="cursor-pointer hover:bg-indigo-50/50 rounded-lg p-2 -m-2 transition-colors"
+                      title={fullTemplate.template}
+                      className="cursor-pointer hover:bg-brand-50/60 rounded-lg p-2 -m-2 transition-colors"
                     >
-                      <PipelineBars data={[item]} />
+                      <PipelineBars data={[item]} max={chartMax} />
                     </div>
                   );
                 })}
@@ -723,9 +748,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
 
         {/* Template Table */}
         <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="px-4 py-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <Mail size={18} className="text-indigo-600" />
+              <BarChart3 size={18} className="text-brand-600" />
               <h2 className="text-base font-semibold text-slate-900">Template Details</h2>
             </div>
           </div>
@@ -743,7 +768,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                   <tr
                     key={row.template}
                     onClick={() => setSelectedTemplate(row.template)}
-                    className={`border-b border-slate-100 hover:bg-indigo-50/50 cursor-pointer transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
+                    className={`border-b border-slate-100 hover:bg-brand-50/60 cursor-pointer transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
                   >
                     <td className="py-3 px-4">
                       <div
@@ -754,7 +779,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2 py-1 rounded-md bg-indigo-100 text-indigo-700 font-semibold text-xs tabular-nums">
+                      <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2 py-1 rounded-md bg-brand-50 text-brand-700 font-semibold text-xs tabular-nums">
                         {row.sentCount}
                       </span>
                     </td>
@@ -773,21 +798,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
       {/* Country Distribution by Type */}
       {leadByTypeStats.length > 0 && (
         <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <div className="px-4 py-3 border-b border-slate-100">
             <h2 className="text-base font-semibold text-slate-900">
               Geographic Distribution by Lead Type
             </h2>
           </div>
-          <div className="p-4 space-y-4">
+          <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-5">
             {leadByTypeStats.map((row) => {
               const countries = (countryByType.get(row.type) || []).slice(0, 6);
               if (countries.length === 0) return null;
               return (
-                <div key={row.type} className="border-l-4 border-indigo-500 pl-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-semibold text-slate-900">{row.type}</p>
-                    <span className="text-xs text-slate-500">
-                      {row.sentCount} sent • Last: {row.lastSentLabel}
+                <div key={row.type} className="border-l-4 border-brand-400 pl-4">
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <p className="text-sm font-semibold text-slate-900 truncate" title={row.type}>
+                      {row.type}
+                    </p>
+                    <span className="text-xs text-slate-500 whitespace-nowrap">
+                      {row.sentCount} sent · last {row.lastSentLabel}
                     </span>
                   </div>
                   <PipelineBars data={countries} compact />
@@ -803,7 +830,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
             {/* Modal Header */}
-            <div className="px-4 py-3 border-b border-slate-200 flex justify-between items-start bg-gradient-to-r from-indigo-50 to-white">
+            <div className="px-4 py-3 border-b border-slate-200 flex justify-between items-start bg-gradient-to-r from-brand-50 to-white">
               <div className="flex-1 min-w-0 pr-4">
                 <h2 className="text-lg font-bold text-slate-900 mb-1">Template Insights</h2>
                 <p className="text-sm font-semibold text-slate-900 break-words">
@@ -956,7 +983,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ leads, loading }) => {
                       </h3>
                     </div>
                     <div className="p-6">
-                      <CountryPieChart data={templateInsights.countryDistribution} />
+                      <CountryBars data={templateInsights.countryDistribution} />
                     </div>
                   </div>
                 )}
