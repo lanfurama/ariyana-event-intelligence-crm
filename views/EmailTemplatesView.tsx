@@ -2,26 +2,31 @@ import type React from 'react';
 import { useState, useEffect, useRef } from 'react';
 import {
   Plus,
-  Search,
   Edit2,
   Trash2,
   X,
   Save,
-  FileText,
-  Check,
-  AlertCircle,
   Sparkles,
   Mail,
   Loader2,
+  Paperclip,
+  Link2,
+  Globe,
+  Tag,
+  ChevronDown,
 } from 'lucide-react';
-import type { EmailTemplate, Attachment, EmailTemplateAttachment } from '../types';
+import type { EmailTemplate, Attachment } from '../types';
 import { emailTemplatesApi } from '../services/apiService';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { Badge, Button, EmptyState } from '../components/ui';
+
+const LANGUAGE_LABELS: Record<string, string> = { en: 'EN', vi: 'VI', th: 'TH' };
 
 export const EmailTemplatesView = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showVariablesHelp, setShowVariablesHelp] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -423,43 +428,38 @@ export const EmailTemplatesView = () => {
   };
 
   return (
-    <div className="p-6 min-h-screen flex flex-col space-y-5">
+    <div className="p-6 min-h-screen flex flex-col space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">
-              Email Templates
-            </h2>
-            <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-semibold">
-              {templates.length} {templates.length === 1 ? 'template' : 'templates'}
-            </span>
-          </div>
-          <p className="text-sm text-slate-600 mt-1">Manage email templates for lead outreach</p>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Templates</h2>
+          <Badge tone="slate">{templates.length}</Badge>
         </div>
-
-        <button
-          onClick={handleCreate}
-          className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shrink-0 inline-flex items-center"
-        >
-          <Plus size={18} className="mr-2" /> New Template
-        </button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setShowVariablesHelp(!showVariablesHelp)}>
+            <Sparkles size={14} className="text-brand-600" />
+            Variables guide
+            <ChevronDown
+              size={14}
+              className={`transition-transform ${showVariablesHelp ? 'rotate-180' : ''}`}
+            />
+          </Button>
+          <Button onClick={handleCreate}>
+            <Plus size={16} /> New Template
+          </Button>
+        </div>
       </div>
 
-      {/* Available Variables Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2 flex items-center">
-          <Sparkles size={16} className="mr-2" />
-          Biến có sẵn (Variables)
-        </h3>
-        <p className="text-xs text-blue-700 mb-2">
-          Sử dụng các biến này trong template email. Khi gửi email, hệ thống sẽ tự động thay thế
-          bằng thông tin thực tế của lead:
-        </p>
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-2">
+      {/* Variables guide — collapsed by default so templates stay above the fold */}
+      {showVariablesHelp && (
+        <div className="bg-white border border-slate-200 rounded-xl p-4 animate-fade-in">
+          <p className="text-xs text-slate-500 mb-3">
+            Dùng các biến này trong subject/body — khi gửi, hệ thống tự thay bằng dữ liệu thật của
+            lead:
+          </p>
+          <div className="flex flex-wrap gap-2 mb-3">
             {[
               { var: '{{companyName}}', desc: 'Tên công ty' },
-              { var: '{{keyPersonName}}', desc: 'Tên người liên hệ' },
+              { var: '{{keyPersonName}}', desc: 'Người liên hệ' },
               { var: '{{keyPersonTitle}}', desc: 'Chức danh' },
               { var: '{{city}}', desc: 'Thành phố' },
               { var: '{{country}}', desc: 'Quốc gia' },
@@ -467,142 +467,132 @@ export const EmailTemplatesView = () => {
             ].map((item) => (
               <div
                 key={item.var}
-                className="flex items-center gap-1.5 px-2 py-1 bg-blue-100 rounded"
+                className="flex items-center gap-1.5 px-2 py-1 bg-brand-50 border border-brand-200 rounded-md"
               >
-                <code className="text-blue-800 text-xs font-mono">{item.var}</code>
-                <span className="text-blue-600 text-[10px]">({item.desc})</span>
+                <code className="text-brand-800 text-xs font-mono">{item.var}</code>
+                <span className="text-brand-700/70 text-[10px]">{item.desc}</span>
               </div>
             ))}
           </div>
-          <div className="mt-3 pt-3 border-t border-blue-200">
-            <p className="text-xs font-semibold text-blue-800 mb-2">Ví dụ sử dụng:</p>
-            <div className="text-xs text-blue-700 space-y-2">
-              <div>
-                <p className="font-semibold mb-1">Template:</p>
-                <div className="bg-white border border-blue-200 rounded p-2 space-y-1">
-                  <p>
-                    <strong>Subject:</strong>{' '}
-                    <code className="bg-blue-50 px-1 rounded">
-                      {'Xin chào {{keyPersonName}} từ {{companyName}}'}
-                    </code>
-                  </p>
-                  <p>
-                    <strong>Body:</strong>{' '}
-                    <code className="bg-blue-50 px-1 rounded">
-                      {
-                        'Kính gửi Anh/Chị {{keyPersonName}}, {{keyPersonTitle}} tại {{companyName}}, {{city}}, {{country}}...'
-                      }
-                    </code>
-                  </p>
-                </div>
-              </div>
-              <div>
-                <p className="font-semibold mb-1">Với lead mẫu:</p>
-                <div className="bg-white border border-blue-200 rounded p-2 text-[11px] space-y-0.5">
-                  <p>
-                    • Tên công ty: <span className="font-semibold">ABC Corporation</span>
-                  </p>
-                  <p>
-                    • Người liên hệ: <span className="font-semibold">Nguyễn Văn A</span>
-                  </p>
-                  <p>
-                    • Chức danh: <span className="font-semibold">Giám đốc Marketing</span>
-                  </p>
-                  <p>
-                    • Thành phố: <span className="font-semibold">Hà Nội</span>
-                  </p>
-                  <p>
-                    • Quốc gia: <span className="font-semibold">Việt Nam</span>
-                  </p>
-                </div>
-              </div>
-              <div>
-                <p className="font-semibold mb-1">Kết quả sau khi thay thế:</p>
-                <div className="bg-green-50 border border-green-200 rounded p-2 space-y-1">
-                  <p>
-                    <strong>Subject:</strong>{' '}
-                    <span className="text-green-800">Xin chào Nguyễn Văn A từ ABC Corporation</span>
-                  </p>
-                  <p>
-                    <strong>Body:</strong>{' '}
-                    <span className="text-green-800">
-                      Kính gửi Anh/Chị Nguyễn Văn A, Giám đốc Marketing tại ABC Corporation, Hà Nội,
-                      Việt Nam...
-                    </span>
-                  </p>
-                </div>
-              </div>
+          <div className="grid md:grid-cols-2 gap-3 text-xs">
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-1">
+              <p className="font-semibold text-slate-700 mb-1">Template</p>
+              <p className="text-slate-600">
+                <strong>Subject:</strong>{' '}
+                <code className="bg-white px-1 rounded border border-slate-200">
+                  {'Xin chào {{keyPersonName}} từ {{companyName}}'}
+                </code>
+              </p>
+              <p className="text-slate-600">
+                <strong>Body:</strong>{' '}
+                <code className="bg-white px-1 rounded border border-slate-200">
+                  {'Kính gửi Anh/Chị {{keyPersonName}}, {{keyPersonTitle}} tại {{companyName}}...'}
+                </code>
+              </p>
+            </div>
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-1">
+              <p className="font-semibold text-emerald-800 mb-1">Kết quả (lead: Nguyễn Văn A, ABC Corporation)</p>
+              <p className="text-emerald-800">
+                <strong>Subject:</strong> Xin chào Nguyễn Văn A từ ABC Corporation
+              </p>
+              <p className="text-emerald-800">
+                <strong>Body:</strong> Kính gửi Anh/Chị Nguyễn Văn A, Giám đốc Marketing tại ABC
+                Corporation...
+              </p>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Templates Table */}
-      <div className="bg-white border border-slate-200 rounded-lg flex-1 overflow-hidden flex flex-col">
+      {/* Templates grid */}
+      <div className="flex-1">
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="animate-spin text-indigo-600" size={32} />
-            <span className="ml-3 text-slate-600">Loading templates...</span>
+          <div className="flex items-center justify-center py-16 bg-white border border-slate-200 rounded-xl">
+            <Loader2 className="animate-spin text-brand-500" size={28} />
+            <span className="ml-3 text-slate-600 text-sm">Loading templates...</span>
           </div>
         ) : templates.length === 0 ? (
-          <div className="text-center py-12">
-            <Mail className="text-slate-300 mx-auto mb-3" size={48} />
-            <p className="text-slate-700 font-medium">No email templates found</p>
-            <p className="text-slate-500 text-sm mt-1">Create your first template to get started</p>
-            <button
-              onClick={handleCreate}
-              className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center"
-            >
-              <Plus size={16} className="mr-2" /> Create Template
-            </button>
+          <div className="bg-white border border-slate-200 rounded-xl">
+            <EmptyState
+              icon={<Mail size={22} />}
+              title="No email templates yet"
+              description="Create your first template to start reaching your audience."
+              action={
+                <Button onClick={handleCreate}>
+                  <Plus size={16} /> Create Template
+                </Button>
+              }
+            />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 sticky top-0 z-10">
-                <tr>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600">
-                    Subject
-                  </th>
-                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate-600 text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {templates.map((template) => (
-                  <tr key={template.id}>
-                    <td className="px-4 py-4">
-                      <div className="font-semibold text-slate-900">{template.name}</div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="text-sm text-slate-700 max-w-md truncate">
-                        {template.subject}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleEdit(template)}
-                          className="text-indigo-600 font-medium text-sm inline-flex items-center"
-                        >
-                          <Edit2 size={16} className="mr-1" /> Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(template.id)}
-                          className="text-red-600 font-medium text-sm inline-flex items-center"
-                        >
-                          <X size={16} className="mr-1" /> Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {templates.map((template) => {
+              const fileCount = (template.attachments || []).filter(
+                (a) => a.type !== 'link',
+              ).length;
+              const linkCount = (template.attachments || []).filter(
+                (a) => a.type === 'link',
+              ).length;
+              return (
+                <div
+                  key={template.id}
+                  className="group bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md hover:border-brand-300 transition-all p-4 flex flex-col"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <h3 className="font-semibold text-slate-900 truncate" title={template.name}>
+                      {template.name}
+                    </h3>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {template.language && (
+                        <Badge tone="sky">
+                          <Globe size={10} />
+                          {LANGUAGE_LABELS[template.language.toLowerCase()] || template.language}
+                        </Badge>
+                      )}
+                      {template.leadType && (
+                        <Badge tone="gold">
+                          <Tag size={10} />
+                          {template.leadType}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <p
+                    className="text-sm text-slate-500 leading-snug line-clamp-2 flex-1"
+                    title={template.subject}
+                  >
+                    {template.subject}
+                  </p>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      {fileCount > 0 && (
+                        <span className="inline-flex items-center gap-1">
+                          <Paperclip size={12} /> {fileCount}
+                        </span>
+                      )}
+                      {linkCount > 0 && (
+                        <span className="inline-flex items-center gap-1">
+                          <Link2 size={12} /> {linkCount}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Button variant="secondary" size="sm" onClick={() => handleEdit(template)}>
+                        <Edit2 size={13} /> Edit
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDelete(template.id)}
+                        aria-label={`Delete ${template.name}`}
+                      >
+                        <Trash2 size={13} />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -631,36 +621,36 @@ export const EmailTemplatesView = () => {
               {/* Template Name */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Template Name <span className="text-red-500">*</span>
+                  Template Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., Introduction Email, Follow Up"
-                  className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none ${
-                    formErrors.name ? 'border-red-300' : 'border-slate-300'
+                  className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none ${
+                    formErrors.name ? 'border-rose-300' : 'border-slate-300'
                   }`}
                 />
-                {formErrors.name && <p className="text-xs text-red-600 mt-1">{formErrors.name}</p>}
+                {formErrors.name && <p className="text-xs text-rose-600 mt-1">{formErrors.name}</p>}
               </div>
 
               {/* Subject */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Subject <span className="text-red-500">*</span>
+                  Subject <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   placeholder="e.g., Invitation to {{companyName}} - Host Your Next Event in Danang"
-                  className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none ${
-                    formErrors.subject ? 'border-red-300' : 'border-slate-300'
+                  className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none ${
+                    formErrors.subject ? 'border-rose-300' : 'border-slate-300'
                   }`}
                 />
                 {formErrors.subject && (
-                  <p className="text-xs text-red-600 mt-1">{formErrors.subject}</p>
+                  <p className="text-xs text-rose-600 mt-1">{formErrors.subject}</p>
                 )}
               </div>
 
@@ -672,7 +662,7 @@ export const EmailTemplatesView = () => {
                 <select
                   value={formData.language}
                   onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
                 >
                   <option value="">Default</option>
                   <option value="en">English</option>
@@ -692,7 +682,7 @@ export const EmailTemplatesView = () => {
                 <select
                   value={formData.leadType}
                   onChange={(e) => setFormData({ ...formData, leadType: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
                 >
                   <option value="">Default (for all leads)</option>
                   <option value="CORP">CORP (Corporate Partner)</option>
@@ -721,26 +711,26 @@ export const EmailTemplatesView = () => {
                 </div>
 
                 {/* Add Link Section */}
-                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mb-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
                   <div className="flex gap-2 mb-2">
                     <input
                       type="text"
                       value={attachmentLinkName}
                       onChange={(e) => setAttachmentLinkName(e.target.value)}
                       placeholder="Link name (e.g., Download Brochure)"
-                      className="flex-1 px-3 py-2 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      className="flex-1 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
                     />
                     <input
                       type="url"
                       value={attachmentLink}
                       onChange={(e) => setAttachmentLink(e.target.value)}
                       placeholder="Google Drive link or URL"
-                      className="flex-1 px-3 py-2 text-sm border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      className="flex-1 px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleAddLink}
-                      className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                      className="px-3 py-2 bg-slate-900 text-white text-sm rounded-lg hover:bg-slate-800"
                     >
                       Add Link
                     </button>
@@ -774,7 +764,7 @@ export const EmailTemplatesView = () => {
                               onClick={() =>
                                 setAttachments(attachments.filter((_, i) => i !== idx))
                               }
-                              className="ml-2 text-slate-400 hover:text-red-600 p-1"
+                              className="ml-2 text-slate-400 hover:text-rose-600 p-1"
                             >
                               <X size={16} />
                             </button>
@@ -802,7 +792,7 @@ export const EmailTemplatesView = () => {
                           <button
                             type="button"
                             onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
-                            className="ml-2 text-slate-400 hover:text-red-600 p-1"
+                            className="ml-2 text-slate-400 hover:text-rose-600 p-1"
                           >
                             <X size={16} />
                           </button>
@@ -821,7 +811,7 @@ export const EmailTemplatesView = () => {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-semibold text-slate-700">
-                    Email Body <span className="text-red-500">*</span>
+                    Email Body <span className="text-rose-500">*</span>
                   </label>
                   <div className="flex gap-2">
                     <button
@@ -836,7 +826,7 @@ export const EmailTemplatesView = () => {
                       }}
                       className={`px-3 py-1 text-xs font-medium rounded ${
                         bodyViewMode === 'code'
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-slate-900 text-white'
                           : 'bg-slate-100 text-slate-600'
                       }`}
                     >
@@ -850,7 +840,7 @@ export const EmailTemplatesView = () => {
                       }}
                       className={`px-3 py-1 text-xs font-medium rounded ${
                         bodyViewMode === 'preview'
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-slate-900 text-white'
                           : 'bg-slate-100 text-slate-600'
                       }`}
                     >
@@ -865,8 +855,8 @@ export const EmailTemplatesView = () => {
                     onChange={(e) => setFormData({ ...formData, body: e.target.value })}
                     placeholder="<html>...\n\nUse HTML format with variables like {{keyPersonName}}, {{companyName}}, etc."
                     rows={15}
-                    className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none font-mono ${
-                      formErrors.body ? 'border-red-300' : 'border-slate-300'
+                    className={`w-full px-4 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none resize-none font-mono ${
+                      formErrors.body ? 'border-rose-300' : 'border-slate-300'
                     }`}
                   />
                 ) : (
@@ -888,7 +878,7 @@ export const EmailTemplatesView = () => {
                         setFormData({ ...formData, body: html });
                         isInternalEditRef.current = false;
                       }}
-                      className="p-4 min-h-[500px] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset"
+                      className="p-4 min-h-[500px] focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:ring-inset"
                       style={{
                         fontFamily: 'Arial, sans-serif',
                         lineHeight: '1.6',
@@ -898,7 +888,7 @@ export const EmailTemplatesView = () => {
                   </div>
                 )}
 
-                {formErrors.body && <p className="text-xs text-red-600 mt-1">{formErrors.body}</p>}
+                {formErrors.body && <p className="text-xs text-rose-600 mt-1">{formErrors.body}</p>}
                 <p className="text-xs text-slate-500 mt-1">
                   Use HTML format. Variables like {'{{companyName}}'}, {'{{keyPersonName}}'}, etc.
                   will be replaced with actual lead data.
@@ -939,7 +929,7 @@ export const EmailTemplatesView = () => {
                     value={testEmail}
                     onChange={(e) => setTestEmail(e.target.value)}
                     placeholder="email@example.com"
-                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm w-48 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm w-48 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
                   />
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -949,7 +939,7 @@ export const EmailTemplatesView = () => {
                     value={testCc}
                     onChange={(e) => setTestCc(e.target.value)}
                     placeholder="email1@example.com, email2@example.com"
-                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm flex-1 min-w-48 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm flex-1 min-w-48 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
                   />
                 </div>
                 <div className="flex justify-end">
@@ -960,7 +950,7 @@ export const EmailTemplatesView = () => {
                       handleSendTest();
                     }}
                     disabled={sendingTest}
-                    className="px-3 py-2 text-indigo-600 border border-indigo-300 rounded-lg text-sm font-medium inline-flex items-center hover:bg-indigo-50 disabled:opacity-50"
+                    className="px-3 py-2 text-brand-700 border border-brand-300 rounded-lg text-sm font-medium inline-flex items-center hover:bg-brand-50 disabled:opacity-50"
                   >
                     {sendingTest ? (
                       <Loader2 size={16} className="mr-1 animate-spin" />
@@ -980,7 +970,7 @@ export const EmailTemplatesView = () => {
                 </button>
                 <button
                   onClick={handleSave}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold inline-flex items-center"
+                  className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm font-semibold inline-flex items-center transition-colors"
                 >
                   <Save size={16} className="mr-2" />
                   {editingTemplate ? 'Update Template' : 'Create Template'}

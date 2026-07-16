@@ -278,7 +278,7 @@ export const EmailReportsView = () => {
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-screen">
-        <Loader2 className="animate-spin text-indigo-600" size={32} />
+        <Loader2 className="animate-spin text-brand-500" size={32} />
         <span className="ml-3 text-slate-600">Loading configurations...</span>
       </div>
     );
@@ -287,12 +287,12 @@ export const EmailReportsView = () => {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h3 className="text-red-800 font-semibold mb-2">Error Loading Configurations</h3>
-          <p className="text-red-600 text-sm">{error}</p>
+        <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
+          <h3 className="text-rose-800 font-semibold mb-2">Error Loading Configurations</h3>
+          <p className="text-rose-600 text-sm">{error}</p>
           <button
             onClick={loadConfigs}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold"
+            className="mt-4 px-4 py-2 bg-rose-600 text-white rounded-lg text-sm font-semibold"
           >
             Retry
           </button>
@@ -305,16 +305,16 @@ export const EmailReportsView = () => {
     <div className="p-6 min-h-screen flex flex-col space-y-5">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">
-            Cấu hình Email Reports
+          <h2 className="text-lg font-semibold text-slate-900 tracking-tight">
+            Cấu hình báo cáo tự động
           </h2>
-          <p className="text-sm text-slate-600 mt-1">
-            Quản lý cấu hình tự động gửi báo cáo email cho manager
+          <p className="text-sm text-slate-500 mt-0.5">
+            Tự động gửi báo cáo email marketing cho manager theo lịch
           </p>
         </div>
         <button
           onClick={handleCreate}
-          className="bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shrink-0 inline-flex items-center"
+          className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shrink-0 inline-flex items-center transition-colors"
         >
           <Plus size={18} className="mr-2" /> Tạo cấu hình mới
         </button>
@@ -329,7 +329,7 @@ export const EmailReportsView = () => {
           </p>
           <button
             onClick={handleCreate}
-            className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center hover:bg-indigo-700"
+            className="mt-4 bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-semibold inline-flex items-center hover:bg-brand-600 transition-colors"
           >
             <Plus size={16} className="mr-2" /> Tạo cấu hình
           </button>
@@ -345,7 +345,7 @@ export const EmailReportsView = () => {
                       {config.recipient_name || config.recipient_email}
                     </h3>
                     {config.enabled ? (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold flex items-center">
+                      <span className="px-2 py-1 bg-emerald-100 text-emerald-800 rounded text-xs font-semibold flex items-center">
                         <CheckCircle size={12} className="mr-1" /> Enabled
                       </span>
                     ) : (
@@ -398,22 +398,22 @@ export const EmailReportsView = () => {
 
                   <div className="mt-3 flex flex-wrap gap-2">
                     {config.include_stats && (
-                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                      <span className="px-2 py-1 bg-sky-50 text-sky-700 rounded text-xs font-medium">
                         Stats
                       </span>
                     )}
                     {config.include_new_leads && (
-                      <span className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs font-medium">
+                      <span className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded text-xs font-medium">
                         New Leads
                       </span>
                     )}
                     {config.include_email_activity && (
-                      <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded text-xs font-medium">
+                      <span className="px-2 py-1 bg-violet-50 text-violet-700 rounded text-xs font-medium">
                         Email Activity
                       </span>
                     )}
                     {config.include_top_leads && (
-                      <span className="px-2 py-1 bg-orange-50 text-orange-700 rounded text-xs font-medium">
+                      <span className="px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs font-medium">
                         Top {config.top_leads_count} Leads
                       </span>
                     )}
@@ -426,7 +426,7 @@ export const EmailReportsView = () => {
                     disabled={toggling === config.id}
                     className={`p-2 rounded-lg disabled:opacity-50 ${
                       config.enabled
-                        ? 'bg-green-50 text-green-600 hover:bg-green-100'
+                        ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
                         : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                     }`}
                     title={config.enabled ? 'Tắt cấu hình' : 'Bật cấu hình'}
@@ -440,7 +440,7 @@ export const EmailReportsView = () => {
                   <button
                     onClick={() => handleSend(config.id)}
                     disabled={sending === config.id || !config.enabled}
-                    className="p-2 bg-indigo-50 text-indigo-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 bg-brand-50 text-brand-700 rounded-lg hover:bg-brand-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Gửi báo cáo ngay"
                   >
                     {sending === config.id ? (
@@ -458,14 +458,14 @@ export const EmailReportsView = () => {
                   </button>
                   <button
                     onClick={() => handleEdit(config)}
-                    className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"
+                    className="p-2 bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100"
                     title="Chỉnh sửa"
                   >
                     <Edit2 size={18} />
                   </button>
                   <button
                     onClick={() => handleDelete(config.id)}
-                    className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
+                    className="p-2 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100"
                     title="Xóa"
                   >
                     <Trash2 size={18} />
@@ -479,7 +479,7 @@ export const EmailReportsView = () => {
                     <h4 className="font-semibold text-slate-900">Lịch sử gửi báo cáo</h4>
                     <button
                       onClick={() => loadLogs(config.id)}
-                      className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                      className="text-xs text-brand-700 hover:text-brand-800 font-medium"
                     >
                       Làm mới
                     </button>
@@ -502,9 +502,9 @@ export const EmailReportsView = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 {log.status === 'sent' ? (
-                                  <CheckCircle size={16} className="text-green-600" />
+                                  <CheckCircle size={16} className="text-emerald-600" />
                                 ) : (
-                                  <XCircle size={16} className="text-red-600" />
+                                  <XCircle size={16} className="text-rose-600" />
                                 )}
                                 <span className="font-semibold text-slate-900">
                                   {log.sent_at
@@ -517,7 +517,7 @@ export const EmailReportsView = () => {
                                       })
                                     : 'N/A'}
                                 </span>
-                                <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
+                                <span className="px-2 py-0.5 bg-brand-50 text-brand-700 rounded text-xs font-medium">
                                   {log.report_type === 'daily'
                                     ? 'Hàng ngày'
                                     : log.report_type === 'weekly'
@@ -534,7 +534,7 @@ export const EmailReportsView = () => {
                                 </p>
                               )}
                               {log.error_message && (
-                                <p className="text-xs text-red-600 ml-6 mt-1 bg-red-50 p-2 rounded">
+                                <p className="text-xs text-rose-600 ml-6 mt-1 bg-rose-50 p-2 rounded">
                                   <strong>Lỗi:</strong> {log.error_message}
                                 </p>
                               )}
@@ -574,13 +574,13 @@ export const EmailReportsView = () => {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Email người nhận <span className="text-red-500">*</span>
+                  Email người nhận <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="email"
                   value={formData.recipient_email}
                   onChange={(e) => setFormData({ ...formData, recipient_email: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   placeholder="manager@example.com"
                 />
               </div>
@@ -593,19 +593,19 @@ export const EmailReportsView = () => {
                   type="text"
                   value={formData.recipient_name}
                   onChange={(e) => setFormData({ ...formData, recipient_name: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   placeholder="Tên Manager (tùy chọn)"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Tần suất <span className="text-red-500">*</span>
+                  Tần suất <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={formData.frequency}
                   onChange={(e) => setFormData({ ...formData, frequency: e.target.value as any })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                 >
                   <option value="daily">Hàng Ngày</option>
                   <option value="weekly">Hàng Tuần</option>
@@ -616,14 +616,14 @@ export const EmailReportsView = () => {
               {formData.frequency === 'weekly' && (
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Ngày trong tuần <span className="text-red-500">*</span>
+                    Ngày trong tuần <span className="text-rose-500">*</span>
                   </label>
                   <select
                     value={formData.day_of_week}
                     onChange={(e) =>
                       setFormData({ ...formData, day_of_week: parseInt(e.target.value) })
                     }
-                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   >
                     <option value="0">Chủ Nhật</option>
                     <option value="1">Thứ 2</option>
@@ -639,7 +639,7 @@ export const EmailReportsView = () => {
               {formData.frequency === 'monthly' && (
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Ngày trong tháng <span className="text-red-500">*</span>
+                    Ngày trong tháng <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -649,7 +649,7 @@ export const EmailReportsView = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, day_of_month: parseInt(e.target.value) || 1 })
                     }
-                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   />
                   <p className="text-xs text-slate-500 mt-1">Chọn ngày từ 1 đến 28</p>
                 </div>
@@ -658,7 +658,7 @@ export const EmailReportsView = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Giờ (0-23) <span className="text-red-500">*</span>
+                    Giờ (0-23) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -668,12 +668,12 @@ export const EmailReportsView = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, time_hour: parseInt(e.target.value) || 0 })
                     }
-                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Phút (0-59) <span className="text-red-500">*</span>
+                    Phút (0-59) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -683,19 +683,19 @@ export const EmailReportsView = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, time_minute: parseInt(e.target.value) || 0 })
                     }
-                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Múi giờ <span className="text-red-500">*</span>
+                  Múi giờ <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={formData.timezone}
                   onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                 >
                   {TIMEZONES.map((tz) => (
                     <option key={tz.value} value={tz.value}>
@@ -707,7 +707,7 @@ export const EmailReportsView = () => {
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Nội dung báo cáo <span className="text-red-500">*</span>
+                  Nội dung báo cáo <span className="text-rose-500">*</span>
                 </label>
                 <div className="space-y-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
                   <label className="flex items-center cursor-pointer hover:bg-white p-2 rounded">
@@ -717,7 +717,7 @@ export const EmailReportsView = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, include_stats: e.target.checked })
                       }
-                      className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                      className="mr-2 w-4 h-4 text-brand-600 focus:ring-brand-500"
                     />
                     <span className="text-sm text-slate-700">Thống kê tổng quan</span>
                   </label>
@@ -728,7 +728,7 @@ export const EmailReportsView = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, include_new_leads: e.target.checked })
                       }
-                      className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                      className="mr-2 w-4 h-4 text-brand-600 focus:ring-brand-500"
                     />
                     <span className="text-sm text-slate-700">Tóm tắt Leads mới</span>
                   </label>
@@ -739,7 +739,7 @@ export const EmailReportsView = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, include_email_activity: e.target.checked })
                       }
-                      className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                      className="mr-2 w-4 h-4 text-brand-600 focus:ring-brand-500"
                     />
                     <span className="text-sm text-slate-700">Hoạt động Email</span>
                   </label>
@@ -750,7 +750,7 @@ export const EmailReportsView = () => {
                       onChange={(e) =>
                         setFormData({ ...formData, include_top_leads: e.target.checked })
                       }
-                      className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                      className="mr-2 w-4 h-4 text-brand-600 focus:ring-brand-500"
                     />
                     <span className="text-sm text-slate-700">Top Leads</span>
                   </label>
@@ -770,7 +770,7 @@ export const EmailReportsView = () => {
                     onChange={(e) =>
                       setFormData({ ...formData, top_leads_count: parseInt(e.target.value) || 10 })
                     }
-                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   />
                   <p className="text-xs text-slate-500 mt-1">Từ 1 đến 50 leads</p>
                 </div>
@@ -782,7 +782,7 @@ export const EmailReportsView = () => {
                     type="checkbox"
                     checked={formData.enabled}
                     onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-                    className="mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                    className="mr-2 w-4 h-4 text-brand-600 focus:ring-brand-500"
                   />
                   <span className="text-sm font-semibold text-slate-700">
                     Kích hoạt cấu hình này
@@ -805,7 +805,7 @@ export const EmailReportsView = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-700"
+                className="px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand-600 transition-colors"
               >
                 {saving ? (
                   <>
