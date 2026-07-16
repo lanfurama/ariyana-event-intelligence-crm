@@ -27,22 +27,22 @@
 
 ## Refactor roadmap status (as of 2026-07-16)
 
-| Sub-project                                           | Status         | Notes                                                                                   |
-| ----------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------- |
-| #1 Cleanup + tooling baseline                         | ✅ done        | Prettier, ESLint flat, TS strict, Zod env, husky                                        |
-| #2 Test infra                                         | ✅ done        | Vitest, 227 tests across 20 files (2026-07-16 count)                                    |
-| #3 Structured logger / observability                  | pending        |                                                                                         |
-| #4b Refactor `components/LeadDetail.tsx`              | 🔄 in progress | 1130 LOC `@ts-nocheck` (was 1998). Plan in 10 commits / ~5 sessions. Tasks 1–5/10 done. |
-| #4c Refactor `views/.../EventModal.tsx`               | ✅ done        | Was the #4b template; EventModal tree later deleted as orphaned UI (2026-07-16 refocus) — pattern reference lives in git history. |
-| #4d Refactor `views/LeadsView.tsx` (1914 LOC)         | pending        | Same playbook as #4b.                                                                   |
-| #4 Refactor `api/src/routes/excelImport.ts` (973 LOC) | pending        | God file with 2 markers.                                                                |
-| #5 API layer-ization + type normalization             | pending        | 5 markers remain (imap×2, excelImport×2 — also #4, managerReport).                      |
-| #6 node-cron v4 migration                             | pending        | 1 marker (`scheduledReportsJob.ts`).                                                    |
-| #7 GitHub Actions CI                                  | pending        | Replaces pre-push hook.                                                                 |
-| #9 Bundle splitting / lazy loading                    | pending        |                                                                                         |
-| #10 Documentation polish                              | pending        |                                                                                         |
-| AI provider abstraction (out-of-band)                 | ✅ done        | Prompts extracted to `services/ai/prompts/`. Providers scaffolded.                      |
-| Email-marketing refocus + full UI refactor (out-of-band) | ✅ done     | 2026-07-16, commits `36e848a..`: build-time Tailwind + tokens + `components/ui/`, new shell/IA, Dashboard/Email Studio/Audience redesign, dead event-intelligence UI removed. Spec in `docs/superpowers/specs/2026-07-16-…`. |
+| Sub-project                                              | Status         | Notes                                                                                                                                                                                                                        |
+| -------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #1 Cleanup + tooling baseline                            | ✅ done        | Prettier, ESLint flat, TS strict, Zod env, husky                                                                                                                                                                             |
+| #2 Test infra                                            | ✅ done        | Vitest, 227 tests across 20 files (2026-07-16 count)                                                                                                                                                                         |
+| #3 Structured logger / observability                     | pending        |                                                                                                                                                                                                                              |
+| #4b Refactor `components/LeadDetail.tsx`                 | 🔄 in progress | 1130 LOC `@ts-nocheck` (was 1998). Plan in 10 commits / ~5 sessions. Tasks 1–5/10 done.                                                                                                                                      |
+| #4c Refactor `views/.../EventModal.tsx`                  | ✅ done        | Was the #4b template; EventModal tree later deleted as orphaned UI (2026-07-16 refocus) — pattern reference lives in git history.                                                                                            |
+| #4d Refactor `views/LeadsView.tsx` (1914 LOC)            | pending        | Same playbook as #4b.                                                                                                                                                                                                        |
+| #4 Refactor `api/src/routes/excelImport.ts` (973 LOC)    | pending        | God file with 2 markers.                                                                                                                                                                                                     |
+| #5 API layer-ization + type normalization                | pending        | 5 markers remain (imap×2, excelImport×2 — also #4, managerReport).                                                                                                                                                           |
+| #6 node-cron v4 migration                                | pending        | 1 marker (`scheduledReportsJob.ts`).                                                                                                                                                                                         |
+| #7 GitHub Actions CI                                     | pending        | Replaces pre-push hook.                                                                                                                                                                                                      |
+| #9 Bundle splitting / lazy loading                       | pending        |                                                                                                                                                                                                                              |
+| #10 Documentation polish                                 | pending        |                                                                                                                                                                                                                              |
+| AI provider abstraction (out-of-band)                    | ✅ done        | Prompts extracted to `services/ai/prompts/`. Providers scaffolded.                                                                                                                                                           |
+| Email-marketing refocus + full UI refactor (out-of-band) | ✅ done        | 2026-07-16, commits `36e848a..`: build-time Tailwind + tokens + `components/ui/`, new shell/IA, Dashboard/Email Studio/Audience redesign, dead event-intelligence UI removed. Spec in `docs/superpowers/specs/2026-07-16-…`. |
 
 ## Currently active: #4b LeadDetail refactor
 
