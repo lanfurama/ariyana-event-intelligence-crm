@@ -72,6 +72,11 @@ const config: UserConfigFnPromise = async ({ mode, command }) => {
       // Use esbuild for minification (faster)
       minify: 'esbuild',
       rollupOptions: {
+        // Multi-page build: the CRM app + the public booking portal
+        input: {
+          main: path.resolve(__dirname, 'index.html'),
+          book: path.resolve(__dirname, 'book.html'),
+        },
         output: {
           manualChunks: (id: string) => {
             // Vendor chunks for better caching
