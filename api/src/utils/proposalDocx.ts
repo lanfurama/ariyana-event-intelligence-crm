@@ -10,8 +10,7 @@ import {
   WidthType,
   ShadingType,
 } from 'docx';
-import type { Lead } from '../types/index.js';
-import type { BookingWithSpaces } from '../models/BookingModel.js';
+import type { BookingWithSpaces, Lead } from '../types/index.js';
 import type { QuoteWithItems } from '../models/QuoteModel.js';
 import { computeQuoteTotals } from './bookingHelpers.js';
 
