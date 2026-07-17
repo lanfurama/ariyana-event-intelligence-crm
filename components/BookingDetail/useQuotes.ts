@@ -141,8 +141,14 @@ export function useQuotes(
     }
   };
 
-  const handleDownload = (quote: Quote) => {
-    window.open(quotesApi.docxUrl(quote.id), '_blank');
+  const handleDownload = async (quote: Quote) => {
+    try {
+      // Authenticated blob download — window.open cannot carry the Bearer header.
+      await quotesApi.downloadDocx(quote.id);
+    } catch (e: any) {
+      console.error('Error downloading proposal:', e);
+      alert(e.message || 'Failed to download proposal');
+    }
   };
 
   /** Email the proposal DOCX to the linked lead via the existing send pipeline. */

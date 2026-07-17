@@ -3,6 +3,8 @@
  * All calls go through backend /api/v1/vertex - API keys stay server-side.
  */
 
+import { authHeaders } from './apiService';
+
 const API_BASE = '/api/v1';
 
 export interface EnrichResponse {
@@ -13,7 +15,7 @@ async function vertexApiCall<T>(endpoint: string, body: object): Promise<T> {
   const url = `${API_BASE}/vertex${endpoint}`;
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(body),
   });
 

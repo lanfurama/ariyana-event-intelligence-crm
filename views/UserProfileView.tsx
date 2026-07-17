@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Loader2, Save } from 'lucide-react';
+import { KeyRound, Loader2, Save } from 'lucide-react';
 import type { User } from '../types';
-import { usersApi } from '../services/apiService';
+import { authApi, usersApi } from '../services/apiService';
 
 export const UserProfileView = ({
   user,
@@ -17,6 +17,35 @@ export const UserProfileView = ({
   const [loading, setLoading] = useState(false);
   const [formErrors, setFormErrors] = useState<{ name?: string }>({});
   const [successMessage, setSuccessMessage] = useState<string>('');
+  const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState<string>('');
+  const [passwordSuccess, setPasswordSuccess] = useState<string>('');
+
+  const handleChangePassword = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+    if (passwords.next.length < 8) {
+      setPasswordError('New password must be at least 8 characters');
+      return;
+    }
+    if (passwords.next !== passwords.confirm) {
+      setPasswordError('New password and confirmation do not match');
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      await authApi.changePassword(passwords.current, passwords.next);
+      setPasswords({ current: '', next: '', confirm: '' });
+      setPasswordSuccess('Password updated successfully!');
+      setTimeout(() => setPasswordSuccess(''), 4000);
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      setPasswordError(error.message || 'Failed to change password');
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
 
   const validateForm = (): boolean => {
     const errors: { name?: string } = {};
@@ -179,6 +208,87 @@ export const UserProfileView = ({
               <>
                 <Save size={16} className="mr-2" />
                 Save Changes
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Change Password */}
+      <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <KeyRound size={16} className="text-brand-600" />
+          <h3 className="text-sm font-bold text-slate-900">Change Password</h3>
+        </div>
+        <p className="text-xs text-slate-500 mb-4">
+          Still on the default password? Change it now — it protects the whole CRM.
+        </p>
+
+        {passwordError && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-2.5 rounded-lg text-sm mb-3">
+            {passwordError}
+          </div>
+        )}
+        {passwordSuccess && (
+          <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-2.5 rounded-lg text-sm mb-3">
+            {passwordSuccess}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Current password
+            </label>
+            <input
+              type="password"
+              value={passwords.current}
+              onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
+              autoComplete="current-password"
+              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              New password (min 8)
+            </label>
+            <input
+              type="password"
+              value={passwords.next}
+              onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
+              autoComplete="new-password"
+              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Confirm new password
+            </label>
+            <input
+              type="password"
+              value={passwords.confirm}
+              onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+              autoComplete="new-password"
+              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleChangePassword}
+            disabled={passwordSaving || !passwords.current || !passwords.next || !passwords.confirm}
+            className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm font-semibold inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {passwordSaving ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <KeyRound size={16} className="mr-2" />
+                Update Password
               </>
             )}
           </button>

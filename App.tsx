@@ -71,8 +71,8 @@ const App = () => {
   }, [activeTab, user]);
 
   // Handle Login Wrapper to reset tab
-  const handleLogin = (u: any) => {
-    login(u);
+  const handleLogin = (u: import('./types').User, token: string) => {
+    login(u, token);
     setActiveTab('dashboard');
   };
 

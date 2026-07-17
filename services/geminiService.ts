@@ -2,6 +2,8 @@
 // API keys are stored server-side only, never exposed to frontend
 
 // Always use /api/v1 - works in both dev (via vite-plugin-api) and production
+import { authHeaders } from './apiService';
+
 const API_BASE_URL = '/api/v1';
 
 // Helper function for API calls
@@ -12,6 +14,7 @@ async function geminiApiCall<T>(endpoint: string, body: any): Promise<T> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders(),
       },
       body: JSON.stringify(body),
     });

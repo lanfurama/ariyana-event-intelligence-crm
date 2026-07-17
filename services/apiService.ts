@@ -25,15 +25,39 @@ if (import.meta.env.DEV) {
   console.log(`🔗 API Base URL: ${API_BASE_URL}`);
 }
 
+const TOKEN_STORAGE_KEY = 'ariyana_token';
+
+/** Bearer header for the logged-in session (empty when logged out / on public pages). */
+export function authHeaders(): Record<string, string> {
+  try {
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Session expired or token invalid — drop credentials and send the user to login. */
+function forceLogout() {
+  try {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem('ariyana_user');
+  } catch {
+    // ignore storage failures
+  }
+  window.location.reload();
+}
+
 // Helper function for API calls
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders(),
         ...options?.headers,
       },
-      ...options,
     });
 
     // Check content-type header (don't read body yet)
@@ -46,6 +70,9 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
     if (responseText.trim() === '') {
       if (response.ok) {
         return undefined as T;
+      }
+      if (response.status === 401 && !endpoint.startsWith('/auth/')) {
+        forceLogout();
       }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -94,6 +121,10 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
     // Handle error responses
     if (!response.ok) {
+      // Expired/invalid session (but never during login/change-password attempts)
+      if (response.status === 401 && !endpoint.startsWith('/auth/')) {
+        forceLogout();
+      }
       const errorMessage = responseData?.error || `HTTP error! status: ${response.status}`;
       throw new Error(errorMessage);
     }
@@ -135,6 +166,21 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
     throw error;
   }
 }
+
+// Auth API
+export const authApi = {
+  login: (username: string, password: string) =>
+    apiCall<{ token: string; user: User }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+  me: () => apiCall<User>('/auth/me'),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    apiCall<{ success: boolean; message: string }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    }),
+};
 
 // Users API
 export const usersApi = {
@@ -602,9 +648,28 @@ export const quotesApi = {
     }),
   /** Direct download URL for the proposal document. */
   docxUrl: (id: string) => `${API_BASE_URL}/quotes/${id}/docx`,
+  /** Authenticated download of the proposal DOCX (window.open cannot carry the Bearer header). */
+  downloadDocx: async (id: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/quotes/${id}/docx`, { headers: authHeaders() });
+    if (!response.ok) {
+      throw new Error(`Failed to download proposal (HTTP ${response.status})`);
+    }
+    const blob = await response.blob();
+    const disposition = response.headers.get('content-disposition') || '';
+    const match = disposition.match(/filename="([^"]+)"/);
+    const fileName = match ? match[1] : `Proposal-${id}.docx`;
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  },
   /** Fetch the proposal DOCX as a data-URL, ready for the send-email attachment pipeline. */
   fetchDocxAsDataUrl: async (id: string): Promise<{ fileName: string; dataUrl: string }> => {
-    const response = await fetch(`${API_BASE_URL}/quotes/${id}/docx`);
+    const response = await fetch(`${API_BASE_URL}/quotes/${id}/docx`, { headers: authHeaders() });
     if (!response.ok) {
       throw new Error(`Failed to fetch proposal document (HTTP ${response.status})`);
     }
