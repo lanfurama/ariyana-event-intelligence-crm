@@ -593,6 +593,23 @@ export const bookingsApi = {
     apiCall<void>(`/bookings/${id}`, {
       method: 'DELETE',
     }),
+  /** Authed intake (AI-parsed or manual) — same pipeline as the public portal form. */
+  intake: (payload: {
+    company_name: string;
+    contact_name: string;
+    email: string;
+    phone?: string;
+    country?: string;
+    event_type?: string;
+    message?: string;
+    expected_guests?: number;
+    venue_id?: string;
+    preferred_date?: string;
+  }) =>
+    apiCall<{ booking: Booking; lead: Lead }>('/bookings/intake', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
   getAvailability: (from: string, to: string, venueId?: string) => {
     const params = new URLSearchParams({ from, to });
     if (venueId) params.append('venue_id', venueId);

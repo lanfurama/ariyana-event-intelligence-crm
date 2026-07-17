@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type React from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, List, Plus } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, List, Plus, Sparkles } from 'lucide-react';
 import type { Booking, Lead, User } from '../types';
 import { bookingsApi } from '../services/apiService';
 import { Button, PageHeader } from '../components/ui';
@@ -8,6 +8,7 @@ import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { BookingDetail } from '../components/BookingDetail';
 import type { CreatePrefill } from '../components/BookingDetail/useBookingForm';
 import { BookingsCalendar } from './BookingsView/BookingsCalendar';
+import { AiIntakeModal } from './BookingsView/AiIntakeModal';
 import { BookingsList } from './BookingsView/BookingsList';
 import { useBookingsData } from './BookingsView/useBookingsData';
 import { addDays, formatWeekRangeLabel, getWeekDays } from './BookingsView/calendarHelpers';
@@ -26,6 +27,7 @@ export const BookingsView: React.FC<BookingsViewProps> = ({ user, leads }) => {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [weekAnchor, setWeekAnchor] = useState(() => new Date());
   const [drawer, setDrawer] = useState<DrawerState>(null);
+  const [showIntake, setShowIntake] = useState(false);
 
   const { venues, blocks, bookings, loading, error, refetch } = useBookingsData(weekAnchor);
   const canEdit = user.role === 'Director' || user.role === 'Sales';
@@ -74,6 +76,11 @@ export const BookingsView: React.FC<BookingsViewProps> = ({ user, leads }) => {
                 <List size={14} /> List
               </button>
             </div>
+            {canEdit && (
+              <Button variant="secondary" size="sm" onClick={() => setShowIntake(true)}>
+                <Sparkles size={15} /> AI Intake
+              </Button>
+            )}
             {canEdit && (
               <Button size="sm" onClick={() => setDrawer({ mode: 'create', prefill: null })}>
                 <Plus size={15} /> New Booking
@@ -144,6 +151,18 @@ export const BookingsView: React.FC<BookingsViewProps> = ({ user, leads }) => {
           times shown on hover). Inquiries and closed bookings live in the List view.
           {canEdit ? ' Click an empty cell to create a booking for that venue and day.' : ''}
         </p>
+      )}
+
+      {showIntake && (
+        <AiIntakeModal
+          venues={venues}
+          onClose={() => setShowIntake(false)}
+          onCreated={(bookingId) => {
+            setShowIntake(false);
+            refetch();
+            openBooking(bookingId);
+          }}
+        />
       )}
 
       {drawer && (

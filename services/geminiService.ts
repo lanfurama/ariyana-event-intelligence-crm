@@ -6,6 +6,20 @@ import { authHeaders } from './apiService';
 
 const API_BASE_URL = '/api/v1';
 
+/** Structured extraction of a pasted venue-inquiry email (AI intake). */
+export interface RfpExtraction {
+  is_rfp: boolean;
+  company_name?: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  event_type?: string;
+  expected_guests?: number;
+  preferred_date?: string;
+  layout?: string;
+  summary?: string;
+}
+
 // Helper function for API calls
 async function geminiApiCall<T>(endpoint: string, body: any): Promise<T> {
   try {
@@ -177,6 +191,11 @@ export const draftSalesEmail = async (
     leadTitle,
     eventContext,
   });
+};
+
+/** Parse a pasted venue-inquiry email into a structured booking request (AI intake). */
+export const parseRfp = async (text: string): Promise<RfpExtraction> => {
+  return geminiApiCall<RfpExtraction>('/parse-rfp', { text });
 };
 
 // Chat / video-analysis / strategic-analysis wrappers were removed 2026-07-16
