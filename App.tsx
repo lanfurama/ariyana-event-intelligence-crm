@@ -1,4 +1,5 @@
 import React, { useState, useEffect, Suspense } from 'react';
+import type { User } from './types';
 import { LoginView } from './components/LoginView';
 import { Sidebar } from './components/Sidebar';
 import { useAuth } from './hooks/useAuth';
@@ -71,7 +72,7 @@ const App = () => {
   }, [activeTab, user]);
 
   // Handle Login Wrapper to reset tab
-  const handleLogin = (u: import('./types').User, token: string) => {
+  const handleLogin = (u: User, token: string) => {
     login(u, token);
     setActiveTab('dashboard');
   };
