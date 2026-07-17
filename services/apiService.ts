@@ -35,6 +35,14 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
     // Read response body once as text first (can parse JSON from text)
     const responseText = await response.text();
 
+    // Empty-body responses (CRUD deletes return 204 No Content) have nothing to parse
+    if (responseText.trim() === '') {
+      if (response.ok) {
+        return undefined as T;
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     // Check if response is HTML (usually means proxy failed or route not found)
     if (
       contentType.includes('text/html') ||
