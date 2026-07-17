@@ -167,6 +167,74 @@ export interface Attachment {
   is_link?: boolean; // If true, name contains the link URL
 }
 
+// --- Venue booking (smart convention centre track) ---
+// Deliberately snake_case: these mirror the API JSON 1:1 (like EmailReply),
+// so there is no mapLeadFromDB-style translation layer to drift.
+
+export type BookingStatus = 'inquiry' | 'hold' | 'quoted' | 'confirmed' | 'completed' | 'cancelled';
+export type BookingSource = 'manual' | 'portal' | 'email_ai';
+
+export interface VenueCapacities {
+  theatre?: number;
+  classroom?: number;
+  banquet?: number;
+  cocktail?: number;
+  ushape?: number;
+  boardroom?: number;
+}
+
+export interface VenueRates {
+  hourly?: number;
+  half_day?: number;
+  full_day?: number;
+}
+
+export interface Venue {
+  id: string;
+  name: string;
+  slug: string;
+  floor?: string;
+  area_sqm?: number;
+  ceiling_height_m?: number;
+  capacities: VenueCapacities;
+  description?: string;
+  images: string[];
+  base_rates: VenueRates;
+  amenities: string[];
+  is_active: boolean;
+  display_order: number;
+}
+
+export interface BookingSpace {
+  id?: number;
+  booking_id?: string;
+  venue_id: string;
+  start_at: string;
+  end_at: string;
+  setup_minutes: number;
+  teardown_minutes: number;
+  block_start_at?: string;
+  block_end_at?: string;
+  booking_status?: BookingStatus;
+}
+
+export interface Booking {
+  id: string;
+  code: string;
+  lead_id?: string;
+  title: string;
+  event_type?: string;
+  status: BookingStatus;
+  expected_guests?: number;
+  layout?: string;
+  notes?: string;
+  source: BookingSource;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+  spaces: BookingSpace[];
+}
+
 export type UserRole = 'Director' | 'Sales' | 'Viewer';
 
 export interface User {

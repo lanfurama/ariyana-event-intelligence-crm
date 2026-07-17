@@ -7,6 +7,10 @@ import type {
   EmailReply,
   LeadWithEmailCount,
   ChatMessage,
+  Venue,
+  Booking,
+  BookingStatus,
+  BookingSource,
 } from '../types';
 
 // Always use relative path /api/v1 - works in both dev and production
@@ -429,4 +433,131 @@ export const emailReportsApi = {
     apiCall<EmailReportsLog[]>(
       `/email-reports/logs${configId ? `?config_id=${configId}` : ''}${limit ? `${configId ? '&' : '?'}limit=${limit}` : ''}`,
     ),
+};
+
+// --- Venue booking APIs (smart convention centre track) ---
+
+/** booking_spaces row joined with its booking code/title, as served by /bookings/availability. */
+export interface AvailabilityBlock {
+  id: number;
+  booking_id: string;
+  venue_id: string;
+  start_at: string;
+  end_at: string;
+  setup_minutes: number;
+  teardown_minutes: number;
+  block_start_at: string;
+  block_end_at: string;
+  booking_status: BookingStatus;
+  code: string;
+  title: string;
+}
+
+export interface SpaceConflictsResult {
+  hard: AvailabilityBlock[];
+  soft: AvailabilityBlock[];
+}
+
+/** Per-space overlap report returned as non-blocking `warnings` by POST /bookings. */
+export interface SpaceConflictWarning {
+  venue_id: string;
+  block_start_at: string;
+  block_end_at: string;
+  hard: AvailabilityBlock[];
+  soft: AvailabilityBlock[];
+}
+
+export interface BookingSpacePayload {
+  venue_id: string;
+  start_at: string;
+  end_at: string;
+  setup_minutes: number;
+  teardown_minutes: number;
+}
+
+export interface BookingPayload {
+  title: string;
+  lead_id?: string | null;
+  event_type?: string;
+  status?: BookingStatus;
+  expected_guests?: number | null;
+  layout?: string;
+  notes?: string;
+  source?: BookingSource;
+  created_by?: string;
+  spaces: BookingSpacePayload[];
+}
+
+export interface BookingFilters {
+  status?: BookingStatus;
+  venue_id?: string;
+  lead_id?: string;
+  from?: string;
+  to?: string;
+  search?: string;
+}
+
+export const venuesApi = {
+  getAll: (includeInactive = false) =>
+    apiCall<Venue[]>(`/venues${includeInactive ? '?include_inactive=true' : ''}`),
+  getById: (id: string) => apiCall<Venue>(`/venues/${id}`),
+  create: (venue: Partial<Venue> & { name: string }) =>
+    apiCall<Venue>('/venues', {
+      method: 'POST',
+      body: JSON.stringify(venue),
+    }),
+  update: (id: string, updates: Partial<Venue>) =>
+    apiCall<Venue>(`/venues/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    }),
+  delete: (id: string) =>
+    apiCall<void>(`/venues/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+export const bookingsApi = {
+  getAll: (filters?: BookingFilters) => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.venue_id) params.append('venue_id', filters.venue_id);
+    if (filters?.lead_id) params.append('lead_id', filters.lead_id);
+    if (filters?.from) params.append('from', filters.from);
+    if (filters?.to) params.append('to', filters.to);
+    if (filters?.search) params.append('search', filters.search);
+    const query = params.toString();
+    return apiCall<Booking[]>(`/bookings${query ? `?${query}` : ''}`);
+  },
+  getById: (id: string) => apiCall<Booking>(`/bookings/${id}`),
+  create: (payload: BookingPayload) =>
+    apiCall<{ booking: Booking; warnings: SpaceConflictWarning[] }>('/bookings', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  update: (id: string, payload: Partial<BookingPayload>) =>
+    apiCall<Booking>(`/bookings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  delete: (id: string) =>
+    apiCall<void>(`/bookings/${id}`, {
+      method: 'DELETE',
+    }),
+  getAvailability: (from: string, to: string, venueId?: string) => {
+    const params = new URLSearchParams({ from, to });
+    if (venueId) params.append('venue_id', venueId);
+    return apiCall<AvailabilityBlock[]>(`/bookings/availability?${params.toString()}`);
+  },
+  checkConflicts: (space: BookingSpacePayload & { exclude_booking_id?: string }) => {
+    const params = new URLSearchParams({
+      venue_id: space.venue_id,
+      start_at: space.start_at,
+      end_at: space.end_at,
+      setup_minutes: String(space.setup_minutes),
+      teardown_minutes: String(space.teardown_minutes),
+    });
+    if (space.exclude_booking_id) params.append('exclude_booking_id', space.exclude_booking_id);
+    return apiCall<SpaceConflictsResult>(`/bookings/check-conflicts?${params.toString()}`);
+  },
 };
