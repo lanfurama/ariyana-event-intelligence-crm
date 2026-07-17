@@ -319,6 +319,63 @@ export const BookingDetail: React.FC<BookingDetailProps> = ({
                   ))}
                 </div>
 
+                {/* Venue suggestions (deterministic capacity + free/busy fit) */}
+                {canEdit && (
+                  <div className="mt-3">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleSuggestVenues(venues)}
+                      disabled={suggesting}
+                    >
+                      {suggesting ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" /> Ranking…
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 size={14} /> Suggest venues
+                        </>
+                      )}
+                    </Button>
+                    {suggestions && (
+                      <div className="mt-2 border border-slate-200 rounded-lg divide-y divide-slate-100 bg-white">
+                        {suggestions.slice(0, 5).map((s) => (
+                          <div key={s.venue.id} className="flex items-center gap-2 px-3 py-2">
+                            <div className="flex-1 min-w-0">
+                              <span
+                                className={`text-sm font-semibold ${
+                                  s.fits ? 'text-slate-900' : 'text-slate-400'
+                                }`}
+                              >
+                                {s.venue.name}
+                              </span>
+                              <span className="text-xs text-slate-500 ml-2">
+                                {s.capacity !== null
+                                  ? `${draft.layout || 'max'} ${s.capacity} pax`
+                                  : 'no capacity data'}
+                                {!s.fits && ' · too small'}
+                              </span>
+                            </div>
+                            {s.free !== null && (
+                              <Badge tone={s.free ? 'emerald' : 'amber'} className="shrink-0">
+                                {s.free ? 'Free' : `Busy (${s.conflicts})`}
+                              </Badge>
+                            )}
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => applySuggestion(s.venue.id)}
+                            >
+                              Use
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Conflict check */}
                 {canEdit && draft.spaces.length > 0 && (
                   <div className="mt-3">
