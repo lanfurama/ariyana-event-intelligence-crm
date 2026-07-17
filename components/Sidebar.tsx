@@ -1,5 +1,14 @@
 import type React from 'react';
-import { LayoutDashboard, Users, Mail, Sparkles, LogOut, ChevronLeft, Menu } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Users,
+  Mail,
+  Sparkles,
+  LogOut,
+  ChevronLeft,
+  Menu,
+  CalendarDays,
+} from 'lucide-react';
 import type { User } from '../types';
 import { NavItem } from './common/NavItem';
 
@@ -98,6 +107,17 @@ export const Sidebar = ({
                 onClick={handleSelect}
               />
             )}
+          </div>
+
+          <SectionLabel>Venue</SectionLabel>
+          <div className="space-y-0.5">
+            <NavItem
+              icon={<CalendarDays size={18} />}
+              label="Bookings"
+              id="bookings"
+              active={activeTab}
+              onClick={handleSelect}
+            />
           </div>
 
           {user.role === 'Director' && (

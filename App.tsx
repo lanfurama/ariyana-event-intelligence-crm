@@ -21,6 +21,9 @@ const IntelligentDataView = React.lazy(() =>
 const EmailView = React.lazy(() =>
   import('./views/EmailView').then((module) => ({ default: module.EmailView })),
 );
+const BookingsView = React.lazy(() =>
+  import('./views/BookingsView').then((module) => ({ default: module.BookingsView })),
+);
 const UserProfileView = React.lazy(() =>
   import('./views/UserProfileView').then((module) => ({ default: module.UserProfileView })),
 );
@@ -109,6 +112,8 @@ const App = () => {
       case 'email':
         if (user.role !== 'Director' && user.role !== 'Sales') return <Dashboard leads={leads} />;
         return <EmailView user={user} />;
+      case 'bookings':
+        return <BookingsView user={user} leads={leads} />;
       case 'profile':
         return <UserProfileView user={user} onUpdateUser={updateUser} />;
       default:
