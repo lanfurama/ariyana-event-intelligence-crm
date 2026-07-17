@@ -14,6 +14,7 @@
     "migrate:fix-leads": "tsx src/scripts/runMigrationGeneric.ts 005_fix_leads_status_from_email_logs.sql",
     "migrate:email-logs-failed": "tsx src/scripts/runMigrationGeneric.ts 006_email_logs_allow_failed_status.sql",
     "migrate:venue-booking": "tsx src/scripts/runMigrationGeneric.ts 013_venue_booking.sql",
+    "migrate:auth": "tsx src/scripts/runMigrationGeneric.ts 014_add_user_password.sql",
     "verify:send-mail": "tsx src/scripts/verifySendMailFlow.ts",
     "send:dmc-test": "tsx src/scripts/sendDmcTestEmail.ts",
     "test:scheduled-job": "tsx src/scripts/testScheduledJob.ts"
@@ -23,10 +24,12 @@
     "@google/generative-ai": "^0.24.1",
     "@types/multer": "^2.0.0",
     "@vercel/node": "^3.2.29",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "docx": "^9.5.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.13",
@@ -34,8 +37,10 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.14.0",
     "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.10.9",

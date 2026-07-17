@@ -16,6 +16,8 @@ import vertexRouter from './routes/vertex.js';
 import venuesRouter from './routes/venues.js';
 import bookingsRouter from './routes/bookings.js';
 import quotesRouter from './routes/quotes.js';
+import authRouter from './routes/auth.js';
+import { requireAuth, viewerReadOnly, requireRole, usersWritePolicy } from './middleware/auth.js';
 import { query } from './config/database.js';
 import { startScheduledReportsJob } from './services/scheduledReportsJob.js';
 
@@ -76,7 +78,13 @@ app.get('/health', async (req, res) => {
 });
 
 // API Routes
-app.use('/api/users', usersRouter);
+// Auth first (public login), then the global guard — every /api route below
+// requires a valid token and Viewer is read-only (secure by default).
+app.use('/api/auth', authRouter);
+app.use('/api', requireAuth);
+app.use('/api', viewerReadOnly);
+
+app.use('/api/users', usersWritePolicy, usersRouter);
 app.use('/api/email-templates', emailTemplatesRouter);
 app.use('/api/leads', leadsRouter);
 app.use('/api/email-logs', emailLogsRouter);
@@ -86,7 +94,7 @@ app.use('/api/gemini', geminiRouter);
 app.use('/api/excel-import', excelImportRouter);
 app.use('/api/event-brief', eventBriefRouter);
 app.use('/api/lead-scoring', leadScoringRouter);
-app.use('/api/email-reports', emailReportsRouter);
+app.use('/api/email-reports', requireRole('Director'), emailReportsRouter);
 app.use('/api/vertex', vertexRouter);
 app.use('/api/venues', venuesRouter);
 app.use('/api/bookings', bookingsRouter);

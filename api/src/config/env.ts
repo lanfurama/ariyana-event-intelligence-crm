@@ -25,6 +25,9 @@ const EnvSchema = z.object({
   // CORS (optional — only the standalone server uses it; vite-plugin-api proxies in dev)
   CORS_ORIGIN: z.string().optional(),
 
+  // Auth (optional in dev — an insecure default is used with a loud warning; REQUIRED in production)
+  JWT_SECRET: z.string().min(16).optional(),
+
   // AI providers
   GEMINI_API_KEY: z.string().min(1),
   OPENAI_API_KEY: z.string().min(1),
@@ -65,3 +68,12 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export type Env = z.infer<typeof EnvSchema>;
+
+export const JWT_SECRET =
+  env.JWT_SECRET ||
+  (() => {
+    console.warn(
+      '⚠️ JWT_SECRET is not set — using an INSECURE development default. Set JWT_SECRET (>=16 chars) in .env before deploying.',
+    );
+    return 'ariyana-dev-insecure-jwt-secret';
+  })();

@@ -48,6 +48,8 @@ let vertexRouter: any;
 let venuesRouter: any;
 let bookingsRouter: any;
 let quotesRouter: any;
+let authRouter: any;
+let authMw: any;
 let query: any;
 
 async function loadRoutes() {
@@ -87,6 +89,8 @@ async function loadRoutes() {
         './api/src/routes/venues.js',
         './api/src/routes/bookings.js',
         './api/src/routes/quotes.js',
+        './api/src/routes/auth.js',
+        './api/src/middleware/auth.js',
         './api/src/config/database.js',
       ];
 
@@ -125,7 +129,9 @@ async function loadRoutes() {
       venuesRouter = routes[14].default;
       bookingsRouter = routes[15].default;
       quotesRouter = routes[16].default;
-      query = routes[17].query;
+      authRouter = routes[17].default;
+      authMw = routes[18];
+      query = routes[19].query;
 
       console.log('✅ Routes loaded successfully');
     } catch (error: any) {
@@ -192,8 +198,13 @@ export function vitePluginApi(): Plugin {
       });
 
       // API Routes - mount at root level (Vite middleware handles /api/v1 prefix)
-      // Routes are relative to /api/v1, so mount them at root
-      app.use('/users', usersRouter);
+      // Auth first (public login), then the global guard — everything below
+      // requires a valid token and Viewer is read-only (secure by default).
+      app.use('/auth', authRouter);
+      app.use(authMw.requireAuth);
+      app.use(authMw.viewerReadOnly);
+
+      app.use('/users', authMw.usersWritePolicy, usersRouter);
       app.use('/email-templates', emailTemplatesRouter);
       app.use('/leads', leadsRouter);
       app.use('/email-logs', emailLogsRouter);
@@ -205,7 +216,7 @@ export function vitePluginApi(): Plugin {
       app.use('/csv-import', csvImportRouter);
       app.use('/event-brief', eventBriefRouter);
       app.use('/lead-scoring', leadScoringRouter);
-      app.use('/email-reports', emailReportsRouter);
+      app.use('/email-reports', authMw.requireRole('Director'), emailReportsRouter);
       app.use('/vertex', vertexRouter);
       app.use('/venues', venuesRouter);
       app.use('/bookings', bookingsRouter);

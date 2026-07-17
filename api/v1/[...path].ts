@@ -20,6 +20,13 @@ import vertexRouter from '../src/routes/vertex.js';
 import venuesRouter from '../src/routes/venues.js';
 import bookingsRouter from '../src/routes/bookings.js';
 import quotesRouter from '../src/routes/quotes.js';
+import authRouter from '../src/routes/auth.js';
+import {
+  requireAuth,
+  viewerReadOnly,
+  requireRole,
+  usersWritePolicy,
+} from '../src/middleware/auth.js';
 import { query } from '../src/config/database.js';
 
 const app = express();
@@ -73,7 +80,13 @@ app.get('/health', async (req, res) => {
 });
 
 // API Routes - paths are relative to /api/v1
-app.use('/users', usersRouter);
+// Auth first (public login), then the global guard — everything below requires
+// a valid token and Viewer is read-only (secure by default).
+app.use('/auth', authRouter);
+app.use(requireAuth);
+app.use(viewerReadOnly);
+
+app.use('/users', usersWritePolicy, usersRouter);
 app.use('/email-templates', emailTemplatesRouter);
 app.use('/leads', leadsRouter);
 app.use('/email-logs', emailLogsRouter);
@@ -85,7 +98,7 @@ app.use('/excel-import', excelImportRouter);
 app.use('/csv-import', csvImportRouter);
 app.use('/event-brief', eventBriefRouter);
 app.use('/lead-scoring', leadScoringRouter);
-app.use('/email-reports', emailReportsRouter);
+app.use('/email-reports', requireRole('Director'), emailReportsRouter);
 app.use('/vertex', vertexRouter);
 app.use('/venues', venuesRouter);
 app.use('/bookings', bookingsRouter);
