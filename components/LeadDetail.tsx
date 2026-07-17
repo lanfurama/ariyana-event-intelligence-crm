@@ -68,6 +68,7 @@ export const LeadDetail = ({
     draftedEmail,
     setDraftedEmail,
     emailSent,
+    setEmailSent,
     selectedTemplate,
     setSelectedTemplate,
     emailCC,

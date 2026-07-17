@@ -355,6 +355,7 @@ export function useLeadEmail(
     draftedEmail,
     setDraftedEmail,
     emailSent,
+    setEmailSent,
     selectedTemplate,
     setSelectedTemplate,
     emailCC,
