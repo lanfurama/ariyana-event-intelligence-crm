@@ -1,7 +1,3 @@
-// @ts-nocheck — TODO(refactor): god file (1621 LOC) with 21+ strict-mode errors
-// requiring structural changes. Resolve when this file is split per sub-project #4.
-// See STRICT_DEBT.md.
-import type React from 'react';
 import { useState } from 'react';
 import { Search, Mail, X, Lock } from 'lucide-react';
 import type { Lead, User } from '../types';
@@ -103,7 +99,9 @@ export const LeadDetail = ({
         </div>
 
         <div className="p-3 flex-1 overflow-y-auto">
-          {activeTab === 'info' && <LeadInfoTab lead={lead} user={user} edit={edit} email={email} />}
+          {activeTab === 'info' && (
+            <LeadInfoTab lead={lead} user={user} edit={edit} email={email} />
+          )}
 
           {activeTab === 'enrich' && <LeadEnrichTab enrichment={enrichment} canEdit={canEdit} />}
 

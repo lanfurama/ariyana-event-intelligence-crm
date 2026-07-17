@@ -274,7 +274,10 @@ export const LeadInfoTab: React.FC<LeadInfoTabProps> = ({ lead, user, edit, emai
               </label>
               <ul className="mt-2 space-y-2">
                 {lead.emailHistory.map((log) => (
-                  <li key={log.id} className="text-xs p-2 bg-slate-50 rounded border border-slate-100">
+                  <li
+                    key={log.id}
+                    className="text-xs p-2 bg-slate-50 rounded border border-slate-100"
+                  >
                     <div className="flex justify-between">
                       <span className="font-bold">{log.subject}</span>
                       <span className="text-slate-400">
@@ -323,7 +326,10 @@ export const LeadInfoTab: React.FC<LeadInfoTabProps> = ({ lead, user, edit, emai
             ) : emailReplies.length > 0 ? (
               <ul className="mt-2 space-y-2">
                 {emailReplies.map((reply) => (
-                  <li key={reply.id} className="text-xs p-3 bg-green-50 rounded border border-green-100">
+                  <li
+                    key={reply.id}
+                    className="text-xs p-3 bg-green-50 rounded border border-green-100"
+                  >
                     <div className="flex justify-between items-start mb-1">
                       <div>
                         <span className="font-bold text-green-900">

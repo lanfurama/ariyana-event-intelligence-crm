@@ -1,5 +1,15 @@
 import type React from 'react';
-import { Check, CheckCircle, ExternalLink, Loader2, Mail, Save, Search, User as UserIcon, X } from 'lucide-react';
+import {
+  Check,
+  CheckCircle,
+  ExternalLink,
+  Loader2,
+  Mail,
+  Save,
+  Search,
+  User as UserIcon,
+  X,
+} from 'lucide-react';
 import type { useLeadEnrichment } from './useLeadEnrichment';
 
 interface LeadEnrichTabProps {
@@ -175,7 +185,10 @@ export const LeadEnrichTab: React.FC<LeadEnrichTabProps> = ({ enrichment, canEdi
 
                   return uniqueSources.map((chunk: any, i: number) => (
                     <li key={i} className="flex items-start">
-                      <ExternalLink size={14} className="mr-2 mt-0.5 text-slate-400 flex-shrink-0" />
+                      <ExternalLink
+                        size={14}
+                        className="mr-2 mt-0.5 text-slate-400 flex-shrink-0"
+                      />
                       <a
                         href={chunk.web.uri}
                         target="_blank"

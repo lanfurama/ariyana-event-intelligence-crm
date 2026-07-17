@@ -284,7 +284,9 @@ export const LeadEmailTab: React.FC<LeadEmailTabProps> = ({ lead, email }) => {
             <Check size={24} />
           </div>
           <h3 className="text-lg font-bold text-green-800">Email Client Opened!</h3>
-          <p className="text-sm text-green-600 mt-1">Lead status updated to &quot;Contacted&quot;.</p>
+          <p className="text-sm text-green-600 mt-1">
+            Lead status updated to &quot;Contacted&quot;.
+          </p>
           <button
             onClick={() => {
               setDraftedEmail(null);
