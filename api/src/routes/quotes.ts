@@ -3,6 +3,9 @@ import express from 'express';
 import type { QuoteItemInput } from '../models/QuoteModel.js';
 import { QuoteModel } from '../models/QuoteModel.js';
 import { BookingModel } from '../models/BookingModel.js';
+import { VenueModel } from '../models/VenueModel.js';
+import { LeadModel } from '../models/LeadModel.js';
+import { buildProposalDocx } from '../utils/proposalDocx.js';
 
 const router = express.Router();
 
@@ -66,6 +69,43 @@ router.get('/', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error fetching quotes:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch quotes' });
+  }
+});
+
+// GET /api/quotes/:id/docx - proposal Word document for a quote
+router.get('/:id/docx', async (req: Request, res: Response) => {
+  try {
+    const quote = await QuoteModel.getById(req.params.id);
+    if (!quote) {
+      return res.status(404).json({ error: 'Quote not found' });
+    }
+    const booking = await BookingModel.getById(quote.booking_id);
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found for this quote' });
+    }
+    const venues = await VenueModel.getAll(true);
+    const venueNameById: Record<string, string> = {};
+    venues.forEach((venue) => {
+      venueNameById[venue.id] = venue.name;
+    });
+    const lead = booking.lead_id ? await LeadModel.getById(booking.lead_id) : null;
+
+    const buffer = await buildProposalDocx(quote, booking, venueNameById, lead);
+
+    const fileName = `Proposal-${booking.code}-v${quote.version}.docx`;
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${fileName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+    );
+    res.setHeader('Content-Length', buffer.length.toString());
+    res.send(buffer);
+  } catch (error: any) {
+    console.error('Error exporting proposal:', error);
+    res.status(500).json({ error: error.message || 'Failed to export proposal' });
   }
 });
 
