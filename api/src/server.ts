@@ -15,6 +15,7 @@ import emailReportsRouter from './routes/emailReports.js';
 import vertexRouter from './routes/vertex.js';
 import venuesRouter from './routes/venues.js';
 import bookingsRouter from './routes/bookings.js';
+import quotesRouter from './routes/quotes.js';
 import { query } from './config/database.js';
 import { startScheduledReportsJob } from './services/scheduledReportsJob.js';
 
@@ -89,6 +90,7 @@ app.use('/api/email-reports', emailReportsRouter);
 app.use('/api/vertex', vertexRouter);
 app.use('/api/venues', venuesRouter);
 app.use('/api/bookings', bookingsRouter);
+app.use('/api/quotes', quotesRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -110,6 +112,7 @@ app.get('/', (req, res) => {
       vertex: '/api/vertex',
       venues: '/api/venues',
       bookings: '/api/bookings',
+      quotes: '/api/quotes',
       health: '/health',
     },
   });

@@ -19,6 +19,7 @@ import emailReportsRouter from '../src/routes/emailReports.js';
 import vertexRouter from '../src/routes/vertex.js';
 import venuesRouter from '../src/routes/venues.js';
 import bookingsRouter from '../src/routes/bookings.js';
+import quotesRouter from '../src/routes/quotes.js';
 import { query } from '../src/config/database.js';
 
 const app = express();
@@ -88,6 +89,7 @@ app.use('/email-reports', emailReportsRouter);
 app.use('/vertex', vertexRouter);
 app.use('/venues', venuesRouter);
 app.use('/bookings', bookingsRouter);
+app.use('/quotes', quotesRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -109,6 +111,7 @@ app.get('/', (req, res) => {
       vertex: '/api/v1/vertex',
       venues: '/api/v1/venues',
       bookings: '/api/v1/bookings',
+      quotes: '/api/v1/quotes',
       health: '/api/v1/health',
     },
   });

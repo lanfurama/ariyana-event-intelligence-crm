@@ -47,6 +47,7 @@ let emailReportsRouter: any;
 let vertexRouter: any;
 let venuesRouter: any;
 let bookingsRouter: any;
+let quotesRouter: any;
 let query: any;
 
 async function loadRoutes() {
@@ -85,6 +86,7 @@ async function loadRoutes() {
         './api/src/routes/vertex.js',
         './api/src/routes/venues.js',
         './api/src/routes/bookings.js',
+        './api/src/routes/quotes.js',
         './api/src/config/database.js',
       ];
 
@@ -122,7 +124,8 @@ async function loadRoutes() {
       vertexRouter = routes[13].default;
       venuesRouter = routes[14].default;
       bookingsRouter = routes[15].default;
-      query = routes[16].query;
+      quotesRouter = routes[16].default;
+      query = routes[17].query;
 
       console.log('✅ Routes loaded successfully');
     } catch (error: any) {
@@ -206,6 +209,7 @@ export function vitePluginApi(): Plugin {
       app.use('/vertex', vertexRouter);
       app.use('/venues', venuesRouter);
       app.use('/bookings', bookingsRouter);
+      app.use('/quotes', quotesRouter);
 
       // Root endpoint (relative to /api/v1)
       app.get('/', (req, res) => {
@@ -224,6 +228,7 @@ export function vitePluginApi(): Plugin {
             emailReports: '/api/v1/email-reports',
             venues: '/api/v1/venues',
             bookings: '/api/v1/bookings',
+            quotes: '/api/v1/quotes',
             health: '/api/v1/health',
           },
         });
