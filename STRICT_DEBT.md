@@ -18,12 +18,11 @@ outweighed the benefit at this stage:
 
 ## Files with `@ts-nocheck`
 
-| File                                   | Reason                                                                           | Resolve in                                                                                      |
-| -------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `components/LeadDetail.tsx` (1998 LOC) | God file with 21+ strict-mode errors requiring structural changes to fix safely. | Sub-project #4b (refactor god files). Split into smaller components, then remove `@ts-nocheck`. |
+(none currently — all god-file `@ts-nocheck` markers resolved)
 
 **Resolved:**
 
+- ~~`components/LeadDetail.tsx` (1998 LOC)~~ — resolved in sub-project #4b (commits `188bcfb..6592edc`, completed 2026-07-17). Split into 3 custom hooks (`useLeadEdit`, `useLeadEnrichment`, `useLeadEmail`) + 3 tab components (`LeadInfoTab`, `LeadEnrichTab`, `LeadEmailTab`) + tested pure helpers (`leadDetailHelpers.ts`, 27 unit tests); 113-LOC orchestrator; `@ts-nocheck` removed with zero surfaced errors.
 - ~~`views/IntelligentDataView/EventModal.tsx`~~ — resolved in sub-project #4c (commits `b868dfc..2ec016b`). Split into 7 sub-components + a tested `extractEventModalData` pure function; `@ts-nocheck` removed.
 
 ## Per-line `@ts-expect-error TODO(refactor)`
