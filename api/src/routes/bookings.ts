@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import express from 'express';
 import type { BookingFilters } from '../models/BookingModel.js';
 import { BookingModel } from '../models/BookingModel.js';
+import { BookingRequestError, submitBookingRequest } from '../services/bookingRequestService.js';
 import type { Booking } from '../types/index.js';
 import type { BookingSpaceInput, SpaceConflicts, SpaceWindowRow } from '../utils/bookingHelpers.js';
 import {
@@ -149,6 +150,63 @@ router.get('/check-conflicts', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error checking conflicts:', error);
     res.status(500).json({ error: error.message || 'Failed to check conflicts' });
+  }
+});
+
+// POST /api/bookings/intake - authed intake (AI-parsed or manual) -> Lead + inquiry Booking.
+// Same pipeline as the public portal, minus honeypot/rate-limit/notification.
+router.post('/intake', async (req: Request, res: Response) => {
+  try {
+    const companyName =
+      typeof req.body.company_name === 'string' ? req.body.company_name.trim() : '';
+    const contactName =
+      typeof req.body.contact_name === 'string' ? req.body.contact_name.trim() : '';
+    const email = typeof req.body.email === 'string' ? req.body.email.trim() : '';
+    if (!companyName || !contactName || !email) {
+      return res.status(400).json({ error: 'company_name, contact_name and email are required' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'email is not valid' });
+    }
+
+    const result = await submitBookingRequest({
+      company_name: companyName,
+      contact_name: contactName,
+      email,
+      phone: typeof req.body.phone === 'string' ? req.body.phone.trim() || undefined : undefined,
+      country:
+        typeof req.body.country === 'string' ? req.body.country.trim() || undefined : undefined,
+      event_type:
+        typeof req.body.event_type === 'string'
+          ? req.body.event_type.trim() || undefined
+          : undefined,
+      message:
+        typeof req.body.message === 'string' ? req.body.message.trim() || undefined : undefined,
+      expected_guests:
+        Number.isInteger(req.body.expected_guests) && req.body.expected_guests >= 0
+          ? req.body.expected_guests
+          : undefined,
+      venue_id:
+        typeof req.body.venue_id === 'string' && req.body.venue_id !== ''
+          ? req.body.venue_id
+          : undefined,
+      preferred_date:
+        typeof req.body.preferred_date === 'string' &&
+        /^\d{4}-\d{2}-\d{2}$/.test(req.body.preferred_date)
+          ? req.body.preferred_date
+          : undefined,
+      source: 'email_ai',
+      created_by: req.user?.username || 'intake',
+      notify: false,
+    });
+
+    res.status(201).json(result);
+  } catch (error: any) {
+    if (error instanceof BookingRequestError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+    console.error('Error in booking intake:', error);
+    res.status(500).json({ error: error.message || 'Failed to create intake booking' });
   }
 });
 

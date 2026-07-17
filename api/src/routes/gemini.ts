@@ -10,6 +10,7 @@ import {
   parseGeminiDraftEmailResponse,
 } from '../services/ai/prompts/draftEmail.js';
 import { buildGeminiChatSystemInstruction } from '../services/ai/prompts/chat.js';
+import { buildGeminiParseRfpPrompt, parseRfpExtraction } from '../services/ai/prompts/parseRfp.js';
 import { buildGeminiStrategicAnalysisPrompt } from '../services/ai/prompts/strategicAnalysis.js';
 import { GEMINI_ANALYZE_VIDEO_PROMPT } from '../services/ai/prompts/analyzeVideo.js';
 
@@ -92,6 +93,57 @@ router.post('/draft-email', async (req: Request, res: Response) => {
     const retryDelay = extractRetryDelay(error);
     res.status(500).json({
       error: error.message || 'Email drafting failed',
+      retryDelay,
+      isRateLimit: error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED'),
+    });
+  }
+});
+
+// POST /api/gemini/parse-rfp - extract a structured booking request from pasted email text
+router.post('/parse-rfp', async (req: Request, res: Response) => {
+  try {
+    const { text } = req.body;
+    if (!text || typeof text !== 'string' || text.trim() === '') {
+      return res.status(400).json({ error: 'text is required' });
+    }
+    if (text.length > 20000) {
+      return res.status(400).json({ error: 'text is too long (max 20000 characters)' });
+    }
+
+    const ai = getAiClient();
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const prompt = buildGeminiParseRfpPrompt(text, todayIso);
+
+    console.log('🔵 [Gemini API] Parse RFP request');
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-lite',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            is_rfp: { type: Type.BOOLEAN },
+            company_name: { type: Type.STRING },
+            contact_name: { type: Type.STRING },
+            email: { type: Type.STRING },
+            phone: { type: Type.STRING },
+            event_type: { type: Type.STRING },
+            expected_guests: { type: Type.NUMBER },
+            preferred_date: { type: Type.STRING },
+            layout: { type: Type.STRING },
+            summary: { type: Type.STRING },
+          },
+        },
+      },
+    });
+
+    res.json(parseRfpExtraction(response.text || ''));
+  } catch (error: any) {
+    console.error('Error in parse-rfp:', error);
+    const retryDelay = extractRetryDelay(error);
+    res.status(500).json({
+      error: error.message || 'RFP parsing failed',
       retryDelay,
       isRateLimit: error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED'),
     });
