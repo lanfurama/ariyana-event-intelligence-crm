@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import type { Booking } from '../../types';
+import type { Booking, Venue } from '../../types';
 import type { SpaceConflictsResult } from '../../services/apiService';
 import { bookingsApi } from '../../services/apiService';
+import type { VenueSuggestion } from './venueFitHelpers';
+import { suggestVenues } from './venueFitHelpers';
 import type { BookingDraft, SpaceDraft } from './bookingDetailHelpers';
 import {
   draftFromBooking,
@@ -41,6 +43,8 @@ export function useBookingForm(
   const [error, setError] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState<SpaceConflictReport[] | null>(null);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
+  const [suggestions, setSuggestions] = useState<VenueSuggestion[] | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
 
   const isEditing = initial !== null;
 
@@ -69,6 +73,62 @@ export function useBookingForm(
 
   const removeSpace = (key: string) => {
     setDraft((prev) => ({ ...prev, spaces: prev.spaces.filter((space) => space.key !== key) }));
+    setConflicts(null);
+  };
+
+  /**
+   * Deterministic venue suggestion (capacity fit + free/busy for the first
+   * space's window) — arithmetic over structured data, not an LLM call.
+   */
+  const handleSuggestVenues = async (venues: Venue[]) => {
+    setSuggesting(true);
+    setError(null);
+    try {
+      const firstSpace = draft.spaces[0];
+      let windowStart: Date | undefined;
+      let windowEnd: Date | undefined;
+      let busy: Array<{ venue_id: string; block_start_at: string; block_end_at: string }> = [];
+      if (firstSpace && firstSpace.start_local && firstSpace.end_local) {
+        const start = new Date(firstSpace.start_local);
+        const end = new Date(firstSpace.end_local);
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
+          windowStart = start;
+          windowEnd = end;
+          const blocks = await bookingsApi.getAvailability(start.toISOString(), end.toISOString());
+          busy = initial ? blocks.filter((block) => block.booking_id !== initial.id) : blocks;
+        }
+      }
+      const guests = Number(draft.expected_guests);
+      setSuggestions(
+        suggestVenues(venues, busy, {
+          guests: Number.isFinite(guests) && guests > 0 ? guests : undefined,
+          layout: draft.layout || undefined,
+          windowStart,
+          windowEnd,
+        }),
+      );
+    } catch (e: any) {
+      console.error('Error suggesting venues:', e);
+      setError(e.message || 'Failed to suggest venues');
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  /** Apply a suggestion to the first space row (or start one when none exist). */
+  const applySuggestion = (venueId: string) => {
+    setDraft((prev) => {
+      if (prev.spaces.length === 0) {
+        return { ...prev, spaces: [newSpaceDraft(nextKey(), venueId)] };
+      }
+      const firstKey = prev.spaces[0].key;
+      return {
+        ...prev,
+        spaces: prev.spaces.map((space) =>
+          space.key === firstKey ? { ...space, venue_id: venueId } : space,
+        ),
+      };
+    });
     setConflicts(null);
   };
 
@@ -153,10 +213,14 @@ export function useBookingForm(
     error,
     conflicts,
     checkingConflicts,
+    suggestions,
+    suggesting,
     setField,
     updateSpace,
     addSpace,
     removeSpace,
+    handleSuggestVenues,
+    applySuggestion,
     handleCheckConflicts,
     handleSave,
     handleDelete,

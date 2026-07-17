@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import type React from 'react';
-import { AlertTriangle, CheckCircle2, FileText, Loader2, Plus, Trash2, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  Plus,
+  Trash2,
+  Wand2,
+  X,
+} from 'lucide-react';
 import type { Booking, Lead, User, Venue } from '../types';
 import { Badge, Button, inputClass, labelClass, selectClass, textareaClass } from './ui';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -47,10 +56,14 @@ export const BookingDetail: React.FC<BookingDetailProps> = ({
     error,
     conflicts,
     checkingConflicts,
+    suggestions,
+    suggesting,
     setField,
     updateSpace,
     addSpace,
     removeSpace,
+    handleSuggestVenues,
+    applySuggestion,
     handleCheckConflicts,
     handleSave,
     handleDelete,
