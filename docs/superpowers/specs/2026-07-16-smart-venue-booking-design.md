@@ -15,15 +15,15 @@ This track extends the product into a **venue-rental platform**: manage the spac
 
 The 2026-07-16 audit found the "event intelligence" half of the codebase dead UI-side but **alive and reusable server-side**. This track deliberately resurrects those assets:
 
-| Existing asset                                                     | Reused for                                       |
-| ------------------------------------------------------------------ | ------------------------------------------------ |
-| `api/src/routes/eventBrief.ts` — DOCX generation (`docx` lib)      | Proposal / quote / BEO document export (Phase 2) |
-| Email Studio + `utils/emailSender` (templates, attachments, SMTP)  | Proposal sending, confirmations, follow-ups      |
-| `utils/imapService.ts` — reply matching                            | Inbound RFP email intake (Phase 4)               |
-| `services/ai/prompts/` pattern (dual-provider builders + tests)    | `parseRfpEmail`, `suggestVenues`, `draftProposal` |
-| `managerReportService` + node-cron                                 | Booking stats in scheduled reports (Phase 5)     |
-| `EventBrief` type, `utils/eventScoring.ts` (currently unwired)     | Event profile / opportunity scoring (later)      |
-| Dashboard + `components/common/Stats.tsx` (dataviz method)         | Occupancy / revenue analytics (Phase 5)          |
+| Existing asset                                                    | Reused for                                        |
+| ----------------------------------------------------------------- | ------------------------------------------------- |
+| `api/src/routes/eventBrief.ts` — DOCX generation (`docx` lib)     | Proposal / quote / BEO document export (Phase 2)  |
+| Email Studio + `utils/emailSender` (templates, attachments, SMTP) | Proposal sending, confirmations, follow-ups       |
+| `utils/imapService.ts` — reply matching                           | Inbound RFP email intake (Phase 4)                |
+| `services/ai/prompts/` pattern (dual-provider builders + tests)   | `parseRfpEmail`, `suggestVenues`, `draftProposal` |
+| `managerReportService` + node-cron                                | Booking stats in scheduled reports (Phase 5)      |
+| `EventBrief` type, `utils/eventScoring.ts` (currently unwired)    | Event profile / opportunity scoring (later)       |
+| Dashboard + `components/common/Stats.tsx` (dataviz method)        | Occupancy / revenue analytics (Phase 5)           |
 
 ### Constraints discovered in the audit (load-bearing for this design)
 
@@ -42,13 +42,13 @@ The 2026-07-16 audit found the "event intelligence" half of the codebase dead UI
 
 ## 3. Phase overview
 
-| Phase | Deliverable                                                                                                                        | Est.       |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| **0** | **Data + API core: venues, bookings, spaces, quotes schema; venue/booking CRUD + availability endpoints; seeds; pure-helper tests** | ~2 sessions |
-| 1     | Internal UI: `bookings` tab — resource calendar (venue × day), booking list by status, BookingDetail drawer (LeadDetail pattern)    | ~3 sessions |
-| 2     | Quotes: builder UI, Director approval gate for discounts, DOCX proposal export, send via Email Studio                               | ~2 sessions |
+| Phase | Deliverable                                                                                                                         | Est.          |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| **0** | **Data + API core: venues, bookings, spaces, quotes schema; venue/booking CRUD + availability endpoints; seeds; pure-helper tests** | ~2 sessions   |
+| 1     | Internal UI: `bookings` tab — resource calendar (venue × day), booking list by status, BookingDetail drawer (LeadDetail pattern)    | ~3 sessions   |
+| 2     | Quotes: builder UI, Director approval gate for discounts, DOCX proposal export, send via Email Studio                               | ~2 sessions   |
 | 3     | Real auth (JWT + passwords + `requireRole`) **then** public portal (browse spaces, free/busy, request form → Lead + inquiry)        | ~3–4 sessions |
-| 4     | Smart layer: AI RFP parsing from IMAP intake, venue suggestions, proposal drafts                                                    | ~2 sessions |
+| 4     | Smart layer: AI RFP parsing from IMAP intake, venue suggestions, proposal drafts                                                    | ~2 sessions   |
 | 5     | Analytics: occupancy %, pipeline value, funnel, seasonality on Dashboard; booking stats in manager reports                          | ~1–2 sessions |
 
 Future (explicitly out of scope): online payment/deposit (VNPay), e-contract/e-signature, IoT (sensors, signage, wayfinding), multi-tenant.
@@ -162,25 +162,25 @@ Two new routers, registered in all three bootstraps, following house conventions
 
 **`/api/v1/venues`** (`api/src/routes/venues.ts`)
 
-| Endpoint            | Behavior                                                                                       |
-| ------------------- | ---------------------------------------------------------------------------------------------- |
-| `GET /`             | Active venues ordered by `display_order, name`; `?include_inactive=true` for all               |
-| `GET /:id`          | One venue or 404                                                                               |
-| `POST /`            | Requires `name`; slug auto-derived (slugify) when absent; 409 on slug collision                |
-| `PUT /:id`          | Partial update (LeadModel-style fieldMap)                                                      |
-| `DELETE /:id`       | Hard delete; 409 with guidance if referenced by bookings                                       |
+| Endpoint      | Behavior                                                                         |
+| ------------- | -------------------------------------------------------------------------------- |
+| `GET /`       | Active venues ordered by `display_order, name`; `?include_inactive=true` for all |
+| `GET /:id`    | One venue or 404                                                                 |
+| `POST /`      | Requires `name`; slug auto-derived (slugify) when absent; 409 on slug collision  |
+| `PUT /:id`    | Partial update (LeadModel-style fieldMap)                                        |
+| `DELETE /:id` | Hard delete; 409 with guidance if referenced by bookings                         |
 
 **`/api/v1/bookings`** (`api/src/routes/bookings.ts`) — literal routes declared before `/:id`:
 
-| Endpoint                | Behavior                                                                                                                                              |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `GET /`                 | Bookings with aggregated `spaces` (`json_agg`); filters `status`, `venue_id`, `lead_id`, `from`, `to`, `search`                                        |
-| `GET /availability`     | `?from&to[&venue_id]` (required window) → space blocks of `hold`/`quoted`/`confirmed` bookings with code/title/status — the calendar + portal feed     |
-| `GET /check-conflicts`  | `?venue_id&start_at&end_at[&setup_minutes&teardown_minutes&exclude_booking_id]` → `{ hard: [], soft: [] }` — pre-save warning UX                       |
-| `GET /:id`              | Booking + spaces or 404                                                                                                                                |
-| `POST /`                | `{ title, spaces: [{venue_id,start_at,end_at,setup_minutes?,teardown_minutes?}], ...fields }` → 201 `{ booking, warnings }`; `23P01` → 409 + conflicts |
-| `PUT /:id`              | Partial fields; optional `spaces` = full replace; status change syncs `booking_spaces.booking_status`; same 409 mapping                                |
-| `DELETE /:id`           | Cascades spaces (and quotes)                                                                                                                           |
+| Endpoint               | Behavior                                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /`                | Bookings with aggregated `spaces` (`json_agg`); filters `status`, `venue_id`, `lead_id`, `from`, `to`, `search`                                        |
+| `GET /availability`    | `?from&to[&venue_id]` (required window) → space blocks of `hold`/`quoted`/`confirmed` bookings with code/title/status — the calendar + portal feed     |
+| `GET /check-conflicts` | `?venue_id&start_at&end_at[&setup_minutes&teardown_minutes&exclude_booking_id]` → `{ hard: [], soft: [] }` — pre-save warning UX                       |
+| `GET /:id`             | Booking + spaces or 404                                                                                                                                |
+| `POST /`               | `{ title, spaces: [{venue_id,start_at,end_at,setup_minutes?,teardown_minutes?}], ...fields }` → 201 `{ booking, warnings }`; `23P01` → 409 + conflicts |
+| `PUT /:id`             | Partial fields; optional `spaces` = full replace; status change syncs `booking_spaces.booking_status`; same 409 mapping                                |
+| `DELETE /:id`          | Cascades spaces (and quotes)                                                                                                                           |
 
 `BookingModel.create`/`update` own their transactions via `getClient()` (BEGIN/COMMIT/ROLLBACK) — multi-row writes plus the status sync must be atomic. Everything else uses the shared `query()` helper like existing models.
 
@@ -217,26 +217,26 @@ Eight venues, deterministic ids (`venue-grand-ballroom`, `venue-summit-hall`, `v
 
 ## 9. Rollout (Phase 0 = 4 commits)
 
-| #   | Commit                                                                     | Scope                                                                                     |
-| --- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| 1   | `docs(superpowers): smart venue booking spec + phase 0 plan`               | This spec, the Phase 0 plan, CLAUDE.md roadmap/track entry                                |
-| 2   | `feat(venues): migration 013 — venue booking schema + anti-double-book`    | `013_venue_booking.sql` + seeds + `migrate:venue-booking` npm script; run on local DB     |
-| 3   | `feat(venues): booking pure helpers + tests`                               | `bookingHelpers.ts` + `bookingHelpers.test.ts`                                            |
-| 4   | `feat(venues): venue/booking models + routes in all three bootstraps`      | Types, `VenueModel`, `BookingModel`, `routes/venues.ts`, `routes/bookings.ts`, 3 bootstraps + endpoint listings |
+| #   | Commit                                                                  | Scope                                                                                                           |
+| --- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 1   | `docs(superpowers): smart venue booking spec + phase 0 plan`            | This spec, the Phase 0 plan, CLAUDE.md roadmap/track entry                                                      |
+| 2   | `feat(venues): migration 013 — venue booking schema + anti-double-book` | `013_venue_booking.sql` + seeds + `migrate:venue-booking` npm script; run on local DB                           |
+| 3   | `feat(venues): booking pure helpers + tests`                            | `bookingHelpers.ts` + `bookingHelpers.test.ts`                                                                  |
+| 4   | `feat(venues): venue/booking models + routes in all three bootstraps`   | Types, `VenueModel`, `BookingModel`, `routes/venues.ts`, `routes/bookings.ts`, 3 bootstraps + endpoint listings |
 
 Each commit is independently revertable; the schema (commit 2) is additive and touches no existing table.
 
 ## 10. Risks
 
-| ID  | Risk                                                                                                   | Mitigation                                                                                                    |
-| --- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| R1  | `pg` returns `NUMERIC` as string → `area_sqm`/rates arrive as strings and break arithmetic later       | Model layer normalizes numeric fields to `number`; helper tests pin `computeQuoteTotals` numeric behavior      |
-| R2  | `CREATE EXTENSION btree_gist` needs superuser on some setups                                           | Local dev uses the owner role; documented fallback: run the statement once as superuser                        |
-| R3  | Naive migration splitter mangles a statement                                                           | No dollar-quoting/triggers/DO blocks; no `;`/apostrophes in seed strings; verified by running the migration    |
-| R4  | `vite-plugin-api.ts` index shift breaks the `query` import (database.js is index-mapped last)          | Insert new routers before `database.js` and update its index in the same edit; smoke hits `/health` first      |
-| R5  | Status-sync bug leaves `booking_spaces.booking_status` stale → constraint checks the wrong class       | Sync is a single UPDATE inside the same transaction as the status write; smoke exercises hold→confirmed→409    |
-| R6  | New endpoints are public like everything else                                                          | Accepted for the internal phase; Phase 3 gates the whole API before any public surface ships                   |
-| R7  | Timezone display bugs (TIMESTAMPTZ ↔ UI)                                                               | Phase 1 UI formats explicitly in Asia/Ho_Chi_Minh; API speaks ISO 8601 with offsets end-to-end                 |
+| ID  | Risk                                                                                             | Mitigation                                                                                                  |
+| --- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| R1  | `pg` returns `NUMERIC` as string → `area_sqm`/rates arrive as strings and break arithmetic later | Model layer normalizes numeric fields to `number`; helper tests pin `computeQuoteTotals` numeric behavior   |
+| R2  | `CREATE EXTENSION btree_gist` needs superuser on some setups                                     | Local dev uses the owner role; documented fallback: run the statement once as superuser                     |
+| R3  | Naive migration splitter mangles a statement                                                     | No dollar-quoting/triggers/DO blocks; no `;`/apostrophes in seed strings; verified by running the migration |
+| R4  | `vite-plugin-api.ts` index shift breaks the `query` import (database.js is index-mapped last)    | Insert new routers before `database.js` and update its index in the same edit; smoke hits `/health` first   |
+| R5  | Status-sync bug leaves `booking_spaces.booking_status` stale → constraint checks the wrong class | Sync is a single UPDATE inside the same transaction as the status write; smoke exercises hold→confirmed→409 |
+| R6  | New endpoints are public like everything else                                                    | Accepted for the internal phase; Phase 3 gates the whole API before any public surface ships                |
+| R7  | Timezone display bugs (TIMESTAMPTZ ↔ UI)                                                         | Phase 1 UI formats explicitly in Asia/Ho_Chi_Minh; API speaks ISO 8601 with offsets end-to-end              |
 
 ## 11. Next steps after Phase 0
 

@@ -66,7 +66,9 @@ router.get('/', async (req: Request, res: Response) => {
     const filters: BookingFilters = {};
     if (typeof req.query.status === 'string') {
       if (!BOOKING_STATUSES.includes(req.query.status)) {
-        return res.status(400).json({ error: `status must be one of ${BOOKING_STATUSES.join(', ')}` });
+        return res
+          .status(400)
+          .json({ error: `status must be one of ${BOOKING_STATUSES.join(', ')}` });
       }
       filters.status = req.query.status;
     }
@@ -123,12 +125,7 @@ router.get('/check-conflicts', async (req: Request, res: Response) => {
     const teardownMinutes = req.query.teardown_minutes
       ? parseInt(req.query.teardown_minutes as string)
       : 0;
-    if (
-      isNaN(setupMinutes) ||
-      setupMinutes < 0 ||
-      isNaN(teardownMinutes) ||
-      teardownMinutes < 0
-    ) {
+    if (isNaN(setupMinutes) || setupMinutes < 0 || isNaN(teardownMinutes) || teardownMinutes < 0) {
       return res
         .status(400)
         .json({ error: 'setup_minutes and teardown_minutes must be non-negative integers' });
@@ -181,7 +178,9 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'title is required' });
     }
     if (status !== undefined && !BOOKING_STATUSES.includes(status)) {
-      return res.status(400).json({ error: `status must be one of ${BOOKING_STATUSES.join(', ')}` });
+      return res
+        .status(400)
+        .json({ error: `status must be one of ${BOOKING_STATUSES.join(', ')}` });
     }
     if (source !== undefined && !BOOKING_SOURCES.includes(source)) {
       return res.status(400).json({ error: `source must be one of ${BOOKING_SOURCES.join(', ')}` });
@@ -253,13 +252,17 @@ router.put('/:id', async (req: Request, res: Response) => {
     }
     if (req.body.status !== undefined) {
       if (!BOOKING_STATUSES.includes(req.body.status)) {
-        return res.status(400).json({ error: `status must be one of ${BOOKING_STATUSES.join(', ')}` });
+        return res
+          .status(400)
+          .json({ error: `status must be one of ${BOOKING_STATUSES.join(', ')}` });
       }
       updates.status = req.body.status;
     }
     if (req.body.source !== undefined) {
       if (!BOOKING_SOURCES.includes(req.body.source)) {
-        return res.status(400).json({ error: `source must be one of ${BOOKING_SOURCES.join(', ')}` });
+        return res
+          .status(400)
+          .json({ error: `source must be one of ${BOOKING_SOURCES.join(', ')}` });
       }
       updates.source = req.body.source;
     }
@@ -282,7 +285,9 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (req.body.spaces !== undefined) {
       const validation = validateBookingSpacesPayload(req.body.spaces);
       if (!validation.ok) {
-        return res.status(400).json({ error: 'Invalid spaces payload', details: validation.errors });
+        return res
+          .status(400)
+          .json({ error: 'Invalid spaces payload', details: validation.errors });
       }
       spaces = validation.spaces;
     }

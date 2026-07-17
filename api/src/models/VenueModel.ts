@@ -5,7 +5,8 @@ import type { Venue } from '../types/index.js';
 function normalizeVenueRow(row: any): Venue {
   return {
     ...row,
-    area_sqm: row.area_sqm === null || row.area_sqm === undefined ? row.area_sqm : Number(row.area_sqm),
+    area_sqm:
+      row.area_sqm === null || row.area_sqm === undefined ? row.area_sqm : Number(row.area_sqm),
     ceiling_height_m:
       row.ceiling_height_m === null || row.ceiling_height_m === undefined
         ? row.ceiling_height_m

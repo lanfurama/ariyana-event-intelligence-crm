@@ -192,7 +192,10 @@ export function computeQuoteTotals(
   discountPct: number,
   vatPct: number,
 ): QuoteTotals {
-  const subtotal = items.reduce((sum, item) => sum + Math.round(item.quantity * item.unit_price), 0);
+  const subtotal = items.reduce(
+    (sum, item) => sum + Math.round(item.quantity * item.unit_price),
+    0,
+  );
   const discountAmount = Math.round((subtotal * discountPct) / 100);
   const taxable = subtotal - discountAmount;
   const vatAmount = Math.round((taxable * vatPct) / 100);
