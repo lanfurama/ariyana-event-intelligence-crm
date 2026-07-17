@@ -235,6 +235,38 @@ export interface Booking {
   spaces: BookingSpace[];
 }
 
+export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+export type QuoteItemKind = 'venue' | 'fnb' | 'av' | 'service' | 'other';
+
+export interface QuoteItem {
+  id?: number;
+  quote_id?: string;
+  kind: QuoteItemKind;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+  sort_order?: number;
+}
+
+export interface Quote {
+  id: string;
+  booking_id: string;
+  version: number;
+  status: QuoteStatus;
+  currency: string;
+  subtotal: number;
+  discount_pct: number;
+  vat_pct: number;
+  total: number;
+  valid_until?: string | null;
+  sent_at?: string | null;
+  notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  items: QuoteItem[];
+}
+
 export type UserRole = 'Director' | 'Sales' | 'Viewer';
 
 export interface User {

@@ -11,6 +11,9 @@ import type {
   Booking,
   BookingStatus,
   BookingSource,
+  Quote,
+  QuoteItemKind,
+  QuoteStatus,
 } from '../types';
 
 // Always use relative path /api/v1 - works in both dev and production
@@ -559,5 +562,61 @@ export const bookingsApi = {
     });
     if (space.exclude_booking_id) params.append('exclude_booking_id', space.exclude_booking_id);
     return apiCall<SpaceConflictsResult>(`/bookings/check-conflicts?${params.toString()}`);
+  },
+};
+
+export interface QuoteItemPayload {
+  kind: QuoteItemKind;
+  description: string;
+  quantity: number;
+  unit_price: number;
+}
+
+export interface QuotePayload {
+  discount_pct?: number;
+  vat_pct?: number;
+  status?: QuoteStatus;
+  valid_until?: string | null;
+  notes?: string | null;
+  sent_at?: string | null;
+  items?: QuoteItemPayload[];
+}
+
+export const quotesApi = {
+  getAll: (bookingId?: string) =>
+    apiCall<Quote[]>(`/quotes${bookingId ? `?booking_id=${encodeURIComponent(bookingId)}` : ''}`),
+  getById: (id: string) => apiCall<Quote>(`/quotes/${id}`),
+  create: (bookingId: string, payload: QuotePayload & { items: QuoteItemPayload[] }) =>
+    apiCall<Quote>('/quotes', {
+      method: 'POST',
+      body: JSON.stringify({ booking_id: bookingId, ...payload }),
+    }),
+  update: (id: string, payload: QuotePayload) =>
+    apiCall<Quote>(`/quotes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  delete: (id: string) =>
+    apiCall<void>(`/quotes/${id}`, {
+      method: 'DELETE',
+    }),
+  /** Direct download URL for the proposal document. */
+  docxUrl: (id: string) => `${API_BASE_URL}/quotes/${id}/docx`,
+  /** Fetch the proposal DOCX as a data-URL, ready for the send-email attachment pipeline. */
+  fetchDocxAsDataUrl: async (id: string): Promise<{ fileName: string; dataUrl: string }> => {
+    const response = await fetch(`${API_BASE_URL}/quotes/${id}/docx`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch proposal document (HTTP ${response.status})`);
+    }
+    const blob = await response.blob();
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read proposal document'));
+      reader.readAsDataURL(blob);
+    });
+    const disposition = response.headers.get('content-disposition') || '';
+    const match = disposition.match(/filename="([^"]+)"/);
+    return { fileName: match ? match[1] : `Proposal-${id}.docx`, dataUrl };
   },
 };
