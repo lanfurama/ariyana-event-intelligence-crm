@@ -50,6 +50,7 @@ let bookingsRouter: any;
 let quotesRouter: any;
 let authRouter: any;
 let authMw: any;
+let publicPortalRouter: any;
 let query: any;
 
 async function loadRoutes() {
@@ -91,6 +92,7 @@ async function loadRoutes() {
         './api/src/routes/quotes.js',
         './api/src/routes/auth.js',
         './api/src/middleware/auth.js',
+        './api/src/routes/publicPortal.js',
         './api/src/config/database.js',
       ];
 
@@ -131,7 +133,8 @@ async function loadRoutes() {
       quotesRouter = routes[16].default;
       authRouter = routes[17].default;
       authMw = routes[18];
-      query = routes[19].query;
+      publicPortalRouter = routes[19].default;
+      query = routes[20].query;
 
       console.log('✅ Routes loaded successfully');
     } catch (error: any) {
@@ -201,6 +204,7 @@ export function vitePluginApi(): Plugin {
       // Auth first (public login), then the global guard — everything below
       // requires a valid token and Viewer is read-only (secure by default).
       app.use('/auth', authRouter);
+      app.use('/public', publicPortalRouter);
       app.use(authMw.requireAuth);
       app.use(authMw.viewerReadOnly);
 

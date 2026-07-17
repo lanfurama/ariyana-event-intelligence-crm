@@ -57,6 +57,14 @@ export class LeadModel {
     return result.rows[0] || null;
   }
 
+  static async getByKeyPersonEmail(email: string): Promise<Lead | null> {
+    const result = await query(
+      'SELECT * FROM leads WHERE LOWER(key_person_email) = LOWER($1) ORDER BY created_at DESC LIMIT 1',
+      [email],
+    );
+    return result.rows[0] || null;
+  }
+
   static async getWithEmailCount(id?: string): Promise<LeadWithEmailCount[]> {
     let sql = `
       SELECT 

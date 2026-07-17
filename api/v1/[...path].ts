@@ -21,6 +21,7 @@ import venuesRouter from '../src/routes/venues.js';
 import bookingsRouter from '../src/routes/bookings.js';
 import quotesRouter from '../src/routes/quotes.js';
 import authRouter from '../src/routes/auth.js';
+import publicPortalRouter from '../src/routes/publicPortal.js';
 import {
   requireAuth,
   viewerReadOnly,
@@ -83,6 +84,7 @@ app.get('/health', async (req, res) => {
 // Auth first (public login), then the global guard — everything below requires
 // a valid token and Viewer is read-only (secure by default).
 app.use('/auth', authRouter);
+app.use('/public', publicPortalRouter);
 app.use(requireAuth);
 app.use(viewerReadOnly);
 

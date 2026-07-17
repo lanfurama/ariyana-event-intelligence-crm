@@ -17,6 +17,7 @@ import venuesRouter from './routes/venues.js';
 import bookingsRouter from './routes/bookings.js';
 import quotesRouter from './routes/quotes.js';
 import authRouter from './routes/auth.js';
+import publicPortalRouter from './routes/publicPortal.js';
 import { requireAuth, viewerReadOnly, requireRole, usersWritePolicy } from './middleware/auth.js';
 import { query } from './config/database.js';
 import { startScheduledReportsJob } from './services/scheduledReportsJob.js';
@@ -81,6 +82,7 @@ app.get('/health', async (req, res) => {
 // Auth first (public login), then the global guard — every /api route below
 // requires a valid token and Viewer is read-only (secure by default).
 app.use('/api/auth', authRouter);
+app.use('/api/public', publicPortalRouter);
 app.use('/api', requireAuth);
 app.use('/api', viewerReadOnly);
 
